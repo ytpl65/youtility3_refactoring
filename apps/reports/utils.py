@@ -15,6 +15,7 @@ from .forms import ReportForm
 from .models import ReportHistory
 import logging, json
 from decimal import Decimal
+from datetime import datetime, timedelta
 log = logging.getLogger('__main__')
 import os
 
@@ -270,6 +271,7 @@ class ReportEssentials(object):
     DynamicDetailedTourSummary = 'DYNAMICDETAILEDTOURSUMMARY'
     LogSheet                   = 'LOGSHEET'
     RP_SiteVisitReport         = 'RP_SITEVISITREPORT'
+    PeopleAttendanceSummary    = 'PEOPLEATTENDANCESUMMARY'
     
     def __init__(self, report_name):
         self.report_name = report_name
@@ -298,7 +300,7 @@ class ReportEssentials(object):
         from apps.reports.report_designs.dynamic_tour_list import DynamicTourList
         from apps.reports.report_designs.static_tour_list import StaticTourList
         from apps.reports.report_designs.qrcode_report import LocationQR
-        
+        from apps.reports.report_designs.people_attendance_summary import PeopleAttendanceSummaryReport
 
         return {
             self.TaskSummary: TaskSummaryReport,
@@ -322,7 +324,8 @@ class ReportEssentials(object):
             self.LogSheet:LogSheet,
             self.RP_SiteVisitReport:RP_SITEVISITREPORT,
             self.DynamicTourList:DynamicTourList,
-            self.StaticTourList:StaticTourList
+            self.StaticTourList:StaticTourList,
+            self.PeopleAttendanceSummary:PeopleAttendanceSummaryReport
         }.get(self.report_name)
     
     @property
@@ -376,3 +379,78 @@ def trim_filename_from_path(file_path):
     filename = os.path.basename(file_path)  # Get the filename from the path
     trimmed_path = file_path[:-len(filename)]  # Remove the filename from the path
     return trimmed_path
+
+def format_data(data):
+    output = {}
+    # Process each entry in the data
+    for entry in data:
+        department = entry['department'] if entry['department'] != "NONE" else "--"
+        designation = entry['designation'] if entry['designation'] != "NONE" else "--"
+        peoplename = entry['peoplename']
+        
+        # Create nested dictionaries if they don't exist
+        if department not in output:
+            output[department] = {}
+        
+        if designation not in output[department]:
+            output[department][designation] = {}
+        
+        if peoplename not in output[department][designation]:
+            output[department][designation][peoplename] = []
+        
+        # Convert Decimal('day') to integer and prepare the entry
+        formatted_entry = {
+            'peoplecode': entry['peoplecode'],
+            'day': int(entry['day']),  # Convert Decimal to int
+            'day_of_week': entry['day_of_week'].strip(),  # Optionally strip whitespace
+            'punch_intime': entry['punch_intime'],
+            'punch_outtime': entry['punch_outtime'],
+            'totaltime': entry['totaltime'],
+        }
+        
+        # Append the entry to the corresponding department and designation
+        output[department][designation][peoplename].append(formatted_entry)
+    
+    output_list = [output]
+    return output_list
+
+def generate_days_in_range(start_datetime, end_datetime):
+    """Generate a list of tuples with day of the month, day names, and month names for a given datetime range."""
+    days = []
+    current_datetime = start_datetime
+    while current_datetime <= end_datetime:
+        day_of_month = current_datetime.day
+        day_name = current_datetime.strftime('%a')  # Day of the week abbreviation
+        month_name = current_datetime.strftime('%b')  # Month abbreviation
+        days.append((day_of_month, day_name, month_name))
+        current_datetime += timedelta(days=1)
+    return days
+
+def get_day_header(data, start_date_str, end_date_str):
+    # Parse the input datetime range
+    start_datetime = datetime.strptime(start_date_str, '%d/%m/%Y %H:%M:%S')
+    end_datetime = datetime.strptime(end_date_str, '%d/%m/%Y %H:%M:%S')
+    
+    # Generate the complete list of days for the given range
+    all_days = generate_days_in_range(start_datetime, end_datetime)
+    
+    # Prepare lists for all days in the range
+    all_day_numbers = [day for day, _, _ in all_days]
+    all_day_names = [day_name for _, day_name, _ in all_days]
+    
+    # Create a mapping for days with data (for debugging purposes)
+    day_mapping = {}
+    for entry in data:
+        day_str = entry['day']
+        month_str = entry.get('month', start_datetime.strftime('%m'))
+        year_str = entry.get('year', start_datetime.strftime('%Y'))
+        date_key = f"{year_str}-{month_str}-{day_str}"
+        day_mapping[date_key] = entry['day_of_week'].strip()[:3]
+    
+    # Print debug information
+    for i, (day, day_name, _) in enumerate(all_days):
+        current_date = start_datetime + timedelta(days=i)
+        date_key = current_date.strftime("%Y-%m-%d")
+    
+    final_list = [all_day_numbers, all_day_names]
+    return final_list

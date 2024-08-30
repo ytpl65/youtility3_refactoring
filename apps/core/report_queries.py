@@ -731,37 +731,60 @@ def get_query(query):
             AND (jobneed.plandatetime AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}'
             ORDER BY bu.buname, (jobneed.plandatetime AT TIME ZONE tz.timezone)::DATE desc
             ''',
-            'People_Attendance_Summary':
+            'PEOPLEATTENDANCESUMMARY':
             '''
-            WITH timezone_setting as ( 
-                SELECT '{timezone}' ::text as timezone 
-            ) 
+            WITH timezone_setting AS (
+                SELECT '{timezone}'::text AS timezone
+            ),
+            aggregated_times AS (
                 SELECT
-                deptype.taname AS department,
-                desgtype.taname AS designation,
-                p.peoplename AS peoplename,
-                p.peoplecode AS peoplecode,
-                EXTRACT(DAY FROM pel.datefor) AS day,
-                TO_CHAR(pel.datefor, 'Day') AS day_of_week,
-                CONCAT(EXTRACT(HOUR FROM pel.punchintime AT TIME ZONE tz.timezone), ':', EXTRACT(MINUTE FROM pel.punchintime AT TIME ZONE tz.timezone)) AS punch_intime,
-                CONCAT(EXTRACT(HOUR FROM pel.punchouttime AT TIME ZONE tz.timezone), ':', EXTRACT(MINUTE FROM pel.punchouttime AT TIME ZONE tz.timezone)) AS punch_outimetime,
-                CONCAT(
-                TRUNC((EXTRACT(EPOCH FROM pel.punchouttime AT TIME ZONE tz.timezone) - EXTRACT(EPOCH FROM pel.punchintime AT TIME ZONE tz.timezone)) / 3600),
-                ':',
-                EXTRACT(MINUTE FROM (pel.punchouttime AT TIME ZONE tz.timezone - pel.punchintime AT TIME ZONE tz.timezone))
-            ) AS totaltime
-            FROM 
-                peopleeventlog pel
-            INNER JOIN people p ON pel.people_id = p.id
-            INNER JOIN typeassist desgtype ON p.designation_id = desgtype.id
-            INNER JOIN typeassist deptype ON p.department_id = deptype.id
-            CROSS JOIN timezone_setting tz
-            WHERE
-                pel.bu_id IN (SELECT unnest(string_to_array('{siteids}', ',')::integer[])) AND
-                (pel.datefor AT TIME ZONE tz.timezone) BETWEEN '{from}' AND '{upto}' AND
-                (pel.punchouttime AT TIME ZONE tz.timezone)::date = pel.datefor AND 
-            ORDER BY 
-                pel.datefor;
+                    pel.people_id,
+                    pel.datefor,
+                    MIN(pel.punchintime) AS min_punchintime,
+                    MAX(pel.punchouttime) AS max_punchouttime
+                FROM 
+                    peopleeventlog pel
+                CROSS JOIN timezone_setting tz
+                WHERE
+                    pel.bu_id IN (SELECT unnest(string_to_array('{siteids}', ',')::integer[])) AND
+                    pel.datefor BETWEEN '{from}' AND '{upto}' AND
+                    (pel.punchouttime AT TIME ZONE tz.timezone)::date = pel.datefor
+                GROUP BY
+                    pel.people_id,
+                    pel.datefor
+            ),
+            detailed_info AS (
+                SELECT
+                    deptype.taname AS department,
+                    desgtype.taname AS designation,
+                    p.peoplename AS peoplename,
+                    p.peoplecode AS peoplecode,
+                    EXTRACT(DAY FROM at.datefor) AS day,
+                    TO_CHAR(at.datefor, 'Day') AS day_of_week,
+                    CONCAT(
+                        EXTRACT(HOUR FROM at.min_punchintime AT TIME ZONE tz.timezone), 
+                        ':', 
+                        EXTRACT(MINUTE FROM at.min_punchintime AT TIME ZONE tz.timezone)
+                    ) AS punch_intime,
+                    CONCAT(
+                        EXTRACT(HOUR FROM at.max_punchouttime AT TIME ZONE tz.timezone), 
+                        ':', 
+                        EXTRACT(MINUTE FROM at.max_punchouttime AT TIME ZONE tz.timezone)
+                    ) AS punch_outtime,
+                    CONCAT(
+                        TRUNC((EXTRACT(EPOCH FROM at.max_punchouttime AT TIME ZONE tz.timezone) - EXTRACT(EPOCH FROM at.min_punchintime AT TIME ZONE tz.timezone)) / 3600),
+                        ':',
+                        EXTRACT(MINUTE FROM (at.max_punchouttime AT TIME ZONE tz.timezone - at.min_punchintime AT TIME ZONE tz.timezone))
+                    ) AS totaltime
+                FROM 
+                    aggregated_times at
+                INNER JOIN people p ON at.people_id = p.id
+                INNER JOIN typeassist desgtype ON p.designation_id = desgtype.id
+                INNER JOIN typeassist deptype ON p.department_id = deptype.id
+                CROSS JOIN timezone_setting tz
+            )
+            SELECT * FROM detailed_info
+            ORDER BY day;
             '''
     }.get(query) 
 

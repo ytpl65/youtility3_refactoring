@@ -1,0 +1,151 @@
+{% extends "reports/pdf_reports/tabular_base.html" %}
+
+{% block header_start %}
+<img src="{{ client_logo }}" alt="" class="logos">
+{% endblock header_start %}
+
+{% block header_end %}
+<div>
+<img src="{{ static('assets/media/images/reportlogo.png') }}" class="companylogo">
+</div>
+
+{% endblock header_end %}
+
+
+{% block header_center %}
+<div id="title">
+    <div>
+        <p id="main_title">{{ report_title }}</p>
+        <p id="subtitle">{{ report_subtitle_site }}</p>
+        <p id="subtitle">{{ report_subtitle_date }}</p>
+    </div>
+</div>
+{% endblock header_center %}
+
+
+{% block inline_css %}
+<style>
+#subtitle{
+    text-align: center;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt; /* Reduce font size */
+}
+th, td {
+    border: 1px solid black;
+    padding: 2px; /* Reduce padding */
+    text-align: center;
+}
+.department-col { width: 8%; }
+.designation-col { width: 10%; }
+.name-col { width: 10%; }
+.date-col { width: 2.1%; } /* (100% - 28% - 7%) / 31 days */
+.total-col { width: 7%; }
+.time-difference {
+    font-weight: bold;
+}
+.background-dept-design-name-time {
+    background-color: white;
+}
+.background-total-col {
+    background-color: #e0e8f1; 
+    font-weight: bold;
+}
+@media print {
+    @page {
+        size: 356mm 216mm;
+        margin: 5mm; /* Reduce margins */
+    }
+    thead {
+        display: table-header-group;
+    }
+    tfoot {
+        display: table-footer-group;
+    }
+    tr {
+        page-break-inside: avoid;
+    }
+    th, td {
+        page-break-inside: auto;
+    }
+}
+</style>
+{% endblock inline_css %}
+
+{% block table %}
+
+<table id="tasksummary">
+    <thead>
+        <tr>
+            <th scope="col" rowspan="2" class="department-col">Department</th>
+            <th scope="col" rowspan="2" class="designation-col">Designation</th>
+            <th scope="col" rowspan="2" class="name-col">People Name</th>
+            {% for day_number in header.0 %}
+                <th scope="col" class="date-col">{{ day_number }}</th>
+            {% endfor %}
+            <th scope="col" rowspan="2" class="total-col">Total Hr's</th>
+        </tr>
+        <tr>
+            {% for day_name in header.1 %}
+                <th scope="col" class="date-col">{{ day_name }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for department, designations in data.0.items() %}
+            {% set dept_rows = namespace(count=0) %}
+            {% for designation, people in designations.items() %}
+                {% set dept_rows.count = dept_rows.count + people|length %}
+            {% endfor %}
+            <tr>
+                <td class="department-col background-dept-design-name-time" rowspan="{{ dept_rows.count }}">{{ department }}</td>
+                {% for designation, people in designations.items() %}
+                    <td class="designation-col background-dept-design-name-time" rowspan="{{ people|length }}">{{ designation }}</td>
+                    {% for person, records in people.items() %}
+                        <td class="name-col background-dept-design-name-time">{{ person }}</td>
+                        {% for day_number in header.0 %}
+                            <td class="date-col background-dept-design-name-time">
+                                {% for record in records %}
+                                    {% if record.day == day_number %}
+                                    {{ record.punch_intime }}<br>{{ record.punch_outtime }}<br><span class="time-difference">{{ record.totaltime }}</span>
+                                    {% else %}
+                                    {{""}}
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        {% endfor %}
+                        {% set total_hrs = namespace(hours=0, minutes=0) %}
+                        {% for record in records %}
+                            {% set time_parts = record.totaltime.split(':') %}
+                            {% set total_hrs.hours = total_hrs.hours + time_parts[0]|int %}
+                            {% set total_hrs.minutes = total_hrs.minutes + time_parts[1]|int %}
+                        {% endfor %}
+                        {% set total_hrs.hours = total_hrs.hours + (total_hrs.minutes // 60) %}
+                        {% set total_hrs.minutes = total_hrs.minutes % 60 %}
+                        <td class="total-col background-total-col">
+                            {{ '%02d:%02d'|format(total_hrs.hours, total_hrs.minutes) }}
+                        </td>
+                        {% if not loop.last %}
+                            </tr><tr>
+                        {% endif %}
+                    {% endfor %}
+                    {% if not loop.last %}
+                        </tr><tr>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+{% endblock table %}
+
+
+{% block summary %}
+{% endblock summary %}
+
+{% block script %}
+{% endblock script %}

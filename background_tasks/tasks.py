@@ -705,7 +705,6 @@ def create_save_report_async(self, formdata, client_id, user_email, user_id):
         dlog.info(f"Report Format initialized, {report}")
         
         if response := report.execute():
-            log.info("Response:  %s %s", response, type(response))
             if returnfile:
                 rutils.process_sendingreport_on_email(response, formdata, user_email)
                 return {"status": 201, "message": "Report generated successfully and email sent", 'alert':'alert-success'}

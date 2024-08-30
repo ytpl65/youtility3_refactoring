@@ -65,7 +65,8 @@ class ScheduleReport(BaseModel):
         ('DYNAMICTOURDETAILS','Dynamic Tour Details'),
         ('STATICTOURDETAILS','Static Tour Details'),
         ('RP_SITEVISITREPORT','RP Site Visit Report'),
-        ('LOGSHEET','Log Sheet')
+        ('LOGSHEET','Log Sheet'),
+        ('PEOPLEATTENDANCESUMMARY','People Attendance Summary')
 
         ]
     
