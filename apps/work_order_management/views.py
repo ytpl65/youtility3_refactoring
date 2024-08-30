@@ -6,7 +6,8 @@ from .forms import VendorForm, WorkOrderForm, WorkPermitForm, ApproverForm,SlaFo
 from .models import Vendor, Wom, WomDetails, Approver
 from apps.peoples.models import People
 from apps.activity.models import QuestionSetBelonging, QuestionSet
-from background_tasks.tasks import send_email_notification_for_sla_vendor,send_email_notification_for_wp,send_email_notification_for_vendor_and_security
+from background_tasks.tasks import send_email_notification_for_sla_vendor,send_email_notification_for_wp,\
+    send_email_notification_for_vendor_and_security,send_email_notification_for_wp_verifier
 from django.http import Http404, QueryDict, response as rp, HttpResponse
 from apps.core  import utils
 from apps.peoples import utils as putils
@@ -463,22 +464,39 @@ class WorkPermit(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
     
+    def get_report_object(self,permit_name):
+        from apps.reports.report_designs import workpermit as wp
+        return {
+            'Cold Work Permit':wp.ColdWorkPermit,
+            'Hot Work Permit':wp.HotWorkPermit,
+            'Confined Space Work Permit':wp.ConfinedSpaceWorkPermit,
+            'Electrical Work Permit':wp.ElectricalWorkPermit,
+            'Height Work Permit':wp.HeightWorkPermit,
+            'Entry Request':wp.EntryRequest,
+        }.get(permit_name)
+
     def handle_valid_form(self, form, R,request, create=True):
         S = request.session
+        print("Request: ",request,R)
         workpermit = form.save(commit=False)
         workpermit.uuid = request.POST.get('uuid')
         workpermit = putils.save_userinfo(
             workpermit, request.user, request.session, create = create)
         workpermit = save_approvers_injson(workpermit)
         formdata = QueryDict(request.POST['workpermitdetails']).copy()
+        print("Permit Name : ",request.POST['permit_name'],workpermit.id,request.session.get('client_id'))
         self.create_workpermit_details(request.POST, workpermit, request, formdata)
-        #wom = Wom.objects.get(id = workpermit.id)
         sitename = S.get('sitename','demo')
-        #workpermit_obj = GeneralWorkPermit(filename=R['permit_name'], client_id=S['client_id'], formdata={'id':workpermit.id,'bu__buname':sitename,'submit_button_flow':R['submit_button_flow'],'filename':R['permit_name'],'site_name':S['sitename'],'workpermit':wom.workpermit})
-        #workpermit_attachment = workpermit_obj.execute()
         workpermit_status = 'PENDING'
-        send_email_notification_for_wp.delay(workpermit.id, workpermit.qset_id, workpermit.approvers, S['client_id'], S['bu_id'],sitename,workpermit_status)
-
+        permit_name = request.POST['permit_name']
+        report_object = self.get_report_object(permit_name)
+        client_id = request.session.get('client_id')
+        report = report_object(filename=permit_name,client_id=client_id,returnfile=True,formdata = {'id':workpermit.id},request=request)
+        report_pdf_object = report.execute()
+        vendor_name =  Vendor.objects.get(id=workpermit.vendor_id).name
+        pdf_path = wom_utils.save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=workpermit.id)
+        send_email_notification_for_wp_verifier.delay(workpermit.id,workpermit.verifiers,sitename,workpermit_status,permit_name,pdf_path,vendor_name)
+        send_email_notification_for_wp.delay(workpermit.id, workpermit.qset_id, workpermit.approvers, S['client_id'], S['bu_id'],sitename,workpermit_status,vendor_name)
         return rp.JsonResponse({'pk':workpermit.id})
 
     def create_child_wom(self, wom, qset_id, rwp_seqno=None):
@@ -502,6 +520,7 @@ class WorkPermit(LoginRequiredMixin, View):
                 workstatus     = wom.workstatus,
                 seqno          = rwp_seqno or qset.seqno,
                 approvers      = wom.approvers,
+                verifiers       = wom.verifiers,
                 workpermit     = wom.workpermit,
                 priority       = wom.priority,
                 vendor         = wom.vendor,
@@ -593,9 +612,37 @@ class WorkPermit(LoginRequiredMixin, View):
     
     def send_report(self, R, request):
         ReportFormat = self.getReportFormatBasedOnWorkpermitType(R)
+        print("R: ",R)
         report = ReportFormat(
             filename=R['qset__qsetname'], client_id=request.session['client_id'], formdata=R, request=request)
         return report.execute()
+    
+
+
+class VerifierReplyWorkPermit(View):
+    P = {
+        'email_template': "work_order_management/workpermit_server_reply.html",
+        'model':Wom,
+    }
+
+    def get(self,request, *args, **kwargs):
+        R,P = request.GET,self.P 
+        S = request.session
+        print(R)
+        if R.get('action') == 'accepted' and R.get('womid') and R.get('peopleid'):
+            wom = Wom.objects.get(id = R['womid'])
+            wp = Wom.objects.filter(id = R['womid']).first()
+            p = People.objects.filter(id = R['peopleid']).first()
+            log.info("R:%s",R)
+        else:
+            print("Else")
+
+
+
+
+
+
+
         
     
 class ReplyWorkPermit(View):

@@ -435,8 +435,54 @@ def create_report_history(self, formdata, userid, buid, EI):
     return jsonresp
 
 
+@shared_task(bind=True, name = "Send Email Notificatio to Verifier")
+def send_email_notification_for_wp_verifier(self,womid,verifiers,sitename,workpermit_status,permit_name,workpermit_attachment,vendor_name):
+    jsonresp = {'story': "", "traceback": ""}
+    try:
+        from django.apps import apps 
+        from django.template.loader import render_to_string
+        Wom = apps.get_model('work_order_management', 'Wom')
+        People = apps.get_model('peoples', 'People')
+        wp_details = Wom.objects.get_wp_answers(womid)
+        wp_obj = Wom.objects.get(id=womid)
+        jsonresp['story'] += f"\n{wp_details}"
+        if wp_details:
+            qset = People.objects.filter(peoplecode__in = verifiers)
+            for p in qset.values('email','id'):
+                dlog.info(f"Sending Email to {p['email'] = }")
+                msg = EmailMessage()
+                msg.subject = f"{permit_name}-{wp_obj.other_data['wp_seqno']}-{sitename}-Verification Pending"            
+                msg.to = [p['email']]
+                msg.from_email = settings.EMAIL_HOST_USER
+                cxt = {
+                    'peopleid':p['id'],
+                    'HOST':settings.HOST,
+                    'workpermitid':womid,
+                    'sitename':sitename,
+                    'status':workpermit_status,
+                    'permit_no':wp_obj.other_data['wp_seqno'],
+                    'permit_name':permit_name,
+                    'vendor_name':vendor_name
+                }
+                html = render_to_string(
+                    'work_order_management/workpermit_verifier_action.html',context=cxt
+                )
+                msg.body = html
+                msg.content_subtype = 'html'
+                msg.attach_file(workpermit_attachment, mimetype='application/pdf')
+                msg.send()
+                dlog.info(f"Email sent to {p['email'] = }")
+                jsonresp['story']+=f"Email sent to {p['email'] = }"
+        jsonresp['story'] += f"A {permit_name} email sent of pk: {womid}: "
+    except Exception as e:
+        dlog.critical(
+            "Something went wrong while running send_email_notification_for_wp_verifier",exc_info=True
+            )
+        jsonresp['traceback'] += tb.format_exc()
+    return jsonresp
+        
 @shared_task(bind=True, name="Create Workpermit email notification")
-def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu_id,sitename,workpermit_status):
+def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu_id,sitename,workpermit_status,vendor_name):
     jsonresp = {'story': "", "traceback": ""}
     try:
         from django.apps import apps
@@ -456,8 +502,15 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
                 msg.subject = f"General Work Permit #{wp_obj.other_data['wp_seqno']} needs your approval"
                 msg.to = [p['email']]
                 msg.from_email = settings.EMAIL_HOST_USER
-                cxt = {'sections': wp_details[1], 'peopleid':p['id'],
-                    "HOST": settings.HOST, "workpermitid": womid,'sitename':sitename,'status':workpermit_status,'permit_no':wp_obj.other_data['wp_seqno'],'permit_name':'General Work Permit'}
+                cxt = {
+                    'peopleid':p['id'],
+                    "HOST": settings.HOST, 
+                    "workpermitid": womid,
+                    'sitename':sitename,
+                    'status':workpermit_status,
+                    'permit_no':wp_obj.other_data['wp_seqno'],
+                    'permit_name':'General Work Permit',
+                    'vendor_name':vendor_name}
                 html = render_to_string(
                     'work_order_management/workpermit_approver_action.html', context=cxt)
                 msg.body = html
@@ -470,7 +523,7 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
         jsonresp['story'] += f"A Workpermit email sent of pk: {womid}"
     except Exception as e:
         dlog.critical(
-            "something went wron while running create_report_history()", exc_info=True)
+            "something went wron while running send_email_notification_for_wp", exc_info=True)
         jsonresp['traceback'] += tb.format_exc()
     return jsonresp
 

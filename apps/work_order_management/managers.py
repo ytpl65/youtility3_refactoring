@@ -112,7 +112,7 @@ class WorkOrderManager(models.Manager):
     def get_workpermitlist(self, request):
         R, S = request.GET, request.session
         P = json.loads(R.get('params', "{}"))
-        qobjs = self.select_related('cuser', 'bu', 'qset').filter(
+        qobjs = self.select_related('cuser', 'bu', 'qset','vendor').filter(
            ~Q(workpermit__in =  ['NOT_REQUIRED', 'NOTREQUIRED']),
             ~Q(identifier = 'SLA'),
             parent_id = 1,
@@ -121,7 +121,7 @@ class WorkOrderManager(models.Manager):
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
         ).order_by('-other_data__wp_seqno').values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
-                 'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode','identifier')
+                 'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode','identifier','verifiers_status','vendor__name','remarks')
         print("qobjs",qobjs)
         return qobjs or self.none()
          
@@ -319,7 +319,7 @@ class WorkOrderManager(models.Manager):
     #     data = self.get_wp_sections_answers(wp_answers[1],id,approval_status)
     #     logger.info(f"{data = }")
     #     return data,permit_no
-
+    
     def wp_data_for_report(self, id):
         site = self.filter(id=id).first().bu
         wp_answers = self.get_wp_answers(id)

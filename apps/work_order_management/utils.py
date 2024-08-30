@@ -89,7 +89,11 @@ def save_approvers_injson(wp):
     wp_approvers = [
         {'name': approver, 'status': 'PENDING'} for approver in wp.approvers
     ]
+    wp_verifiers = [
+        {'name': verifier, 'status':'PENDING'} for verifier in wp.verifiers
+    ]
     wp.other_data['wp_approvers'] = wp_approvers
+    wp.other_data['wp_verifiers'] = wp_verifiers
     wp.save()
     log.info("saving approvers ended")
     return wp
@@ -103,6 +107,7 @@ def get_approvers(approver_codes):
         except People.DoesNotExist:
             approvers.append({'peoplecode': code, 'peoplename': code})
     return approvers
+
 
 def extract_data(wp_answers):
         for section in wp_answers:
@@ -247,3 +252,12 @@ def create_child_wom(wom, qset_id):
 def get_overall_score(id):
     sla_answers_data,overall_score,question_ans,all_average_score,remarks = Wom.objects.sla_data_for_report(id)
     return overall_score
+
+
+def  save_pdf_to_tmp_location(report_pdf_object,report_name,report_number):
+    tmp_pdf_location = '/home/satyam/tmp_reports'
+    output_pdf = f'{report_name}-{report_number}.pdf'
+    final_path = os.path.join(tmp_pdf_location,output_pdf)
+    with open(final_path, 'wb') as file:
+        file.write(report_pdf_object)
+    return final_path

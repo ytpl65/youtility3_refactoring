@@ -28,6 +28,7 @@ def other_data():
         'reply_from_vendor':"",
         'wp_seqno':0,
         'wp_approvers':[],
+        'wp_verifiers':[],
         'section_weightage':0,
         'overall_score':0,
         'remarks':"",
@@ -50,8 +51,15 @@ class Wom(BaseModel, TenantAwareModel):
         
     class WorkPermitStatus(models.TextChoices):
         '''
-        if value is NOT_REQURED it is 
+        if value is NOT_REQURED it is work order
         '''
+        NOTNEED   = ('NOT_REQUIRED', 'Not Required')
+        APPROVED  = ('APPROVED', 'Approved')
+        REJECTED = ('REJECTED', 'Rejected')
+        PENDING  = ('PENDING', 'Pending')
+
+
+    class WorkPermitVerifierStatus(models.TextChoices):
         NOTNEED   = ('NOT_REQUIRED', 'Not Required')
         APPROVED  = ('APPROVED', 'Approved')
         REJECTED = ('REJECTED', 'Rejected')
@@ -82,6 +90,7 @@ class Wom(BaseModel, TenantAwareModel):
     approvers       = ArrayField(models.CharField(max_length = 100, blank = True), null = True, blank = True, verbose_name= _("Approvers"))
     verifiers       = ArrayField(models.CharField(max_length = 100, blank = True), null = True, blank = True, verbose_name= _("Verifiers"))
     workpermit      = models.CharField(_('Work Permit'), choices=WorkPermitStatus.choices, default=WorkPermitStatus.NOTNEED, max_length=35)
+    verifiers_status= models.CharField(_('Verifier Status'),choices=WorkPermitVerifierStatus.choices,default=WorkPermitVerifierStatus.PENDING)
     priority        = models.CharField(_("Priority"), max_length = 50, choices = Priority.choices)
     qset            = models.ForeignKey("activity.QuestionSet", verbose_name = _("QuestionSet"), on_delete  = models.RESTRICT, null = True, blank = True)
     vendor          = models.ForeignKey('Vendor', null=True, blank=False, on_delete=models.RESTRICT, verbose_name='Vendor')
@@ -99,7 +108,7 @@ class Wom(BaseModel, TenantAwareModel):
     categories      = ArrayField(models.CharField(max_length = 50, blank = True, default=""), default = list)
     wo_history      = models.JSONField(encoder=DjangoJSONEncoder, default=wo_history_json)
     identifier      = models.CharField(_("Identifier"), max_length=50, choices=Identifier.choices, null=True, blank=True)
-    
+    remarks         = models.TextField(_("Remarks"),blank=True,null=True)
     objects = WorkOrderManager()
     
     def add_history(self):
