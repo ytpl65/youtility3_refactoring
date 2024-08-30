@@ -10,6 +10,11 @@ import logging
 from intelliwiz_config.settings import BULK_IMPORT_GOOGLE_DRIVE_API_KEY as api_key
 from apps.onboarding.models import Bt, TypeAssist
 from apps.peoples.models import People
+from apps.core import utils
+import json 
+from django.http import response as rp
+
+
 logger = logging.getLogger('django')
 dbg = logging.getLogger('__main__').debug
 
@@ -382,3 +387,73 @@ def get_resource_and_dataset(request, form, mode_resource_map):
         request=request, ctzoffset=form.cleaned_data.get("ctzoffset")
     )
     return res, dataset
+
+def get_designation_choices(request,P):
+
+    form_instance = P['form_class'](request=request)
+    designation_choices = {}
+
+    for key,value in form_instance.fields['designation'].choices:
+        designation_choices[str(key)] = value
+
+    designation_choices = json.dumps(designation_choices)
+    
+    return designation_choices
+
+
+def get_shift_data(obj):
+    data = obj.shift_data.get('designation_details')
+    if not data:
+        return []
+    return data
+
+def handle_shift_data_edit(request,self):  
+    shift_id = request.POST.get('shift_id')
+    shift = utils.get_model_obj(int(shift_id), request, self.params)
+    dataa = request.POST.dict()
+    action = dataa.get('action')
+
+    data = {}
+    
+    for key, value in dataa.items():
+        if key.startswith('data['):
+            field_name = key.split('[')[-1][:-1]
+            data[field_name] = value
+        else:
+            data[key] = value
+    
+    if not shift.shift_data:
+        shift.shift_data = {'designation_details': []}
+    elif 'designation_details' not in shift.shift_data:
+        shift.shift_data['designation_details'] = []
+    
+    designation_details = shift.shift_data['designation_details']
+
+    if action == 'create':
+        new_data = {
+            "id": len(designation_details) + 1,
+            "designation":data.get('designation'),
+            "count":data.get('count'),
+            "people_code":[]
+        }
+        designation_details.append(new_data)
+
+    elif action == 'edit':
+        edit_id = data.get('id')
+        for item in designation_details:
+            if item['id'] == int(edit_id):
+                item.update({
+                    "designation": data.get('designation'),
+                    "count": data.get('count')
+                })
+                break
+
+    elif action == 'remove':
+        remove_id =int(data.get('id'))
+        designation_details = [item for item in designation_details if item['id'] != remove_id]
+        for i, item in enumerate(designation_details, 1):
+            item['id'] = i
+
+    shift.shift_data['designation_details'] = designation_details
+    shift.save()
+    return rp.JsonResponse({'status': 'success'}, status=200)

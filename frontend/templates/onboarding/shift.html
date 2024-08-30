@@ -41,6 +41,26 @@ Shift List
 	const rowlink         = "a.shift-link"
 	
 	$(document).ready(function () {
+
+		function addField() {
+			const container = document.getElementById('dynamic-fields-container');
+			if (!container) return;
+			const newGroup = document.createElement('div');
+			newGroup.className = 'input-group mb-3';
+			newGroup.innerHTML = `
+				<select class="form-select" name="terminal[]">
+					<option value="">Select terminal</option>
+					<option value="terminal1">Terminal 1</option>
+					<option value="terminal2">Terminal 2</option>
+					<option value="terminal3">Terminal 3</option>
+					<!-- Add more options as needed -->
+				</select>
+				<button class="btn btn-outline-secondary add-field-btn" type="button">+</button>
+			`;
+			container.appendChild(newGroup);
+		}
+
+		$(document).on('click', '.add-field-btn', addField);
 		
 
         //beforeSend of capability ajax request 
@@ -62,7 +82,7 @@ Shift List
                 { "data": "id", 'visible':false, className:'noVis'},
                 { "data": "shiftname" , 'title': 'Name',
                     'render':function(data, type, row, meta){
-                        return `<a href="#" class="shift-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
+                        return `<a href="${urlname}?id=${row['id']}" class="shift-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
                     }
                 },
                 { "data": "starttime", 'title': 'Start'},
@@ -70,7 +90,7 @@ Shift List
                 { "data": "nightshiftappicable", 'title': 'Night Shift',
                     'render': function(data, type, row, meta){
                         return data === true ? "True": "False"
-                    } 
+                    }
                 },
 				{data:"bu__buname", title:"Site", visible:false},
 				{data:'bu__bucode', title:"Site Code", visible:false}
@@ -83,124 +103,30 @@ Shift List
                     filename="shift_list"
                 ),
                 dataTablesExcelConfig(
-                    title = `Site: {{request.user.bu.buname}}\n Shift List`,
+                    title = `Site: {{request.user.bu.buname}}\n Shift List`,	
                     columns = ':visible',
                     filename="shift_list"
                 ),
                 dataTablesColumnVisibilityConfig(),
 				{
-					text     : `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
-					className: "btn btn-sm border border-primary btn-light-primary add_new_shift",
-					//action for add_new_button 
-					action: function(e, dt, node, config){
-                        const params = {
-                            'modal_id'  : modal_id,
-                            'url'       : `${urlname}?action=form`,
-                            'beforeSend': ShiftBeforeSend }
-						fire_ajax_get(params)
-						.done((data, status, xhr) => {
-							$(modalcontent_id).attr('data-form', 'create')
-                            $(`${modal_id} .modal-content`).html(data.html_form)
-                        })
-						.fail((xhr, status, error) => {
-							show_error_alert("Something went wrong!")
-						})
-					}
-				}
-			],
-			select: {
-				style:"single"
-			}
-		})
-		$('.btn').removeClass('dt-button')
-		
+                    text: `Add New &nbsp;<i class='fas fa-plus ch4'></i></a>`,
+                    className: "btn btn-sm border border-primary btn-light-primary add_new_shift",
+                    action: function(e, dt, node, config){
+                        window.location.href = `${urlname}?action=form`;
+                    }
+                }
+            ],
+            select: {
+                style:"single"
+            }
+        })
+        $('.btn').removeClass('dt-button')
+        
+        // Remove the modal-related event listeners
+        // The row click event is now handled by the 'render' function in the DataTable initialization
+    }); //END document.ready()
 
-		//END STYLING DATATABLE
-
-		
-		//submit form
-		$(modal_id).on('submit', formid, function(e) {
-			var form = $(this);
-			e.preventDefault()
-			const params = { url:urlname, modal:true } //capability view
-			const id = $("#pk").val()//form instance id
-			var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
-			if(id != 'None'){
-				var newPayLoad = {...payLoad, 'pk':id}
-				payLoad = newPayLoad
-			}
-			fire_ajax_form_post(params, payLoad)
-			.done((data, status, xhr) => { //function to submit post request
-				console.log("data ", data)
-				$(modal_id).modal("hide");
-				if(id!=='None'){
-					table.row('.selected').data(data.row).draw()
-				}else{
-					table.row.add(data.row).draw()
-				}
-				show_successful_save_alert(update= id != 'None' ? true : false)
-			})
-		})
-
-		table.on('select', function(e, dt, type, indexes){
-			if(type === 'row'){
-				var id = table.rows(indexes).data().pluck('id')[0]
-				if (!(id)){ return }
-				e.preventDefault();
-				const params = {
-					'modal_id': modal_id,
-					'url': `${urlname}?id=${id}`,
-					beforeSend: ShiftBeforeSend
-				}
-				fire_ajax_get(params)
-				.done((data, status, xhr) => {
-					$(modalcontent_id).attr('data-form', 'update')
-					$(`${modal_id} .modal-content`).html(data.html_form)
-				})
-				.fail((xhr, status, error) => {
-					show_error_alert('Something went wrong!') //defined in custom.js
-				})
-			}
-		})
-
-
-	}); //END document.ready()
-
-	//delete ajax request 
-	function isShiftDeleted(id){
-		console.log("id ", id)
-		const params = {url:`${urlname}?action=delete&id=${id}`, 'beforeSend':function () {} }
-		fire_ajax_get(params)
-		.done((data, status, xhr) => {
-			if(!xhr.status === 200){
-				return false
-			}
-			return true
-		})
-		.fail((xhr, status, error) => {
-			show_error_alert('Something went wrong!') //defined in custom.js
-			return false
-		})
-	}
-
-	//delete capability 
-	function deleteShift(elemt){
-		var id = $(elemt).attr("data-id");
-		show_alert_before_delete(viewname)
-		.then((result) => {
-			if(result.isConfirmed){ //delete requested by user
-				status = isShiftDeleted(id) //fire's request
-				console.log("status ", status)
-				if(status){
-					show_successful_delete_alert() //defined in customjs
-					$(modal_id).modal("hide")
-					table.row('.selected').remove().draw()
-				}else{
-					show_error_alert('Something went wrong!');
-				}
-			}
-		})
-	}
+    // Remove the deleteShift function if it's no longer needed in this file
 </script>
 {% endblock extra_scripts %}
 <!-------- END EXTRA SCRIPTS ------------------------------->

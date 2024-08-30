@@ -417,7 +417,14 @@ class ShiftManager(models.Manager):
             'id', 'shiftname', 'dsgn', 'starttime',
             'endtime', 'nightshiftappicable','bu__buname','bu__bucode'
         ) or self.none()
-        
+    
+    def get_designations_data(self,request,id):
+        S = request.session
+        return self.filter(
+            client_id = S['client_id'],
+            bu_id = S['bu_id'],
+            id = id
+        ).values('designation__taname', 'designation__tacode', 'peoplecount' ) or self.none()
 
 class DeviceManager(models.Manager):
     use_in_migrations=True

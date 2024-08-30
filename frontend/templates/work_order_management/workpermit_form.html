@@ -108,6 +108,14 @@ Work Permit Form
                     {{ wpform.approvers }}
                 </div>
             </div>
+            <div class="input-group-sm input-group mb-3">
+                <div class="col-md-4 col-sm-12 pt-2">
+                    {{ wpform.verifiers.label_tag() }}
+                </div>
+                <div class="col-md-8 col-sm-12 ">
+                    {{ wpform.verifiers }}
+                </div>
+            </div>
         </div>
         <div class="col-md-6">
             <div class="input-group-sm input-group mb-3">
@@ -152,6 +160,7 @@ Work Permit Form
     <div id="wp_details_container" class="">
         <form action="" method="post" id="wp_details_form" autocomplete="on" >
             <div class="sections accordion" id="wp_details">
+                {{ wp_details|pprint }}
                 {{ plot_sections_questions(wp_details, "wp_details", "wp_section") }}
             </div>
         </form>
@@ -195,7 +204,6 @@ Work Permit Form
 
 {% block extra_scripts %}
 {{ wpform.media.js }}
-
 <script>
     //set the variables which are gonna used in attachment.js file for fetching attachments against the owner
     var attachmentParams = {
@@ -356,22 +364,11 @@ Work Permit Form
         
         //load the questionaire of selected template
         $("#load_questions").click((e) => {
-            var validWorkpermit = '{{ valid_workpermit }}'
             var qsetid = $("#id_qset").val()
             var approvers = $("#id_approvers").val()
             var workpermitname = $("#select2-id_qset-container").attr('title')
             var vendor = $("#id_vendor").val()
-
-            if (!validWorkpermit.includes(workpermitname)){
-                Swal.fire({
-                    icon:'warning',
-                    title:'Invalid Workpermit Selected',
-                    showConfirmButton: true,
-                    timer:3000
-                })
-                return
-            }
-            
+            var verifiers = $("#id_verifiers").val()
             console.log(workpermitname,approvers,qsetid)
             if(qsetid.length == 0){
                 display_field_error('qset','Select Permit to Work')
@@ -382,7 +379,7 @@ Work Permit Form
                 display_field_error('approvers', 'At least one approver needed!')
                 return
             }
-            location.href = `${urlname}?qsetid=${qsetid}&approvers=${approvers}&vendor=${vendor}`
+            location.href = `${urlname}?qsetid=${qsetid}&approvers=${approvers}&vendor=${vendor}&verifiers=${verifiers}`
         })
 
 

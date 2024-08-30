@@ -46,7 +46,6 @@ def get_appropriate_client_url(client_code):
 class CustomJsonEncoderWithDistance(JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Distance):
-            print(obj)
             return obj.m
         return super(CustomJsonEncoderWithDistance, self).default(obj)
 
@@ -147,7 +146,6 @@ def delete_pgroup_pgbelonging_data(request):
         if not pk:
             return handle_Exception(request)
         pgroup_obj = pm.Pgroup.objects.filter(id=pk).first()
-        print()
         with transaction.atomic():
             pgbelonging_savepoint = transaction.savepoint()
             try:
@@ -502,7 +500,6 @@ def get_index_for_deletion(lookup, request, ids):
     data = request.session['wizard_data']['timeline_data'][ids]
     for idx, item in enumerate(data):
         if item['id'] == int(id):
-            print(f"idx going to be deleted {idx}")
             return idx
 
 

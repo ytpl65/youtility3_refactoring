@@ -345,9 +345,9 @@ class WorkPermit(LoginRequiredMixin, View):
         'form':WorkPermitForm,
         'related':['qset', 'cuser', 'bu'],
         'fields':['cdtz', 'id', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'cuser__peoplename', 'bu__bucode', 'bu__buname'],
-        'valid_workpermit':','.join(['General Work Permit'])
 
     }
+    
     
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
@@ -375,7 +375,7 @@ class WorkPermit(LoginRequiredMixin, View):
                     workpermit_status = 'APPROVED'
                     send_email_notification_for_vendor_and_security.delay(R['womid'],workpermit_attachment,sitename,workpermit_status)
             return rp.JsonResponse(data={'status': 'Approved'}, status=200)
-        
+
         if action == 'reject_wp' and R.get('womid'):
             wom = P['model'].objects.get(id=R['womid'])
             Wom.objects.filter(id=R['womid']).update(workpermit=Wom.WorkPermitStatus.REJECTED.value)
@@ -384,7 +384,8 @@ class WorkPermit(LoginRequiredMixin, View):
 
         if action == 'form':
             import uuid
-            cxt = {'wpform': P['form'](request=request), 'msg': "create workpermit requested", 'ownerid': uuid.uuid4(),'valid_workpermit':self.params['valid_workpermit']}
+            cxt = {'wpform': P['form'](request=request), 'msg': "create workpermit requested", 'ownerid': uuid.uuid4()}
+            print("CXT: ",cxt)
             return render(request, P['template_form'], cxt)
         
         if action == 'approver_list':
@@ -392,12 +393,13 @@ class WorkPermit(LoginRequiredMixin, View):
             return rp.JsonResponse({'data': objs}, status=200)
 
         if R.get('qsetid'):
+            print('R.get(qsetid)',R.get('qsetid'))
             import uuid
             wp_details = Wom.objects.get_workpermit_details(request, R['qsetid'])
             approver_codes = R['approvers'].split(',')
             approvers = wom_utils.get_approvers(approver_codes)
-            form = P['form'](request=request, initial={'qset': R['qsetid'], 'approvers': R['approvers'].split(','),'vendor':R['vendor']})
-            context = {"wp_details": wp_details, 'wpform': form, 'ownerid': uuid.uuid4(),'valid_workpermit':self.params['valid_workpermit'],'approvers':approvers}
+            form = P['form'](request=request, initial={'qset': R['qsetid'], 'approvers': R['approvers'].split(','),'vendor':R['vendor'],'verifiers':R['verifiers'].split(',')})
+            context = {"wp_details": wp_details, 'wpform': form, 'ownerid': uuid.uuid4(),'approvers':approvers}
             return render(request, P['template_form'], context=context)
 
         if action == 'get_answers_of_template' and R.get('qsetid') and R.get('womid'):
@@ -412,14 +414,12 @@ class WorkPermit(LoginRequiredMixin, View):
         if action == 'printReport':
             return self.send_report(R, request)
 
-        if 'id' in R:
-            print("After Submission Here I am")
+        if 'id' in R:   
             log.info("In this view")
-            print("R:  ",R)
             # get work permit questionnaire
             obj = utils.get_model_obj(int(R['id']), request, P)
             wp_answers = Wom.objects.get_wp_answers(obj.id)
-            cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers[1],'valid_workpermit':self.params['valid_workpermit']}
+            cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers}
             if obj.workpermit == Wom.WorkPermitStatus.APPROVED and obj.workstatus != Wom.Workstatus.COMPLETED:
                 rwp_details = Wom.objects.get_return_wp_details(request)
                 log.info(f"return work permit details are as follows: {rwp_details}")
@@ -452,6 +452,8 @@ class WorkPermit(LoginRequiredMixin, View):
                 data = QueryDict(R['formData']).copy()
                 form = self.params['form'](data, request = request)
                 create=True
+                print("Data:" ,data)
+                print("Form: ",form)
             if form.is_valid():
                 resp = self.handle_valid_form(form, R, request, create)
             else:
@@ -470,14 +472,12 @@ class WorkPermit(LoginRequiredMixin, View):
         workpermit = save_approvers_injson(workpermit)
         formdata = QueryDict(request.POST['workpermitdetails']).copy()
         self.create_workpermit_details(request.POST, workpermit, request, formdata)
-        print("Session",S)
-        wom = Wom.objects.get(id = workpermit.id)
+        #wom = Wom.objects.get(id = workpermit.id)
         sitename = S.get('sitename','demo')
-        workpermit_obj = GeneralWorkPermit(filename=R['permit_name'], client_id=S['client_id'], formdata={'id':workpermit.id,'bu__buname':sitename,'submit_button_flow':R['submit_button_flow'],'filename':R['permit_name'],'site_name':S['sitename'],'workpermit':wom.workpermit})
-        workpermit_attachment = workpermit_obj.execute()
-        print("Workpermit Path: ",workpermit_attachment)
+        #workpermit_obj = GeneralWorkPermit(filename=R['permit_name'], client_id=S['client_id'], formdata={'id':workpermit.id,'bu__buname':sitename,'submit_button_flow':R['submit_button_flow'],'filename':R['permit_name'],'site_name':S['sitename'],'workpermit':wom.workpermit})
+        #workpermit_attachment = workpermit_obj.execute()
         workpermit_status = 'PENDING'
-        send_email_notification_for_wp.delay(workpermit.id, workpermit.qset_id, workpermit.approvers, S['client_id'], S['bu_id'],workpermit_attachment,sitename,workpermit_status)
+        send_email_notification_for_wp.delay(workpermit.id, workpermit.qset_id, workpermit.approvers, S['client_id'], S['bu_id'],sitename,workpermit_status)
 
         return rp.JsonResponse({'pk':workpermit.id})
 
@@ -580,15 +580,19 @@ class WorkPermit(LoginRequiredMixin, View):
     
     def getReportFormatBasedOnWorkpermitType(self, R):
         from apps.reports.report_designs import workpermit as wp
+        print(R['qset__qsetname'])
         return {
-            'General Work Permit':wp.GeneralWorkPermit
+            'Cold Work Permit':wp.ColdWorkPermit,
+            'Hot Work Permit':wp.HotWorkPermit,
+            'Confined Space Work Permit':wp.ConfinedSpaceWorkPermit,
+            'Electrical Work Permit':wp.ElectricalWorkPermit,
+            'Height Work Permit':wp.HeightWorkPermit,
+            'Entry Request':wp.EntryRequest,
         }.get(R['qset__qsetname'])
     
     
     def send_report(self, R, request):
         ReportFormat = self.getReportFormatBasedOnWorkpermitType(R)
-        print("R: ",R)
-        print("Request: ",request)
         report = ReportFormat(
             filename=R['qset__qsetname'], client_id=request.session['client_id'], formdata=R, request=request)
         return report.execute()
@@ -618,10 +622,10 @@ class ReplyWorkPermit(View):
                         wom = Wom.objects.get(id = wom_id)
                         sitename = Bt.objects.get(id=wom.bu_id).buname
                         log.info("Inside of the if sitename %s",sitename)
-                        workpermit_obj = GeneralWorkPermit(filename=permit_name, formdata={'id':R['womid'],'bu__buname':sitename,'submit_button_flow':is_submit_button_flow,'filename':permit_name,'workpermit':wom.workpermit})
-                        workpermit_attachment = workpermit_obj.execute()
+                        #workpermit_obj = GeneralWorkPermit(filename=permit_name, formdata={'id':R['womid'],'bu__buname':sitename,'submit_button_flow':is_submit_button_flow,'filename':permit_name,'workpermit':wom.workpermit})
+                        #workpermit_attachment = workpermit_obj.execute()
                         workpermit_status = 'APPROVED'
-                        send_email_notification_for_vendor_and_security.delay(R['womid'],workpermit_attachment,sitename,workpermit_status)
+                        send_email_notification_for_vendor_and_security.delay(R['womid'],sitename,workpermit_status)
                 else:
                     return render(request, P['email_template'], context={'alreadyapproved':True})
             cxt = {'status': Wom.WorkPermitStatus.APPROVED.value, 'action_acknowledged':True, 'seqno':wp.other_data['wp_seqno']}
@@ -736,6 +740,7 @@ class ApproverView(LoginRequiredMixin, View):
         resp, create = None, True
         try:
             data = QueryDict(request.POST['formData']).copy()
+            print("Data",data)
             if pk := request.POST.get('pk', None):
                 msg = "approver_view"
                 ven = utils.get_model_obj(pk, request, self.params)
@@ -848,7 +853,6 @@ class SLA_View(LoginRequiredMixin, View):
     def send_report(self, R, request):
         from apps.reports.report_designs import service_level_agreement as sla
         report = sla.ServiceLevelAgreement(filename=R['qset__qsetname'], client_id=request.session['client_id'], formdata=R, request=request)
-        print("Report: ",report)
         return report.execute()
 
     def post(self,request,*args,**kwargs):

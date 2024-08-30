@@ -76,7 +76,7 @@ class Bt(BaseModel, TenantAwareModel):
     gpslocation         = PointField(_('GPS Location'),null = True, blank = True, geography = True, srid = 4326)
     isvendor            = models.BooleanField(_("Vendor"), default = False)
     isserviceprovider   = models.BooleanField(_("ServiceProvider"), default = False)
-
+    
     objects = BtManager()
 
     class Meta(BaseModel.Meta):
@@ -100,6 +100,12 @@ class Bt(BaseModel, TenantAwareModel):
         if self.siteincharge is None: self.siteincharge= utils.get_or_create_none_people()
         if self.butype is None: self.butype = utils.get_none_typeassist()
 
+def shiftdata_json():
+    return{
+        'gracetime':"",
+        'designation_details':[]
+    }
+
 class Shift(BaseModel, TenantAwareModel):
     bu                  = models.ForeignKey('Bt', verbose_name='Buisiness View', null = True, on_delete = models.RESTRICT, related_name="shift_bu")
     client              = models.ForeignKey('Bt', verbose_name='Buisiness View', null = True, on_delete = models.RESTRICT, related_name="shift_client")
@@ -112,6 +118,8 @@ class Shift(BaseModel, TenantAwareModel):
     nightshiftappicable = models.BooleanField(default = True, verbose_name="Night Shift Applicable")
     captchafreq         = models.IntegerField(default = 10, null = True)
     enable              = models.BooleanField(verbose_name='Enable', default = True)
+    shift_data          = models.JSONField( encoder = DjangoJSONEncoder, blank = True, null = True, default = shiftdata_json)
+
 
     objects = ShiftManager()
     class Meta(BaseModel.Meta):

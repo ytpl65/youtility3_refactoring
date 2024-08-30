@@ -184,7 +184,6 @@ class Capability(LoginRequiredMixin, View):
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
-            print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params, True)
 
         # return form with instance
@@ -192,21 +191,17 @@ class Capability(LoginRequiredMixin, View):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             resp = utils.render_form_for_update(
                 request, self.params, "cap_form", obj)
-        # print(f'return resp={resp}')
         return resp
 
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         try:
-            print(request.POST)
             data = QueryDict(request.POST['formData'])
             pk = request.POST.get('pk', None)
-            print(pk, type(pk))
             if pk:
                 msg, create = "capability_view", False
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk), {'request': request})
-                print(form.data)
 
             else:
                 form = self.params['form_class'](data, request=request)
@@ -379,7 +374,6 @@ class PeopleGroup(LoginRequiredMixin, View):
                                              'peoples': list(peoples)})
             resp = utils.render_form_for_update(
                 request, self.params, "pgroup_form", obj, FORM=FORM)
-        print(f'return resp={resp}')
         return resp
 
     def post(self, request, *args, **kwargs):
@@ -571,7 +565,6 @@ def verifyemail(request):
     logger.info('verify email requested for user id %s',
                 request.GET.get('userid'))
     user = People.objects.get(id=request.GET.get('userid'))
-    print(user)
     try:
         send_email(user)
         messages.success(

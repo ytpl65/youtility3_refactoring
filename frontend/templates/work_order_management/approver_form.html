@@ -23,6 +23,16 @@
             <div class="col-md-6">
                 <div class="input-group mb-3">
                     <div class="col-md-4">
+                        {{ approver_form.identifier.label_tag() }}
+                    </div>
+                    <div class="col-md-8" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Enter text without any special chars, and spaces">
+                        {{ approver_form.identifier }}
+                    </div>
+                </div>
+
+                <div class="input-group mb-3">
+                    <div class="col-md-4">
                         {{ approver_form.people.label_tag() }}
                     </div>
                     <div class="col-md-8" data-bs-toggle="tooltip" data-bs-placement="top"

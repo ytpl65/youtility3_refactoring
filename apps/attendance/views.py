@@ -70,7 +70,6 @@ class Attendance(LoginRequiredMixin, View):
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
-            print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params)
         
         # return form with instance
@@ -78,13 +77,11 @@ class Attendance(LoginRequiredMixin, View):
             obj = utils.get_model_obj(R['id'], request, self.params)
             resp = utils.render_form_for_update(
                 request, self.params, "attd_form", obj)
-        print(f'return resp={resp}')
         return resp
 
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         try:
-            print(request.POST)
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
                 msg = "attendance_view"
@@ -151,7 +148,6 @@ class Conveyance(LoginRequiredMixin, View):
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
-            print(f'resp={resp}')
             resp = utils.render_form_for_delete(request, self.params, False)
 
         # return form with instance for update
