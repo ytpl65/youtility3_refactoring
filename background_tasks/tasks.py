@@ -18,6 +18,9 @@ from apps.reports.models import ScheduleReport
 from apps.reports import utils as rutils
 from django.templatetags.static import static
 
+import logging
+
+log = logging.getLogger('__main__')
 
 from .move_files_to_GCS import move_files_to_GCS, del_empty_dir, get_files
 from .report_tasks import (

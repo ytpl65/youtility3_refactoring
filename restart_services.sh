@@ -3,3 +3,5 @@
 sudo systemctl restart nginx.service
 sudo systemctl restart gunicorn.service
 sudo supervisorctl restart all
+sudo systemctl restart mosquitto
+

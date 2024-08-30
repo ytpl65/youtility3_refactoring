@@ -412,11 +412,13 @@ Generate PDF Form
 
             // Choose source of site or customer text
             const textSource = siteText !== ' - ' ? siteText : customerText;
-            const trimmedText = textSource.split(' - ')[1].trim();
-
+            const parts = textSource.split(' - ')
+            const trimmedText = parts.slice(1).join('-').trim();
+      
             return prefix + trimmedText + result;
           }
 
+          
           const formData = {
             document_type: $('#id_document_type').val(), 
             company: $('#id_company').val(),

@@ -121,7 +121,7 @@ class QuestionResource(resources.ModelResource):
         for val in values:
             if row.get(val) == None:
                 continue
-            else:
+            else :
                 isnan(row.get(val))
                 row[val] = None
 
