@@ -119,7 +119,10 @@ class QuestionResource(resources.ModelResource):
     def handle_nan_values(self, row):
         values = ['Min', 'Max', 'Alert Below', 'Alert Above']
         for val in values:
-            if isnan(row.get(val)):
+            if row.get(val) == None:
+                continue
+            else:
+                isnan(row.get(val))
                 row[val] = None
 
     def validate_numeric_values(self, row):

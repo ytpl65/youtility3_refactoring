@@ -79,7 +79,8 @@ class Wom(BaseModel, TenantAwareModel):
     location        = models.ForeignKey('activity.Location', verbose_name=_('Location'), on_delete=models.RESTRICT, null=True, blank=True)
     workstatus      = models.CharField('Job Status', choices = Workstatus.choices, default=Workstatus.ASSIGNED,  max_length = 60, null = True)
     seqno           = models.SmallIntegerField(_("Serial No."), null=True)
-    approvers       = ArrayField(models.CharField(max_length = 70, blank = True), null = True, blank = True, verbose_name= _("Approvers"))
+    approvers       = ArrayField(models.CharField(max_length = 100, blank = True), null = True, blank = True, verbose_name= _("Approvers"))
+    verifiers       = ArrayField(models.CharField(max_length = 100, blank = True), null = True, blank = True, verbose_name= _("Verifiers"))
     workpermit      = models.CharField(_('Work Permit'), choices=WorkPermitStatus.choices, default=WorkPermitStatus.NOTNEED, max_length=35)
     priority        = models.CharField(_("Priority"), max_length = 50, choices = Priority.choices)
     qset            = models.ForeignKey("activity.QuestionSet", verbose_name = _("QuestionSet"), on_delete  = models.RESTRICT, null = True, blank = True)
@@ -205,14 +206,20 @@ class WomDetails(BaseModel, TenantAwareModel):
             )
         ]
         
-
+        
 class Approver(BaseModel):
-    approverfor = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Approvers"))
+    class Identifier(models.TextChoices):
+        APPROVER = ("APPROVER","Approver")
+        VERIFIER = ("VERIFIER","Verifier")
+
+    approverfor = ArrayField(models.CharField(_("Approver/Verifier For"),max_length = 50, blank = True), null = True, blank = True)
     sites       = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Sites"))
     forallsites = models.BooleanField(_("For all sites"), default=True)
     people      = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("Approver"), on_delete=models.RESTRICT, null=True)
     bu          = models.ForeignKey("onboarding.Bt", verbose_name=_(""), on_delete=models.RESTRICT, null=True)
     client      = models.ForeignKey('onboarding.Bt', on_delete=models.RESTRICT, null=True, related_name='approver_clients')
+    identifier  = models.CharField(_("Approver/Verifier"),choices=Identifier.choices,max_length=250,null=True,blank=True)
+    
     objects     = ApproverManager()
     
     

@@ -436,7 +436,7 @@ def create_report_history(self, formdata, userid, buid, EI):
 
 
 @shared_task(bind=True, name="Create Workpermit email notification")
-def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu_id,workpermit_attachment,sitename,workpermit_status):
+def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu_id,sitename,workpermit_status):
     jsonresp = {'story': "", "traceback": ""}
     try:
         from django.apps import apps
@@ -463,7 +463,7 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
                 msg.body = html
                 # msg.attach_file(workpermit_attachment,mimetype='application/pdf')
                 msg.content_subtype = 'html'
-                msg.attach_file(workpermit_attachment, mimetype='application/pdf')
+                #msg.attach_file(workpermit_attachment, mimetype='application/pdf')
                 msg.send()
                 dlog.info(f"email sent to {p['email'] = }")
                 jsonresp['story'] += f"email sent to {p['email'] = }"
@@ -477,7 +477,7 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
 
 
 @shared_task(bind=True, name="Create Workpermit email notification for vendor and security")
-def send_email_notification_for_vendor_and_security(self,wom_id,workpermit_attachment,sitename,workpermit_status):
+def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workpermit_status):
     jsonresp = {'story':"", 'traceback':""}
     try:
         from apps.work_order_management.models import Wom,WomDetails
@@ -498,7 +498,7 @@ def send_email_notification_for_vendor_and_security(self,wom_id,workpermit_attac
                 'work_order_management/workpermit_vendor.html', context=cxt)
             msg.body = html
             msg.content_subtype = 'html'
-            msg.attach_file(workpermit_attachment, mimetype='application/pdf')
+            #msg.attach_file(workpermit_attachment, mimetype='application/pdf')
             msg.send()
             dlog.info(f"email sent to {email.answer}")
     except Exception as e:

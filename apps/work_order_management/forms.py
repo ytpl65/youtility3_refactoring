@@ -119,9 +119,10 @@ class WorkPermitForm(forms.ModelForm):
     required_css_class = "required"
     seqno = forms.IntegerField(label="Seq. Number", required=False, widget=forms.TextInput(attrs={'readonly':True}))
     approvers = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label="Approvers")
+    verifiers = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label="Verifiers")
     class Meta:
         model = Wom
-        fields = ['qset', 'seqno', 'ctzoffset', 'workpermit', 'performedby', 'parent', 'approvers', 'vendor']
+        fields = ['qset', 'seqno', 'ctzoffset', 'workpermit', 'performedby', 'parent', 'approvers', 'vendor','verifiers']
         labels={
             'qset':'Permit to work',
             'seqno':'Seq No',
@@ -136,6 +137,7 @@ class WorkPermitForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         self.fields['approvers'].choices = Approver.objects.get_approver_options_wp(self.request).values_list('people__peoplecode', 'people__peoplename')
+        self.fields['verifiers'].choices = Approver.objects.get_verifier_options_wp(self.request).values_list('people__peoplecode','people__peoplename')
         self.fields['qset'].queryset = am.QuestionSet.objects.filter(type='WORKPERMIT',client_id=S['client_id'],enable=True,parent_id=1).filter(Q(bu_id=S['bu_id']) | Q(buincludes__contains=[str(S['bu_id'])]) | Q(show_to_all_sites=True))
         self.fields['vendor'].queryset = Vendor.objects.filter(Q(bu_id = S['bu_id']) | Q(Q(show_to_all_sites = True) & Q(client_id=S['client_id'])))
         
@@ -143,18 +145,19 @@ class WorkPermitForm(forms.ModelForm):
         
 class ApproverForm(forms.ModelForm):
     required_css_class = "required"
-    approverfor = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=True)
-    sites = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=False)
+    approverfor = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=True,label='Approver/Verifier For ')
+    sites = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=False,label='Sites')
     class Meta:
         model = Approver
-        fields = ['approverfor', 'forallsites', 'sites', 'people', 'ctzoffset']
+        fields = ['approverfor', 'forallsites', 'sites', 'people', 'ctzoffset','identifier']
         widgets = {
             'people':s2forms.Select2Widget
         }
         labels = {
-            'approverfor':'Approver For',
+            'identifier' : 'Name',
             'forallsites':'Applicable to all sites',
-            'people':'Approver'
+            'people':'Approver/Verifier',
+            'approverfor':'Approver/Verifier For'
         }
         
     def __init__(self, *args, **kwargs):
@@ -162,6 +165,7 @@ class ApproverForm(forms.ModelForm):
         S = self.request.session
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
+
         self.fields['approverfor'].choices = om.TypeAssist.objects.filter(
             Q(client_id = S['client_id']) | Q(client_id=2), tatype__tacode = 'APPROVERFOR'
         ).values_list('tacode', 'taname')

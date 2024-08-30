@@ -1,11 +1,11 @@
 {% extends "globals/base_form.html" %}
 
-{% block extras_css %}
+{% block extra_css %}
 {{ shift_form.media.css }}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 <link  href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet" type="text/css"/>
 
-{% endblock extras_css %}
+{% endblock extra_css %}
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
@@ -102,6 +102,8 @@ Shift Form
 {% endblock form %}
 
 {% block extras %}
+<!-- 
+
 <div class="row">
   <div class="card">
     <div class="card-header ps-0 mb-0">
@@ -112,6 +114,20 @@ Shift Form
     </div>
   </div>
 </div>
+
+-->
+<div class="row shift_detail_section" style="display: block;">
+    <div class="card">
+        <div class="card-body">
+            <h4># Shift Details</h4>
+            <table id="people_count_details" class="display sections cell-border compact hover">
+
+            </table>
+        </div>
+    </div>
+    
+</div>
+
 {% endblock extras %}
 
 {% block ajax_page_actions %}
@@ -188,7 +204,7 @@ Shift Form
             }
         });
     }
-
+    /*
     var editor;
     var table;
 
@@ -206,6 +222,8 @@ Shift Form
         ];
     }
 
+
+    */
 
 
     $(document).ready(function() {
@@ -304,9 +322,6 @@ Shift Form
             });
         });
 
-
-
-
         var editor = new $.fn.dataTable.Editor({
                 ajax: {
                     url:"{{ url('onboarding:shift') }}",
@@ -315,25 +330,26 @@ Shift Form
                         d.shift_id = "{{shift_form.instance.id}}";
                         d.csrfmiddlewaretoken = '{{ csrf_token }}';}
                 },
-                table: "#People_count_details",
+                idSrc: "id",
+                table: "#people_count_details",
                 fields: [
-                    
                     { label: "Designation", name: "designation" },
                     { label: "People count", name: "people_count"},
                 ]
             });
 
         editor.on('open', function(e, mode, action){
+            $(".DTE_Field").addClass('p-1')
             console.log('editor opened',action)
         })
         
-
+        
         editor.on('opened', function(e, moed, action){
             $('.DTED_Lightbox_Content').draggable()
         })
-        
-        
-        var table = $('#People_count_details').DataTable({
+    
+        var table = $('#people_count_details').DataTable({
+            dom:"Bfrtip",
             ajax:{
                 url:"{{ url('onboarding:shift') }}",
                 data: function(d){
@@ -347,22 +363,82 @@ Shift Form
             ],  
             deferRender:true,
 			responsive:true,
-            dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
-			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
-            columnDefs:[ ],
             select: true,
             buttons: [
-                    {text:'<i class="fas text-white fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn disabled'},
+                    {text:'<i class="fas text-white fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn'},
                     { extend: "create", editor: editor },
                     { extend: "edit", editor: editor },
                     { extend: "remove", editor: editor }
                 ],
-            select:{
-                style: 'single',
-            }
+        });
 
+
+        $('.refreshBtn').click(() => {
+            var selected = table.rows().data();
+            console.log("Selected",selected)
+            if (selected.count()){
+                table.ajax.reload();
+            }
+        })
+
+    })
+
+        /*
+        var editor = new $.fn.dataTable.Editor({
+                ajax: {
+                    url:"{{ url('onboarding:shift') }}",
+                    data: function(d) {
+                        d.actiond = 'edit_shift_data';
+                        d.shift_id = "{{shift_form.instance.id}}";
+                        d.csrfmiddlewaretoken = '{{ csrf_token }}';}
+                },
+                table: "#people_count_details",
+                fields: [
+                    { label: "Designation", name: "designation" },
+                    { label: "People count", name: "people_count"},
+                ]
+            });
+
+        editor.on('open', function(e, mode, action){
+            $(".DTE_Field").addClass('p-1')
+            console.log('editor opened',action)
+        })
+        
+        
+        editor.on('opened', function(e, moed, action){
+            $('.DTED_Lightbox_Content').draggable()
+        })
+    
+        
+        var table = $('#people_count_details').DataTable({
+            dom:"Bfrtip",
+            ajax:{
+                url:"{{ url('onboarding:shift') }}",
+                data: function(d){
+                    d.action = 'get_shift_data';
+                    d.shift_id = "{{shift_form.instance.id}}";  
+                }
+            },
+            columns:[
+                {data:'designation',title:'Designation'},
+                {data:'count',title:'People Count'},
+            ],  
+            //deferRender:true,
+			responsive:true,
+            //dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
+			// <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
+            //columnDefs:[ ],
+            select: true,
+            buttons: [
+                    //{text:'<i class="fas text-white fa-sync-alt text-dark"></i>', titleAttr:'Refresh Data', className:'refreshBtn disabled'},
+                    { extend: "create", editor: editor },
+                    { extend: "edit", editor: editor },
+                    { extend: "remove", editor: editor }
+                ],
         });
 
     });
+
+    */
 </script>
 {% endblock extra_scripts %}
