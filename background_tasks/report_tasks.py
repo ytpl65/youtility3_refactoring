@@ -196,6 +196,48 @@ def save_report_to_tmp_folder(filename, ext, report_output, dir=None):
     return filepath
 
 
+
+
+
+
+
+
+# def save_report_to_tmp_folder(filename, ext, report_output, dir=None):
+#     log.info(" Report Output: %s",report_output)
+#     if report_output:
+#         directory = dir or settings.TEMP_REPORTS_GENERATED
+#         filepath = os.path.join(directory, f"{filename}.{ext}")
+
+#         log.info("File Path: %s",filepath)
+#         if not os.path.exists(directory):
+#             os.makedirs(directory)
+#         log.info("Report Output: %s %s",report_output, type(report_output))
+#         mode = 'wb' if ext in ['pdf', 'xlsx'] else 'w'
+#         try:
+#             with open(filepath, mode) as f:
+                
+#                 if isinstance(report_output, BytesIO):
+#                     log.info("Here I am in bytes")
+#                     report_output = report_output.getvalue()
+#                     if ext in ['csv', 'json', 'html'] and report_output:
+#                         report_output = report_output.decode('utf-8')
+#                 if report_output:  # Check if report_output is not empty
+#                     with open(report_output, 'r' if mode == 'w' else 'rb') as source_file:
+#                         file_content = source_file.read()
+#                         f.write(file_content)
+#                 else:
+#                     log.error(f"No data to write for {filename}.{ext}")
+#                     return None  # Return None to indicate no file was saved
+#         except Exception as e:
+#             log.error(f"Error while saving file {filename}.{ext}: {e}")
+#             return None  # Return None on error
+#     else:
+#         log.error("No report output provided")
+#         return None
+
+#     return filepath
+
+
 def update_report_record(record, updatevalues, filename):
     isupdated = ScheduleReport.objects.filter(id=record['id']).update(
         filename=filename, **updatevalues)

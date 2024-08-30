@@ -900,13 +900,14 @@ def getClient(company):
         client = FrappeClient(server_url, api_key=api_key, api_secret=secerate_key)
     elif company == 'SFS':
         server_url = 'http://leave.spsindia.com:8008'
-        secerate_key= 'c7047cc28b4a14e'
-        api_key= '3a6bfc7224a228c'
+        secerate_key= '8dc1421ac748917'
+        api_key= 'ca9b240aa73a9b8'
         client = FrappeClient(server_url, api_key=api_key, api_secret=secerate_key)
-    elif company == 'SFS':
+    elif company == 'TARGET':
         server_url = 'http://leave.spsindia.com:8002'
-        secerate_key= 'c7047cc28b4a14e'
-        api_key= '3a6bfc7224a228c'
+        secerate_key= 'ff6806a3f9bf5a8'
+        api_key= '87bf164dd684d03'
+        client = FrappeClient(server_url, api_key=api_key, api_secret=secerate_key)
     else:
         return None
     client = FrappeClient(server_url, api_key=api_key, api_secret=secerate_key)

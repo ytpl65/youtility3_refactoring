@@ -398,24 +398,27 @@ Generate PDF Form
           e.preventDefault()
           
           function downloadedFileName(){
-            if ($('#id_document_type').val() == 'PF'){
-              if ($('#id_site').find('option:selected').text() != ' - '){
-                return "ECR_" + $('#id_site').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
-              }
-              else{
-                return "ECR_" + $('#id_customer').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
-              }
-            }
-            else{
-              if ($('#id_site').find('option:selected').text() != ' - '){
-                return "MCR_" + $('#id_site').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
-              }
-              else{
-                return "MCR_" + $('#id_customer').find('option:selected').text().split(' - ')[1].trim() + ".pdf"
-              }
-            }
+            const type = $('#id_document_type').val();
+            const isPF = type === 'PF';
+            const siteText = $('#id_site').find('option:selected').text();
+            const customerText = $('#id_customer').find('option:selected').text();
+
+            // Extract relevant part from filename
+            const match = filename.match(/(\w+ \d{4}\.pdf)$/);
+            const result = match ? " " + match[0] : ".pdf";
+
+            // Determine prefix based on document type
+            const prefix = isPF ? "ECR PF_" : "MCR ESIC_";
+
+            // Choose source of site or customer text
+            const textSource = siteText !== ' - ' ? siteText : customerText;
+            const parts = textSource.split(' - ')
+            const trimmedText = parts.slice(1).join('-').trim();
+      
+            return prefix + trimmedText + result;
           }
 
+          
           const formData = {
             document_type: $('#id_document_type').val(), 
             company: $('#id_company').val(),
