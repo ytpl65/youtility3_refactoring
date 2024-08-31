@@ -18,6 +18,7 @@ from decimal import Decimal
 from datetime import datetime, timedelta
 log = logging.getLogger('__main__')
 import os
+import xlsxwriter
 
 
 
@@ -140,7 +141,10 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     
     def get_xlsx_output(self, orm=False):
         log.info("xlsx is executing")
-        output = self.get_excel_output(orm=orm)
+        if self.formdata['report_name']=='PEOPLEATTENDANCESUMMARY':
+            output = self.create_attendance_report()
+        else:
+            output = self.get_excel_output(orm=orm)
         if self.returnfile: return output
         response = HttpResponse(
             output,
@@ -239,6 +243,100 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
             content = merge_item.get('content')
             worksheet.merge_range(range, content, format)
         return worksheet, workbook
+    
+    def create_attendance_report(self):
+        data = self.context['data']
+        header = self.context['header']
+        report_title = self.context['report_title']
+        report_subtitle_site = self.context['report_subtitle_site']
+        report_subtitle_date = self.context['report_subtitle_date']
+
+        # Create a BytesIO object instead of a file
+        output = BytesIO()
+
+        # Create the workbook
+        workbook = xlsxwriter.Workbook(output)
+        worksheet = workbook.add_worksheet('People Attendance Summary')
+
+        # Define styles
+        title_style = workbook.add_format({'font_size': 16, 'bold': True, 'align': 'center', 'border': 1})
+        subtitle_style = workbook.add_format({'font_size': 12, 'align': 'center', 'border': 1})
+        header_style = workbook.add_format({'font_size': 10,'bold': True, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#E0E8F1', 'border': 1, 'border': 1})
+        cell_style = workbook.add_format({'font_size': 10,'align': 'center', 'valign': 'vcenter', 'border': 1, 'text_wrap': True, 'border': 1})
+        total_style = workbook.add_format({'font_size': 10,'bold': True, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#E0E8F1', 'border': 1})
+
+        num_columns = len(header[0]) + 4
+        # Add title and subtitle
+        worksheet.merge_range(0, 0, 0, num_columns - 1, report_title, title_style)
+        worksheet.merge_range(1, 0, 1, num_columns - 1, report_subtitle_site, subtitle_style)
+        worksheet.merge_range(2, 0, 2, num_columns - 1, report_subtitle_date, subtitle_style)
+
+        # Start the table from row 4
+        current_row = 4
+
+        # Add headers
+        headers = ['Department', 'Designation', 'People Name'] + header[0] + ['Total Hr\'s']
+        for col, header_text in enumerate(headers):
+            worksheet.write(current_row, col, header_text, header_style)
+
+        current_row += 1
+
+        # Add day names
+        for col, day_name in enumerate(header[1], start=3):
+            worksheet.write(current_row, col, day_name, header_style)
+
+        current_row += 1
+
+        # Add data
+        for department, designations in data[0].items():
+            dept_start_row = current_row
+            for designation, people in designations.items():
+                design_start_row = current_row
+                for person, records in people.items():
+                    worksheet.write(current_row, 0, department, cell_style)
+                    worksheet.write(current_row, 1, designation, cell_style)
+                    worksheet.write(current_row, 2, person, cell_style)
+
+                    total_minutes = 0
+
+                    for day_number in header[0]:
+                        col = header[0].index(day_number) + 3
+                        day_records = [r for r in records if r['day'] == day_number]
+                        if day_records:
+                            record = day_records[0]
+                            cell_value = f"{record['punch_intime']}\n{record['punch_outtime']}\n{record['totaltime']}"
+                            worksheet.write(current_row, col, cell_value, cell_style)
+                            
+                            # Calculate total time
+                            hours, minutes = map(int, record['totaltime'].split(':'))
+                            total_minutes += hours * 60 + minutes
+
+                    # Calculate and add total hours
+                    total_hours, total_minutes = divmod(total_minutes, 60)
+                    total_time = f"{total_hours:02d}:{total_minutes:02d}"
+                    worksheet.write(current_row, len(headers) - 1, total_time, total_style)
+
+                    current_row += 1
+
+                # Merge designation cells
+                if design_start_row < current_row - 1:
+                    worksheet.merge_range(design_start_row, 1, current_row - 1, 1, designation, cell_style)
+
+            # Merge department cells
+            if dept_start_row < current_row - 1:
+                worksheet.merge_range(dept_start_row, 0, current_row - 1, 0, department, cell_style)
+
+        # Adjust column widths
+        worksheet.set_column(0, 2, 12)  # Columns A-C
+        worksheet.set_column(3, len(headers) - 2, 8)  # Date columns
+        worksheet.set_column(len(headers) - 1, len(headers) - 1, 10)  # Total column
+        worksheet.set_default_row(45)
+        workbook.close()
+
+        # Seek to the beginning of the BytesIO object
+        output.seek(0)
+
+        return output
                 
             
 

@@ -46,86 +46,15 @@ class PeopleAttendanceSummaryReport(BaseReportsExport):
         
     def set_args_required_for_query(self):
         self.args = {
-                    'timezone':get_timezone(self.formdata['ctzoffset']),
-                    'siteids':','.join(self.formdata['site']),
-                    'from':self.formdata['fromdatetime'].strftime('%d/%m/%Y %H:%M:%S'),
-                    'upto':self.formdata['uptodatetime'].strftime('%d/%m/%Y %H:%M:%S'),
-                }  
-   
-    #Excel
-    def set_data(self):
-        '''
-        setting the data which is shown on report
-        '''
-        self.set_args_required_for_query()
-        self.data = format_data(runrawsql(get_query(self.report_name), args=self.args, named_params=True))
-        return len(self.data) > 0
-
-    def excel_columns(self,df):
-        df = df[['Department','Designation','People','Total Adhoc',
-                 'Total Completed','Not Performed','Total Pending',
-                 'Total Closed','Percentage']]
-        return df
-
-        
-    def set_additional_content(self):
-        bt = Bt.objects.filter(id=self.client_id).values('id', 'buname').first()
-        fromdatetime = self.formdata.get('fromdatetime').strftime('%d/%m/%Y %H:%M:%S')
-        uptodatetime = self.formdata.get('uptodatetime').strftime('%d/%m/%Y %H:%M:%S')
-        self.additional_content = f"Client: {bt['buname']}; Report: {self.report_title}; From: {fromdatetime} To: {uptodatetime}"
-        
-
-    def excel_layout(self, worksheet, workbook, df, writer, output):
-        super().excel_layout(worksheet, workbook, df, writer, output)
-        #overriding to design the excel file
-    
-        # Add a header format.
-        header_format = workbook.add_format(
-            {
-                "valign": "middle",
-                "fg_color": "#01579b",
-                'font_color':'white'
-            }
-        )
-        max_row, max_col = df.shape
-        
-        # Create a list of column headers, to use in add_table().
-        column_settings = [{"header": column} for column in df.columns]
-        
-        # Add the Excel table structure. Pandas will add the data.
-        worksheet.add_table(1, 0, max_row, max_col - 1, {"columns": column_settings})
-        
-        # Make the columns wider for clarity.
-        # worksheet.set_column(0, max_col - 1, 12)
-        worksheet.autofit()
-
-        # Write the column headers with the defined format.
-        for col_num, value in enumerate(df.columns.values):
-            worksheet.write(1, col_num, value, header_format)
-            
-        # Define the format for the merged cell
-        merge_format = workbook.add_format({
-            'bg_color': '#E2F4FF',
-        })
-        # Title of xls/xlsx report
-        worksheet.merge_range("A1:F1", self.additional_content, merge_format)
-
-        # Close the Pandas Excel writer and output the Excel file
-        writer.save()
-
-        # Rewind the buffer
-        output.seek(0)
-        return output
-    
+            'timezone':get_timezone(self.formdata['ctzoffset']),
+            'siteids':','.join(self.formdata['site']),
+            'from':self.formdata['fromdatetime'].strftime('%d/%m/%Y %H:%M:%S'),
+            'upto':self.formdata['uptodatetime'].strftime('%d/%m/%Y %H:%M:%S'),
+        }  
     
     def execute(self):
         export_format = self.formdata.get('format')
-        # context needed for pdf, html
-        if export_format in ['pdf', 'html']:
-            has_data = self.set_context_data()
-        else:
-            self.set_additional_content()
-            has_data = self.set_data()
+        has_data = self.set_context_data()
         
         if not has_data:
             return None
@@ -136,14 +65,6 @@ class PeopleAttendanceSummaryReport(BaseReportsExport):
         
         if export_format == 'pdf':
             return self.get_pdf_output()
-        elif export_format == 'xls':
-            return self.get_xls_output()
         elif export_format == 'xlsx':
             return self.get_xlsx_output()
-        elif export_format == 'csv':
-            return self.get_csv_output()
-        elif export_format == 'html':
-            return self.get_html_output()
-        else:
-            return self.get_json_output()
         
