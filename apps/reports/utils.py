@@ -259,8 +259,8 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         worksheet = workbook.add_worksheet('People Attendance Summary')
 
         # Define styles
-        title_style = workbook.add_format({'font_size': 16, 'bold': True, 'align': 'center', 'border': 1})
-        subtitle_style = workbook.add_format({'font_size': 12, 'align': 'center', 'border': 1})
+        title_style = workbook.add_format({'font_size': 12, 'bold': True, 'align': 'center', 'border': 1})
+        subtitle_style = workbook.add_format({'font_size': 10, 'align': 'center', 'border': 1})
         header_style = workbook.add_format({'font_size': 10,'bold': True, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#E0E8F1', 'border': 1, 'border': 1})
         cell_style = workbook.add_format({'font_size': 10,'align': 'center', 'valign': 'vcenter', 'border': 1, 'text_wrap': True, 'border': 1})
         total_style = workbook.add_format({'font_size': 10,'bold': True, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#E0E8F1', 'border': 1})
@@ -270,6 +270,10 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         worksheet.merge_range(0, 0, 0, num_columns - 1, report_title, title_style)
         worksheet.merge_range(1, 0, 1, num_columns - 1, report_subtitle_site, subtitle_style)
         worksheet.merge_range(2, 0, 2, num_columns - 1, report_subtitle_date, subtitle_style)
+
+        # Set row height for rows 0 through 3 to 20
+        for row in range(6):
+            worksheet.set_row(row, 20)
 
         # Start the table from row 4
         current_row = 4
@@ -328,9 +332,10 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
 
         # Adjust column widths
         worksheet.set_column(0, 2, 12)  # Columns A-C
-        worksheet.set_column(3, len(headers) - 2, 8)  # Date columns
+        worksheet.set_column(3, len(headers) - 2, 6)  # Date columns
         worksheet.set_column(len(headers) - 1, len(headers) - 1, 10)  # Total column
         worksheet.set_default_row(45)
+        worksheet.freeze_panes(6, 3)
         workbook.close()
 
         # Seek to the beginning of the BytesIO object

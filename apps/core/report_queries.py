@@ -738,6 +738,7 @@ def get_query(query):
             ),
             aggregated_times AS (
                 SELECT
+                    pel.id,
                     pel.people_id,
                     pel.datefor,
                     MIN(pel.punchintime) AS min_punchintime,
@@ -745,16 +746,20 @@ def get_query(query):
                 FROM 
                     peopleeventlog pel
                 CROSS JOIN timezone_setting tz
+                INNER JOIN typeassist eventtype on pel.peventtype_id = eventtype.id
                 WHERE
                     pel.bu_id IN (SELECT unnest(string_to_array('{siteids}', ',')::integer[])) AND
-                    pel.datefor BETWEEN '{from}' AND '{upto}' AND
-                    (pel.punchouttime AT TIME ZONE tz.timezone)::date = pel.datefor
+                     pel.datefor BETWEEN '{from}' AND '{upto}' AND
+                    (pel.punchouttime AT TIME ZONE tz.timezone)::date = pel.datefor AND
+                    eventtype.tacode in ('SELF','MARK')
                 GROUP BY
+                    pel.id,
                     pel.people_id,
                     pel.datefor
             ),
             detailed_info AS (
                 SELECT
+                    at.id,
                     deptype.taname AS department,
                     desgtype.taname AS designation,
                     p.peoplename AS peoplename,
