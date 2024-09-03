@@ -105,7 +105,8 @@ class ReportForm(forms.Form):
         ('STATICTOURDETAILS','Static Tour Details'),
         ('SITEVISITREPORT','SiteVisitReport'),
         ('LOGSHEET','Log Sheet'),
-        ('RP_SITEVISITREPORT','Route Plan Site Visit Report')
+        ('RP_SITEVISITREPORT','Route Plan Site Visit Report'),
+        ('PEOPLEATTENDANCESUMMARY','People Attendance Summary')
     ]
     download_or_send_options = [
         ('DOWNLOAD', 'Download'),

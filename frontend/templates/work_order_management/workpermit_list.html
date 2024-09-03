@@ -66,9 +66,12 @@ $(document).ready(function(){
             {title:'Plandatetime', data:'cdtz'},
             {title:'Permit No', data:'other_data__wp_seqno', width:"10%"},
             {title:'Work Permit Report', data:'qset__qsetname'},
-            {title:'Approval', data:'workpermit'},
-            {title:'Status', data:'workstatus'},
-            {title:'Site', data:'bu__buname'},
+            {title:'Verifer Status',data:'verifiers_status'},
+            {title:'Approval Status', data:'workpermit'},
+            {title:'Work Status', data:'workstatus'},
+            {title:'Vendor Name',data:'vendor__name'},
+            {title:'Site', data:'bu__buname',visible:false},
+            {title:'Remarks',data:'remarks'},
             {title:'Action', data:null, defaultContent:'<a href="#" class="edit-link">Report&nbsp;<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i></a>'},
             {title:'Site Code', data:'bu__bucode', visible:false},
             {visible:false, data:"ctzoffset", className:'noVis'}
@@ -91,8 +94,20 @@ $(document).ready(function(){
                     return `<span class="badge fs-9 badge-warning">${data}</span>`
                 }
             }
+            
             },
+
             {targets:5, render:function(data, type, row, meta){
+                if(data === 'APPROVED'){
+                    return `<span class="badge fs-9 badge-success">${data}</span>`
+                }else if (data === 'REJECTED'){
+                    return `<span class="badge fs-9 badge-danger">${data}</span>`
+                }else{
+                    return `<span class="badge fs-9 badge-warning">${data}</span>`
+                }
+            }
+        },
+            {targets:6, render:function(data, type, row, meta){
                 if(data === 'ASSIGNED'){return `<span class="badge fs-9 badge-secondary">${data}</span>`}
                 else if (data === 'COMPLETED'){return `<span class="badge fs-9 badge-success">${data}</span>`}
             }

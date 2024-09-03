@@ -15,8 +15,10 @@ from .forms import ReportForm
 from .models import ReportHistory
 import logging, json
 from decimal import Decimal
+from datetime import datetime, timedelta
 log = logging.getLogger('__main__')
 import os
+import xlsxwriter
 
 
 
@@ -139,7 +141,10 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
     
     def get_xlsx_output(self, orm=False):
         log.info("xlsx is executing")
-        output = self.get_excel_output(orm=orm)
+        if self.formdata['report_name']=='PEOPLEATTENDANCESUMMARY':
+            output = self.create_attendance_report()
+        else:
+            output = self.get_excel_output(orm=orm)
         if self.returnfile: return output
         response = HttpResponse(
             output,
@@ -238,6 +243,105 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
             content = merge_item.get('content')
             worksheet.merge_range(range, content, format)
         return worksheet, workbook
+    
+    def create_attendance_report(self):
+        data = self.context['data']
+        header = self.context['header']
+        report_title = self.context['report_title']
+        report_subtitle_site = self.context['report_subtitle_site']
+        report_subtitle_date = self.context['report_subtitle_date']
+
+        # Create a BytesIO object instead of a file
+        output = BytesIO()
+
+        # Create the workbook
+        workbook = xlsxwriter.Workbook(output)
+        worksheet = workbook.add_worksheet('People Attendance Summary')
+
+        # Define styles
+        title_style = workbook.add_format({'font_size': 12, 'bold': True, 'align': 'center', 'border': 1})
+        subtitle_style = workbook.add_format({'font_size': 10, 'align': 'center', 'border': 1})
+        header_style = workbook.add_format({'font_size': 10,'bold': True, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#E0E8F1', 'border': 1, 'border': 1})
+        cell_style = workbook.add_format({'font_size': 10,'align': 'center', 'valign': 'vcenter', 'border': 1, 'text_wrap': True, 'border': 1})
+        total_style = workbook.add_format({'font_size': 10,'bold': True, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#E0E8F1', 'border': 1})
+
+        num_columns = len(header[0]) + 4
+        # Add title and subtitle
+        worksheet.merge_range(0, 0, 0, num_columns - 1, report_title, title_style)
+        worksheet.merge_range(1, 0, 1, num_columns - 1, report_subtitle_site, subtitle_style)
+        worksheet.merge_range(2, 0, 2, num_columns - 1, report_subtitle_date, subtitle_style)
+
+        # Set row height for rows 0 through 3 to 20
+        for row in range(6):
+            worksheet.set_row(row, 20)
+
+        # Start the table from row 4
+        current_row = 4
+
+        # Add headers
+        headers = ['Department', 'Designation', 'People Name'] + header[0] + ['Total Hr\'s']
+        for col, header_text in enumerate(headers):
+            worksheet.write(current_row, col, header_text, header_style)
+
+        current_row += 1
+
+        # Add day names
+        for col, day_name in enumerate(header[1], start=3):
+            worksheet.write(current_row, col, day_name, header_style)
+
+        current_row += 1
+
+        # Add data
+        for department, designations in data[0].items():
+            dept_start_row = current_row
+            for designation, people in designations.items():
+                design_start_row = current_row
+                for person, records in people.items():
+                    worksheet.write(current_row, 0, department, cell_style)
+                    worksheet.write(current_row, 1, designation, cell_style)
+                    worksheet.write(current_row, 2, person, cell_style)
+
+                    total_minutes = 0
+
+                    for day_number in header[0]:
+                        col = header[0].index(day_number) + 3
+                        day_records = [r for r in records if r['day'] == day_number]
+                        if day_records:
+                            record = day_records[0]
+                            cell_value = f"{record['punch_intime']}\n{record['punch_outtime']}\n{record['totaltime']}"
+                            worksheet.write(current_row, col, cell_value, cell_style)
+                            
+                            # Calculate total time
+                            hours, minutes = map(int, record['totaltime'].split(':'))
+                            total_minutes += hours * 60 + minutes
+
+                    # Calculate and add total hours
+                    total_hours, total_minutes = divmod(total_minutes, 60)
+                    total_time = f"{total_hours:02d}:{total_minutes:02d}"
+                    worksheet.write(current_row, len(headers) - 1, total_time, total_style)
+
+                    current_row += 1
+
+                # Merge designation cells
+                if design_start_row < current_row - 1:
+                    worksheet.merge_range(design_start_row, 1, current_row - 1, 1, designation, cell_style)
+
+            # Merge department cells
+            if dept_start_row < current_row - 1:
+                worksheet.merge_range(dept_start_row, 0, current_row - 1, 0, department, cell_style)
+
+        # Adjust column widths
+        worksheet.set_column(0, 2, 12)  # Columns A-C
+        worksheet.set_column(3, len(headers) - 2, 6)  # Date columns
+        worksheet.set_column(len(headers) - 1, len(headers) - 1, 10)  # Total column
+        worksheet.set_default_row(45)
+        worksheet.freeze_panes(6, 3)
+        workbook.close()
+
+        # Seek to the beginning of the BytesIO object
+        output.seek(0)
+
+        return output
                 
             
 
@@ -270,6 +374,7 @@ class ReportEssentials(object):
     DynamicDetailedTourSummary = 'DYNAMICDETAILEDTOURSUMMARY'
     LogSheet                   = 'LOGSHEET'
     RP_SiteVisitReport         = 'RP_SITEVISITREPORT'
+    PeopleAttendanceSummary    = 'PEOPLEATTENDANCESUMMARY'
     
     def __init__(self, report_name):
         self.report_name = report_name
@@ -298,7 +403,7 @@ class ReportEssentials(object):
         from apps.reports.report_designs.dynamic_tour_list import DynamicTourList
         from apps.reports.report_designs.static_tour_list import StaticTourList
         from apps.reports.report_designs.qrcode_report import LocationQR
-        
+        from apps.reports.report_designs.people_attendance_summary import PeopleAttendanceSummaryReport
 
         return {
             self.TaskSummary: TaskSummaryReport,
@@ -322,7 +427,8 @@ class ReportEssentials(object):
             self.LogSheet:LogSheet,
             self.RP_SiteVisitReport:RP_SITEVISITREPORT,
             self.DynamicTourList:DynamicTourList,
-            self.StaticTourList:StaticTourList
+            self.StaticTourList:StaticTourList,
+            self.PeopleAttendanceSummary:PeopleAttendanceSummaryReport
         }.get(self.report_name)
     
     @property
@@ -376,3 +482,78 @@ def trim_filename_from_path(file_path):
     filename = os.path.basename(file_path)  # Get the filename from the path
     trimmed_path = file_path[:-len(filename)]  # Remove the filename from the path
     return trimmed_path
+
+def format_data(data):
+    output = {}
+    # Process each entry in the data
+    for entry in data:
+        department = entry['department'] if entry['department'] != "NONE" else "--"
+        designation = entry['designation'] if entry['designation'] != "NONE" else "--"
+        peoplename = entry['peoplename']
+        
+        # Create nested dictionaries if they don't exist
+        if department not in output:
+            output[department] = {}
+        
+        if designation not in output[department]:
+            output[department][designation] = {}
+        
+        if peoplename not in output[department][designation]:
+            output[department][designation][peoplename] = []
+        
+        # Convert Decimal('day') to integer and prepare the entry
+        formatted_entry = {
+            'peoplecode': entry['peoplecode'],
+            'day': int(entry['day']),  # Convert Decimal to int
+            'day_of_week': entry['day_of_week'].strip(),  # Optionally strip whitespace
+            'punch_intime': entry['punch_intime'],
+            'punch_outtime': entry['punch_outtime'],
+            'totaltime': entry['totaltime'],
+        }
+        
+        # Append the entry to the corresponding department and designation
+        output[department][designation][peoplename].append(formatted_entry)
+    
+    output_list = [output]
+    return output_list
+
+def generate_days_in_range(start_datetime, end_datetime):
+    """Generate a list of tuples with day of the month, day names, and month names for a given datetime range."""
+    days = []
+    current_datetime = start_datetime
+    while current_datetime <= end_datetime:
+        day_of_month = current_datetime.day
+        day_name = current_datetime.strftime('%a')  # Day of the week abbreviation
+        month_name = current_datetime.strftime('%b')  # Month abbreviation
+        days.append((day_of_month, day_name, month_name))
+        current_datetime += timedelta(days=1)
+    return days
+
+def get_day_header(data, start_date_str, end_date_str):
+    # Parse the input datetime range
+    start_datetime = datetime.strptime(start_date_str, '%d/%m/%Y %H:%M:%S')
+    end_datetime = datetime.strptime(end_date_str, '%d/%m/%Y %H:%M:%S')
+    
+    # Generate the complete list of days for the given range
+    all_days = generate_days_in_range(start_datetime, end_datetime)
+    
+    # Prepare lists for all days in the range
+    all_day_numbers = [day for day, _, _ in all_days]
+    all_day_names = [day_name for _, day_name, _ in all_days]
+    
+    # Create a mapping for days with data (for debugging purposes)
+    day_mapping = {}
+    for entry in data:
+        day_str = entry['day']
+        month_str = entry.get('month', start_datetime.strftime('%m'))
+        year_str = entry.get('year', start_datetime.strftime('%Y'))
+        date_key = f"{year_str}-{month_str}-{day_str}"
+        day_mapping[date_key] = entry['day_of_week'].strip()[:3]
+    
+    # Print debug information
+    for i, (day, day_name, _) in enumerate(all_days):
+        current_date = start_datetime + timedelta(days=i)
+        date_key = current_date.strftime("%Y-%m-%d")
+    
+    final_list = [all_day_numbers, all_day_names]
+    return final_list

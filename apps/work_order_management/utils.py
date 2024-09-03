@@ -13,6 +13,7 @@ from apps.work_order_management.models import WomDetails
 from django.http import response as rp
 from background_tasks.tasks import send_email_notification_for_sla_report
 import logging
+import getpass
 logger = logging.getLogger('__main__')
 log = logger
 import os
@@ -60,7 +61,20 @@ def notify_wo_creation(id):
     else:
         log.info('object not found')
         
-        
+def check_all_verified(womuuid,usercode):
+    w = Wom.objects.filter(uuid = womuuid).first()
+    all_verified = True
+    log.info(f"{usercode}, {womuuid}")
+    for verifier in w.other_data['wp_verifiers']:
+        log.info(f"Approver {verifier}")
+        if verifier['name'] == usercode:
+            verifier['status'] = 'APPROVED'
+            log.info(f"verifier {usercode} has approved with status code {verifier['status']}")
+        if verifier['status'] != 'APPROVED':
+            all_verified = False
+    w.save()
+    log.info(f"all approved status is {all_verified}")
+    return all_verified
         
 def check_all_approved(womuuid, usercode):
     w = Wom.objects.filter(uuid = womuuid).first()
@@ -98,6 +112,21 @@ def save_approvers_injson(wp):
     log.info("saving approvers ended")
     return wp
 
+def save_verifiers_injson(wp):
+    log.info("saving verifiers started")
+    wp_verifiers = [
+        {'name': verifier, 'status':'PENDING'} for verifier in wp.verifiers
+    ]
+    wp.other_data['wp_verifiers'] = wp_verifiers
+    wp.save()
+    log.info("saving verifiers ended")
+    return wp
+
+def save_workpermit_name_injson(wp,permit_name):
+    wp.other_data['wp_name'] = permit_name
+    wp.save()
+    return wp
+
 def get_approvers(approver_codes):
     approvers = []
     for code in approver_codes:
@@ -107,6 +136,7 @@ def get_approvers(approver_codes):
         except People.DoesNotExist:
             approvers.append({'peoplecode': code, 'peoplename': code})
     return approvers
+
 
 def extract_data(wp_answers):
         for section in wp_answers:
@@ -251,3 +281,18 @@ def create_child_wom(wom, qset_id):
 def get_overall_score(id):
     sla_answers_data,overall_score,question_ans,all_average_score,remarks = Wom.objects.sla_data_for_report(id)
     return overall_score
+
+def get_pdf_path():
+    user_name = getpass.getuser()
+    tmp_pdf_location = f'/home/{user_name}/tmp_reports'
+    if not os.path.exists(tmp_pdf_location):
+        os.makedirs(tmp_pdf_location)
+    return tmp_pdf_location
+
+def save_pdf_to_tmp_location(report_pdf_object,report_name,report_number):
+    tmp_pdf_location = get_pdf_path()
+    output_pdf = f'{report_name}-{report_number}.pdf'
+    final_path = os.path.join(tmp_pdf_location,output_pdf)
+    with open(final_path, 'wb') as file:
+        file.write(report_pdf_object)
+    return final_path
