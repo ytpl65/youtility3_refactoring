@@ -151,7 +151,7 @@ class ApproverForm(forms.ModelForm):
         model = Approver
         fields = ['approverfor', 'forallsites', 'sites', 'people', 'ctzoffset','identifier']
         widgets = {
-            'people':s2forms.Select2Widget
+            'people':s2forms.Select2Widget()
         }
         labels = {
             'identifier' : 'Name',

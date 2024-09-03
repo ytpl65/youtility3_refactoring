@@ -7,14 +7,15 @@ from .models import Vendor, Wom, WomDetails, Approver
 from apps.peoples.models import People
 from apps.activity.models import QuestionSetBelonging, QuestionSet
 from background_tasks.tasks import send_email_notification_for_sla_vendor,send_email_notification_for_wp,\
-    send_email_notification_for_vendor_and_security,send_email_notification_for_wp_verifier
+    send_email_notification_for_vendor_and_security,send_email_notification_for_wp_verifier,send_email_notification_for_workpermit_approval
 from django.http import Http404, QueryDict, response as rp, HttpResponse
 from apps.core  import utils
 from apps.peoples import utils as putils
 import psycopg2.errors as pg_errs
 from django.template.loader import render_to_string
-from apps.work_order_management.utils import check_all_approved,reject_workpermit, save_approvers_injson
+from apps.work_order_management.utils import check_all_approved,reject_workpermit, save_approvers_injson,check_all_verified,save_verifiers_injson,save_workpermit_name_injson
 import logging
+import os
 from django.utils import timezone
 from apps.reports import utils as rutils
 from apps.work_order_management import utils as wom_utils
@@ -399,6 +400,8 @@ class WorkPermit(LoginRequiredMixin, View):
             wp_details = Wom.objects.get_workpermit_details(request, R['qsetid'])
             approver_codes = R['approvers'].split(',')
             approvers = wom_utils.get_approvers(approver_codes)
+            print("wp_details: ",wp_details)
+            print("rwp_section",wp_details.pop(-1))
             form = P['form'](request=request, initial={'qset': R['qsetid'], 'approvers': R['approvers'].split(','),'vendor':R['vendor'],'verifiers':R['verifiers'].split(',')})
             context = {"wp_details": wp_details, 'wpform': form, 'ownerid': uuid.uuid4(),'approvers':approvers}
             return render(request, P['template_form'], context=context)
@@ -478,25 +481,26 @@ class WorkPermit(LoginRequiredMixin, View):
     def handle_valid_form(self, form, R,request, create=True):
         S = request.session
         print("Request: ",request,R)
+        permit_name = request.POST['permit_name']
         workpermit = form.save(commit=False)
         workpermit.uuid = request.POST.get('uuid')
         workpermit = putils.save_userinfo(
             workpermit, request.user, request.session, create = create)
         workpermit = save_approvers_injson(workpermit)
+        workpermit = save_verifiers_injson(workpermit)
+        workpermit = save_workpermit_name_injson(workpermit,permit_name)
         formdata = QueryDict(request.POST['workpermitdetails']).copy()
         print("Permit Name : ",request.POST['permit_name'],workpermit.id,request.session.get('client_id'))
         self.create_workpermit_details(request.POST, workpermit, request, formdata)
         sitename = S.get('sitename','demo')
         workpermit_status = 'PENDING'
-        permit_name = request.POST['permit_name']
         report_object = self.get_report_object(permit_name)
         client_id = request.session.get('client_id')
         report = report_object(filename=permit_name,client_id=client_id,returnfile=True,formdata = {'id':workpermit.id},request=request)
         report_pdf_object = report.execute()
         vendor_name =  Vendor.objects.get(id=workpermit.vendor_id).name
-        pdf_path = wom_utils.save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=workpermit.id)
+        pdf_path = wom_utils.save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=workpermit.other_data['wp_seqno'])
         send_email_notification_for_wp_verifier.delay(workpermit.id,workpermit.verifiers,sitename,workpermit_status,permit_name,pdf_path,vendor_name)
-        send_email_notification_for_wp.delay(workpermit.id, workpermit.qset_id, workpermit.approvers, S['client_id'], S['bu_id'],sitename,workpermit_status,vendor_name)
         return rp.JsonResponse({'pk':workpermit.id})
 
     def create_child_wom(self, wom, qset_id, rwp_seqno=None):
@@ -524,8 +528,6 @@ class WorkPermit(LoginRequiredMixin, View):
                 workpermit     = wom.workpermit,
                 priority       = wom.priority,
                 vendor         = wom.vendor,
-                performedby    = wom.performedby,
-                alerts         = wom.alerts,
                 client         = wom.client,
                 bu             = wom.bu,
                 ticketcategory = wom.ticketcategory,
@@ -621,7 +623,7 @@ class WorkPermit(LoginRequiredMixin, View):
 
 class VerifierReplyWorkPermit(View):
     P = {
-        'email_template': "work_order_management/workpermit_server_reply.html",
+        'email_template': "work_order_management/workpermit_verifier_server_reply.html",
         'model':Wom,
     }
 
@@ -634,9 +636,32 @@ class VerifierReplyWorkPermit(View):
             wp = Wom.objects.filter(id = R['womid']).first()
             p = People.objects.filter(id = R['peopleid']).first()
             log.info("R:%s",R)
-        else:
-            print("Else")
-
+            if is_all_verified := check_all_verified(wp.uuid, p.peoplecode):
+                if Wom.WorkPermitVerifierStatus.APPROVED != Wom.objects.get(id=R['womid']).workpermit:
+                    Wom.objects.filter(id=R['womid']).update(verifiers_status=Wom.WorkPermitVerifierStatus.APPROVED)
+                    if is_all_verified:
+                        wom_id = R['womid']
+                        wom = Wom.objects.get(id = wom_id)
+                        sitename = Bt.objects.get(id=wom.bu_id).buname
+                        folder_path = wom_utils.get_pdf_path()
+                        file_name = f"{wom.other_data['wp_name']}-{wom.other_data['wp_seqno']}.pdf"
+                        email_attachment_path = os.path.join(folder_path, file_name)
+                        print("Sending Email to Approver to approve the work permit")
+                        approvers = wom.other_data['wp_approvers']
+                        workpermit_status = Wom.WorkPermitStatus.PENDING
+                        permit_name = wom.other_data['wp_name']
+                        vendor_name = Vendor.objects.get(id=wom.vendor_id).name
+                        approvers = [approver['name'] for approver in approvers]
+                        log.info("Sending Email to Approver to approve the work permit")
+                        send_email_notification_for_workpermit_approval.delay(wom_id,approvers,sitename,workpermit_status,permit_name,email_attachment_path,vendor_name)
+                else:
+                    return render(request,P['email_template'],context={'alreadyverified':True})
+            cxt = {
+                'status':Wom.WorkPermitVerifierStatus.APPROVED,
+                'seqno':wp.other_data['wp_seqno'],
+            }
+        return render(request,P['email_template'],context=cxt)
+    
 
 
 

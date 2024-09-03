@@ -80,7 +80,8 @@ class MqttClient:
 
     # MQTT client callback functions
     def on_connect(self, client, userdata, flags, rc, props):
-        if rc == 0:
+        log.info("Hello %s",rc)
+        if rc == 'Success':
             print("Connected to MQTT Broker!")
             client.subscribe(GRAPHQL_MUTATION, qos=1)
             client.subscribe(MUTATION_STATUS, qos=1)
