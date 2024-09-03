@@ -142,8 +142,8 @@ Work Permit Form
 
 {% block extras %}
 {% if wp_details is defined %}
-<div class="approvers py-4 my-4 d-none">
-    <h4>Approver List</h4>
+<div class="approvers py-4 my-4 ">
+    <h4>Approver / Verifier Status</h4>
     <table id="tabApprovers" class="display"></table>
 </div>
 <br>
@@ -160,7 +160,6 @@ Work Permit Form
     <div id="wp_details_container" class="">
         <form action="" method="post" id="wp_details_form" autocomplete="on" >
             <div class="sections accordion" id="wp_details">
-                {{ wp_details|pprint }}
                 {{ plot_sections_questions(wp_details, "wp_details", "wp_section") }}
             </div>
         </form>
@@ -236,8 +235,9 @@ Work Permit Form
             columns:[
                 {data:null, title:"SNo.", defaultContent:null, render:function(data, type, row, meta){
                     return meta.row + 1
-                }},
-                {title:"Approver", data:"name"},
+                } },
+                {title:"Name", data:"name"},
+                {title:"Role", data:'identifier'},
                 {title:"Status", data:'status'}
             ],
             dom:'rt',
@@ -555,8 +555,8 @@ Work Permit Form
                     retrieve: true,
                     columns:[
                         { data: "id", visible: false },
-                        {title:'SL No.', width:"5%", data:null, defaultContent:null, render:function (data, type, row, meta) { return meta.row  + 1; }},
-                        { data: "filepath",  width:"5%", title:'File', render:function (data, type, row, meta) { return `<img src="{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}" class="card-img-top" target="_blank" alt="" style="width: 30px;height: 30px;">`; }},
+                        {title:'SL No.', width:"5%", data:null, defaultContent:null, render:function (data, type, row, meta) { return meta.row  + 1; } },
+                        { data: "filepath",  width:"5%", title:'File', render:function (data, type, row, meta) { return `<img src="{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}" class="card-img-top" target="_blank" alt="" style="width: 30px;height: 30px;">`; } },
                         { data: "filename",  title:'File Name' },
                         { data: null, width:"5%", defaultContent:null, title:"Action", render:function(data, type, row, meta ){
                         let file = `{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}`
