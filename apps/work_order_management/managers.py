@@ -202,7 +202,6 @@ class WorkOrderManager(models.Manager):
                     'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
             }
             wp_details.append(sq)
-        logger.info(f"{wp_details = }")
         return wp_details or self.none()
     
 
@@ -211,7 +210,9 @@ class WorkOrderManager(models.Manager):
         obj = self.filter(
             id = womid
         ).values('other_data').first()
-        return obj['other_data']['wp_approvers'] or []
+        print('action manager performed',obj)
+        app_verifier_status_data = obj['other_data']['wp_approvers'] + obj['other_data']['wp_verifiers']
+        return app_verifier_status_data or []
     
     
     def get_wom_status_chart(self, request):

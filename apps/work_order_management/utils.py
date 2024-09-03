@@ -89,7 +89,11 @@ def save_approvers_injson(wp):
     wp_approvers = [
         {'name': approver, 'status': 'PENDING'} for approver in wp.approvers
     ]
+    wp_verifier = [
+        {'name': verifier, 'status': 'PENDING'} for verifier in wp.verifier
+    ]
     wp.other_data['wp_approvers'] = wp_approvers
+    wp.other_data['wp_verifier'] = wp_verifier
     wp.save()
     log.info("saving approvers ended")
     return wp
