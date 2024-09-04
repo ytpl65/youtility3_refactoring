@@ -581,28 +581,36 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
 
 
 @shared_task(bind=True, name="Create Workpermit email notification for vendor and security")
-def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workpermit_status):
+def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no):
     jsonresp = {'story':"", 'traceback':""}
     try:
         from apps.work_order_management.models import Wom,WomDetails
         from django.template.loader import render_to_string
         wom = Wom.objects.filter(parent_id=wom_id)
-        wom_detail = wom[4].id
+        sections = [x for x in wom]
+        wom_detail = sections[-1].id
         wom_detail_email_section = WomDetails.objects.filter(wom_id=wom_detail)
-        wp_details = Wom.objects.get_wp_answers(wom_id)
-        dlog.info(f"WP Details: ",wp_details)
+        #wp_details = Wom.objects.get_wp_answers(wom_id)
+        #dlog.info(f"WP Details: ",wp_details)
         for email in wom_detail_email_section:
             dlog.info(f"email: {email.answer}")
             msg = EmailMessage()
-            msg.subject = f"General Work Permit #{wp_details[0]}"
+            msg.subject = f"{permit_name}-{permit_no}-{sitename}-{workpermit_status}"
             msg.to = [email.answer]
             msg.from_email = settings.EMAIL_HOST_USER
-            cxt = {'sections': wp_details[1],"HOST": settings.HOST, "workpermitid": wom_id,'permit_name':'General Work Permit','sitename':sitename,'permit_no':wp_details[0],'status':workpermit_status}
+            cxt = {
+                'permit_name':permit_name,
+                'sitename':sitename,
+                'status':workpermit_status,
+                'vendor_name':vendor_name,
+                'permit_no':permit_no,
+            }
+            
             html = render_to_string(
                 'work_order_management/workpermit_vendor.html', context=cxt)
             msg.body = html
             msg.content_subtype = 'html'
-            #msg.attach_file(workpermit_attachment, mimetype='application/pdf')
+            msg.attach_file(pdf_path, mimetype='application/pdf')
             msg.send()
             dlog.info(f"email sent to {email.answer}")
     except Exception as e:
