@@ -135,7 +135,7 @@ class Shift(BaseModel, TenantAwareModel):
         return reverse("onboarding:wiz_shift_update", kwargs={"pk": self.pk})
 
 class TypeAssist(BaseModel, TenantAwareModel):
-    # id= models.BigIntegerField(primary_key = True)
+    id= models.BigAutoField(primary_key = True)
     tacode = models.CharField(_("tacode"), max_length = 50)
     taname = models.CharField(_("taname"),   max_length = 100)
     tatype = models.ForeignKey( "self", verbose_name='TypeAssist', null = True, blank = True, on_delete = models.RESTRICT, related_name='children')
@@ -160,6 +160,9 @@ class TypeAssist(BaseModel, TenantAwareModel):
         return reverse("onboarding:ta_update", kwargs={"pk": self.pk})
 
     def get_all_children(self):
+        print("------------>",self.pk)
+        if self.pk is None:
+            return []  
         children = [self]
         try:
             child_list = self.children.all()
