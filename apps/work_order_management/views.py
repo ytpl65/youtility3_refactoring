@@ -426,6 +426,7 @@ class WorkPermit(LoginRequiredMixin, View):
             cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers}
             if obj.workpermit == Wom.WorkPermitStatus.APPROVED and obj.workstatus != Wom.Workstatus.COMPLETED:
                 rwp_details = Wom.objects.get_return_wp_details(request)
+                print("rwp_details: ",rwp_details)
                 log.info(f"return work permit details are as follows: {rwp_details}")
                 cxt['rwp_details'] = rwp_details
             return render(request, P['template_form'], cxt)
@@ -494,7 +495,7 @@ class WorkPermit(LoginRequiredMixin, View):
         self.create_workpermit_details(request.POST, workpermit, request, formdata)
         sitename = S.get('sitename','demo')
         workpermit_status = 'PENDING'
-        report_object = self.get_report_object(permit_name)
+        report_object = wom_utils.get_report_object(permit_name)
         client_id = request.session.get('client_id')
         report = report_object(filename=permit_name,client_id=client_id,returnfile=True,formdata = {'id':workpermit.id},request=request)
         report_pdf_object = report.execute()
@@ -680,8 +681,6 @@ class ReplyWorkPermit(View):
         R, P = request.GET, self.P
         S = request.session
         if R.get('action') == "accepted" and R.get('womid') and R.get('peopleid'):
-            is_submit_button_flow='true'
-            permit_name = 'General Work Permit'
             wom = Wom.objects.get(id = R['womid'])
             wp = Wom.objects.filter(id = R['womid']).first()
             p = People.objects.filter(id = R['peopleid']).first()
@@ -694,10 +693,16 @@ class ReplyWorkPermit(View):
                         wom = Wom.objects.get(id = wom_id)
                         sitename = Bt.objects.get(id=wom.bu_id).buname
                         log.info("Inside of the if sitename %s",sitename)
-                        #workpermit_obj = GeneralWorkPermit(filename=permit_name, formdata={'id':R['womid'],'bu__buname':sitename,'submit_button_flow':is_submit_button_flow,'filename':permit_name,'workpermit':wom.workpermit})
-                        #workpermit_attachment = workpermit_obj.execute()
-                        workpermit_status = 'APPROVED'
-                        send_email_notification_for_vendor_and_security.delay(R['womid'],sitename,workpermit_status)
+                        permit_name = wom.other_data['wp_name']
+                        permit_no   = wom.other_data['wp_seqno']
+                        worpermit_status = 'APPROVED'
+                        client_id = S['client_id']
+                        report_obj = wom_utils.get_report_object()
+                        report = report_obj(filename=permit_name,client_id=client_id,returnfile=True,formdata = {'id':wom_id},request=request)
+                        report_pdf_object = report.execute()
+                        vendor_name = Vendor.objects.get(id=wom.vendor_id).name
+                        pdf_path = wom_utils.save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=permit_no)
+                        send_email_notification_for_vendor_and_security.delay(wom_id,sitename,worpermit_status,vendor_name,pdf_path,permit_name,permit_no)
                 else:
                     return render(request, P['email_template'], context={'alreadyapproved':True})
             cxt = {'status': Wom.WorkPermitStatus.APPROVED.value, 'action_acknowledged':True, 'seqno':wp.other_data['wp_seqno']}

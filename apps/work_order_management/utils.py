@@ -292,3 +292,15 @@ def save_pdf_to_tmp_location(report_pdf_object,report_name,report_number):
     with open(final_path, 'wb') as file:
         file.write(report_pdf_object)
     return final_path
+
+
+def get_report_object(permit_name):
+    from apps.reports.report_designs import workpermit as wp
+    return {
+            'Cold Work Permit':wp.ColdWorkPermit,
+            'Hot Work Permit':wp.HotWorkPermit,
+            'Confined Space Work Permit':wp.ConfinedSpaceWorkPermit,
+            'Electrical Work Permit':wp.ElectricalWorkPermit,
+            'Height Work Permit':wp.HeightWorkPermit,
+            'Entry Request':wp.EntryRequest,
+    }.get(permit_name)
