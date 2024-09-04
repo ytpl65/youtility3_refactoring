@@ -39,7 +39,7 @@ Scheduled Tours
     {% endcall %}
 {% endblock popup_alerts %}
 
-<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+<!--------- BEGIN EXTRA SCRIPTS ------------------------------>
 {% block extra_scripts %}
 <script>
 	var table           = null;
@@ -72,7 +72,7 @@ Scheduled Tours
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             columns:[
-                {data: 'id', defaultContent:null},
+                {data: 'id', title:"ID", defaultContent:null},
                 {data: 'jobname', title: "Name"},
                 {data: 'assignedto', title:"People/Group", defaultContent:null, render:function(data, type, row, meta){
                     if(data.includes('[GROUP]')){
@@ -88,7 +88,7 @@ Scheduled Tours
                 {title: 'Exp. Time', data: 'expirytime'},
                 {title: 'Site', data: 'bu__buname'},
                 {title: 'Site Code', data: 'bu__bucode', visible:false},
-                {data: 'ctzoffset', visible:false, className:"noVis"},
+                {data: 'ctzoffset', title:"Ctzoffset", visible:false, className:"noVis"},
             ],
             rowReorder: {
                 dataSrc: 'jobname',
@@ -109,7 +109,12 @@ Scheduled Tours
             ],
             select:true,
             buttons:[
-                "searchBuilder",
+                {
+                    extend: 'searchBuilder',
+                    config: {
+                    columns: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+                    }
+                },
                 dataTablesPDFConfig(
                     'Site: {{ request.user.bu.buname }}\nScheduled Internal Tour List',
                     [1,2,3,4,5,6,7,8,9],

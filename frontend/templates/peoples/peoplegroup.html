@@ -33,7 +33,7 @@ People Groups
 </div>
 {% endblock popup_alerts %}
 
-<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+<!--------- BEGIN EXTRA SCRIPTS ------------------------------>
 {% block extra_scripts %}
 <script>
 	var table             = null;
@@ -81,7 +81,7 @@ People Groups
 					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
 				}
 				},
-				{data: 'id', visible:false, defaultContent: "", className:'noVis'},
+				{data: 'id', title:"ID", visible:false, defaultContent: "", className:'noVis'},
 				{data:'bu__buname', title:'Site', visible:false},
 				{data:'bu__bucode', title:'Site Code', visible:false}
 			],
@@ -91,7 +91,12 @@ People Groups
 				}
 			},
 			buttons:[
-				"searchBuilder",
+				{
+					extend: 'searchBuilder',
+					config: {
+					columns: [0, 1, 3, 4, 5]
+					}
+				},
 				dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n People Group List`,
                     columns = ':visible',

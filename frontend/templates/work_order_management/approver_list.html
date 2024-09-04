@@ -51,7 +51,7 @@ const formid          = "#approverform"
             },
             pageLength:50,
             columns:[
-                {visible:false, data:"id", className:'noVis'},
+                {visible:false, data:"id", title:"ID", className:'noVis'},
                 {title:"Approver For", data:"approverfor"},
                 {title:"Sites", data:"sites"},
                 {title:"Approver", data:"people__peoplename"},
@@ -74,7 +74,12 @@ const formid          = "#approverform"
                 style:'single',
             },
             buttons:[
-                "searchBuilder",
+                {
+                    extend: 'searchBuilder',
+                    config: {
+                    columns: [1, 2, 3, 4, 5, 6, 7]
+                    }
+                },
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Approver List`,
                     columns = [1,2,3,4,5],

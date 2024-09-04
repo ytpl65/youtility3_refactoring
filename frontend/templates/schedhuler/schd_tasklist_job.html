@@ -31,7 +31,7 @@ Scheduled Tasks
 {% endblock table %}
 <!-------------------------------------------- END Schedhuled External Tour TABLE ------------------------------------------->
 
-<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+<!--------- BEGIN EXTRA SCRIPTS ------------------------------>
 {% block extra_scripts %}
 <script>
 	var table        = null;
@@ -59,7 +59,7 @@ Scheduled Tasks
             lengthMenu: [250,500,750,1000],
             pageLength: 500,
             columns:[
-                {data: 'id', visible:false, searchable:false, className:'noVis'},
+                {data: 'id', title:"ID", visible:false, searchable:false, className:'noVis'},
                 {data: 'jobname', title: "Name"},
                 {data: 'asset__assetname', title: "Asset"},
                 {data: 'qset__qsetname', title: 'Checklist'},
@@ -96,7 +96,12 @@ Scheduled Tasks
                 }}
             ],
             buttons:[
-                "searchBuilder",
+                {
+                    extend: 'searchBuilder',
+                    config: {
+                    columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+                    }
+                },
                 dataTablesPDFConfig(
                     'Site: {{ request.user.bu.buname }}\nScheduled Task List',
                     [1,2,3,4,5,6,7,8,9,10,11],

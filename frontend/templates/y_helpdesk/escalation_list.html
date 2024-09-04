@@ -24,7 +24,7 @@ Escalation List
 {% endblock table %}
 <!------------------ END BU TABLE --------------------------->
 
-<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+<!--------- BEGIN EXTRA SCRIPTS ------------------------------>
 {% block extra_scripts %}
 <script>
 	$(document).ready(function () {
@@ -39,8 +39,8 @@ Escalation List
 				searchPlaceholder: "Search keyword"
 			},
             columns:[
-                {data:'id', visible:false, className:"noVis"},
-                {data:'ctzoffset', visible:false},
+                {title:"ID", data:'id', visible:false, className:"noVis"},
+                {title:"Ctzoffset", data:'ctzoffset', visible:false, className:"noVis"},
                 {title:'Category', data:'taname', render:function(data, type, row, meta){
                     let url = "{{ url('helpdesk:escalationmatrix') }}"
                     return `<a href="${url}?id=${row['id']}">${data}</a>`
@@ -55,7 +55,12 @@ Escalation List
             dom       : `<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			<'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             buttons:[
-				"searchBuilder",
+                {
+                    extend: 'searchBuilder',
+                    config: {
+                    columns: [2, 3, 4, 5]
+                    }
+                },
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Escalation List`,
                     columns = [2,3],

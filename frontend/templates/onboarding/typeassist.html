@@ -33,7 +33,7 @@ TypeAssist List
 {% endblock popup_alerts %}
 
 
-<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+<!--------- BEGIN EXTRA SCRIPTS ------------------------------>
 {% block extra_scripts %}
 <script>
 	var table             = null;
@@ -58,7 +58,7 @@ TypeAssist List
 				url: '{{ url("onboarding:typeassist") }}?action=list',
 			},
 			columns     : [
-                { "data": "id", className:'noVis' },
+                { "data": "id", title:"ID", className:'noVis' },
                 { "data": "tacode", title: "Code" },
                 { "data": "taname", title: 'Name' },
                 { "data": "tatype__tacode", title: 'Type' },
@@ -84,7 +84,12 @@ TypeAssist List
 			dom       :`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons:[
-				"searchBuilder",
+				{
+					extend: 'searchBuilder',
+					config: {
+					columns: [1, 2, 3, 4]
+					}
+				},
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n TypeAssist List`,
                     columns = [1,2,3,4],

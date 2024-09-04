@@ -33,7 +33,7 @@ Schedule Tour
 </div>
 {% endif %}
 {% endblock nonfield_errors %}
-<!---------- END NON FIELD ERRORS --------->
+<!---------- END NON FIELD ERRORS ---------->
 
 
 {% block form %}
@@ -89,7 +89,7 @@ Schedule Tour
             </div>
 
             <div class="input-group mb-3">
-                <!-- ASSIGN TO PEOPLE --->
+                <!-- ASSIGN TO PEOPLE ---->
                 <div class="col-md-4 people">
                     <label for={{ schdtourform.people.id_for_label }} class="">{{ schdtourform.people.label }}:</label>
                 </div>
@@ -100,7 +100,7 @@ Schedule Tour
             </div>
 
             <div class="input-group mb-3">
-                <!-- ASSIGN TO GROUP --->
+                <!-- ASSIGN TO GROUP ---->
                 <div class="col-md-4 pgroup">
                     <label for={{ schdtourform.pgroup.id_for_label }} class="">{{ schdtourform.pgroup.label }}:</label>
                 </div>
@@ -544,7 +544,7 @@ Schedule Tour
             responsive: true,
             order:[0, 'asc'],
             ordering:false,
-            dom:'Brt',
+            dom: '<"float-right"B>rt',
             columns:[
                 {title:'SNo.', data:"seqno"},
                 {title:'SNo.', data:"pk", visible:false},
