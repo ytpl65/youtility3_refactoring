@@ -391,17 +391,14 @@ class WorkPermit(LoginRequiredMixin, View):
             return render(request, P['template_form'], cxt)
         
         if action == 'approver_list':
-            objs = Wom.objects.get_approver_list(R['womid'])
+            objs = Wom.objects.get_approver_verifier_status(R['womid'])
             return rp.JsonResponse({'data': objs}, status=200)
 
         if R.get('qsetid'):
-            print('R.get(qsetid)',R.get('qsetid'))
             import uuid
             wp_details = Wom.objects.get_workpermit_details(request, R['qsetid'])
             approver_codes = R['approvers'].split(',')
             approvers = wom_utils.get_approvers(approver_codes)
-            print("wp_details: ",wp_details)
-            print("rwp_section",wp_details.pop(-1))
             form = P['form'](request=request, initial={'qset': R['qsetid'], 'approvers': R['approvers'].split(','),'vendor':R['vendor'],'verifiers':R['verifiers'].split(',')})
             context = {"wp_details": wp_details, 'wpform': form, 'ownerid': uuid.uuid4(),'approvers':approvers}
             return render(request, P['template_form'], context=context)
@@ -480,7 +477,6 @@ class WorkPermit(LoginRequiredMixin, View):
 
     def handle_valid_form(self, form, R,request, create=True):
         S = request.session
-        print("Request: ",request,R)
         permit_name = request.POST['permit_name']
         workpermit = form.save(commit=False)
         workpermit.uuid = request.POST.get('uuid')
@@ -490,7 +486,6 @@ class WorkPermit(LoginRequiredMixin, View):
         workpermit = save_verifiers_injson(workpermit)
         workpermit = save_workpermit_name_injson(workpermit,permit_name)
         formdata = QueryDict(request.POST['workpermitdetails']).copy()
-        print("Permit Name : ",request.POST['permit_name'],workpermit.id,request.session.get('client_id'))
         self.create_workpermit_details(request.POST, workpermit, request, formdata)
         sitename = S.get('sitename','demo')
         workpermit_status = 'PENDING'
@@ -874,12 +869,10 @@ class SLA_View(LoginRequiredMixin, View):
             return self.send_report(R, request)
         
         if action == 'approve_sla' and R.get('slaid'):
-            print("SLA Approve")
             S = request.session 
             wom = P['model'].objects.get(id = R['slaid'])
             sla_obj = ServiceLevelAgreement(filename='Vendor Performance Report', client_id=S['client_id'], formdata={'id':R['slaid'],'bu__buname':S['sitename'],'submit_button_flow':'true','filename':'Service Level Agreement','workpermit':wom.workpermit})
             sla_attachment = sla_obj.execute()
-            print("SLA Attachment: ",sla_attachment)
             if is_all_approved := check_all_approved(wom.uuid, request.user.peoplecode):
                 Wom.objects.filter(id=R['slaid']).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
                 if is_all_approved:
