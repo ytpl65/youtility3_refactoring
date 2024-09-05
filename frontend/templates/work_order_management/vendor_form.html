@@ -236,7 +236,7 @@
                 lat: lat,
                 lng: lng
             }, (address) => {
-                $("#id_address").val(address)
+                $("#id_address").val(address.formattedAddress)
             })
             $("#open_map").modal('hide');
         });

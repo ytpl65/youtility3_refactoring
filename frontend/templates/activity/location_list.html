@@ -62,7 +62,7 @@ $(document).ready(function () {
 				{data: 'parent__locname', title: 'Belongs To', defaultContent:null},
 				{data: 'locstatus', title: 'Status'},
 				{data: 'enable', title: 'Enable', render:function(data, type, row, meta){
-					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i> Active': '<i class="bi bi-x-circle-fill text-danger"></i> Inactive'				
 				}
 				},
 				{data:'bu__bucode', title:'Site Code', visible:false},

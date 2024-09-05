@@ -86,6 +86,9 @@ ext_schdtour_list = 'External ScheduleTour List',
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                 }
                 },
+                {targets:4, data:"israndomized", render:function(data, type, row, meta){
+					return data ? 'Yes': 'No'				
+				}},
                 {targets:6, render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }

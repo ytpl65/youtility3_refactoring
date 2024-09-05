@@ -16,7 +16,7 @@
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
-<!------ BEGIN FORM TITLE ------->
+<!------ BEGIN FORM TITLE -------->
 {% block custom_title %}
 Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true"></i>
 {% endblock custom_title %}
@@ -28,7 +28,7 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
     <strong>Error: </strong> <span></span>
 </div>
 {% endblock nonfield_errors %}
-<!---------- END NON FIELD ERRORS --------->
+<!---------- END NON FIELD ERRORS ---------->
 
 {% block form %}
 <form action="" method="post" id="id_schdexternaltourform">
@@ -170,7 +170,7 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
                     {{ schdexternaltourform.uptodate }}
                 </div>
             </div>
-            <div class="input-group mb-6">
+            <div class="input-group row mb-6">
                 <div class="col-md-4 form-check form-switch form-check-solid">
                     <label for="{{ schdexternaltourform.israndom.id_for_label }}" 
                     class="form-check-label bool text-sm-right">
@@ -180,10 +180,12 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
                     <div class="form-floating col-md-4 fv-row">
                         {{ schdexternaltourform.tourfrequency }}
                         <label for="id_tourfrequency">Frequency</label>
+                        <div id="error_tourfrequency" class="mt-3 d-none"></div>
                     </div>
                     <div class="form-floating col-md-4 fv-row">
                         {{ schdexternaltourform.breaktime }}
                         <label for="id_breaktime">Breaktime (mins)</label>
+                        <div id="error_breaktime" class="mt-3 d-none"></div>
                     </div>
             </div>
         </div>
@@ -469,6 +471,46 @@ function disableFields(elements){
 function properCron(cron){
     return cron === '* * * * *' ? false :true
 }
+
+function isValidPositiveNumber(value) {
+    // Check if the value is a string that matches the pattern for a positive number
+    // with no 'e', no special characters, and no alphabets.
+    const regex = /^[0-9]*[.,]?[0-9]+$/;
+
+    // Check if the value is a string, then match against the regex
+    if (typeof value === 'string' && regex.test(value)) {
+        // Convert string to number
+        const number = parseFloat(value);
+        // Check if the number is greater than 0
+        return number >= 0 && !isNaN(number);
+    }
+
+    // Return false for non-string values
+    return false;
+}
+
+function handleFrequencyChange(inputId, errorId) {
+    $(inputId).change(function() {
+        var inputValue = $(this).val();
+        var errorDiv = document.getElementById(errorId);
+        
+        if (!isValidPositiveNumber(inputValue)) {
+            errorDiv.innerHTML = '';
+            var newChild = document.createElement('div');
+            newChild.className = 'text-danger';
+            newChild.textContent = "Enter Positive Integer Number Only";
+            errorDiv.appendChild(newChild);
+            errorDiv.classList.remove('d-none');
+        } else {
+            errorDiv.classList.add('d-none');
+            errorDiv.innerHTML = '';
+        }
+    });
+}
+
+// Call the function for each ID pair
+handleFrequencyChange('#id_tourfrequency', 'error_tourfrequency');
+handleFrequencyChange('#id_breaktime', 'error_breaktime');
 
 
 //UPDATE CRONDATETIME ON CRON CHANGE
