@@ -81,6 +81,7 @@ Shift Form
                 </div>
                 <div class="col-md-8">
                     {{ shift_form.captchafreq }}
+                    <div id="error_captchafreq" class="mt-3 d-none"></div>
                 </div>
             </div>
             <div class="input-group mb-3 d-none">
@@ -97,6 +98,7 @@ Shift Form
                 </div>
                 <div class="col-md-8">
                     {{ shift_form.peoplecount }}
+                    <div id="error_peoplecount" class="mt-3 d-none"></div>
                 </div>
             </div>
         </div>
@@ -170,6 +172,49 @@ Shift Form
         let mins = parseInt(val, 10);
         $("#id_shiftduration").val(formatMins(mins))
     }
+
+    function isValidPositiveNumber(value) {
+        if (value === '') {
+            return true;
+        }
+        // Check if the value is a string that matches the pattern for a positive number
+        // with no 'e', no special characters, and no alphabets.
+        const regex = /^[0-9]*[.,]?[0-9]+$/;
+    
+        // Check if the value is a string, then match against the regex
+        if (typeof value === 'string' && regex.test(value)) {
+            // Convert string to number
+            const number = parseFloat(value);
+            // Check if the number is greater than 0
+            return number >= 0 && !isNaN(number);
+        }
+    
+        // Return false for non-string values
+        return false;
+    }
+    
+    function handleChange(inputId, errorId) {
+        $(inputId).change(function() {
+            var inputValue = $(this).val();
+            var errorDiv = document.getElementById(errorId);
+            
+            if (!isValidPositiveNumber(inputValue)) {
+                errorDiv.innerHTML = '';
+                var newChild = document.createElement('div');
+                newChild.className = 'text-danger';
+                newChild.textContent = "Enter Positive Integer Number Only";
+                errorDiv.appendChild(newChild);
+                errorDiv.classList.remove('d-none');
+            } else {
+                errorDiv.classList.add('d-none');
+                errorDiv.innerHTML = '';
+            }
+        });
+    }
+    
+    // Call the function for each ID pair
+    handleChange('#id_captchafreq', 'error_captchafreq');
+    handleChange('#id_peoplecount', 'error_peoplecount');
 
     function deleteShift(elem) {
         var id = $(elem).attr("data-id");
@@ -273,25 +318,27 @@ Shift Form
         $("#shiftform").on('submit', function(e) {
             var form = $(this);
             e.preventDefault();
-            const params = {url: "{{ url('onboarding:shift') }}", modal: false};
-            const id = "{{ shift_form.instance.pk }}";
+            if (isValidPositiveNumber($('#id_captchafreq').val()) && isValidPositiveNumber($('#id_peoplecount').val())){
+                const params = {url: "{{ url('onboarding:shift') }}", modal: false};
+                const id = "{{ shift_form.instance.pk }}";
 
-            var formData = form.serialize();
+                var formData = form.serialize();
 
-            var payLoad = {
-                formData: formData,
-                csrfmiddlewaretoken: '{{ csrf_token }}'
-            };
+                var payLoad = {
+                    formData: formData,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                };
 
-            if (id != 'None') {
-                payLoad.pk = id;
+                if (id != 'None') {
+                    payLoad.pk = id;
+                }
+                fire_ajax_form_post(params, payLoad)
+                .done((data, status, xhr) => {
+                    show_successful_save_alert(update = id != 'None' ? true : false);
+                    window.setTimeout(function() {var url = "{{ url('onboarding:shift') }}";
+                    url += "?id=" + data.row.id;window.location.href = url;}, 2000);
+                });
             }
-            fire_ajax_form_post(params, payLoad)
-            .done((data, status, xhr) => {
-                show_successful_save_alert(update = id != 'None' ? true : false);
-                window.setTimeout(function() {var url = "{{ url('onboarding:shift') }}";
-                url += "?id=" + data.row.id;window.location.href = url;}, 2000);
-            });
         });
 
         // Desingation count table editor

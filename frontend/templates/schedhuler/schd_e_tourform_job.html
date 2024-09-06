@@ -22,14 +22,6 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
 {% endblock custom_title %}
 <!------ END FORM TITLE -------->
 
-<!--------- BEGIN NON FIELD ERRORS -------->
-{% block nonfield_errors %}
-<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
-    <strong>Error: </strong> <span></span>
-</div>
-{% endblock nonfield_errors %}
-<!---------- END NON FIELD ERRORS ---------->
-
 {% block form %}
 <form action="" method="post" id="id_schdexternaltourform">
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -130,6 +122,7 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
                 </div>
                 <div class="col-md-8">
                     {{ schdexternaltourform.planduration }}
+                    <div id="error_planduration" class="mt-3 d-none"></div>
                 </div>
             </div>
             <div class="input-group mb-3">
@@ -138,6 +131,7 @@ Route Plan Setup&nbsp;<i class="fa fa-clock fs-4 text-primary" aria-hidden="true
                 </div>
                 <div class="col-md-8">
                     {{ schdexternaltourform.gracetime }}
+                    <div id="error_gracetime" class="mt-3 d-none"></div>
                 </div>
             </div>
             <div class="input-group mb-3">
@@ -473,6 +467,9 @@ function properCron(cron){
 }
 
 function isValidPositiveNumber(value) {
+    if (value === '') {
+        return true;
+    }
     // Check if the value is a string that matches the pattern for a positive number
     // with no 'e', no special characters, and no alphabets.
     const regex = /^[0-9]*[.,]?[0-9]+$/;
@@ -489,7 +486,7 @@ function isValidPositiveNumber(value) {
     return false;
 }
 
-function handleFrequencyChange(inputId, errorId) {
+function handleChange(inputId, errorId) {
     $(inputId).change(function() {
         var inputValue = $(this).val();
         var errorDiv = document.getElementById(errorId);
@@ -509,9 +506,10 @@ function handleFrequencyChange(inputId, errorId) {
 }
 
 // Call the function for each ID pair
-handleFrequencyChange('#id_tourfrequency', 'error_tourfrequency');
-handleFrequencyChange('#id_breaktime', 'error_breaktime');
-
+handleChange('#id_tourfrequency', 'error_tourfrequency');
+handleChange('#id_breaktime', 'error_breaktime');
+handleChange('#id_planduration', 'error_planduration');
+handleChange('#id_gracetime', 'error_gracetime');
 
 //UPDATE CRONDATETIME ON CRON CHANGE
 function updateCronDate(){
@@ -830,40 +828,42 @@ $(document).ready(() => {
     //submit main form
     $("#id_schdexternaltourform").on('submit', function(e) {
         e.preventDefault();
-        if(!properCron($("#id_cron").val())){
-            show_error_alert( "Please change your cron expression and update the job record.", "Problematic Cron")
-            return
-        }
-        else{
-        let totalCheckpoints = asgdsites_table.rows().count()
-        let israndomTour = $("#id_israndom").is(":checked") ? "Yes" :"No"
-        let breaktime = $('#id_breaktime').val() ? $("#id_breaktime").val() : "Not Provided"
-        let frequency = $("#id_tourfrequency").val() ? $("#id_tourfrequency").val() : "Not Provided"
-        var text = `The Route Plan scheduling depends on these parameters:<br>
-                    <br>
-                    Random Tour Generation: &nbsp;${israndomTour}<br>Route Frequency:&nbsp; ${frequency}<br>Breaktime: &nbsp;${breaktime}<br><br>
-                    Please check these parameters and confirm if they are acceptable or require any changes. ` 
-        submit_form_alert(text=text).then((res) => {
-            if(res.isConfirmed){
-                var form = $(this);
-                const params = { url: "{{ url('schedhuler:schd_external_tour') }}", modal:false } 
-                var payLoad =  {'formData':form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}
-                const id = $("#id_pk").val() //form instance id
-                if(id != 'None'){
-                    var newPayLoad = {...payLoad, 'pk':id}
-                    payLoad = newPayLoad
-                }
-                fire_ajax_form_post(params, payLoad)
-                .done((data, status, xhr) => { //function to submit post request
-                    show_successful_save_alert(update= id != 'None' ? true : false)
-                    updateCronDate();
-                    window.setTimeout(function() {
-                        window.location.href = `{{ url('schedhuler:schd_external_tour') }}?id=${data.pk}`;
-                    }, 2000);
-                })
+        if (isValidPositiveNumber($('#id_planduration').val()) && isValidPositiveNumber($('#id_tourfrequency').val()) && isValidPositiveNumber($('#id_breaktime').val()) && isValidPositiveNumber($('#id_gracetime').val())){
+            if(!properCron($("#id_cron").val())){
+                show_error_alert( "Please change your cron expression and update the job record.", "Problematic Cron")
+                return
             }
+            else{
+            let totalCheckpoints = asgdsites_table.rows().count()
+            let israndomTour = $("#id_israndom").is(":checked") ? "Yes" :"No"
+            let breaktime = $('#id_breaktime').val() ? $("#id_breaktime").val() : "Not Provided"
+            let frequency = $("#id_tourfrequency").val() ? $("#id_tourfrequency").val() : "Not Provided"
+            var text = `The Route Plan scheduling depends on these parameters:<br>
+                        <br>
+                        Random Tour Generation: &nbsp;${israndomTour}<br>Route Frequency:&nbsp; ${frequency}<br>Breaktime: &nbsp;${breaktime}<br><br>
+                        Please check these parameters and confirm if they are acceptable or require any changes. ` 
+            submit_form_alert(text=text).then((res) => {
+                if(res.isConfirmed){
+                    var form = $(this);
+                    const params = { url: "{{ url('schedhuler:schd_external_tour') }}", modal:false } 
+                    var payLoad =  {'formData':form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}
+                    const id = $("#id_pk").val() //form instance id
+                    if(id != 'None'){
+                        var newPayLoad = {...payLoad, 'pk':id}
+                        payLoad = newPayLoad
+                    }
+                    fire_ajax_form_post(params, payLoad)
+                    .done((data, status, xhr) => { //function to submit post request
+                        show_successful_save_alert(update= id != 'None' ? true : false)
+                        updateCronDate();
+                        window.setTimeout(function() {
+                            window.location.href = `{{ url('schedhuler:schd_external_tour') }}?id=${data.pk}`;
+                        }, 2000);
+                    })
+                }
 
-        })}
+            })}
+        }
     })
 
     //ON SAVE-ROUTE CLICK

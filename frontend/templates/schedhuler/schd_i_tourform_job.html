@@ -18,23 +18,9 @@
 
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
-Schedule Tour 
+Schedule Tour
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
-
-<!--------- BEGIN NON FIELD ERRORS -------->
-{% block nonfield_errors %}
-{% if schdtourform.non_field_errors() %}
-<div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-    {% for error in schdtourform.non_field_errors() %}
-    <strong>Error</strong> <span>{{ error }}</span>
-    {% endfor %}
-    <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-{% endif %}
-{% endblock nonfield_errors %}
-<!---------- END NON FIELD ERRORS ---------->
-
 
 {% block form %}
 <form action="" method="post" id="id_schdtourform">
@@ -175,6 +161,7 @@ Schedule Tour
                 </div>
                 <div class="col-md-4">
                     {{ schdtourform.planduration }}
+                    <div id="error_planduration" class="mt-3 d-none"></div>
                     {{ schdtourform.planduration.errors }}
                 </div>
             </div>
@@ -190,6 +177,7 @@ Schedule Tour
                 </div>
                 <div class="col-md-4">
                     {{ schdtourform.gracetime }}
+                    <div id="error_gracetime" class="mt-3 d-none"></div>
                     {{ schdtourform.gracetime.errors }}
                 </div>
             </div>
@@ -423,6 +411,49 @@ Schedule Tour
         toggleRequiredAttribute('id_uptodate', set=set)
     }
 
+    function isValidPositiveNumber(value) {
+        if (value === '') {
+            return true;
+        }
+        // Check if the value is a string that matches the pattern for a positive number
+        // with no 'e', no special characters, and no alphabets.
+        const regex = /^[0-9]*[.,]?[0-9]+$/;
+    
+        // Check if the value is a string, then match against the regex
+        if (typeof value === 'string' && regex.test(value)) {
+            // Convert string to number
+            const number = parseFloat(value);
+            // Check if the number is greater than 0
+            return number >= 0 && !isNaN(number);
+        }
+    
+        // Return false for non-string values
+        return false;
+    }
+    
+    function handleChange(inputId, errorId) {
+        $(inputId).change(function() {
+            var inputValue = $(this).val();
+            var errorDiv = document.getElementById(errorId);
+            
+            if (!isValidPositiveNumber(inputValue)) {
+                errorDiv.innerHTML = '';
+                var newChild = document.createElement('div');
+                newChild.className = 'text-danger';
+                newChild.textContent = "Enter Positive Integer Number Only";
+                errorDiv.appendChild(newChild);
+                errorDiv.classList.remove('d-none');
+            } else {
+                errorDiv.classList.add('d-none');
+                errorDiv.innerHTML = '';
+            }
+        });
+    }
+    
+    // Call the function for each ID pair
+    handleChange('#id_planduration', 'error_planduration');
+    handleChange('#id_gracetime', 'error_gracetime');
+
     $(document).ready(() => {
         //set ctzoffset
   	    $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -450,7 +481,7 @@ Schedule Tour
             idSrc:  'pk',
             fields:[
                 {data:'pk', type:'hidden', name:'pk', def:'None'},
-                {label: 'Seq No', name: 'seqno', type: 'text', data:'seqno'},
+                {label: 'Seq No', name: 'seqno', type:"readonly", data:'seqno'},
                 {label: 'Asset/Checkpoint', name: 'asset', type: 'select', data:'asset__assetname'},
                 {label: 'Question Set', name: 'qset', type: 'select', data:'qset__qsetname'},
                 {label: 'Expiry Time', name: 'expirytime', type: 'text', data:'expirytime', def:0},
@@ -476,7 +507,6 @@ Schedule Tour
             }
         });
 
-
         editor.on('open', function(e, mode, action){
             $(".DTE_Field").addClass('p-1') // add css to form fields
             if(action == 'create' || action == "edit"){
@@ -501,7 +531,7 @@ Schedule Tour
                 editor.field('seqno').set(table.data().count() + 1) //update seqno for new entry
                 $("#DTE_Field_asset").val(null)
                 $("#DTE_Field_qset").val(null)
-
+                
             }
             if(action == 'edit'){
                 var data = getCurrentEditingRow(editor, table);
@@ -522,6 +552,8 @@ Schedule Tour
                 true
                 );
                 $("#DTE_Field_asset").append(newOption);
+
+                
             }
         })
 
@@ -594,8 +626,10 @@ Schedule Tour
 
         $("#id_schdtourform").on('submit', function (e) {
 
-                var form = $(this);
-                e.preventDefault()
+            var form = $(this);
+            e.preventDefault()
+            if (isValidPositiveNumber($('#id_planduration').val()) && isValidPositiveNumber($('#id_gracetime').val()))
+            {
                 const params = {
                     url: "{{ url('schedhuler:schd_internal_tour') }}",
                     modal: false
@@ -633,6 +667,8 @@ Schedule Tour
                     }
                     
                 })
+            }
+            
         })
 
         $("#runScheduler").click(function() {

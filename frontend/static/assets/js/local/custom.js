@@ -245,7 +245,6 @@ function getAssetsOfLocation(locationid, url) {
 }
 
 function populateQsetForm(questionid, url) {
-  debugger;
   const params = {
     url: `${url}?action=getquestion&questionid=${questionid}`,
     modal: false,
@@ -1907,7 +1906,7 @@ function editorOnOpenedActions() {
 function editorFieldsConfig() {
   return [
     { data: "pk", type: "hidden", name: "pk", def: "None" },
-    { label: "SNo.", name: "seqno", type: "text", data: "seqno" },
+    { label: "SNo.", type:"readonly", name: "seqno", data: "seqno" },
     { label: "Question", name: "question", type: "select", data: "question" },
     { label: "Type", name: "answertype", type: "readonly", data: "answertype" },
     { label: "Min", name: "min", type: "text", def: null },

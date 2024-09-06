@@ -1533,7 +1533,6 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         if R.get('action') == 'form':
             cxt = {'schdexternaltourform': P['form_class'](
             request = request, initial = P['initial'])}
-            print("----------->>>>>>>>",cxt['schdexternaltourform'])
             return render(request, P['template_form'], context = cxt)
         
         # return resp to populate the sites from sitgroup 

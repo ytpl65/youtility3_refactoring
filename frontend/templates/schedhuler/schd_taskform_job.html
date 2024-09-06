@@ -20,19 +20,6 @@ Schedule Task
 {% endblock form_title %}
 <!------ END FORM TITLE -------->
 
-<!--------- BEGIN NON FIELD ERRORS -------->
-{% block nonfield_errors %}
-    {% if schdtaskform.non_field_errors() %}
-    <div id="non_field_error" class="alert alert-danger" style="width: 73%;">
-        {% for error in schdtaskform.non_field_errors()[::-1] %}
-        <strong>Error</strong> <span>{{ error }}</span>
-        {% endfor %}
-        <button type="button" class="btn-close flt-right" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    {% endif %}
-{% endblock nonfield_errors %}
-<!---------- END NON FIELD ERRORS ---------->
-
 {% block form %}
 <form action="{{ url('schedhuler:create_task') }}" method="post" id="schdtaskform">
 <input type="hidden" name="{{ schdtaskform.ctzoffset.name }}" id = "{{ schdtaskform.ctzoffset.auto_id }}" value="-1">
@@ -65,6 +52,7 @@ Schedule Task
         </div>
         <div class="col-md-2">
             {{ schdtaskform.planduration }}
+            <div id="error_planduration" class="mt-3 d-none"></div>
             {{ schdtaskform.planduration.errors }}
         </div>
 
@@ -89,6 +77,7 @@ Schedule Task
         </div>
         <div class="col-md-2">
             {{ schdtaskform.gracetime }}
+            <div id="error_gracetime" class="mt-3 d-none"></div>
             {{ schdtaskform.gracetime.errors }}
         </div>
 
@@ -113,6 +102,7 @@ Schedule Task
         </div>
         <div class="col-md-2">
             {{ schdtaskform.expirytime }}
+            <div id="error_expirytime" class="mt-3 d-none"></div>
             {{ schdtaskform.expirytime.errors }}
         </div>
         
@@ -351,6 +341,50 @@ var formValidator = FormValidation.formValidation(
     return cron === '* * * * *' ? false :true
 }
 
+function isValidPositiveNumber(value) {
+    if (value === '') {
+        return true;
+    }
+    // Check if the value is a string that matches the pattern for a positive number
+    // with no 'e', no special characters, and no alphabets.
+    const regex = /^[0-9]*[.,]?[0-9]+$/;
+
+    // Check if the value is a string, then match against the regex
+    if (typeof value === 'string' && regex.test(value)) {
+        // Convert string to number
+        const number = parseFloat(value);
+        // Check if the number is greater than 0
+        return number >= 0 && !isNaN(number);
+    }
+
+    // Return false for non-string values
+    return false;
+}
+
+function handleChange(inputId, errorId) {
+    $(inputId).change(function() {
+        var inputValue = $(this).val();
+        var errorDiv = document.getElementById(errorId);
+        
+        if (!isValidPositiveNumber(inputValue)) {
+            errorDiv.innerHTML = '';
+            var newChild = document.createElement('div');
+            newChild.className = 'text-danger';
+            newChild.textContent = "Enter Positive Integer Number Only";
+            errorDiv.appendChild(newChild);
+            errorDiv.classList.remove('d-none');
+        } else {
+            errorDiv.classList.add('d-none');
+            errorDiv.innerHTML = '';
+        }
+    });
+}
+
+// Call the function for each ID pair
+handleChange('#id_planduration', 'error_planduration');
+handleChange('#id_gracetime', 'error_gracetime');
+handleChange('#id_expirytime', 'error_expirytime');
+
     function showHideSelectField(val) {
         if (val == "PEOPLE") {
             //$("#aatopdiv").show();
@@ -452,45 +486,48 @@ var formValidator = FormValidation.formValidation(
         //on submit form post request
         $("#schdtaskform").submit((e) => {
             e.preventDefault()
-            formValidator.validate().then(function (status){
-                console.log("form is ", status)
-                if(status === 'Valid'){
-                    var form = $(this);
-                    const params   = { url: "{{ url('schedhuler:jobschdtasks') }}", modal: false }
-                    const formtype = '{{schdtaskform.instance.id}}' == 'None' ? "create" : "update"         
-                    const id       = '{{schdtaskform.instance.id}}'                                          
-                    var   payLoad  = { formData: $("#schdtaskform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}' }
-                    
-                    if (formtype === 'update') {
-                        var newPayLoad = { ...payLoad, 'pk': id }
-                            payLoad    = newPayLoad
-                    }
-                    submit_form_alert().then((res) => {
-                        if(res.isConfirmed){
-                            console.log(payLoad, "payload")
-                            fire_ajax_form_post(params, payLoad)
-                            .done((data, status, xhr) => {
-                                Swal.fire(
-                                    `Task Form saved`,
-                                    `Task Form with this name <strong>${data.jobname}</strong> has been saved successfully`,
-                                    'success'
-                                ).then(function () {
-                                    formSaved = true
-                                    window.location.replace(data.url);
-                                })
-                            })
-                            .fail((xhr, status, error) => {
-                                console.log(xhr)
-                                if(!typeof(xhr.responseJSON.errors) === 'object'){
-                                    show_error_alert(xhr.responseJSON.errors, "Failed to save!")
-                                }else{}
-                                
-                            })
+            if(isValidPositiveNumber($('#id_planduration').val()) &&  isValidPositiveNumber($('#id_expirytime').val()) && isValidPositiveNumber($('#id_gracetime').val())){
+                formValidator.validate().then(function (status){
+                    console.log("form is ", status)
+                    if(status === 'Valid'){
+                        var form = $(this);
+                        const params   = { url: "{{ url('schedhuler:jobschdtasks') }}", modal: false }
+                        const formtype = '{{schdtaskform.instance.id}}' == 'None' ? "create" : "update"         
+                        const id       = '{{schdtaskform.instance.id}}'                                          
+                        var   payLoad  = { formData: $("#schdtaskform").serialize(),csrfmiddlewaretoken: '{{ csrf_token }}' }
+                        
+                        if (formtype === 'update') {
+                            var newPayLoad = { ...payLoad, 'pk': id }
+                                payLoad    = newPayLoad
                         }
-                    })
-                }
-                
-            })
+                        submit_form_alert().then((res) => {
+                            if(res.isConfirmed){
+                                console.log(payLoad, "payload")
+                                fire_ajax_form_post(params, payLoad)
+                                .done((data, status, xhr) => {
+                                    Swal.fire(
+                                        `Task Form saved`,
+                                        `Task Form with this name <strong>${data.jobname}</strong> has been saved successfully`,
+                                        'success'
+                                    ).then(function () {
+                                        formSaved = true
+                                        window.location.replace(data.url);
+                                    })
+                                })
+                                .fail((xhr, status, error) => {
+                                    console.log(xhr)
+                                    if(!typeof(xhr.responseJSON.errors) === 'object'){
+                                        show_error_alert(xhr.responseJSON.errors, "Failed to save!")
+                                    }else{}
+                                    
+                                })
+                            }
+                        })
+                    }
+                    
+                })
+            }
+            
         })
 
         $("#schdtaskform").change(() => {
