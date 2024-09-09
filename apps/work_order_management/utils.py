@@ -66,7 +66,7 @@ def check_all_verified(womuuid,usercode):
     all_verified = True
     log.info(f"{usercode}, {womuuid}")
     for verifier in w.other_data['wp_verifiers']:
-        log.info(f"Approver {verifier}")
+        log.info(f"Verifier {verifier}")
         if verifier['name'] == usercode:
             verifier['status'] = 'APPROVED'
             log.info(f"verifier {usercode} has approved with status code {verifier['status']}")
@@ -96,6 +96,14 @@ def reject_workpermit(womuuid, usercode):
     for approver in w.other_data['wp_approvers']:
         if approver['name'] == usercode:
             approver['status'] = 'REJECTED'
+    w.save()
+
+
+def reject_workpermit_verifier(womuuid, usercode):
+    w = Wom.objects.filter(uuid = womuuid).first()
+    for verifier in w.other_data['wp_verifiers']:
+        if verifier['name'] == usercode:
+            verifier['status'] = 'REJECTED'
     w.save()
     
 def save_approvers_injson(wp):

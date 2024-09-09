@@ -71,7 +71,6 @@ $(document).ready(function(){
             {title:'Work Status', data:'workstatus'},
             {title:'Vendor Name',data:'vendor__name'},
             {title:'Site', data:'bu__buname',visible:false},
-            {title:'Remarks',data:'remarks'},
             {title:'Action', data:null, defaultContent:'<a href="#" class="edit-link">Report&nbsp;<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i></a>'},
             {title:'Site Code', data:'bu__bucode', visible:false},
             {visible:false, data:"ctzoffset", className:'noVis'}
@@ -110,6 +109,7 @@ $(document).ready(function(){
             {targets:6, render:function(data, type, row, meta){
                 if(data === 'ASSIGNED'){return `<span class="badge fs-9 badge-secondary">${data}</span>`}
                 else if (data === 'COMPLETED'){return `<span class="badge fs-9 badge-success">${data}</span>`}
+                else if (data === 'CANCELLED'){return `<span class="badge fs-9 badge-danger">${data}</span>`}
             }
             },
         ],

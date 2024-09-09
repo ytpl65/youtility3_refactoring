@@ -34,7 +34,7 @@
     <br>
     If the work permit details meet your requirements, please proceed to approve it with the
     <a style="margin-right: 20px; color: white; background-color: green; padding: 10px 20px; text-decoration: none; display: inline-block;"
-       href="{{ HOST }}{{ url('work_order_management:verifier_reply_workpermit') }}?action=accepted&womid={{ workpermitid }}&peopleid={{ peopleid }}&sitename={{ sitename }}"
+       href="{{ HOST }}{{ url('work_order_management:verifier_reply_workpermit') }}?action=accepted&womid={{ workpermitid }}&peopleid={{ peopleid }}&sitename={{ sitename }}&client_id={{ client_id }}"
        target="_blank">
         Approve
     </a>
@@ -42,7 +42,7 @@
     <hr>
     Conversely, if any information doesn't meet your requirements you can reject it with
     <a style="color: white; background-color: red; padding: 10px 20px; text-decoration: none; display: inline-block;"
-       href="{{ HOST }}{{ url('work_order_management:verifier_reply_workpermit') }}?action=rejected&womid={{workpermitid}}&peopleid={{ peopleid }}"
+       href="{{ HOST }}{{ url('work_order_management:verifier_reply_workpermit') }}?action=rejected&womid={{workpermitid}}&peopleid={{ peopleid }}&client_id={{ client_id }}"
        target="_blank">
         Reject
     </a>

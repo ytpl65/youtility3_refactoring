@@ -37,11 +37,13 @@ Work Permit Form
             </ul>
         </div>
         {% endif %}
+        {% if work_status is defined and work_status!='COMPLETED' %}
         <div>
             <button class="btn btn-sm me-2 btn-secondary" type="button" id="btn_cancel">
                 Cancel&nbsp;<i class="fas text-dark fa-times"></i>
             </button>
         </div>
+        {% endif %}
         <div>
             <button class="btn btn-sm me-2 btn-secondary" type="button" id="btn_clear">
                 Clear&nbsp;<i class="fas text-dark fa-trash-alt"></i>
@@ -56,7 +58,7 @@ Work Permit Form
     </div>
     {% else %}
     <button type="button"  id="load_questions" class="btn btn-sm btn-primary2">
-        Load Questionaire &nbsp;<i class="bi text-white bi-cloud-download"></i>
+        Load Questionnaire &nbsp;<i class="bi text-white bi-cloud-download"></i>
     </button>
     <button type="submit" form="wpform"  class="btn btn-sm btn-success">
         Submit &nbsp;<i class="bi text-white bi-cloud-upload"></i>
@@ -86,6 +88,7 @@ Work Permit Form
 {% endblock breadcumbactions %}
 
 {% block form %}
+{{ request.user.id }}
 <form action="{{ url('work_order_management:work_permit') }}" method="post" id="wpform">
     <!--------------------------CSRF MIDDLEWARE TOKEN---------------------->
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -142,6 +145,7 @@ Work Permit Form
         </div>
     </div>
 </form>
+
 {% endblock form %}
 
 
@@ -152,6 +156,27 @@ Work Permit Form
     <table id="tabApprovers" class="display"></table>
 </div>
 <br>
+
+<!-- Remarks Section Start-->
+
+    {% if remarks is defined and remarks != 'None' and remarks %}
+    <h4>Remarks</h4>
+    <div class="border border-1 p-4 rounded-2">
+        <div class="card">
+            <div class="card-body">
+                <p class="card-text" style="color: red;">
+                    {% for remark in remarks %}
+                        <li style="color: red; font-size: larger;"><strong>Remark:</strong> {{ remark.remarks }} by {{ remark.people }}</li>
+                    {% endfor %}
+                </p>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+</div>
+<!-- Remarks section ends -->
+ <br>
 <div class="border border-1 p-4 rounded-2 mb-3  workpermit-details-section">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3 class="">Work Permit Details</h3>
@@ -170,7 +195,7 @@ Work Permit Form
         </form>
     </div>
 </div>
-<div class="border border-1 p-4 rounded-2  workpermit-details-section">
+<div class="border border-1 p-4 rounded-2  returnworkpermit-details-section">
     {% if rwp_details is defined %}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="d-flex justify-content-between">
@@ -201,6 +226,35 @@ Work Permit Form
 
 
 
+<!-- Modal Code Starts -->
+
+<div class="modal fade" id="remarkModal" tabindex="-1" aria-labelledby="remarkModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="remarkModalLabel">Cancel Remark</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="remarkForm" method="post">
+                    <input type="hidden" name="logged_in_user" value="{{ logged_in_user }}">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    <div class="mb-3">
+                        <label for="remark" class="form-label">Remark</label>
+                        <textarea class="form-control" id="remark" name="remark" rows="3"></textarea>
+                    </div>
+                    <input type="hidden" id="workPermitId" name="workPermitId" value="{{ wpform.instance.id }}">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="submitRemark">Submit Remark</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal Code Ends -->
+
 {% endblock extras %}
 
 
@@ -219,6 +273,8 @@ Work Permit Form
         media_url      : '{{ MEDIA_URL }}',
         peopleid       : "{{ request.user.id }}"
     }
+    var workpermit_remarks = "{{ remarks }}"
+    console.log(typeof workpermit_remarks)
 </script>
 <script src="{{ static('assets/js/local/attachment.js') }}" type="text/javascript"></script>
 <script src="{{ static('assets/plugins/custom/DataTables/datatables.min.js') }}" type="text/javascript"></script>
@@ -267,6 +323,20 @@ Work Permit Form
     }
 
     $(document).ready(function () {
+        console.log("workpermit_remarks:",workpermit_remarks,typeof workpermit_remarks);
+        console.log(workpermit_remarks === 'None')
+        console.log("{{ request.user.id }}")
+        if (workpermit_remarks === 'None'){
+            $('.returnworkpermit-details-section').css('display', 'block')
+            $('#btn_cancel').css('display', 'block')
+        }
+        else{
+            $('.returnworkpermit-details-section').css('display', 'none')
+            $('#btn_cancel').css('display', 'none')   
+        }
+
+
+
         if("{{ wpform.instance.id }}" !== "None"){
             makeReadonlyFieldsUnderClass("wp_section")
             makeRangeReadonly(".wp_section input[type=range]")
@@ -514,6 +584,45 @@ Work Permit Form
                 })
             }
         })
+
+        $("#btn_cancel").click(function(e){
+            console.log("Clicked");
+            console.log("workpermit_remarks:",workpermit_remarks);
+            e.preventDefault();
+            $("#remarkModal").modal('show');
+        })
+        
+
+        $('#submitRemark').click(function(e){
+            var remark = $('#remark').val();
+            var workpermit_id = $('#workPermitId').val();
+            console.log("Remark",remark);
+            if ($.trim(remark) === ''){
+                alert("Please enter remark");
+                return;
+            }
+            const params = {
+                    url:urlname,
+                    modal:false, 
+                    
+            }
+
+            const payLoad = {
+                wom_id : workpermit_id,
+                action:"cancellation_remark",
+                cancelation_remarks:$('#remark').val(),
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                logged_in_user:'{{ logged_in_user }}'
+            }
+            fire_ajax_form_post(params,payLoad)
+            .done((data, status, xhr) => { //function to submit post request
+                show_successful_save_alert(update = true)
+                window.setTimeout(function () {
+                    window.location.href = `${urlname}?id=${payLoad.wom_id}`;
+                }, 2000);
+            })
+        })
+
 
         //on click open-wpd
         $(".open-wpd").on("click", (e) => {

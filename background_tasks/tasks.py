@@ -439,7 +439,7 @@ def create_report_history(self, formdata, userid, buid, EI):
 
 
 @shared_task(bind=True, name="Send Email Notification to Approver")
-def send_email_notification_for_workpermit_approval(self,womid,approvers,sitename,workpermit_status,permit_name,workpermit_attachment,vendor_name):
+def send_email_notification_for_workpermit_approval(self,womid,approvers,sitename,workpermit_status,permit_name,workpermit_attachment,vendor_name,client_id):
     jsonresp = {'story': "", "traceback": ""}
     try:
         from django.apps import apps 
@@ -467,7 +467,8 @@ def send_email_notification_for_workpermit_approval(self,womid,approvers,sitenam
                     'status':workpermit_status,
                     'permit_no':wp_obj.other_data['wp_seqno'],
                     'permit_name':permit_name,
-                    'vendor_name':vendor_name
+                    'vendor_name':vendor_name,
+                    'client_id':client_id,
                 }
                 html = render_to_string(
                     'work_order_management/workpermit_approver_action.html',context=cxt
@@ -487,7 +488,7 @@ def send_email_notification_for_workpermit_approval(self,womid,approvers,sitenam
     return jsonresp
 
 @shared_task(bind=True, name = "Send Email Notificatio to Verifier")
-def send_email_notification_for_wp_verifier(self,womid,verifiers,sitename,workpermit_status,permit_name,workpermit_attachment,vendor_name):
+def send_email_notification_for_wp_verifier(self,womid,verifiers,sitename,workpermit_status,permit_name,workpermit_attachment,vendor_name,client_id):
     jsonresp = {'story': "", "traceback": ""}
     try:
         from django.apps import apps 
@@ -513,7 +514,8 @@ def send_email_notification_for_wp_verifier(self,womid,verifiers,sitename,workpe
                     'status':workpermit_status,
                     'permit_no':wp_obj.other_data['wp_seqno'],
                     'permit_name':permit_name,
-                    'vendor_name':vendor_name
+                    'vendor_name':vendor_name,
+                    'client_id':client_id
                 }
                 html = render_to_string(
                     'work_order_management/workpermit_verifier_action.html',context=cxt
@@ -581,14 +583,19 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
 
 
 @shared_task(bind=True, name="Create Workpermit email notification for vendor and security")
-def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no):
+def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no,submit_work_permit=False):
     jsonresp = {'story':"", 'traceback':""}
     try:
         from apps.work_order_management.models import Wom,WomDetails
         from django.template.loader import render_to_string
         wom = Wom.objects.filter(parent_id=wom_id)
         sections = [x for x in wom]
-        wom_detail = sections[-1].id
+        if submit_work_permit:
+            wom_detail = sections[-2].id
+        else:
+            wom_detail = sections[-1].id 
+        dlog.info(f"sections: {sections}")
+        dlog.info(f"wom_detail: {wom_detail}")
         wom_detail_email_section = WomDetails.objects.filter(wom_id=wom_detail)
         #wp_details = Wom.objects.get_wp_answers(wom_id)
         #dlog.info(f"WP Details: ",wp_details)

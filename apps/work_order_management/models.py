@@ -108,7 +108,7 @@ class Wom(BaseModel, TenantAwareModel):
     categories      = ArrayField(models.CharField(max_length = 50, blank = True, default=""), default = list)
     wo_history      = models.JSONField(encoder=DjangoJSONEncoder, default=wo_history_json)
     identifier      = models.CharField(_("Identifier"), max_length=50, choices=Identifier.choices, null=True, blank=True)
-    remarks         = models.TextField(_("Remarks"),blank=True,null=True)
+    remarks         = models.JSONField(_("Remarks"),blank=True,null=True)
     objects = WorkOrderManager()
     
     def add_history(self):
