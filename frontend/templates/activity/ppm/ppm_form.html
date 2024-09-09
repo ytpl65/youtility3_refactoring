@@ -17,14 +17,6 @@
 {% endblock pagebreadcumb %}
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
-<!--------- BEGIN NON FIELD ERRORS -------->
-{% block nonfield_errors %}
-<div class="alert alert-danger" id="nonfield_errors"role="alert" style="display:none">
-    <strong>Error: </strong> <span></span>
-</div>
-{% endblock nonfield_errors %}
-<!---------- END NON FIELD ERRORS --------->
-
 <!------ BEGIN FORM TITLE ------->
 {% block form_title %}
 PPM Form
@@ -151,7 +143,7 @@ PPM Form
         </div>
 
         <div class="col-md-6">
-            <div class="input-group mb-3 gy-3">
+            <div class="input-group row mb-3">
                 <div class="col-md-4">
                     {{ ppmform.planduration.label_tag() }}
                 </div>
@@ -160,9 +152,10 @@ PPM Form
                 </div>
                 <div class="col-md-4">
                     {{ ppmform.planduration }}
+                    <div id="error_planduration" class="mt-3 d-none"></div>
                 </div>
             </div>
-            <div class="input-group mb-3">
+            <div class="input-group row mb-3">
                 <div class="col-md-4">
                     {{ ppmform.gracetime.label_tag() }}
                 </div>
@@ -171,9 +164,10 @@ PPM Form
                 </div>
                 <div class="col-md-4">
                     {{ ppmform.gracetime }}
+                    <div id="error_gracetime" class="mt-3 d-none"></div>
                 </div>
             </div>
-            <div class="input-group mb-3">
+            <div class="input-group row mb-3">
                 <div class="col-md-4">
                     {{ ppmform.expirytime.label_tag() }}
                 </div>
@@ -182,6 +176,7 @@ PPM Form
                 </div>
                 <div class="col-md-4">
                     {{ ppmform.expirytime }}
+                    <div id="error_expirytime" class="mt-3 d-none"></div>
                 </div>
             </div>
             <div class="input-group mb-3">
@@ -319,6 +314,50 @@ function properCron(cron){
     return cron === '* * * * *' ? false :true
 }
 
+function isValidPositiveNumber(value) {
+    if (value === '') {
+        return true;
+    }
+    // Check if the value is a string that matches the pattern for a positive number
+    // with no 'e', no special characters, and no alphabets.
+    const regex = /^[0-9]*[.,]?[0-9]+$/;
+
+    // Check if the value is a string, then match against the regex
+    if (typeof value === 'string' && regex.test(value)) {
+        // Convert string to number
+        const number = parseFloat(value);
+        // Check if the number is greater than 0
+        return number >= 0 && !isNaN(number);
+    }
+
+    // Return false for non-string values
+    return false;
+}
+
+function handleChange(inputId, errorId) {
+    $(inputId).change(function() {
+        var inputValue = $(this).val();
+        var errorDiv = document.getElementById(errorId);
+        
+        if (!isValidPositiveNumber(inputValue)) {
+            errorDiv.innerHTML = '';
+            var newChild = document.createElement('div');
+            newChild.className = 'text-danger';
+            newChild.textContent = "Enter Positive Integer Number Only";
+            errorDiv.appendChild(newChild);
+            errorDiv.classList.remove('d-none');
+        } else {
+            errorDiv.classList.add('d-none');
+            errorDiv.innerHTML = '';
+        }
+    });
+}
+
+// Call the function for each ID pair
+handleChange('#id_planduration', 'error_planduration');
+handleChange('#id_gracetime', 'error_gracetime');
+handleChange('#id_expirytime', 'error_expirytime');
+
     //delete ppm 
     function deletePPM(elemt){
         var id = "{{ ppmform.instance.pk }}"
@@ -417,32 +456,35 @@ $(document).ready(() => {
     //submit main form
     $("#id_ppmform").on('submit', function(e) {
         e.preventDefault();
-        if(!properCron($("#id_cron").val())){
-            show_error_alert( "Please change your cron expression and update the job record.", "Problematic Cron")
-            return
-        }
-        else{
-        submit_form_alert().then((res) => {
-            if(res.isConfirmed){
-                var form = $(this);
-                const params = { url: "{{ url('activity:ppm') }}", modal:false } 
-                var payLoad =  {'formData':form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}
-                const id = $("#id_pk").val() //form instance id
-                if(id != 'None'){
-                    var newPayLoad = {...payLoad, 'pk':id}
-                    payLoad = newPayLoad
-                }
-                fire_ajax_form_post(params, payLoad)
-                .done((data, status, xhr) => { //function to submit post request
-                    show_successful_save_alert(update= id != 'None' ? true : false)
-                    formSaved = true
-                    window.setTimeout(function() {
-                        window.location.href = `{{ url('activity:ppm') }}?id=${data.pk}`;
-                    }, 2000);
-                })
+        if (isValidPositiveNumber($('#id_planduration').val()) && isValidPositiveNumber($('#id_gracetime').val()) && isValidPositiveNumber($('#id_expirytime').val()))
+        {
+            if(!properCron($("#id_cron").val())){
+                show_error_alert( "Please change your cron expression and update the job record.", "Problematic Cron")
+                return
             }
-
-        })}
+            else{
+            submit_form_alert().then((res) => {
+                if(res.isConfirmed){
+                    var form = $(this);
+                    const params = { url: "{{ url('activity:ppm') }}", modal:false } 
+                    var payLoad =  {'formData':form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}
+                    const id = $("#id_pk").val() //form instance id
+                    if(id != 'None'){
+                        var newPayLoad = {...payLoad, 'pk':id}
+                        payLoad = newPayLoad
+                    }
+                    fire_ajax_form_post(params, payLoad)
+                    .done((data, status, xhr) => { //function to submit post request
+                        show_successful_save_alert(update= id != 'None' ? true : false)
+                        formSaved = true
+                        window.setTimeout(function() {
+                            window.location.href = `{{ url('activity:ppm') }}?id=${data.pk}`;
+                        }, 2000);
+                    })
+                }
+    
+            })}
+        }
     })
     //editior for reminder configuration table
     editor = new $.fn.dataTable.Editor({

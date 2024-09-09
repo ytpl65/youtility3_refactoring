@@ -35,7 +35,7 @@ Question Set List
 </div>
 {% endblock popup_alerts %}
 
-<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+<!--------- BEGIN EXTRA SCRIPTS ------------------------------>
 {% block extra_scripts %}
 <script>
 	var Qsettable             = null;
@@ -68,12 +68,12 @@ Question Set List
             scrollCollapse: true,
             scrollX:true, #}
 			columns:[
-				{data: 'id', visible:false, className:'noVis'},
-				{data: 'ctzoffset', visible:false, className:'noVis'},
+				{data: 'id', title:"ID", visible:false, className:'noVis'},
+				{data: 'ctzoffset', title:"Ctzoffset", visible:false, className:'noVis'},
 				{data: 'qsetname', title:'Name'},
 				{data: 'type', title:"Type"},
-				{data: 'cdtz', title:"Created Date"},
-				{data: 'mdtz', title:"Modified Date"},
+				{data: 'cdtz', title:"Created Date Time"},
+				{data: 'mdtz', title:"Modified Date Time"},
 				{data: 'bu__bucode', title:"Site Code", visible:false},
 				{data: 'bu__buname', title:"Site"},
 			],
@@ -100,7 +100,12 @@ Question Set List
 			],
 
 			buttons:[
-			 "searchBuilder",
+			 {
+				extend: 'searchBuilder',
+				config: {
+				columns: [2, 3, 4, 5, 6, 7]
+				}
+			 },
 			 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Question Set List`,
                     columns = ':visible',

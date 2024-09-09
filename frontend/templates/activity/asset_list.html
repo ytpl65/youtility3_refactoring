@@ -21,7 +21,7 @@ Asset Lists
 	</table>
 </div>
 {% endblock table %} 
-<!------------------ END PEOPLE TABLE --------------------------->
+<!------------------ END PEOPLE TABLE ---------------------------->
 
 
 {% block extra_scripts %}
@@ -59,7 +59,7 @@ $(document).ready(function () {
 				}
 			},
 			columns:[
-				{data: 'id', visible:false, defaultContent: "", className:'noVis'},
+				{data: 'id', title:"ID", visible:false, defaultContent: "", className:'noVis'},
 				{data: 'identifier',title:'Type', visible:false, defaultContent: ""},
 				{data: 'assetcode', title: 'Code'},
 				{data: 'assetname', title: 'Name'},
@@ -110,7 +110,7 @@ $(document).ready(function () {
 				}
 				},
 				{targets:7, data:"enable", render:function(data, type, row, meta){
-					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i>': '<i class="bi bi-x-circle-fill text-danger"></i>'				
+					return data === true ? '<i class="bi bi-check-circle-fill text-success"></i> Active': '<i class="bi bi-x-circle-fill text-danger"></i> Inactive'				
 				}
 				},
 
@@ -122,7 +122,12 @@ $(document).ready(function () {
 				}
 			},
 			buttons:[
-				"searchBuilder",
+				{
+					extend: 'searchBuilder',
+					config: {
+					columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+					}
+				},
 				{
 					text:'<i class="bi bi-file-bar-graph-fill text-primary"></i>',
 					titleAttr:"Asset Logs",

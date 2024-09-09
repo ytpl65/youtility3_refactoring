@@ -398,7 +398,6 @@ class WorkPermit(LoginRequiredMixin, View):
             return rp.JsonResponse({'data': objs}, status=200)
 
         if R.get('qsetid'):
-            print('R.get(qsetid)',R.get('qsetid'))
             import uuid
             wp_details = Wom.objects.get_workpermit_details(request, R['qsetid'])
             approver_codes = R['approvers'].split(',')
@@ -517,7 +516,6 @@ class WorkPermit(LoginRequiredMixin, View):
 
     def handle_valid_form(self, form, R,request, create=True):
         S = request.session
-        print("Request: ",request,R)
         permit_name = request.POST['permit_name']
         workpermit = form.save(commit=False)
         workpermit.uuid = request.POST.get('uuid')
@@ -949,12 +947,10 @@ class SLA_View(LoginRequiredMixin, View):
             return self.send_report(R, request)
         
         if action == 'approve_sla' and R.get('slaid'):
-            print("SLA Approve")
             S = request.session 
             wom = P['model'].objects.get(id = R['slaid'])
             sla_obj = ServiceLevelAgreement(filename='Vendor Performance Report', client_id=S['client_id'], formdata={'id':R['slaid'],'bu__buname':S['sitename'],'submit_button_flow':'true','filename':'Service Level Agreement','workpermit':wom.workpermit})
             sla_attachment = sla_obj.execute()
-            print("SLA Attachment: ",sla_attachment)
             if is_all_approved := check_all_approved(wom.uuid, request.user.peoplecode):
                 Wom.objects.filter(id=R['slaid']).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
                 if is_all_approved:

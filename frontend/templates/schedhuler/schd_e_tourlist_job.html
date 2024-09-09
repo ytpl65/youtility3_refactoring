@@ -36,7 +36,7 @@ ext_schdtour_list = 'External ScheduleTour List',
 {% endblock table %}
 <!-------------------------------------------- END Schedhuled External Tour TABLE ------------------------------------------->
 
-<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+<!--------- BEGIN EXTRA SCRIPTS ------------------------------>
 {% block extra_scripts %}
 <script>
 	var table           = null;
@@ -59,7 +59,7 @@ ext_schdtour_list = 'External ScheduleTour List',
                 url: '{{ url("schedhuler:schd_external_tour") }}?action=list'
             },
 			columns:[
-                {data: 'id', visible:false},
+                {data: 'id', title:"ID", visible:false},
                 {data: 'jobname', title: 'Name'},
                 {data: 'sitegrpname', title: 'Cluster'},
                 {data: 'assignedto', title:"People/Group", defaultContent:null, render:function(data, type, row, meta){
@@ -77,7 +77,7 @@ ext_schdtour_list = 'External ScheduleTour List',
                 {title: 'Duration', data: 'planduration'},
                 {title: 'Gracetime', data: 'gracetime'},
                 {title: 'Exp. Time', data: 'expirytime'},
-                {data: 'ctzoffset', visible:false, className:'noVis'},
+                {data: 'ctzoffset', title:"Ctzoffset", visible:false, className:'noVis'},
             ],
             columnDefs:[
                 {targets:0, data: 'id', visible: 'false', searchable:false, className:'noVis' },
@@ -86,6 +86,9 @@ ext_schdtour_list = 'External ScheduleTour List',
                     return `<a href="${urlname}?id=${row['id']}">${data}</a>`
                 }
                 },
+                {targets:4, data:"israndomized", render:function(data, type, row, meta){
+					return data ? 'Yes': 'No'				
+				}},
                 {targets:6, render:function(data, type, row, meta){
                     return convert_to_local(type, data, row)
                 }
@@ -103,7 +106,12 @@ ext_schdtour_list = 'External ScheduleTour List',
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             buttons:[
-                "searchBuilder",
+                {
+                    extend: 'searchBuilder',
+                    config: {
+                    columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                    }
+                },
                 dataTablesPDFConfig(
                     'Site: {{ request.user.bu.buname }}\nScheduled Route Plan List',
                     [1,2,3,4,5,6,7,8,9],

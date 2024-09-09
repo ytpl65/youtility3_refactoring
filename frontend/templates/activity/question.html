@@ -69,7 +69,7 @@ Question List
 			lengthMenu: [250,500,750,1000],
             pageLength: 500,
 			columns     : [
-                { "data": "id", className:"noVis" },
+                { "data": "id", title:"ID", className:"noVis" },
                 { "data": "quesname", title: "Name" },
                 { "data": "answertype", title: 'Type' },
                 { "data": "unit__tacode", title: 'Unit', visible:false},
@@ -87,12 +87,20 @@ Question List
 					render : function ( data, type, row, meta ) {
 						return `<a href="#" class="ques-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
 					}
-				}
+				},
+				{targets:4, data:"israndomized", render:function(data, type, row, meta){
+					return data ? 'Yes': 'No'				
+				}},
 			],
 			dom       :`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			buttons: [
-				"searchBuilder",
+				{
+					extend: 'searchBuilder',
+					config: {
+					columns: [1, 2, 3, 4]
+					}
+				},
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Questions List`,
                     columns = ':visible',

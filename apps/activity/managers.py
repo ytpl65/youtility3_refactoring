@@ -1764,9 +1764,11 @@ class JobManager(models.Manager):
                 return {'data':list(self.none()),}
             qset = self.filter(pk = ID).values('seqno', 'qset__qsetname', 'asset__assetname', 'expirytime', 'pk', 'asset_id', 'qset_id')
             return {'data':list(qset)}
-        except Exception  as e:
-            log.critical("something went wrong", exc_info=True)
-            return {'data':[], 'error':"Somthing went Wrong!"}
+        except Exception as e:
+            log.critical("Unexpected error",e ,exc_info=True)
+            if 'expirytime_gte_0_ck' in str(e):
+                return {'data': [], 'error': "Invalid Expiry Time. It must be greater than or equal to 0."}
+            return {'data': [], 'error': "Something went wrong!"}
     
     def handle_save_checkpoint_sitetour(self, request):
         R, S = request.POST, request.session

@@ -210,7 +210,7 @@ $(document).ready(() => {
 		lengthMenu: [250,500,750,1000],
         pageLength: 500,
         columns:[
-            {visible:false, data:"id", className:'noVis'},
+            {visible:false, title:"ID", data:"id", className:'noVis'},
             {title:"Code", data:"code"},
             {title:"Name", data:"name"},
             {title:"Type", data:"type__taname", render:function(data, type, row, meta){
@@ -221,7 +221,7 @@ $(document).ready(() => {
             {title:"Email", data:"email"},
             {title:"Created By", data:"cuser__peoplename"},
             {title:"Created On", data:"cdtz"},
-            {visible:false, data:"ctzoffset"},
+            {visible:false, title:"Ctzoffset", data:"ctzoffset", className:'noVis'},
         ],
         deferRender:true,
         responsive:true,
@@ -241,7 +241,12 @@ $(document).ready(() => {
         dom       :`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
                     <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
         buttons:[
-			"searchBuilder",
+				{
+					extend: 'searchBuilder',
+					config: {
+					columns: [1, 2, 3, 4, 5, 6, 7] // Include all columns except the ID & Ctzoffset column (index 0)
+					}
+				},
                 dataTablesPDFConfig(
                     title = `Site: {{request.user.bu.buname}}\n Vendor List`,
                     columns = ':visible',

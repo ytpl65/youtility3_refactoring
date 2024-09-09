@@ -698,7 +698,7 @@ style="background-image: url({% if peopleform.instance.peopleimg.name.endswith('
 {{ form_create('id_peopleform') }}
 {% endif %}
 {% endblock page_actions %}
-<!------------------- END FORM PAGE ACTIONS --------------->
+<!------------------- END FORM PAGE ACTIONS ---------------->
 {% endif %}
 
 
@@ -780,7 +780,7 @@ style="background-image: url({% if peopleform.instance.peopleimg.name.endswith('
 			var lng = userMarker.getPosition().lng();
 			const geocoder = new google.maps.Geocoder()
 			getAddressOfPoint(geocoder, {lat:lat, lng:lng}, (address) => {
-				$("#id_permanentaddress").val(address)
+				$("#id_permanentaddress").val(address.formattedAddress)
 			})
 			$("#open_map_perm").modal('hide');
 		});
@@ -791,7 +791,7 @@ style="background-image: url({% if peopleform.instance.peopleimg.name.endswith('
 			var lng = userMarker.getPosition().lng();
 			const geocoder = new google.maps.Geocoder()
 			getAddressOfPoint(geocoder, {lat:lat, lng:lng}, (address) => {
-				$("#id_currentaddress").val(address)
+				$("#id_currentaddress").val(address.formattedAddress)
 			})
 			$("#open_map_curr").modal('hide');
 		});

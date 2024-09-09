@@ -29,7 +29,7 @@ tr{
     <!------------------ END TABLE --------------------->
 
 {% endblock table %}
-<!------------------ --------------------------END BU TABLE ------------------------------------------------->
+<!------------------ --------------------------END BU TABLE -------------------------------------------------->
 
 
 {% block extra_scripts %}
@@ -54,11 +54,10 @@ var urlname = "{{ url('reports:schedule_email_report') }}"
                 },
                 {data:'report_sendtime', title:'Send time'},
                 {data:'enable', title:'Enable', render:function(data, type, row, meta){
-                    if(data){return "Yes"}
-                    return "No"
+                    return data ? '<i class="bi bi-check-circle-fill text-success"></i> Active': '<i class="bi bi-x-circle-fill text-danger"></i> Inactive'
                 }
                 },
-                {data:'cron', title:'Frequecy', render:function(data, type, row, meta){
+                {data:'cron', title:'Frequency', render:function(data, type, row, meta){
                     if(data){
                         return cronstrue.toString(data)
                     }return 'NA'

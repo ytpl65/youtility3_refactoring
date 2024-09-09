@@ -90,7 +90,7 @@ class Wom(BaseModel, TenantAwareModel):
     approvers       = ArrayField(models.CharField(max_length = 100, blank = True), null = True, blank = True, verbose_name= _("Approvers"))
     verifiers       = ArrayField(models.CharField(max_length = 100, blank = True), null = True, blank = True, verbose_name= _("Verifiers"))
     workpermit      = models.CharField(_('Work Permit'), choices=WorkPermitStatus.choices, default=WorkPermitStatus.NOTNEED, max_length=35)
-    verifiers_status= models.CharField(_('Verifier Status'),choices=WorkPermitVerifierStatus.choices,default=WorkPermitVerifierStatus.PENDING)
+    verifiers_status= models.CharField(_('Verifier Status'),max_length =  50, choices=WorkPermitVerifierStatus.choices,default=WorkPermitVerifierStatus.PENDING)
     priority        = models.CharField(_("Priority"), max_length = 50, choices = Priority.choices)
     qset            = models.ForeignKey("activity.QuestionSet", verbose_name = _("QuestionSet"), on_delete  = models.RESTRICT, null = True, blank = True)
     vendor          = models.ForeignKey('Vendor', null=True, blank=False, on_delete=models.RESTRICT, verbose_name='Vendor')
