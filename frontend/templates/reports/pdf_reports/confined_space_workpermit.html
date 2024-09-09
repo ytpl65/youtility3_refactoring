@@ -1,4 +1,4 @@
-{% extends "reports/pdf_reports/workpermit_base.html" %}
+{# {% extends "reports/pdf_reports/workpermit_base.html" %}
 
 {% block inline_css %}
 <style>
@@ -109,4 +109,249 @@
         class="w-100">{{ question['answer'] }}</span>
 </div>
 {% endfor %}
-{% endblock rwp_section %}
+{% endblock rwp_section %} #}
+
+
+
+
+{% extends "reports/pdf_reports/workpermit_base.html" %}
+
+{% block inline_css %}
+<style>
+.logos{
+    width: 5.8rem;
+    height: 3.8rem;
+}
+#subtitle{
+    background-color: #01579b;
+    color:white;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    border-radius: 25px;
+    font-size: 20px;
+    text-align: center;
+    white-space: nowrap;
+    display:flex;
+    justify-content: center;
+}
+.spaced-row-after td {
+            position: relative;
+        }
+
+.spaced-row-before td {
+            position: relative;
+        }
+.spaced-row-before td::before {
+    content: '';
+    display: block;
+    height: 10px; /* Adjust this value to increase/decrease space */
+}
+
+.spaced-row-after td::after {
+    content: '';
+    display: block;
+    height: 10px; /* Adjust this value to increase/decrease space */
+}
+li {
+    font-size: small;
+}
+.color-red {
+        color: red;
+        font-weight: bolder;
+    }
+</style>
+{% endblock inline_css %}
+
+{% block header_start %}
+<img src="{{ client_logo }}" alt="" class="logos">
+{% endblock header_start %}
+
+
+{% block header_end %}
+<div>
+    <img src="{{ static('assets/media/images/reportlogo.png') }}" alt="SPS" class="companylogo">
+</div>
+{% endblock header_end %}
+
+{% block header_center %}
+<div id="title">
+    <div>
+        <p id="main_title">{{ main_title }}</p>
+        <p id="subtitle">Work Permit And Entry Request</p>
+    </div>
+</div>
+{% endblock header_center %}
+
+{% block wp_info %}
+    <div class="mr ">
+    <br>
+    <br>
+    <table>
+        <thead>
+            <tr>
+                <th>
+                    Document Type: 
+                </th>
+                <th>
+                    {{ report_subtitle }}
+                </th>
+            </tr>
+        </thead>
+    </table>
+    </div>
+
+    {% if wp_info  %}
+    <table>
+        {% for info in wp_info['questions'] %}
+            {% if info['question__quesname'] != 'Name Of People Working/Visiting' %}
+            <div class="mr">
+                <tr>
+                    <td>
+                        <span>{{ info['question__quesname'] }}:</span>{{ "&nbsp;"*5 }}
+                    </td> 
+                    <td>
+                        <span class="subtle-black " style="width: 100%;">{{ info['answer'] }}</span>
+                    </td>
+                </tr>
+            </div>
+            {% else %}
+                {% set peoples = info['answer'].split(',') %}
+                    <tr class ="spaced-row-before" >
+                        <td>
+                            <span>Name of People Working:</span>{{ "&nbsp;"*5 }}
+                        </td>
+                        <td>
+                            <span class="subtle-black" >1. &nbsp;{{ peoples[0]  }}</span>
+                        </td>
+                    </tr>
+                    {% for i in range(1, peoples|count) %}
+                    <tr>
+                        <td></td>
+                        <td class="subtle-black">{{ loop.index + 1 }}. &nbsp;{{ peoples[i].strip() }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr  class ="spaced-row-after">
+                        <td></td>
+                    </tr>
+            {% endif %}
+        {% endfor %}
+    </table>
+    {% endif %}
+{% endblock wp_info %}
+
+
+{% block wp_sections %}
+<br>
+<table id="wp_sections">
+    {% for section in wp_sections %}
+        <thead>
+            <tr>
+                <th>{{ section['section'] }}</th>
+                <th>OPTIONS</th>
+                <th>ANSWERED</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for question in section['questions'] %}
+            <tr>
+                <td>{{ question['question__quesname'] }}</td>
+                {% set current_options = question['options'].replace(',', ' / ') %}
+                <td>{{ current_options }}</td>
+                <td>{{ question['answer'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    {% endfor %}
+</table>
+
+<div class="new-page border-class">
+    <br>
+    <br>
+    <table>
+        <thead>
+            <tr>
+                <th>HSEQ Guidelines/ Instructions:</th>
+            </tr>
+        </thead>
+    </table>
+    <h4>General:</h4>
+    <ol>
+        <li>This work permit is intended primarily to safeguard people and property of the company.</li>
+        <li>The work permit is required to work in all areas of the company.</li>
+        <li>Risk assessment should be carried out at site by initiator and executor before starting the work</li>
+        <li>In case of emergency the executor to stop the job and intimate the initiator and wait for further instruction.</li>
+        <li>Work at height /work alone activities are not permitted during night shifts.</li>
+        <li>This permit is valid up to the time mentioned and any extension of the work permit should be duly authorized by responsible person only.</li>
+        <li>Executor of this permit should have awareness of the PPE requirement to carryout assigned work.</li>
+        <li>Executor should report all the incidents/ hazards to the initiator.</li>
+        <li>Executor to carry a copy of the work permit during working hours and ensure the proper closing of the work permit.</li>
+        <li>Executor to ensure work area is clear and returned to safe condition, appropriate storage and avoid dumping of wastages in site</li>
+        <li>Ensure all debris are cleared and kept at the designated areas <span style="text-decoration: underline;"></span> on a daily basis.</li>
+    </ol>
+
+    <h4>Personal Protection Equipment (PPEs):</h4>
+    <ol>
+        <li>All personnel deployed for the work should have the appropriate PPE’s as required for the job</li>
+        <li>All Persons should be provided with Safety Shoes, Safety Goggles, gloves and Helmet as a basic minimum. </li>
+        <li>All PPE’s should be as per the IS / EN standards as applicable, as it is required to meet the basic Safety standard to protect the individual in case of any accident</li>
+        <li>Electrical tools should have proper insulation </li>
+        <li>All Electrical PPE’s should be as per the rating required – e.g. Insulated gloves, face shield, aprons etc</li>
+        <li>All tools and tackles should be checked before every use and stored properly in a safe manner</li>
+        <li>Where the sound level exposure is high then appropriate ear plug / ear muff to be used</li>
+        <li>MEWP/Lifting tools and tackles should be inspected by authorized personnel.</li>
+    </ol>
+    <h5>Confined space work:</h5>
+    <ol>
+        <li>Work inside any vessel, reactor, kettles, storage tanks, underground water tanks, ducts, drainage sewer septic tanks, sumps are categorized as confined work places.</li>
+        <li>Confined place work to be carried out only in the day time and under complete supervision only.</li>
+        <li>Full body harness with extended rope shall be provided to the person performing the work.</li>
+        <li>One trained standby person shall be available to watch and respond in case of any emergency.</li>
+        <li>Use of hand lamp / torch shall not exceed 12V inside the confined place.</li>
+        <li>Ventilate the area for at least 2 hrs. Before starting the activity.</li>
+        <li>Check for O2 and Other gas by using oxy meter or multi gas detector before entering the confined space. Oxygen level inside the confined space should be 19.6 % to 21%.</li>
+        <li>Emergency rescue device to be available at site.</li>
+        <li>Individual before entering confined space should wear the personal oximeter on body.</li>
+        <li>In case of reactor, advise to wear motion sensor device on body.</li>
+        <li>Appropriate respiratory mask to be worn as per for risk level in the activity.</li>
+        <li>Any hot work activity inside confined space must be properly risk assessed for the activity.</li>
+    </ol>
+
+    <h5>Working with Chemicals:</h5>
+    <ol>
+        <li>Use only approved chemicals you have been trained to use – if you don’t know it, don’t use it!</li>
+        <li>Wear the correct Personal Protective Equipment for the job and follow safety instructions.</li>
+        <li>Only use chemicals from containers or bottles with correct labels.</li>
+        <li>All Chemicals should be identified for hazards and assessed for risk.</li>
+        <li>Follow safe working procedures and advice from Material Safety Data Sheets and Safety Labels when transporting, storing, using and disposing chemicals.</li>
+        <li>All approved chemicals for use are to be recorded in a register.</li>
+        <li>Keep flammable chemical away from any heat source.</li>
+        <li>Use trays as secondary containment to contain any leaks and spills.</li>
+        <li>Clean up or report any chemical spills immediately.</li>
+        <li>Only use original containers/bottles/cans for storage and keep them closed when not in use.</li>
+    </ol>
+
+    <h4 class="color-red">Please Note:</h4>
+    <p>Kindly report to your Supervisor/Site Lead/HSE Manager:</p>
+    <ol>
+        <li>Any Hazards observed.</li>
+        <li>Incident / Near miss incident happen/ observed.</li>
+        <li>Any unsafe Act / Unsafe conditions observed.</li>
+        <li>In case of any doubt – STOP WORK and assess the risk before continuing with the activity.</li>
+        <li>Damaged equipment etc.</li>
+        <li>Any spills or leak observed.</li>
+    </ol>
+    <h4>Return Permit Details :</h4>
+    <table border="1">
+        {% for question in rwp_info['questions'] %}
+        <tr>
+            <td >{{ question['question__quesname'] }}</td>
+            <td >{{ question['answer'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+
+{% endblock wp_sections %}
