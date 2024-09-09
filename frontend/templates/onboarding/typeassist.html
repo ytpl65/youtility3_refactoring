@@ -66,7 +66,8 @@ TypeAssist List
             ],
 			deferRender: true,
 			responsive : true,
-			pageLength:19,
+			lengthMenu: [250,500,750,1000],
+            pageLength: 500,
 			order:[[1, 'asc']],
 			columnDefs:[
 				{targets:0, data: "id", visible:false, searchable:false, orderable:false},
@@ -121,8 +122,6 @@ TypeAssist List
 				}
 			]
 		})
-		
-		$('.btn').removeClass('dt-button')
 		
 
 		//END STYLING DATATABLE

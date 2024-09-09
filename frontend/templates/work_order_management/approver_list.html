@@ -49,7 +49,8 @@ const formid          = "#approverform"
             ajax:{
                 url:`${urlname}?action=list`
             },
-            pageLength:50,
+            lengthMenu: [250,500,750,1000],
+            pageLength: 500,
             columns:[
                 {visible:false, data:"id", title:"ID", className:'noVis'},
                 {title:"Approver For", data:"approverfor"},
