@@ -1,4 +1,4 @@
-{% extends "reports/pdf_reports/workpermit_base.html" %}
+{# {% extends "reports/pdf_reports/workpermit_base.html" %}
 
 {% block inline_css %}
 <style>
@@ -108,4 +108,264 @@
         class="w-100">{{ question['answer'] }}</span>
 </div>
 {% endfor %}
-{% endblock rwp_section %}
+{% endblock rwp_section %} #}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% extends "reports/pdf_reports/workpermit_base.html" %}
+
+{% block inline_css %}
+<style>
+.logos{
+    width: 5.8rem;
+    height: 3.8rem;
+}
+#subtitle{
+    background-color: #01579b;
+    color:white;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    border-radius: 25px;
+    font-size: 20px;
+    text-align: center;
+    white-space: nowrap;
+    display:flex;
+    justify-content: center;
+}
+.spaced-row-after td {
+            position: relative;
+        }
+
+.spaced-row-before td {
+            position: relative;
+        }
+.spaced-row-before td::before {
+    content: '';
+    display: block;
+    height: 10px; /* Adjust this value to increase/decrease space */
+}
+
+.spaced-row-after td::after {
+    content: '';
+    display: block;
+    height: 10px; /* Adjust this value to increase/decrease space */
+}
+li {
+    font-size: small;
+}
+.color-red {
+        color: red;
+        font-weight: bolder;
+    }
+</style>
+{% endblock inline_css %}
+
+{% block header_start %}
+<img src="{{ client_logo }}" alt="" class="logos">
+{% endblock header_start %}
+
+
+{% block header_end %}
+<div>
+    <img src="{{ static('assets/media/images/reportlogo.png') }}" alt="SPS" class="companylogo">
+</div>
+{% endblock header_end %}
+
+{% block header_center %}
+<div id="title">
+    <div>
+        <p id="main_title">{{ main_title }}</p>
+        <p id="subtitle">Work Permit And Entry Request</p>
+    </div>
+</div>
+{% endblock header_center %}
+
+{% block wp_info %}
+    <div class="mr ">
+    <br>
+    <br>
+    <table>
+        <thead>
+            <tr>
+                <th>
+                    Document Type: 
+                </th>
+                <th>
+                    {{ report_subtitle }}
+                </th>
+            </tr>
+        </thead>
+    </table>
+    </div>
+
+    {% if wp_info  %}
+    <table>
+        {% for info in wp_info['questions'] %}
+            {% if info['question__quesname'] != 'Name Of People Working/Visiting' %}
+            <div class="mr">
+                <tr>
+                    <td>
+                        <span>{{ info['question__quesname'] }}:</span>{{ "&nbsp;"*5 }}
+                    </td> 
+                    <td>
+                        <span class="subtle-black " style="width: 100%;">{{ info['answer'] }}</span>
+                    </td>
+                </tr>
+            </div>
+            {% else %}
+                {% set peoples = info['answer'].split(',') %}
+                    <tr class ="spaced-row-before" >
+                        <td>
+                            <span>Name of People Working:</span>{{ "&nbsp;"*5 }}
+                        </td>
+                        <td>
+                            <span class="subtle-black" >1. &nbsp;{{ peoples[0]  }}</span>
+                        </td>
+                    </tr>
+                    {% for i in range(1, peoples|count) %}
+                    <tr>
+                        <td></td>
+                        <td class="subtle-black">{{ loop.index + 1 }}. &nbsp;{{ peoples[i].strip() }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr  class ="spaced-row-after">
+                        <td></td>
+                    </tr>
+            {% endif %}
+        {% endfor %}
+    </table>
+    {% endif %}
+{% endblock wp_info %}
+
+
+{% block wp_sections %}
+<br>
+<table id="wp_sections">
+    {% for section in wp_sections %}
+        <thead>
+            <tr>
+                <th>{{ section['section'] }}</th>
+                <th>OPTIONS</th>
+                <th>ANSWERED</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for question in section['questions'] %}
+            <tr>
+                <td>{{ question['question__quesname'] }}</td>
+                {% set current_options = question['options'].replace(',', ' / ') %}
+                <td>{{ current_options }}</td>
+                <td>{{ question['answer'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    {% endfor %}
+</table>
+
+<div class="new-page border-class">
+    <br>
+    <br>
+    <table>
+        <thead>
+            <tr>
+                <th>HSEQ Guidelines/ Instructions:</th>
+            </tr>
+        </thead>
+    </table>
+    <h4>General:</h4>
+    <ol>
+        <li>This work permit is intended primarily to safeguard people and property of the company.</li>
+        <li>The work permit is required to work in all areas of the company.</li>
+        <li>Risk assessment should be carried out at site by initiator and executor before starting the work</li>
+        <li>In case of emergency the executor to stop the job and intimate the initiator and wait for further instruction.</li>
+        <li>Work at height /work alone activities are not permitted during night shifts.</li>
+        <li>This permit is valid up to the time mentioned and any extension of the work permit should be duly authorized by responsible person only.</li>
+        <li>Executor of this permit should have awareness of the PPE requirement to carryout assigned work.</li>
+        <li>Executor should report all the incidents/ hazards to the initiator.</li>
+        <li>Executor to carry a copy of the work permit during working hours and ensure the proper closing of the work permit.</li>
+        <li>Executor to ensure work area is clear and returned to safe condition, appropriate storage and avoid dumping of wastages in site</li>
+        <li>Ensure all debris are cleared and kept at the designated areas <span style="text-decoration: underline;"></span> on a daily basis.</li>
+    </ol>
+    <h4>Personal Protection Equipment (PPEs):</h4>
+    <ol>
+        <li>All personnel deployed for the work should have the appropriate PPE’s as required for the job</li>
+        <li>All Persons should be provided with Safety Shoes, Safety Goggles, gloves and Helmet as a basic minimum. </li>
+        <li>All PPE’s should be as per the IS / EN standards as applicable, as it is required to meet the basic Safety standard to protect the individual in case of any accident</li>
+        <li>Electrical tools should have proper insulation </li>
+        <li>All Electrical PPE’s should be as per the rating required – e.g. Insulated gloves, face shield, aprons etc</li>
+        <li>All tools and tackles should be checked before every use and stored properly in a safe manner</li>
+        <li>Where the sound level exposure is high then appropriate ear plug / ear muff to be used</li>
+        <li>MEWP/Lifting tools and tackles should be inspected by authorized personnel.</li>
+    </ol>
+    <h5>Hot Work:</h5>
+    <ol>
+        <li>Ensure the welding machine, gas cutting machine, drilling machine, grinding machines are in good condition before starting the job</li>
+        <li>Welding machine connection to be inspected/checked for proper fitting of lugs and sleeves, connection and earthing</li>
+        <li>Loose cable joints are not allowed for welding and other portable machines</li>
+        <li>In gas cutting machine flash back arrestor is mandatory.</li>
+        <li>Only trained and competent personnel allowed to carry out welding and gas cutting jobs.</li>
+        <li>Medical fitness check should be carried out/ available (chest x ray) as per the norms for all welders</li>
+        <li>Area should be cleared of all flammable /combustible material around the Hot work area, or ensure that the material is safely covered / protected using Fire retardant sheet/ blanket (11 mtr radius)</li>
+        <li>PPEs like welding shield, mask, Apron, welding goggles, leather gloves should be available.</li>
+        <li>Trained Fire Watcher should be deployed during the hot work activity.</li>
+        <li>Fire blanket / sheet to be utilized along with hard barricading as applicable.</li>
+        <li>Wind direction to be checked before start of work, and activity aligned to avoid any inhalation of fumes by the workers, if required smoke extractors to be used.</li>
+        <li>Appropriate fire extinguisher to be available at point of work</li>
+    </ol>
+    <h5>Working with flammable liquids/gases:</h5>
+    <ol>
+        <li>Follow safe working procedures and advice from Material Safety Data Sheets and Safety Labels when transporting, storing, using and disposing chemicals.</li>
+        <li>Keep flammable chemical away from any heat source.</li>
+        <li>Do not mix / store with other chemicals – segregate and store separately the flammable and corrosive chemicals.</li>
+        <li>Emergency response plan must be available and understood by all in case of inadvertent spill/ release of gases.</li>
+        <li>All gas cylinders should be stored in a safe manner and anchored to avoid any inadvertent fall risk.</li>
+        <li>All cylinders to have the safety cap on when not in use.</li>
+        <li>Flame proof/ intrinsically safe equipment to be used to avoid any spark.</li>
+        <li>Wear the correct Personal Protective Equipment for the job and follow safety norms and ensure signages for ease of understanding is available and displayed on site.</li>
+        <li>Segregate the cylinders and store them in upright condition in a ventilated area - with correct labels.</li>
+        <li>Report any leaks or any spills immediately.</li>
+        <li>Have a proper secondary containment area to arrest any leaks or spills.</li>
+    </ol>
+    
+
+    <h4 class="color-red">Please Note:</h4>
+    <p>Kindly report to your Supervisor/Site Lead/HSE Manager:</p>
+    <ol>
+        <li>Any Hazards observed.</li>
+        <li>Incident / Near miss incident happen/ observed.</li>
+        <li>Any unsafe Act / Unsafe conditions observed.</li>
+        <li>In case of any doubt – STOP WORK and assess the risk before continuing with the activity.</li>
+        <li>Damaged equipment etc.</li>
+        <li>Any spills or leak observed.</li>
+    </ol>
+    <h4>Return Permit Details :</h4>
+    <table border="1">
+        {% for question in rwp_info['questions'] %}
+        <tr>
+            <td >{{ question['question__quesname'] }}</td>
+            <td >{{ question['answer'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+
+{% endblock wp_sections %}

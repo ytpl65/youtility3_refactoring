@@ -227,13 +227,13 @@ class WorkOrderManager(models.Manager):
         app_verifier_status_data = obj['other_data']['wp_approvers'] 
         return app_verifier_status_data or []
     
-    def get_approver_verifier_status(self, womid):
-        if womid == 'None':return []
-        obj = self.filter(id = womid).values('other_data').first()
-        verifier_data = obj['other_data']['wp_verifiers']
-        approver_data = obj['other_data']['wp_approvers']
-        data = verifier_data + approver_data
-        return data
+    # def get_approver_verifier_status(self, womid):
+    #     if womid == 'None':return []
+    #     obj = self.filter(id = womid).values('other_data').first()
+    #     verifier_data = obj['other_data']['wp_verifiers']
+    #     approver_data = obj['other_data']['wp_approvers']
+    #     data = verifier_data + approver_data
+    #     return data
     
     def get_wom_status_chart(self, request):
         S,R = request.session, request.GET
