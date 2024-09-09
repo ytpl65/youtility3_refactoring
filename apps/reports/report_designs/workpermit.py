@@ -5,7 +5,7 @@ from apps.onboarding.models import Bt
 from apps.work_order_management.models import Wom
 from django.conf import settings
 from django.http.response import JsonResponse
-
+from apps.work_order_management.managers import WorkOrderManager
 import logging
 logger = logging.getLogger('__main__')
 log = logger
@@ -22,6 +22,11 @@ class WorkPermit(BaseReportsExport):
         used for pdf/html reports
         '''
         wp_info, wp_sections, rwp_section, sitename = Wom.objects.wp_data_for_report(self.formdata.get('id'))
+        obj = Wom.objects.filter(id = self.formdata.get('id')).values('other_data').first()
+        verifier_data = obj['other_data']['wp_verifiers']
+        approver_data = obj['other_data']['wp_approvers']
+        print(verifier_data)
+        print(approver_data)
         self.context = {
             'base_path': settings.BASE_DIR,
             'main_title':sitename,

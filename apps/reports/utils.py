@@ -194,7 +194,6 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         
         print("Attachment: ",att)
         filepath =  att[0]['filepath'][1:]
-        log.info("File path: ",filepath)
         if att:
             clientlogo_filepath = settings.MEDIA_URL + filepath + att[0]['filename']
         else:

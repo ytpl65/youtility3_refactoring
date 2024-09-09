@@ -227,13 +227,13 @@ class WorkOrderManager(models.Manager):
         app_verifier_status_data = obj['other_data']['wp_approvers'] 
         return app_verifier_status_data or []
     
-    def get_approver_verifier_status(self, womid):
-        if womid == 'None':return []
-        obj = self.filter(id = womid).values('other_data').first()
-        verifier_data = obj['other_data']['wp_verifiers']
-        approver_data = obj['other_data']['wp_approvers']
-        data = verifier_data + approver_data
-        return data
+    # def get_approver_verifier_status(self, womid):
+    #     if womid == 'None':return []
+    #     obj = self.filter(id = womid).values('other_data').first()
+    #     verifier_data = obj['other_data']['wp_verifiers']
+    #     approver_data = obj['other_data']['wp_approvers']
+    #     data = verifier_data + approver_data
+    #     return data
     
     def get_wom_status_chart(self, request):
         S,R = request.session, request.GET
@@ -350,12 +350,35 @@ class WorkOrderManager(models.Manager):
     #     wp_sections = wp_answers
     #     return wp_info, wp_sections, rwp_section, site.buname
 
+
+    def get_empty_rwp_section(self):
+        return {
+            'section':'THIS SECTION TO BE COMPLETED ON RETURN OF PERMIT',
+            'questions':[
+                {
+                    'question__quesname':'Permit Returned at',
+                    'answer':'',
+                },
+                {
+                    'question__quesname':'Work Checked at',
+                    'answer':'',
+                },
+                {
+                    'question__quesname':'Name of Requester',
+                    'answer':'',
+                }
+            ]
+        }
+
     def wp_data_for_report(self, id):
         site = self.filter(id=id).first().bu
         wp_answers = self.get_wp_answers(id)
         wp_info = wp_answers[0]
         wp_answers.pop(0)
         rwp_section = wp_answers.pop(-1)
+        if rwp_section['section'] == 'EMAIL':
+            rwp_section = self.get_empty_rwp_section()
+        print(rwp_section)
         wp_sections = wp_answers
         return wp_info, wp_sections, rwp_section, site.buname
     
