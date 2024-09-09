@@ -394,7 +394,7 @@ class WorkPermit(LoginRequiredMixin, View):
             return render(request, P['template_form'], cxt)
         
         if action == 'approver_list':
-            objs = Wom.objects.get_approver_list(R['womid'])
+            objs = Wom.objects.get_approver_verifier_status(R['womid'])
             return rp.JsonResponse({'data': objs}, status=200)
 
         if R.get('qsetid'):
@@ -862,7 +862,7 @@ class ApproverView(LoginRequiredMixin, View):
         # return cap_list data
         if R.get('template'): return render(request, P['template_list'])
         if R.get('action', None) == 'list':
-            objs = P['model'].objects.get_approver_list(request, P['fields'], P['related'])
+            objs = P['model'].objects.get_approver_verifier_status(request, P['fields'], P['related'])
             return  rp.JsonResponse(data = {'data':list(objs)})
             
 
@@ -942,7 +942,7 @@ class SLA_View(LoginRequiredMixin, View):
             return rp.JsonResponse(data = {'data':list(objs)},safe = False)
 
         if action == 'approver_list':
-            objs = Wom.objects.get_approver_list(R['womid'])
+            objs = Wom.objects.get_approver_verifier_status(R['womid'])
             return rp.JsonResponse({'data': objs}, status=200)
         
         if action == 'printReport':

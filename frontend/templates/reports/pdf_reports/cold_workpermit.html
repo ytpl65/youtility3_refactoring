@@ -20,6 +20,31 @@
     display:flex;
     justify-content: center;
 }
+.spaced-row-after td {
+            position: relative;
+        }
+
+.spaced-row-before td {
+            position: relative;
+        }
+.spaced-row-before td::before {
+    content: '';
+    display: block;
+    height: 10px; /* Adjust this value to increase/decrease space */
+}
+
+.spaced-row-after td::after {
+    content: '';
+    display: block;
+    height: 10px; /* Adjust this value to increase/decrease space */
+}
+li {
+    font-size: small;
+}
+.color-red {
+        color: red;
+        font-weight: bolder;
+    }
 </style>
 {% endblock inline_css %}
 
@@ -43,44 +68,68 @@
 </div>
 {% endblock header_center %}
 
-
 {% block wp_info %}
     <div class="mr ">
-        <span>Document Type:</span>{{ "&nbsp;"*5 }} <span
-            class="dashed-text bold-label" >{{ report_subtitle }}</span>
+    <br>
+    <br>
+    <table>
+        <thead>
+            <tr>
+                <th>
+                    Document Type: 
+                </th>
+                <th>
+                    {{ report_subtitle }}
+                </th>
+            </tr>
+        </thead>
+    </table>
     </div>
+
     {% if wp_info  %}
+    <table>
         {% for info in wp_info['questions'] %}
             {% if info['question__quesname'] != 'Name Of People Working/Visiting' %}
             <div class="mr">
-                <span>{{ info['question__quesname'] }}:</span>{{ "&nbsp;"*5 }} <span
-                    class="subtle-black dashed-text" style="width: 100%;">{{ info['answer'] }}</span>
+                <tr>
+                    <td>
+                        <span>{{ info['question__quesname'] }}:</span>{{ "&nbsp;"*5 }}
+                    </td> 
+                    <td>
+                        <span class="subtle-black " style="width: 100%;">{{ info['answer'] }}</span>
+                    </td>
+                </tr>
             </div>
             {% else %}
                 {% set peoples = info['answer'].split(',') %}
-                <table id="peoples">
-                    <tr>
-                        <td width="30%" class="subtle-black">Name of People Working:</td>
-                        <td class="subtle-black dashed-text">1. &nbsp;{{peoples[0] }}</td>
+                    <tr class ="spaced-row-before" >
+                        <td>
+                            <span>Name of People Working:</span>{{ "&nbsp;"*5 }}
+                        </td>
+                        <td>
+                            <span class="subtle-black" >1. &nbsp;{{ peoples[0]  }}</span>
+                        </td>
                     </tr>
                     {% for i in range(1, peoples|count) %}
                     <tr>
                         <td></td>
-                        <td class="subtle-black dashed-text">{{ loop.index + 1 }}. &nbsp;{{ peoples[i].strip() }}</td>
+                        <td class="subtle-black">{{ loop.index + 1 }}. &nbsp;{{ peoples[i].strip() }}</td>
                     </tr>
                     {% endfor %}
-                </table>
+                    <tr  class ="spaced-row-after">
+                        <td></td>
+                    </tr>
             {% endif %}
-
         {% endfor %}
+    </table>
     {% endif %}
 {% endblock wp_info %}
 
 
 {% block wp_sections %}
+<br>
 <table id="wp_sections">
     {% for section in wp_sections %}
-        {% if section['section'] != 'EMAIL' %}
         <thead>
             <tr>
                 <th>{{ section['section'] }}</th>
@@ -98,19 +147,74 @@
             </tr>
             {% endfor %}
         </tbody>
-        {% endif %}
     {% endfor %}
 </table>
-{% endblock wp_sections %}
 
+<div class="new-page border-class">
+    <br>
+    <br>
+    <table>
+        <thead>
+            <tr>
+                <th>HSEQ Guidelines/ Instructions:</th>
+            </tr>
+        </thead>
+    </table>
+    <h4>General:</h4>
+    <ol>
+        <li>This work permit is intended primarily to safeguard people and property of the company.</li>
+        <li>The work permit is required to work in all areas of the company.</li>
+        <li>Risk assessment should be carried out at site by initiator and executor before starting the work</li>
+        <li>In case of emergency the executor to stop the job and intimate the initiator and wait for further instruction.</li>
+        <li>Work at height /work alone activities are not permitted during night shifts.</li>
+        <li>This permit is valid up to the time mentioned and any extension of the work permit should be duly authorized by responsible person only.</li>
+        <li>Executor of this permit should have awareness of the PPE requirement to carryout assigned work.</li>
+        <li>Executor should report all the incidents/ hazards to the initiator.</li>
+        <li>Executor to carry a copy of the work permit during working hours and ensure the proper closing of the work permit.</li>
+        <li>Executor to ensure work area is clear and returned to safe condition, appropriate storage and avoid dumping of wastages in site</li>
+        <li>Ensure all debris are cleared and kept at the designated areas <span style="text-decoration: underline;"></span> on a daily basis.</li>
+    </ol>
+    <h4>Covid Protocol:</h4>
+    <p class="new-font-size">In view of the current pandemic kindly ensure that all the staff are informed and advised of the requirement for protection and safeguarding everyone from contracting the same. All need to follow the norms:</p>
+    <ul>
+        <li>Social distancing </li>
+        <li>Frequent washing of hands </li>
+        <li>Wear a mask properly</li>
+    </ul>
+    <p class="color-red">In case anyone is not well they should inform their supervisor and go for medical advice/ treatment. Anyone who is COVID positive or has come in close contact with a COVID positive patient, he/she should inform the team and quarantine themselves and follow medical advice.</p>
+    <h4>Personal Protection Equipment (PPEs):</h4>
+    <ol>
+        <li>All personnel deployed for the work should have the appropriate PPE’s as required for the job</li>
+        <li>All Persons should be provided with Safety Shoes, Safety Goggles, gloves and Helmet as a basic minimum. </li>
+        <li>All PPE’s should be as per the IS / EN standards as applicable, as it is required to meet the basic Safety standard to protect the individual in case of any accident</li>
+        <li>Electrical tools should have proper insulation </li>
+        <li>All Electrical PPE’s should be as per the rating required – e.g. Insulated gloves, face shield, aprons etc</li>
+        <li>All tools and tackles should be checked before every use and stored properly in a safe manner</li>
+        <li>Where the sound level exposure is high then appropriate ear plug / ear muff to be used</li>
+        <li>MEWP/Lifting tools and tackles should be inspected by authorized personnel.</li>
+    </ol>
 
-
-{% block rwp_section %}
-<p style="font-weight: 500;">{{ rwp_info['section'] }}</p>
-{% for question in rwp_info['questions'] %}
-<div class="mr">
-    <span style="color: rgb(47, 47, 47); font-weight:500">{{ question['question__quesname'] }}&nbsp;:</span>{{" "*5}}<span
-        class="w-100">{{ question['answer'] }}</span>
+    <h4 class="color-red">Please Note:</h4>
+    <p>Kindly report to your Supervisor/Site Lead/HSE Manager:</p>
+    <ol>
+        <li>Any Hazards observed.</li>
+        <li>Incident / Near miss incident happen/ observed.</li>
+        <li>Any unsafe Act / Unsafe conditions observed.</li>
+        <li>In case of any doubt – STOP WORK and assess the risk before continuing with the activity.</li>
+        <li>Damaged equipment etc.</li>
+        <li>Any spills or leak observed.</li>
+    </ol>
 </div>
-{% endfor %}
-{% endblock rwp_section %}
+<div>
+    <h4>Return Permit Details :</h4>
+    <table border="1">
+        {% for question in rwp_info['questions'] %}
+        <tr>
+            <td >{{ question['question__quesname'] }}</td>
+            <td >{{ question['answer'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock wp_sections %}

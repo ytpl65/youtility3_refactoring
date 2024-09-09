@@ -203,6 +203,19 @@ class WorkOrderManager(models.Manager):
             }
             wp_details.append(sq)
         return wp_details or self.none()
+
+
+    
+
+    def get_approver_verifier_status(self, womid):
+        if womid == 'None':return []
+        obj = self.filter(id = womid).values('other_data').first()
+        verifier_data = obj['other_data']['wp_verifiers']
+        approver_data = obj['other_data']['wp_approvers']
+        data = verifier_data + approver_data
+        for i in data:
+            i['name'] = People.objects.filter(peoplecode = i['name']).values('peoplename').first()['peoplename']
+        return data
     
 
     def get_approver_list(self, womid):
@@ -321,6 +334,15 @@ class WorkOrderManager(models.Manager):
     #     logger.info(f"{data = }")
     #     return data,permit_no
     
+    # def wp_data_for_report(self, id):
+    #     site = self.filter(id=id).first().bu
+    #     wp_answers = self.get_wp_answers(id)
+    #     wp_info = wp_answers[0]
+    #     wp_answers.pop(0)
+    #     rwp_section = wp_answers.pop(-1)
+    #     wp_sections = wp_answers
+    #     return wp_info, wp_sections, rwp_section, site.buname
+
     def wp_data_for_report(self, id):
         site = self.filter(id=id).first().bu
         wp_answers = self.get_wp_answers(id)

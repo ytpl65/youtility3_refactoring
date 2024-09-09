@@ -407,13 +407,18 @@ Work Permit Form
         };
 
         // Initialize date pickers
+        // Initialize date pickers
         document.addEventListener('DOMContentLoaded', function() {
             initializeDatePicker(wpConfig, "Permit valid from");
             initializeDatePicker(wpConfig, "Permit valid upto");
             initializeDatePicker(rwpConfig, "PERMIT RETURNED AT");
             initializeDatePicker(rwpConfig, "WORK CHECKED AT");
+            initializeDatePicker(wpConfig, "This Permit Is Valid From");
+            initializeDatePicker(wpConfig, "This Permit Is Valid To");
         });
 
+
+        // Function to initialize any missed date pickers
         // Function to initialize any missed date pickers
         function initializeMissedDatePickers() {
             document.querySelectorAll('.input-group').forEach(group => {
@@ -428,6 +433,10 @@ Work Permit Form
                         flatpickr(input, rwpConfig);
                     } else if (label.textContent.includes("WORK CHECKED AT")){
                         flatpickr(input, rwpConfig);
+                    }  else if (label.textContent.includes("This Permit Is Valid From")){
+                        flatpickr(input, wpConfig);
+                    } else if (label.textContent.includes("This Permit Is Valid To")){
+                        flatpickr(input, wpConfig);
                     }
                 }
             });
