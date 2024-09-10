@@ -109,7 +109,7 @@ def reject_workpermit_verifier(womuuid, usercode):
 def save_approvers_injson(wp):
     log.info("saving approvers started")
     wp_approvers = [
-        {'name': approver, 'status': 'PENDING','identifier':'APPROVER'} for approver in wp.approvers
+        {'name': People.objects.get(peoplecode=approver).peoplename, 'status': 'PENDING','identifier':'APPROVER','peoplecode':approver} for approver in wp.approvers
     ]
     wp.other_data['wp_approvers'] = wp_approvers
     wp.save()
@@ -119,7 +119,7 @@ def save_approvers_injson(wp):
 def save_verifiers_injson(wp):
     log.info("saving verifiers started")
     wp_verifiers = [
-        {'name': verifier, 'status':'PENDING','identifier':'VERIFIER'} for verifier in wp.verifiers
+        {'name': People.objects.get(peoplecode=verifier).peoplename, 'status':'PENDING','identifier':'VERIFIER','peoplecode':verifier} for verifier in wp.verifiers
     ]
     wp.other_data['wp_verifiers'] = wp_verifiers
     wp.save()
@@ -312,3 +312,5 @@ def get_report_object(permit_name):
             'Height Work Permit':wp.HeightWorkPermit,
             'Entry Request':wp.EntryRequest,
     }.get(permit_name)
+
+

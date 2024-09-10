@@ -342,6 +342,16 @@ li {
         <li>Damaged equipment etc.</li>
         <li>Any spills or leak observed.</li>
     </ol>
+    <div>
+        <h4>Approver and Verifier who accepted the Work Permit</h4>
+        <h5>Verifier: </h5> {{ verifers }}
+        <br>
+        <h5>Approver: </h5>{{ approvers }}
+    </div>
+    
+    
+    
+    
     <h4>Return Permit Details :</h4>
     <table border="1">
         {% for question in rwp_info['questions'] %}
