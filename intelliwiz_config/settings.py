@@ -365,7 +365,6 @@ ADMINS = [('wed_dev', "naveen.sargam@youtility.in")]
 username = os.getlogin()
 LOGGER_PATH = f'/home/{username}'
 
-# LOGGING CONF...
 import logging.config
 LOGGING_CONFIG = None
 LOGGING_CONFIG_ = { 
