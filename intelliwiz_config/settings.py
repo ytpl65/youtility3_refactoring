@@ -362,8 +362,8 @@ GRAPHQL_JWT = {
 }
 
 ADMINS = [('wed_dev', "naveen.sargam@youtility.in")]
-
-LOGGER_PATH = '/home/redmine'
+username = os.getlogin()
+LOGGER_PATH = f'/home/{username}'
 
 # LOGGING CONF...
 import logging.config
