@@ -851,7 +851,7 @@ class ApproverView(LoginRequiredMixin, View):
         'template_list': 'work_order_management/approver_list.html',
         'related'      : ['people', 'cuser'],
         'model'        : Approver,
-        'fields'       : ['approverfor', 'id','sites', 'cuser__peoplename', 'people__peoplename', 'forallsites', 'bu__buname', 'bu__bucode']
+        'fields'       : ['approverfor', 'id','sites', 'cuser__peoplename', 'people__peoplename', 'forallsites', 'bu__buname', 'bu__bucode','identifier']
     }
 
     def get(self, request, *args, **kwargs):
@@ -860,7 +860,7 @@ class ApproverView(LoginRequiredMixin, View):
         # return cap_list data
         if R.get('template'): return render(request, P['template_list'])
         if R.get('action', None) == 'list':
-            objs = P['model'].objects.get_approver_verifier_status(request, P['fields'], P['related'])
+            objs = P['model'].objects.get_approver_list(request, P['fields'], P['related'])
             return  rp.JsonResponse(data = {'data':list(objs)})
             
 

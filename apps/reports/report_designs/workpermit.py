@@ -5,7 +5,6 @@ from apps.onboarding.models import Bt
 from apps.work_order_management.models import Wom
 from django.conf import settings
 from django.http.response import JsonResponse
-from apps.work_order_management.managers import WorkOrderManager
 import logging
 logger = logging.getLogger('__main__')
 log = logger
@@ -21,12 +20,10 @@ class WorkPermit(BaseReportsExport):
         context data is the info that is passed in templates
         used for pdf/html reports
         '''
-        wp_info, wp_sections, rwp_section, sitename = Wom.objects.wp_data_for_report(self.formdata.get('id'))
-        obj = Wom.objects.filter(id = self.formdata.get('id')).values('other_data').first()
-        verifier_data = obj['other_data']['wp_verifiers']
-        approver_data = obj['other_data']['wp_approvers']
-        print(verifier_data)
-        print(approver_data)
+        id = self.formdata.get('id')
+        wp_info, wp_sections, rwp_section, sitename = Wom.objects.wp_data_for_report(id)
+        approvers = WorkPermit.__get_approvers_name(id)
+        verifiers = WorkPermit.__get_verifiers_name(id)
         self.context = {
             'base_path': settings.BASE_DIR,
             'main_title':sitename,
@@ -37,6 +34,8 @@ class WorkPermit(BaseReportsExport):
             'report_title': self.report_title,
             'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
+            'approvers':approvers,
+            'verifiers':verifiers
         }
 
 
@@ -52,6 +51,22 @@ class WorkPermit(BaseReportsExport):
         self.set_context_data()
         #return self.get_html_output()
         return self.get_pdf_output()
+    
+    def __get_approvers_name(id):
+        obj = Wom.objects.filter(id=id).values('other_data').first()
+        approver = ''
+        for record in obj['other_data']['wp_approvers']:
+            if record['status'] == 'APPROVED':
+                approver+= record['name'] + ' '
+        return approver
+
+    def __get_verifiers_name(id):
+        obj = Wom.objects.filter(id=id).values('other_data').first()
+        verifier = ''
+        for record in obj['other_data']['wp_verifiers']:
+            if record['status'] == 'APPROVED':
+                verifier+= record['name'] + ' '
+        return verifier
 
 
 

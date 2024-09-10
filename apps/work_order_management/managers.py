@@ -172,22 +172,7 @@ class WorkOrderManager(models.Manager):
         return rwp_details or self.none()
             
         
-    
-    # def get_wp_answers(self, womid):
-    #     childwoms = self.filter(parent_id = womid).order_by('seqno')
-    #     work_permit_no = childwoms[0].other_data['wp_seqno']
-    #     logger.info(f"{childwoms = }")
-    #     wp_details = []
-    #     for childwom in childwoms:
-    #         sq = {
-    #             "section":childwom.description,
-    #             "sectionID":childwom.seqno,
-    #             'questions':childwom.womdetails_set.values(
-    #                 'question__quesname', 'answertype', 'answer', 'qset_id',
-    #                 'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
-    #         }
-    #         wp_details.append(sq)
-    #     return [work_permit_no,wp_details or self.none()]
+ 
 
     def get_wp_answers(self, womid):
         childwoms = self.filter(parent_id = womid).order_by('seqno')
@@ -207,16 +192,6 @@ class WorkOrderManager(models.Manager):
 
     
 
-    def get_approver_verifier_status(self, womid):
-        if womid == 'None':return []
-        obj = self.filter(id = womid).values('other_data').first()
-        verifier_data = obj['other_data']['wp_verifiers']
-        approver_data = obj['other_data']['wp_approvers']
-        data = verifier_data + approver_data
-        for i in data:
-            i['name'] = People.objects.filter(peoplecode = i['name']).values('peoplename').first()['peoplename']
-        return data
-    
 
     def get_approver_list(self, womid):
         if womid == 'None':return []
@@ -227,13 +202,13 @@ class WorkOrderManager(models.Manager):
         app_verifier_status_data = obj['other_data']['wp_approvers'] 
         return app_verifier_status_data or []
     
-    # def get_approver_verifier_status(self, womid):
-    #     if womid == 'None':return []
-    #     obj = self.filter(id = womid).values('other_data').first()
-    #     verifier_data = obj['other_data']['wp_verifiers']
-    #     approver_data = obj['other_data']['wp_approvers']
-    #     data = verifier_data + approver_data
-    #     return data
+    def get_approver_verifier_status(self, womid):
+        if womid == 'None':return []
+        obj = self.filter(id = womid).values('other_data').first()
+        verifier_data = obj['other_data']['wp_verifiers']
+        approver_data = obj['other_data']['wp_approvers']
+        data = verifier_data + approver_data
+        return data
     
     def get_wom_status_chart(self, request):
         S,R = request.session, request.GET
