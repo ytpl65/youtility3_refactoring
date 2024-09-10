@@ -180,7 +180,7 @@ Question Set
                 .done((data, status, xhr) => {
                     show_successful_delete_alert() //defined in customjs
                     window.setTimeout(function() {
-                        window.location.href = "{{ url('activity:checklist') }}?action=form";
+                        window.location.href = "{{ url('activity:checklist') }}?template=true";
                     }, 2000);
                 })
                 .fail((xhr, status, error) => {

@@ -122,7 +122,7 @@ class EscalationMatrix(BaseModel, TenantAwareModel):
     assignedgroup      = models.ForeignKey('peoples.Pgroup', null = True, blank = True, on_delete = models.RESTRICT, related_name="escalation_grps")
     bu                 = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT)
     escalationtemplate = models.ForeignKey('onboarding.TypeAssist', null=True, blank=True, related_name="esc_types", on_delete=models.RESTRICT)
-    notify             = models.TextField(blank = True, null = True)
+    notify             = models.EmailField(blank = True, null = True)
     client             = models.ForeignKey("onboarding.Bt", null = True,blank = True, on_delete = models.RESTRICT, related_name='esc_clients')
 
     objects = ESCManager() 
@@ -130,3 +130,14 @@ class EscalationMatrix(BaseModel, TenantAwareModel):
     class Meta(BaseModel.Meta):
         db_table = 'escalationmatrix'
         get_latest_by = ["mdtz", 'cdtz']
+        constraints         = [
+            models.CheckConstraint(
+                check = models.Q(frequencyvalue__gte = 0),
+                name='frequencyvalue_gte_0_ck'
+            ),
+            models.CheckConstraint(
+                  check=models.Q(notify__isnull=True) | models.Q(notify='') | models.Q(notify__regex=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'),
+                name='valid_notify_format'
+            ),
+         
+        ]

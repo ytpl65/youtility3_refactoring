@@ -178,7 +178,7 @@ Location Form
                 .done((data, status, xhr) => {
                     show_successful_delete_alert() //defined in customjs
                     window.setTimeout(function() {
-                        window.location.href = "{{ url('activity:location') }}?action=form";
+                        window.location.href = "{{ url('activity:location') }}?template=true";
                     }, 2000);
                 })
                 .fail((xhr, status, error) => {

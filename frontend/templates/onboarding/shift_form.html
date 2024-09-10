@@ -110,12 +110,10 @@ Shift Form
 {% if shift_form.instance.id %}
 <div class="row">
   <div class="card">
-    <div class="card-header ps-0 mb-0">
-      <h4 class="ch4">Designation Count :-&nbsp;<i class="fas text-white fa-layer-group ch4"></i></h4>
+    <div class="ps-0 mt-5 mb-2">
+      <h5 class="ch4">Designation Count&nbsp;<i class="fas text-white fa-layer-group ch4"></i></h5>
     </div>
-    <div class="card-body pt-0">
-      <table id="People_count_details" class="display cell-border compact hover nowrap"></table>
-    </div>
+    <table id="People_count_details" class="display cell-border compact hover nowrap"></table>
   </div>
 </div>
 {% endif%}
@@ -385,9 +383,9 @@ Shift Form
 
         editor.on('preSubmit', function(e, data, action) {
             let totalCount = calculateTotalPeopleCount();
+            // Add or subtract the count value from the new/edited row
+            const rowCount = parseInt(data.data[Object.keys(data.data)[0]].count || 0);
             if (action === 'create' || action === 'edit') {
-                // Add or subtract the count value from the new/edited row
-                const rowCount = parseInt(data.data[Object.keys(data.data)[0]].count || 0);
                 if (action === 'edit') {
                     // If editing, subtract the old value first
                     const currentRowData = getCurrentEditingRow(editor, table);
@@ -402,6 +400,11 @@ Shift Form
 
             if (!validatePeopleCount(totalCount)) {
                 this.error('count', 'The total people count exceeds the allowed number of people for this shift.');
+                return false;
+            }
+            
+            if (!isValidPositiveNumber(rowCount.toString())) {
+                this.error('count', 'Enter Positive Integer Number Only.');
                 return false;
             }
         });
@@ -463,7 +466,7 @@ Shift Form
         return totalCount <= formPeopleCount;
     }
 
-        });
+    });
         
 </script>
 {% endblock extra_scripts %}

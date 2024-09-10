@@ -5,6 +5,9 @@ from django.db.models import Q, When, Case, F, CharField, Value as V
 from django.db.models.functions import Cast
 from apps.onboarding.models import TypeAssist
 from apps.peoples.models import Pgbelonging
+import logging
+logger = logging.getLogger('__main__')
+log = logger
 
 class TicketManager(models.Manager):
     use_in_migrations = True
@@ -134,36 +137,43 @@ class ESCManager(models.Manager):
     
     
     def handle_reminder_config_postdata(self,request):
-        
-        P, S = request.POST, request.session
-        cdtz = datetime.now(tz = timezone.utc)
-        mdtz = datetime.now(tz = timezone.utc)
-        ppmjob = TypeAssist.objects.get(tatype__tacode='ESCALATIONTEMPLATE', tacode="JOB")
-        PostData = {
-            'cdtz':cdtz, 'mdtz':mdtz, 'cuser':request.user, 'muser':request.user,
-            'level':1, 'job_id':P['jobid'], 'frequency':P['frequency'], 'frequencyvalue':P['frequencyvalue'],
-            'notify':P['notify'], 'assignedperson_id':P['peopleid'], 'assignedgroup_id':P['groupid'], 
-            'bu_id':S['bu_id'], 'escalationtemplate':ppmjob, 'client_id':S['client_id'], 
-            'ctzoffset':P['ctzoffset']
-        }
-        if P['action'] == 'create':
-            if self.filter(
-                job_id = P['jobid'],
-                frequency = PostData['frequency'], frequencyvalue = PostData['frequencyvalue'], 
-                ).exists():
-                return {'data':list(self.none()), 'error':'Warning: Record already added!'}
-            ID = self.create(**PostData).id
-        
-        elif P['action'] == 'edit':
-            PostData.pop('cdtz')
-            PostData.pop('cuser')
-            if updated := self.filter(pk=P['pk']).update(**PostData):
-                ID = P['pk']
-        else:
-            self.filter(pk = P['pk']).delete()
-            return {'data':list(self.none()),}
-        qset = self.filter(pk = ID).values('notify', 'frequency', 'frequencyvalue', 'id')
-        return {'data':list(qset)}
+        try:
+            P, S = request.POST, request.session
+            cdtz = datetime.now(tz = timezone.utc)
+            mdtz = datetime.now(tz = timezone.utc)
+            ppmjob = TypeAssist.objects.get(tatype__tacode='ESCALATIONTEMPLATE', tacode="JOB")
+            PostData = {
+                'cdtz':cdtz, 'mdtz':mdtz, 'cuser':request.user, 'muser':request.user,
+                'level':1, 'job_id':P['jobid'], 'frequency':P['frequency'], 'frequencyvalue':P['frequencyvalue'],
+                'notify':P['notify'], 'assignedperson_id':P['peopleid'], 'assignedgroup_id':P['groupid'], 
+                'bu_id':S['bu_id'], 'escalationtemplate':ppmjob, 'client_id':S['client_id'], 
+                'ctzoffset':P['ctzoffset']
+            }
+            if P['action'] == 'create':
+                if self.filter(
+                    job_id = P['jobid'],
+                    frequency = PostData['frequency'], frequencyvalue = PostData['frequencyvalue'], 
+                    ).exists():
+                    return {'data':list(self.none()), 'error':'Warning: Record already added!'}
+                ID = self.create(**PostData).id
+            
+            elif P['action'] == 'edit':
+                PostData.pop('cdtz')
+                PostData.pop('cuser')
+                if updated := self.filter(pk=P['pk']).update(**PostData):
+                    ID = P['pk']
+            else:
+                self.filter(pk = P['pk']).delete()
+                return {'data':list(self.none()),}
+            qset = self.filter(pk = ID).values('notify', 'frequency', 'frequencyvalue', 'id')
+            return {'data':list(qset)}
+        except Exception as e:
+            log.critical("Unexpected error", exc_info=True)
+            if 'frequencyvalue_gte_0_ck' in str(e):
+                return {'data': [], 'error': "Invalid Reminder Before. It must be greater than or equal to 0."}
+            if 'valid_notify_format' in str(e):
+                return {'data': [], 'error': "Invalid Email ID format. Please enter a valid email address."}
+            return {'data': [], 'error': "Something went wrong!"}
     
 
     def get_escalation_listview(self, request):
@@ -181,40 +191,46 @@ class ESCManager(models.Manager):
     
     
     def handle_esclevel_form_postdata(self,request):
+        try:
+            P, S = request.POST, request.session
+            cdtz = datetime.now(tz = timezone.utc)
+            mdtz = datetime.now(tz = timezone.utc)
+            PostData = {
+                'cdtz':cdtz, 'mdtz':mdtz, 'cuser':request.user, 'muser':request.user,
+                'level':P['level'], 'job_id':1, 'frequency':P['frequency'], 'frequencyvalue':P['frequencyvalue'],
+                'notify':"", 'assignedperson_id':P['assignedperson'], 'assignedgroup_id':P['assignedgroup'], 
+                'assignedfor':P['assignedfor'],
+                'bu_id':S['bu_id'], 'escalationtemplate_id':P['escalationtemplate_id'], 'client_id':S['client_id'], 
+                'ctzoffset':P['ctzoffset']
+            }
         
-        P, S = request.POST, request.session
-        cdtz = datetime.now(tz = timezone.utc)
-        mdtz = datetime.now(tz = timezone.utc)
-        PostData = {
-            'cdtz':cdtz, 'mdtz':mdtz, 'cuser':request.user, 'muser':request.user,
-            'level':P['level'], 'job_id':1, 'frequency':P['frequency'], 'frequencyvalue':P['frequencyvalue'],
-            'notify':"", 'assignedperson_id':P['assignedperson'], 'assignedgroup_id':P['assignedgroup'], 
-            'assignedfor':P['assignedfor'],
-            'bu_id':S['bu_id'], 'escalationtemplate_id':P['escalationtemplate_id'], 'client_id':S['client_id'], 
-            'ctzoffset':P['ctzoffset']
-        }
-        if P['action'] == 'create':
-            if self.filter(
-                (Q(assignedgroup_id = P['assignedgroup']) & Q(assignedperson_id = P['assignedperson'])),
-                escalationtemplate_id = P['escalationtemplate_id'], 
-                ).exists():
-                return {'data':list(self.none()), 'error':'Warning: Record with this escalation template and people is already added!'}
-            ID = self.create(**PostData).id
-        
-        elif P['action'] == 'edit':
-            PostData.pop('cdtz')
-            PostData.pop('cuser')
-            if updated := self.filter(pk=P['pk']).update(**PostData):
-                ID = P['pk']
-        else:
-            self.filter(pk = P['pk']).delete()
-            return {'data':list(self.none()),}
-        qset = self.filter(pk = ID).values(
-            'assignedfor', 'assignedperson__peoplename', 'assignedperson__peoplecode', 
-            'assignedgroup__groupname', 'frequency', 'frequencyvalue', 'id', 'level',
-            'assignedperson_id', 'assignedgroup_id')
-        return {'data':list(qset)}
-    
+            if P['action'] == 'create':
+                if self.filter(
+                    (Q(assignedgroup_id = P['assignedgroup']) & Q(assignedperson_id = P['assignedperson'])),
+                    escalationtemplate_id = P['escalationtemplate_id'], 
+                    ).exists():
+                    return {'data':list(self.none()), 'error':'Warning: Record with this escalation template and people is already added!'}
+                ID = self.create(**PostData).id
+            
+            elif P['action'] == 'edit':
+                PostData.pop('cdtz')
+                PostData.pop('cuser')
+                if updated := self.filter(pk=P['pk']).update(**PostData):
+                    ID = P['pk']
+            else:
+                self.filter(pk = P['pk']).delete()
+                return {'data':list(self.none()),}
+            qset = self.filter(pk = ID).values(
+                'assignedfor', 'assignedperson__peoplename', 'assignedperson__peoplecode', 
+                'assignedgroup__groupname', 'frequency', 'frequencyvalue', 'id', 'level',
+                'assignedperson_id', 'assignedgroup_id')
+            return {'data':list(qset)}
+        except Exception as e:
+            log.critical("Unexpected error", exc_info=True)
+            if 'frequencyvalue_gte_0_ck' in str(e):
+                return {'data': [], 'error': "Invalid Value. It must be greater than or equal to 0."}
+            return {'data': [], 'error': "Something went wrong!"}
+
             
         
         

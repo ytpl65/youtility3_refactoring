@@ -42,176 +42,157 @@
 <!------------------------------ START PAGE BODY CONTAINER -------------------------->
 {% block pagebody_container %}
 <div class="row gy-3">
-    <div class="db_portlet col-xl-3 col-md-4 col-lg-6 col-sm-12 d-none" data-portlet-id="1" id="TASKSCARD">
-        {% include "dashboard/RP_d/partials/dashboard_cards/partial_taskstats_card.html" %}
-    </div>
-    <div class="db_portlet col-xl-3 col-md-4  col-lg-6 h-xl-75 col-sm-12 d-none" data-portlet-id = "2" id="ASSETSCARD">
-        <div class="card card-flush h-lg-100">
-            <div class="card-header  mb-3">
-                <h3 class="card-title align-items-start flex-column pt-9">
-                    <span class="card-label fw-bold y-primary fw-bold fs-1"  style="color: #01579b;">Assets Status</span>
-                    {# <span class="text-gray-400 mt-1 fw-semibold fs-6">Total <span id="total_assets"></span> Assets and <span id="total_locations"></span> locations</span> #}
-                </h3>
-            </div>
-            <div class="card-body pb-0 pt-7 px-2 mt-n12">
-                <div id="assets_status_chart"></div>
-            </div>
-
-        </div>
-    </div>
-    <div class="db_portlet col-xl-3 col-md-4 accordion-buttoncol-lg-6 col-sm-12 d-none"  data-portlet-id = "3" id="TOURCARD">
-        {% include "dashboard/RP_d/partials/dashboard_cards/partial_guardtour_card.html" %}
-    </div>
-    <div class="db_portlet col-xl-3  col-md-4  col-lg-6 h-xl-75 col-sm-12 d-none"  data-portlet-id ="4" id="ALERTSCARD">
-        <div class="card card-flush h-lg-100">
-            <div class="card-header mb-3">
-                <h3 class="card-title align-items-start pt-9 flex-column">
-                    <span class="card-label fw-bold fs-1"  style="color: #01579b;">Alerts</span>
-                    {# <span class="text-gray-400 mt-1 fw-semibold fs-6">Total <span id="total_alerts"></span> Alerts</span> #}
-                </h3>
-            </div>
-            <div class="card-body pb-0 pt-7 ps-6" style="height: 350px;">
-                <div class="alerts_not_found">
-                    <span>No Data Found <i class="bi bi-exclamation-circle text-danger fs-5"></i></span>
-                    <div>From&nbsp;<span class="from"></span> to&nbsp; <span class="upto"></span></div>
-                </div>
-                <div id="alerts_donut_chart"></div>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-4">
+        <div class="col">
+            <div class="db_portlet card card-flush h-100" data-portlet-id="1" id="TASKSCARD">
+                {% include "dashboard/RP_d/partials/dashboard_cards/partial_taskstats_card.html" %}
             </div>
         </div>
-    </div>
-    <div class="db_portlet col-xl-3 col-md-4  col-lg-6 col-sm-12 d-none"  data-portlet-id ="5"id="PPMCARD">
-        {% include "dashboard/RP_d/partials/dashboard_cards/partial_ppm_card.html" %}
-    </div>
-    <div class="col-xl-3 col-md-4 col-lg-6 col-sm-12">
-        <div class="mt-0 p-2">
-            <div class="db_portlet row card col-lg-12 portlet d-none  mb-2 p-2" data-portlet-id ="6" id="PORTLET_SOS_ALERTS">
-                <div class="counter card-body bg-gray-100 bg-opacity-60 p-2 rounded-3">
-                    <div class="d-flex count-item justify-content-between">
-                        <i class="fas text-white align-middle p-4 yiconpadd yicon text-danger fa-exclamation-triangle"></i>
-                        <div class="pe-3" data-cardtype='SOSALERTS'>
-                            <h6 class="pb-1 y-primary  timer count-title text-end count-number" id="sos_count">
-
-                            </h6>
-                            <p class="h4 text-gray-500 fw-semibold fs-6">SOS Alerts</p>
-                        </div>
-                    </div>
+        <div class="col">
+            <div class="db_portlet card card-flush h-100" data-portlet-id="2" id="ASSETSCARD">
+                <div class="card-header mb-3">
+                    <h3 class="card-title align-items-start flex-column pt-9">
+                        <span class="card-label fw-bold y-primary fw-bold fs-1" style="color: #01579b;">Assets Status</span>
+                    </h3>
+                </div>
+                <div class="card-body pb-0 pt-7 px-2 mt-n12">
+                    <div id="assets_status_chart"></div>
                 </div>
             </div>
-            <div class="db_portlet row card col-lg-12 portlet d-none mb-2 p-2 " data-portlet-id ="7" id="PORTLET_INCIDENTREPORTS">
-                <div class="card-body counter  bg-gray-100 bg-opacity-60  p-2 rounded-3 ">
-                    <div class="d-flex count-item justify-content-between">
-                        {# <i class="fas text-white p-4 yiconpadd yicon fa-clipboard-user y-primary fs-1"></i> #}
-                        <i class="fas text-white p-4 yiconpadd yicon text-start text-warning fa-file-medical-alt"></i>
-                        <div class="pe-3" data-cardtype='INCREPORTS'>
-                            <h6 class="pb-1 y-primary text-end timer count-title count-number" id="ir_count"></h6>
-                            <p class="h4 text-gray-500 fw-semibold fs-6">Incident Reports</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="db_portlet row card col-lg-12 portlet d-none mb-2 p-2" data-portlet-id ="8" id="PORTLET_FR_FAILURES">
-                <div class="card-body counter  bg-gray-100 bg-opacity-60  p-2 rounded-3">
-                    <div class="d-flex count-item justify-content-between">
-                        <i class="bi bi-person-bounding-box yiconpadd yicon p-4 y-primary"></i>
-                        <div class="pe-3" data-cardtype='ATTENDANCE'>
-                            <h6 class="pb-1 y-primary  text-end timer count-title count-number" id="att_count"></h6>
-                            <p class="h4 text-gray-500 fw-semibold fs-6">Attendance</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="db_portlet row card col-lg-12 portlet d-none mb-2 p-2" data-portlet-id ="9" id="PORTLET_ROUTES">
-                <div class="card-body counter  bg-gray-100 bg-opacity-60 p-2 rounded-3">
-                    <div class="d-flex count-item justify-content-between">
-                        <i class="fas text-white yicon yiconpadd text-success p-4 fa-route"></i>
-                        <div class="pe-3" data-cardtype='ROUTES'>
-                            <h6 class="pb-1 y-primary text-end timer count-title count-number" id="route_count">
-                            </h6>
-                            <p class="h4 text-gray-500 fw-semibold fs-6">Routes</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
         </div>
-    </div>
+        <div class="col">
+            <div class="db_portlet card card-flush h-100" data-portlet-id="3" id="TOURCARD">
+                {% include "dashboard/RP_d/partials/dashboard_cards/partial_guardtour_card.html" %}
+            </div>
+        </div>
+        <div class="col">
+            <div class="db_portlet card card-flush h-100" data-portlet-id="4" id="ALERTSCARD">
+                <div class="card-header mb-3">
+                    <h3 class="card-title align-items-start pt-9 flex-column">
+                        <span class="card-label fw-bold fs-1" style="color: #01579b;">Alerts</span>
+                    </h3>
+                </div>
+                <div class="card-body pb-0 pt-7 ps-6">
+                    <div class="alerts_not_found">
+                        <span>No Data Found <i class="bi bi-exclamation-circle text-danger fs-5"></i></span>
+                        <div>From&nbsp;<span class="from"></span> to&nbsp; <span class="upto"></span></div>
+                    </div>
+                    <div id="alerts_donut_chart"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="db_portlet card card-flush h-100" data-portlet-id="5" id="PPMCARD">
+                {% include "dashboard/RP_d/partials/dashboard_cards/partial_ppm_card.html" %}
+            </div>
+        </div>
+        <div class="col">
+            <div class="db_portlet card card-flush h-100" data-portlet-id="10" id="TICKETSCARD">
+                <div class="card-header mb-3">
+                    <h3 class="card-title align-items-start flex-column pt-9">
+                        <span class="card-label fw-bold y-primary fw-bold fs-1" style="color: #01579b;">Ticket Metrics</span>
+                    </h3>
+                </div>
+                <div class="card-body pb-0 pt-7 px-2 ps-6">
+                    <div class="tickets_not_found">
+                        <span>No Data Found <i class="bi bi-exclamation-circle text-danger fs-5"></i></span>
+                        <div>From&nbsp;<span class="from"></span> to&nbsp; <span class="upto"></span></div>
+                    </div>
+                    <div id="tickets_status_chart"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="mt-0 p-2">
+                <div class="db_portlet row card portlet d-none  mb-2 p-2" data-portlet-id ="6" id="PORTLET_SOS_ALERTS">
+                    <div class="counter card-body bg-gray-100 bg-opacity-60 p-2 rounded-3">
+                        <div class="d-flex count-item justify-content-between">
+                            <i class="fas text-white align-middle p-4 yiconpadd yicon text-danger fa-exclamation-triangle"></i>
+                            <div class="pe-3" data-cardtype='SOSALERTS'>
+                                <h6 class="pb-1 y-primary  timer count-title text-end count-number" id="sos_count">
     
-    <div class="db_portlet col-xl-3 col-lg-6 h-xl-75 col-sm-12 d-none" data-portlet-id ="10" id="TICKETSCARD">
-        <div class="card card-flush h-lg-100">
-            <div class="card-header  mb-3">
-                <h3 class="card-title align-items-start flex-column pt-9">
-                    <span class="card-label fw-bold y-primary fw-bold fs-1"  style="color: #01579b;">Ticket Metrics</span>
-                    {# <span class="text-gray-400 mt-1 fw-semibold fs-6">Total <span id="total_assets"></span> Assets and <span id="total_locations"></span> locations</span> #}
-                </h3>
-            </div>
-            <div class="card-body pb-0 pt-7 px-2 ps-6" style="height: 350px;">
-                <div class="tickets_not_found">
-                    <span>No Data Found <i class="bi bi-exclamation-circle text-danger fs-5"></i></span>
-                    <div>From&nbsp;<span class="from"></span> to&nbsp; <span class="upto"></span></div>
+                                </h6>
+                                <p class="h4 text-gray-500 fw-semibold fs-6">SOS Alerts</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="tickets_status_chart"></div>
-            </div>
-        </div>
-    </div>
-    <div class="db_portlet col-xl-3 col-lg-6 h-xl-75 col-sm-12 d-none" data-portlet-id ="11" id="WORKORDERCARD">
-        <div class="card card-flush h-lg-100">
-            <div class="card-header  mb-3">
-                <h3 class="card-title align-items-start flex-column pt-9">
-                    <span class="card-label fw-bold y-primary fw-bold fs-1"  style="color: #01579b;">Work Order</span>
-                    {# <span class="text-gray-400 mt-1 fw-semibold fs-6">Total <span id="total_assets"></span> Assets and <span id="total_locations"></span> locations</span> #}
-                </h3>
-            </div>
-            <div class="card-body pb-0 pt-7 px-2 ps-6" style="height: 350px;">
-                <div class="wom_not_found">
-                    <span>No Data Found <i class="bi bi-exclamation-circle text-danger fs-5"></i></span>
-                    <div>From&nbsp;<span class="from"></span> to&nbsp; <span class="upto"></span></div>
+                <div class="db_portlet row card portlet d-none mb-2 p-2 " data-portlet-id ="7" id="PORTLET_INCIDENTREPORTS">
+                    <div class="card-body counter  bg-gray-100 bg-opacity-60  p-2 rounded-3 ">
+                        <div class="d-flex count-item justify-content-between">
+                            {# <i class="fas text-white p-4 yiconpadd yicon fa-clipboard-user y-primary fs-1"></i> #}
+                            <i class="fas text-white p-4 yiconpadd yicon text-start text-warning fa-file-medical-alt"></i>
+                            <div class="pe-3" data-cardtype='INCREPORTS'>
+                                <h6 class="pb-1 y-primary text-end timer count-title count-number" id="ir_count"></h6>
+                                <p class="h4 text-gray-500 fw-semibold fs-6">Incident Reports</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="wom_status_chart"></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-4 col-lg-6 col-sm-12">
-        <div class="mt-0 p-2">
-            <div class="db_portlet row card col-lg-12 portlet mb-2 p-2 d-none" data-portlet-id ="9" id="PORTLET_SITEDIVERSION">
-                <div class="card-body counter  bg-gray-100 bg-opacity-60 p-2 rounded-3">
-                    <div class="d-flex count-item justify-content-between">
-                        <i class="fas  yicon yiconpadd text-purple p-4 fa-code-branch"></i>
-                        <div class="pe-3" data-cardtype='SITEDIVERSION'>
-                            <h6 class="pb-1 y-primary text-end timer count-title count-number" id="diversion_count">0
-                            </h6>
-                            <p class="h4 text-gray-500 fw-semibold fs-6">Site Diversions Alerts</p>
+                <div class="db_portlet row card portlet d-none mb-2 p-2" data-portlet-id ="8" id="PORTLET_FR_FAILURES">
+                    <div class="card-body counter  bg-gray-100 bg-opacity-60  p-2 rounded-3">
+                        <div class="d-flex count-item justify-content-between">
+                            <i class="bi bi-person-bounding-box yiconpadd yicon p-4 y-primary"></i>
+                            <div class="pe-3" data-cardtype='ATTENDANCE'>
+                                <h6 class="pb-1 y-primary  text-end timer count-title count-number" id="att_count"></h6>
+                                <p class="h4 text-gray-500 fw-semibold fs-6">Attendance</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="db_portlet row card portlet d-none mb-2 p-2" data-portlet-id ="9" id="PORTLET_ROUTES">
+                    <div class="card-body counter  bg-gray-100 bg-opacity-60 p-2 rounded-3">
+                        <div class="d-flex count-item justify-content-between">
+                            <i class="fas text-white yicon yiconpadd text-success p-4 fa-route"></i>
+                            <div class="pe-3" data-cardtype='ROUTES'>
+                                <h6 class="pb-1 y-primary text-end timer count-title count-number" id="route_count">
+                                </h6>
+                                <p class="h4 text-gray-500 fw-semibold fs-6">Routes</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="col-xl-3 col-md-4 col-lg-6 col-sm-12">
-        <div class="mt-0 p-2">
-            <div class="db_portlet row card col-lg-12 portlet mb-2 p-2 d-none" data-portlet-id ="9" id="PORTLET_SITECRISIS">
-                <div class="card-body counter  bg-gray-100 bg-opacity-60 p-2 rounded-3">
-                    <div class="d-flex count-item justify-content-between">
-                        <i class="fas  yicon yiconpadd text-danger p-4 fa-dumpster-fire"></i>
-                        <div class="pe-3" data-cardtype='SITECRISIS'>
-                            <h6 class="pb-1 y-primary text-end timer count-title count-number" id="sitecrisis_count">0
-                            </h6>   
-                            <p class="h4 text-gray-500 fw-semibold fs-6">Site Crisis Alerts</p>
+        <div class="col">
+            <div class="mt-0 p-2">
+                <div class="db_portlet row card portlet mb-2 p-2 d-none" data-portlet-id ="9" id="PORTLET_SITEDIVERSION">
+                    <div class="card-body counter  bg-gray-100 bg-opacity-60 p-2 rounded-3">
+                        <div class="d-flex count-item justify-content-between">
+                            <i class="fas  yicon yiconpadd text-purple p-4 fa-code-branch"></i>
+                            <div class="pe-3" data-cardtype='SITEDIVERSION'>
+                                <h6 class="pb-1 y-primary text-end timer count-title count-number" id="diversion_count">0
+                                </h6>
+                                <p class="h4 text-gray-500 fw-semibold fs-6">Site Diversions Alerts</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-4 col-lg-6 col-sm-12">
-        <div class="mt-0 p-2">
-            <div class="db_portlet row card col-lg-12 portlet mb-2 p-2 " data-portlet-id ="9" id="PORTLET_DYNAMICTOURS">
-                <div class="card-body counter  bg-gray-100 bg-opacity-60 p-2 rounded-3">
-                    <div class="d-flex count-item justify-content-between">
-                        <i class="fas  yicon yiconpadd text-danger p-4 fa-infinity"></i>
-                        <div class="pe-3" data-cardtype='DYNAMICTOURS'>
-                            <h6 class="pb-1 y-primary text-end timer count-title count-number" id="dynamictours_count">0
-                            </h6>   
-                            <p class="h4 text-gray-500 fw-semibold fs-6">Dynamic Tours</p>
+            <div class="mt-0 p-2">
+                <div class="db_portlet row card portlet mb-2 p-2 d-none" data-portlet-id ="9" id="PORTLET_SITECRISIS">
+                    <div class="card-body counter  bg-gray-100 bg-opacity-60 p-2 rounded-3">
+                        <div class="d-flex count-item justify-content-between">
+                            <i class="fas  yicon yiconpadd text-danger p-4 fa-dumpster-fire"></i>
+                            <div class="pe-3" data-cardtype='SITECRISIS'>
+                                <h6 class="pb-1 y-primary text-end timer count-title count-number" id="sitecrisis_count">0
+                                </h6>   
+                                <p class="h4 text-gray-500 fw-semibold fs-6">Site Crisis Alerts</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-0 p-2">
+                <div class="db_portlet row card portlet mb-2 p-2 " data-portlet-id ="9" id="PORTLET_DYNAMICTOURS">
+                    <div class="card-body counter  bg-gray-100 bg-opacity-60 p-2 rounded-3">
+                        <div class="d-flex count-item justify-content-between">
+                            <i class="fas  yicon yiconpadd text-danger p-4 fa-infinity"></i>
+                            <div class="pe-3" data-cardtype='DYNAMICTOURS'>
+                                <h6 class="pb-1 y-primary text-end timer count-title count-number" id="dynamictours_count">0
+                                </h6>   
+                                <p class="h4 text-gray-500 fw-semibold fs-6">Dynamic Tours</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -298,7 +279,7 @@
     }
 </script>
 
-<!----- Datatable For SOS ----->
+<!----- Datatable For SOS ------>
 {# {% include "dashboard/RP_d/partials/partial_sitepeople_datatable.html" %} #}
 
 

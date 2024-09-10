@@ -371,7 +371,7 @@ handleChange('#id_expirytime', 'error_expirytime');
                 .done((data, status, xhr) => {
                     show_successful_delete_alert() //defined in customjs
                     window.setTimeout(function() {
-                        window.location.href = "{{ url('activity:ppm') }}?action=form";
+                        window.location.href = "{{ url('activity:ppm') }}?template=true";
                     }, 2000);
                 })
                 .fail((xhr, status, error) => {

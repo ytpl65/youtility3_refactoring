@@ -143,7 +143,6 @@ $(document).ready(function(){
         let filters = {from:from_pd, to:to_pd}
         reloadTable(table, filters)
     })
-    $('.btn').removeClass('dt-button')
     //hide add new wp button if user is not wp approver
     if(session['is_wp_approver'] === true){
         $(".add_new_wp").addClass('d-none')
