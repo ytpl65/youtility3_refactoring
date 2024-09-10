@@ -192,14 +192,14 @@ Ticket {% if  ticketform.instance.id is not none  %}- {{ ticketform.instance.tic
     <button type="submit" id="submitTour" form="ticketform" class="btn btn-sm btn-primary2 btn-hover-scale">
         Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
     </button>
-    <button type='button' id="clearForm" class="btn btn-sm btn-secondary btn-hover-scale">
-        Clear&nbsp;<i class="fas fa-cloud-upload-alt"></i>
-    </button>
     {% else %}
     <button type="submit" form="ticketform" class="btn btn-sm btn-primary2 btn-hover-scale">
         Save&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
     </button>
     {% endif %}
+    <button type='button' id="clearForm" class="btn btn-sm btn-secondary btn-hover-scale">
+        Clear&nbsp;<i class="fas fa-cloud-upload-alt"></i>
+    </button>
 </div>
 {% endblock ajax_page_actions %}
 

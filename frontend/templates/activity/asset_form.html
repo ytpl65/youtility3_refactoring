@@ -398,7 +398,7 @@ Asset Form
                         .done((data, status, xhr) => {
                             show_successful_delete_alert() //defined in customjs
                             window.setTimeout(function () {
-                                window.location.href = "{{ url('activity:asset') }}?action=form";
+                                window.location.href = "{{ url('activity:asset') }}?template=true";
                             }, 2000);
                         })
                         .fail((xhr, status, error) => {

@@ -135,8 +135,8 @@ class EscalationMatrix(BaseModel, TenantAwareModel):
                 check = models.Q(frequencyvalue__gte = 0),
                 name='frequencyvalue_gte_0_ck'
             ),
-             models.CheckConstraint(
-                check=models.Q(notify__regex=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'),
+            models.CheckConstraint(
+                  check=models.Q(notify__isnull=True) | models.Q(notify='') | models.Q(notify__regex=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'),
                 name='valid_notify_format'
             ),
          
