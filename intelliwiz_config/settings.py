@@ -17,7 +17,7 @@ import os
 import logging
 from datetime import datetime
 from pickle import TRUE
-
+import getpass
 import environ
 env = environ.Env()
 
@@ -362,7 +362,7 @@ GRAPHQL_JWT = {
 }
 
 ADMINS = [('wed_dev', "naveen.sargam@youtility.in")]
-username = os.getlogin()
+username = getpass.getuser()
 LOGGER_PATH = f'/home/{username}'
 
 import logging.config

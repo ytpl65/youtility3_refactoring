@@ -705,6 +705,8 @@ class VerifierReplyWorkPermit(View):
             wom = Wom.objects.get(id = R['womid'])
             if wom.workpermit == Wom.WorkPermitStatus.APPROVED:
                 return render(request,P['email_template'],context={'alreadyverified':True})
+            if wom.workpermit == Wom.WorkPermitStatus.REJECTED:
+                return render(request,P['email_template'],context={'alreadyrejected':True})
             people = People.objects.get(id = R['peopleid'])
             wom.workpermit = Wom.WorkPermitVerifierStatus.REJECTED.value
             wom.save()
@@ -782,6 +784,8 @@ class ReplyWorkPermit(View):
             wp = Wom.objects.filter(id = R['womid']).first()
             if wp.workpermit == Wom.WorkPermitStatus.APPROVED:
                 return render(request, P['email_template'], context={'alreadyapproved':True})
+            if wp.workpermit == Wom.WorkPermitStatus.REJECTED:
+                return render(request, P['email_template'], context={'alreadyrejected':True})
             p = People.objects.filter(id = R['peopleid']).first()
             wp.workpermit = Wom.WorkPermitStatus.REJECTED.value
             wp.save()
