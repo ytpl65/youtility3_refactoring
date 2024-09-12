@@ -38,11 +38,11 @@ th, td {
     padding: 2px; /* Reduce padding */
     text-align: center;
 }
-.department-col { width: 8%; }
-.designation-col { width: 10%; }
-.name-col { width: 10%; }
+.department-col { width: 6%; }
+.designation-col { width: 6%; }
+.name-col { width: 8%; }
 .date-col { width: 2.1%; } /* (100% - 28% - 7%) / 31 days */
-.total-col { width: 7%; }
+.total-col { width: 6%; }
 .time-difference {
     font-weight: bold;
 }
@@ -53,9 +53,18 @@ th, td {
     background-color: #e0e8f1; 
     font-weight: bold;
 }
+.sunday-col {
+    background-color: #FF6F6F !important;
+}
+.less-than-4-hours {
+    background-color: #FF6F6F !important;
+}
+.less-than-8-hours {
+    background-color: yellow !important;
+}
 @media print {
     @page {
-        size: 356mm 216mm;
+        size: 380mm 216mm;
         margin: 5mm; /* Reduce margins */
     }
     thead {
@@ -81,6 +90,7 @@ th, td {
         <tr>
             <th scope="col" rowspan="2" class="department-col">Department</th>
             <th scope="col" rowspan="2" class="designation-col">Designation</th>
+            <th scope="col" rowspan="2" class="name-col">People Code</th>
             <th scope="col" rowspan="2" class="name-col">People Name</th>
             {% for day_number in header.0 %}
                 <th scope="col" class="date-col">{{ day_number }}</th>
@@ -103,15 +113,27 @@ th, td {
                 <td class="department-col background-dept-design-name-time" rowspan="{{ dept_rows.count }}">{{ department }}</td>
                 {% for designation, people in designations.items() %}
                     <td class="designation-col background-dept-design-name-time" rowspan="{{ people|length }}">{{ designation }}</td>
-                    {% for person, records in people.items() %}
-                        <td class="name-col background-dept-design-name-time">{{ person }}</td>
+                    {% for person_code, records in people.items() %}
+                        <td class="name-col background-dept-design-name-time">{{ person_code }}</td>
+                        <td class="name-col background-dept-design-name-time">{{ records[0].peoplename }}</td>
                         {% for day_number in header.0 %}
-                            <td class="date-col background-dept-design-name-time">
+                            <td class="date-col background-dept-design-name-time {% if header.1[loop.index0] == 'Sun' %}sunday-col{% endif %}">
                                 {% for record in records %}
                                     {% if record.day == day_number %}
-                                    {{ record.punch_intime }}<br>{{ record.punch_outtime }}<br><span class="time-difference">{{ record.totaltime }}</span>
+                                        {% set hours, minutes = record.totaltime.split(':') %}
+                                        {% set total_minutes = hours|int * 60 + minutes|int %}
+                                        {% if total_minutes < 240 %}
+                                            {% set time_class = 'less-than-4-hours' %}
+                                        {% elif total_minutes < 480 %}
+                                            {% set time_class = 'less-than-8-hours' %}
+                                        {% else %}
+                                            {% set time_class = '' %}
+                                        {% endif %}
+                                        <div class="{{ time_class }}">
+                                            {{ record.punch_intime }}<br>{{ record.punch_outtime }}<br><span class="time-difference">{{ record.totaltime }}</span>
+                                        </div>
                                     {% else %}
-                                    {{""}}
+                                        {{""}}
                                     {% endif %}
                                 {% endfor %}
                             </td>
