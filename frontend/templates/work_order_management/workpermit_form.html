@@ -389,21 +389,38 @@ Work Permit Form
         let endOfDay = new Date(startOfDay.getTime() + (24 * 60 * 60 * 1000));
 
         // Configuration for wp_section (Permit valid from)
-        let wpConfig = {
+        const baseConfig = {
             enableTime: true,
             time_24hr: true,
-            dateFormat: 'd-M-Y H:i',
+            dateFormat: 'd-M-Y H:i'
+        };
+
+        let wpConfigValidFrom = {
+            ...baseConfig,
             minDate: startOfDay,
-            maxDate: endOfDay
+            maxDate: endOfDay,
+            defaultDate: startOfDay
+        };
+        let wpConfigValidTo = {
+            ...baseConfig,
+            minDate: startOfDay,
+            maxDate: endOfDay,
+            defaultDate: endOfDay
         };
 
         // Configuration for rwp_section (PERMIT RETURNED AT)
-        let rwpConfig = {
-            enableTime: true,
-            time_24hr: true,
-            dateFormat: 'd-M-Y H:i',
+        let rwpConfigPermit = {
+            ...baseConfig,
             minDate: new Date(startOfDay.getTime() - (2 * 24 * 60 * 60 * 1000)),
-            maxDate: new Date(startOfDay.getTime() + (24 * 60 * 60 * 1000))
+            maxDate: new Date(startOfDay.getTime() + (24 * 60 * 60 * 1000)),
+            defaultDate: new Date(startOfDay.getTime() - (2 * 24 * 60 * 60 * 1000))
+        };
+
+        let rwpConfigWork = {
+            ...baseConfig,
+            minDate: new Date(startOfDay.getTime() - (2 * 24 * 60 * 60 * 1000)),
+            maxDate: new Date(startOfDay.getTime() + (24 * 60 * 60 * 1000)),
+            defaultDate: new Date(startOfDay.getTime() + (24 * 60 * 60 * 1000))
         };
 
         // Initialize date pickers
@@ -411,10 +428,10 @@ Work Permit Form
         document.addEventListener('DOMContentLoaded', function() {
             initializeDatePicker(wpConfig, "Permit valid from");
             initializeDatePicker(wpConfig, "Permit valid upto");
-            initializeDatePicker(rwpConfig, "PERMIT RETURNED AT");
-            initializeDatePicker(rwpConfig, "WORK CHECKED AT");
-            initializeDatePicker(wpConfig, "This Permit Is Valid From");
-            initializeDatePicker(wpConfig, "This Permit Is Valid To");
+            initializeDatePicker(rwpConfigPermit, "PERMIT RETURNED AT");
+            initializeDatePicker(rwpConfigWork, "WORK CHECKED AT");
+            initializeDatePicker(wpConfigValidFrom, "This Permit Is Valid From");
+            initializeDatePicker(wpConfigValidTo, "This Permit Is Valid To");
         });
 
 
@@ -430,13 +447,13 @@ Work Permit Form
                     } else if (label.textContent.includes("Permit valid upto")){
                         flatpickr(input, wpConfig);
                     } else if (label.textContent.includes("PERMIT RETURNED AT")) {
-                        flatpickr(input, rwpConfig);
+                        flatpickr(input, rwpConfigPermit);
                     } else if (label.textContent.includes("WORK CHECKED AT")){
-                        flatpickr(input, rwpConfig);
+                        flatpickr(input, rwpConfigWork);
                     }  else if (label.textContent.includes("This Permit Is Valid From")){
-                        flatpickr(input, wpConfig);
+                        flatpickr(input, wpConfigValidFrom);
                     } else if (label.textContent.includes("This Permit Is Valid To")){
-                        flatpickr(input, wpConfig);
+                        flatpickr(input, wpConfigValidTo);
                     }
                 }
             });
