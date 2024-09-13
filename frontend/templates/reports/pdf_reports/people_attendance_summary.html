@@ -57,7 +57,7 @@ th, td {
     background-color: #FF6F6F !important;
 }
 .less-than-4-hours {
-    background-color: #FF6F6F !important;
+    background-color: #FFA500 !important;
 }
 .less-than-8-hours {
     background-color: yellow !important;
@@ -92,6 +92,7 @@ th, td {
             <th scope="col" rowspan="2" class="designation-col">Designation</th>
             <th scope="col" rowspan="2" class="name-col">People Code</th>
             <th scope="col" rowspan="2" class="name-col">People Name</th>
+            <th scope="col" rowspan="2" class="values-col">Values</th>
             {% for day_number in header.0 %}
                 <th scope="col" class="date-col">{{ day_number }}</th>
             {% endfor %}
@@ -107,15 +108,53 @@ th, td {
         {% for department, designations in data.0.items() %}
             {% set dept_rows = namespace(count=0) %}
             {% for designation, people in designations.items() %}
-                {% set dept_rows.count = dept_rows.count + people|length %}
+                {% set dept_rows.count = dept_rows.count + people|length * 3 %}
             {% endfor %}
             <tr>
                 <td class="department-col background-dept-design-name-time" rowspan="{{ dept_rows.count }}">{{ department }}</td>
                 {% for designation, people in designations.items() %}
-                    <td class="designation-col background-dept-design-name-time" rowspan="{{ people|length }}">{{ designation }}</td>
+                    <td class="designation-col background-dept-design-name-time" rowspan="{{ people|length * 3 }}">{{ designation }}</td>
                     {% for person_code, records in people.items() %}
-                        <td class="name-col background-dept-design-name-time">{{ person_code }}</td>
-                        <td class="name-col background-dept-design-name-time">{{ records[0].peoplename }}</td>
+                        <td class="name-col background-dept-design-name-time" rowspan="3">{{ person_code }}</td>
+                        <td class="name-col background-dept-design-name-time" rowspan="3">{{ records[0].peoplename }}</td>
+                        <td class="values-col background-dept-design-name-time">IN</td>
+                        {% for day_number in header.0 %}
+                            <td class="date-col background-dept-design-name-time {% if header.1[loop.index0] == 'Sun' %}sunday-col{% endif %}">
+                                {% for record in records %}
+                                    {% if record.day == day_number %}
+                                        {{ record.punch_intime }}
+                                    {% else %}
+                                        {{""}}
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        {% endfor %}
+                        <td class="total-col background-total-col" rowspan="3">
+                            {% set total_hrs = namespace(hours=0, minutes=0) %}
+                            {% for record in records %}
+                                {% set time_parts = record.totaltime.split(':') %}
+                                {% set total_hrs.hours = total_hrs.hours + time_parts[0]|int %}
+                                {% set total_hrs.minutes = total_hrs.minutes + time_parts[1]|int %}
+                            {% endfor %}
+                            {% set total_hrs.hours = total_hrs.hours + (total_hrs.minutes // 60) %}
+                            {% set total_hrs.minutes = total_hrs.minutes % 60 %}
+                            {{ '%02d:%02d'|format(total_hrs.hours, total_hrs.minutes) }}
+                        </td>
+                        </tr><tr>
+                        <td class="values-col background-dept-design-name-time">OUT</td>
+                        {% for day_number in header.0 %}
+                            <td class="date-col background-dept-design-name-time {% if header.1[loop.index0] == 'Sun' %}sunday-col{% endif %}">
+                                {% for record in records %}
+                                    {% if record.day == day_number %}
+                                        {{ record.punch_outtime }}
+                                    {% else %}
+                                        {{""}}
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        {% endfor %}
+                        </tr><tr>
+                        <td class="values-col background-dept-design-name-time">Total Hrs</td>
                         {% for day_number in header.0 %}
                             <td class="date-col background-dept-design-name-time {% if header.1[loop.index0] == 'Sun' %}sunday-col{% endif %}">
                                 {% for record in records %}
@@ -129,26 +168,13 @@ th, td {
                                         {% else %}
                                             {% set time_class = '' %}
                                         {% endif %}
-                                        <div class="{{ time_class }}">
-                                            {{ record.punch_intime }}<br>{{ record.punch_outtime }}<br><span class="time-difference">{{ record.totaltime }}</span>
-                                        </div>
+                                        <span class="time-difference {{ time_class }}">{{ record.totaltime }}</span>
                                     {% else %}
                                         {{""}}
                                     {% endif %}
                                 {% endfor %}
                             </td>
                         {% endfor %}
-                        {% set total_hrs = namespace(hours=0, minutes=0) %}
-                        {% for record in records %}
-                            {% set time_parts = record.totaltime.split(':') %}
-                            {% set total_hrs.hours = total_hrs.hours + time_parts[0]|int %}
-                            {% set total_hrs.minutes = total_hrs.minutes + time_parts[1]|int %}
-                        {% endfor %}
-                        {% set total_hrs.hours = total_hrs.hours + (total_hrs.minutes // 60) %}
-                        {% set total_hrs.minutes = total_hrs.minutes % 60 %}
-                        <td class="total-col background-total-col">
-                            {{ '%02d:%02d'|format(total_hrs.hours, total_hrs.minutes) }}
-                        </td>
                         {% if not loop.last %}
                             </tr><tr>
                         {% endif %}
