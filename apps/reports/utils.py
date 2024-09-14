@@ -352,7 +352,8 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
 
         # Adjust column widths
         worksheet.set_column(0, 1, 12)  # Columns A-B (Department, Designation)
-        worksheet.set_column(2, 3, 26)  # Columns C-D (People Code, People Name)
+        worksheet.set_column(2, 2, 10)  # Columns C (People Code)
+        worksheet.set_column(3, 3, 26)  # Columns D (People Name)
         worksheet.set_column(4, 4, 8)   # Column E (Values)
         worksheet.set_column(5, len(headers) - 2, 6)  # Date columns
         worksheet.set_column(len(headers) - 1, len(headers) - 1, 10)  # Total column
