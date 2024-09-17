@@ -71,7 +71,8 @@ class ApproverManager(models.Manager):
         S = request.session
         qset = self.annotate(
             text = F('people__peoplename'),
-        ).filter(approverfor__contains = ['SLA_TEMPLATE'], bu_id = S['bu_id']).values('id', 'text')
+        ).filter(approverfor__contains = ['SLA_TEMPLATE'],client_id=S['client_id'],bu_id=S['bu_id']).values('id', 'text')
+        print("Approver: ",qset)
         return qset or self.none()
     
     def get_approver_list_for_mobile(self, buid, clientid):
@@ -123,7 +124,6 @@ class WorkOrderManager(models.Manager):
             cdtz__date__lte = P['to'],
         ).order_by('-other_data__wp_seqno').values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
                  'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode','identifier','verifiers_status','vendor__name','remarks')
-        print("qobjs",qobjs)
         return qobjs or self.none()
          
 
@@ -199,7 +199,6 @@ class WorkOrderManager(models.Manager):
         obj = self.filter(
             id = womid
         ).values('other_data').first()
-        print('action manager performed',obj)
         app_verifier_status_data = obj['other_data']['wp_approvers'] 
         return app_verifier_status_data or []
     

@@ -67,9 +67,9 @@ def check_all_verified(womuuid,usercode):
     log.info(f"{usercode}, {womuuid}")
     for verifier in w.other_data['wp_verifiers']:
         log.info(f"Verifier {verifier}")
-        if verifier['name'] == usercode:
+        if verifier['peoplecode'] == usercode:
             verifier['status'] = 'APPROVED'
-            log.info(f"verifier {usercode} has approved with status code {verifier['status']}")
+            log.info(f"verifier {verifier['name']} has approved with status code {verifier['status']}")
         if verifier['status'] != 'APPROVED':
             all_verified = False
     w.save()
@@ -82,9 +82,9 @@ def check_all_approved(womuuid, usercode):
     log.info(f"{usercode}, {womuuid}")
     for approver in w.other_data['wp_approvers']:
         log.info(f"Approver {approver}")
-        if approver['name'] == usercode:
+        if approver['peoplecode'] == usercode:
             approver['status'] = 'APPROVED'
-            log.info(f"approver {usercode} has approved with status code {approver['status']}")
+            log.info(f"approver {approver['name']} has approved with status code {approver['status']}")
         if approver['status'] != 'APPROVED':
             all_approved = False
     w.save()
@@ -94,7 +94,7 @@ def check_all_approved(womuuid, usercode):
 def reject_workpermit(womuuid, usercode):
     w = Wom.objects.filter(uuid = womuuid).first()
     for approver in w.other_data['wp_approvers']:
-        if approver['name'] == usercode:
+        if approver['peoplecode'] == usercode:
             approver['status'] = 'REJECTED'
     w.save()
 
@@ -165,6 +165,7 @@ def handle_valid_form(form, R, request, create):
     sla.other_data['overall_score'] = overall_score
     create_sla_details(request.POST, sla, request, formdata)
     sitename = S.get('sitename')
+    
     send_email_notification_for_sla_report.delay(sla.id,sitename)
     print("sla:", sla)
     return rp.JsonResponse({'pk':sla.id})
@@ -176,10 +177,11 @@ def create_sla_details(R,wom,request,formdata):
             'SERVICE QUALITY':0.2,
             'SERVICE DELIVERY':0.15,
             'LEGAL COMPLIANCE':0.2,
-            'Documentation / record':0.1,
+            'DOCUMENTATION/RECORD':0.1,
             'ORGANISATION RESPONSIVENESS':0.05,
             'TECHNOLOGY / DESIGN':0.05,
-            'CPI':0.05
+            'CPI':0.05,
+            'REMARKS':0,
         }
         log.info(f'creating sla_details started {R}')
         S = request.session
@@ -245,15 +247,17 @@ def create_child_wom(wom, qset_id):
             'SERVICE QUALITY':0.2,
             'SERVICE DELIVERY':0.15,
             'LEGAL COMPLIANCE':0.2,
-            'Documentation / record':0.1,
+            'DOCUMENTATION/RECORD':0.1,
             'ORGANISATION RESPONSIVENESS':0.05,
             'TECHNOLOGY / DESIGN':0.05,
-            'CPI':0.05
+            'CPI':0.05,
+            'REMARKS':0,
         }
         qs = QuestionSet.objects.get(id=qset_id).qsetname
         if qs in SECTION_WEIGHTAGE:
             section_weightage = SECTION_WEIGHTAGE[qs]
             wom.other_data['section_weightage'] = section_weightage
+            log.info(f"section and question %s %s",section_weightage,qs)
         return Wom.objects.create(
                 parent_id      = wom.id,
                 description    = qset.qsetname,

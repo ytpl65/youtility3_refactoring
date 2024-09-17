@@ -17,7 +17,6 @@ from django.core.mail import EmailMessage
 from apps.reports.models import ScheduleReport
 from apps.reports import utils as rutils
 from django.templatetags.static import static
-
 import logging
 
 log = logging.getLogger('__main__')
@@ -632,13 +631,21 @@ def send_email_notification_for_sla_vendor(self,wom_id,report_attachment,sitenam
         from apps.work_order_management.models import Wom,WomDetails
         from apps.work_order_management.models import Vendor
         from django.template.loader import render_to_string
+        from dateutil.relativedelta import relativedelta
+
         wom = Wom.objects.filter(uuid=wom_id)
-        vendor_email = Vendor.objects.get(id=wom[0].vendor_id)
+        month = (datetime.now() - relativedelta(months=1)).strftime('%B')
+        current_year = datetime.now().year
+        vendor_details = Vendor.objects.filter(id=wom[0].vendor_id).values('name','email')
+        vendor_name = vendor_details[0].get('name')
+        vendor_email = vendor_details[0].get('email')
         msg = EmailMessage()
         sla_seqno = wom[0].other_data['wp_seqno']
-        msg.subject = f" {sitename} Vendor Performance #{sla_seqno}"
-        msg.to = [vendor_email.email]
+        msg.subject = f" {sitename} Vendor Performance of {vendor_name} of {month}-{current_year}:"
+        msg.to = [vendor_email]
         msg.from_email = settings.EMAIL_HOST_USER
+
+        
         cxt = {
             'sla_report_no':sla_seqno,
             'sitename':sitename,
@@ -648,9 +655,11 @@ def send_email_notification_for_sla_vendor(self,wom_id,report_attachment,sitenam
             'work_order_management/sla_vendor.html', context=cxt)
         msg.body = html
         msg.content_subtype = 'html'
+
+        
         msg.attach_file(report_attachment, mimetype='application/pdf')
         msg.send()
-        dlog.info(f"email sent to {vendor_email.email}")
+        dlog.info(f"email sent to {vendor_email}")
     except Exception as e:
         dlog.critical("something went wrong while sending email to vendor and security", exc_info=True)
         jsonresp['traceback'] += tb.format_exc()
@@ -890,10 +899,12 @@ def send_email_notification_for_sla_report(self,slaid,sitename):
         from apps.work_order_management.models import Vendor
         from dateutil.relativedelta import relativedelta
         from datetime import datetime
+        from apps.work_order_management.utils import save_pdf_to_tmp_location
         Wom = apps.get_model('work_order_management', 'Wom')
         People = apps.get_model('peoples', 'People')
         sla_details,rounded_overall_score,question_ans,all_average_score,remarks = Wom.objects.get_sla_answers(slaid)
         sla_record = Wom.objects.filter(id=slaid)[0]
+        permit_no = sla_record.other_data['wp_seqno']
         approvers = sla_record.approvers 
         status = sla_record.workpermit
         jsonresp['story'] += f"\n{sla_details}"
@@ -901,8 +912,9 @@ def send_email_notification_for_sla_report(self,slaid,sitename):
         uuid = sla_record.uuid
         month = (datetime.now() - relativedelta(months=1)).strftime('%B')
         current_year = datetime.now().year
-        sla_report_obj = ServiceLevelAgreement(filename='Service Level Agreement', formdata={'id':slaid,'bu__buname':sitename,'submit_button_flow':'true','filename':'Service Level Agreement','workpermit':sla_record.workpermit})
+        sla_report_obj = ServiceLevelAgreement(returnfile=True,filename='Service Level Agreement', formdata={'id':slaid,'bu__buname':sitename,'submit_button_flow':'true','filename':'Service Level Agreement','workpermit':sla_record.workpermit})
         attachment = sla_report_obj.execute()
+        attachment_path = save_pdf_to_tmp_location(attachment,'Vendor performance report',permit_no)
         vendor_id = sla_record.vendor_id
         vendor_name = Vendor.objects.get(id=vendor_id).name
         if sla_details:
@@ -912,7 +924,7 @@ def send_email_notification_for_sla_report(self,slaid,sitename):
                 dlog.info(f"sending email to {p['email'] = }")
                 jsonresp['story'] += f"sending email to {p['email'] = }"
                 msg = EmailMessage()
-                msg.subject = f"{sitename} Vendor Performance {vendor_name} of {month}-{current_year}"
+                msg.subject = f"{sitename} Vendor Performance {vendor_name} of {month}-{current_year}: Approval Pending"
                 msg.to = [p['email']]
                 msg.from_email = settings.EMAIL_HOST_USER
                 cxt = {'sections': sla_details, 'peopleid':p['id'],
@@ -924,7 +936,7 @@ def send_email_notification_for_sla_report(self,slaid,sitename):
                     'work_order_management/sla_report_approver_action.html', context=cxt)
                 msg.body = html
                 msg.content_subtype = 'html'
-                msg.attach_file(attachment, mimetype='application/pdf')
+                msg.attach_file(attachment_path, mimetype='application/pdf')
                 msg.send()
                 dlog.info(f"email sent to {p['email'] = }")
                 jsonresp['story'] += f"email sent to {p['email'] = }"

@@ -25,18 +25,16 @@ class ServiceLevelAgreement(BaseReportsExport):
     def set_context_data(self):
         log.info("Form Data: %s", self.formdata)
         sla_answers_data,overall_score,question_ans,all_average_score,remarks = Wom.objects.sla_data_for_report(self.formdata.get('id'))
-        vendor_description = ''
         vendor_id = Wom.objects.get(id=self.formdata.get('id')).vendor_id
-        vendor_description = Vendor.objects.get(id=vendor_id).description
+        vendor_details = Vendor.objects.filter(id=vendor_id).values('name','description')
         self.context = {
                 'question_answer': question_ans,
                 'sla_answer_data': sla_answers_data,
                 'overall_score':overall_score,
                 'average_score':all_average_score,
                 'remarks':remarks,
-                'vendor_description':vendor_description
-
-
+                'vendor_description':vendor_details[0].get('name',''),
+                'vendor_name':vendor_details[0].get('description','')
         }
     
     def execute(self):

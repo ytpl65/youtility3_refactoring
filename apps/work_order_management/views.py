@@ -23,7 +23,7 @@ from apps.reports.report_designs.workpermit import GeneralWorkPermit
 from apps.reports.report_designs.service_level_agreement import ServiceLevelAgreement
 from apps.onboarding.models import TypeAssist,Bt
 import json
-
+from apps.work_order_management.utils import save_pdf_to_tmp_location
 
 logger = logging.getLogger('__main__')
 log = logger
@@ -666,38 +666,43 @@ class VerifierReplyWorkPermit(View):
         print(R)
         if R.get('action') == 'accepted' and R.get('womid') and R.get('peopleid'):
             wom = Wom.objects.get(id = R['womid'])
-            wp = Wom.objects.filter(id = R['womid']).first()
-            p = People.objects.filter(id = R['peopleid']).first()
-            log.info("R:%s",R)
-            
-            if is_all_verified := check_all_verified(wp.uuid, p.peoplecode):
-                if Wom.WorkPermitVerifierStatus.APPROVED != Wom.objects.get(id=R['womid']).workpermit:
-                    Wom.objects.filter(id=R['womid']).update(verifiers_status=Wom.WorkPermitVerifierStatus.APPROVED)
-                    if is_all_verified:
-                        wom_id = R['womid']
-                        wom = Wom.objects.get(id = wom_id)
-                        sitename = Bt.objects.get(id=wom.bu_id).buname
-                        permit_name = wom.other_data['wp_name']
-                        permit_no =   wom.other_data['wp_seqno']
-                        client_id = R.get('client_id')
-                        print("Client ID***********: ",client_id)
-                        report_obj = wom_utils.get_report_object(permit_name)
-                        report = report_obj(filename=permit_name,client_id=client_id,returnfile=True,formdata = {'id':wom_id},request=request)
-                        report_pdf_object = report.execute()
-                        vendor_name = Vendor.objects.get(id=wom.vendor_id).name
-                        pdf_path = wom_utils.save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=permit_no)
-                        print("Sending Email to Approver to approve the work permit")
-                        approvers = wom.other_data['wp_approvers']
-                        workpermit_status = Wom.WorkPermitStatus.PENDING
-                        approvers = [approver['name'] for approver in approvers]
-                        log.info("Sending Email to Approver to approve the work permit")
-                        send_email_notification_for_workpermit_approval.delay(wom_id,approvers,sitename,workpermit_status,permit_name,pdf_path,vendor_name,client_id)
-                else:
-                    return render(request,P['email_template'],context={'alreadyverified':True})
-            cxt = {
-                'status':Wom.WorkPermitVerifierStatus.APPROVED,
-                'seqno':wp.other_data['wp_seqno'],
-            }
+            if wom.workpermit != 'REJECTED':
+                wp = Wom.objects.filter(id = R['womid']).first()
+                p = People.objects.filter(id = R['peopleid']).first()
+                log.info("R:%s",R)
+                
+                if is_all_verified := check_all_verified(wp.uuid, p.peoplecode):
+                    if Wom.WorkPermitVerifierStatus.APPROVED != Wom.objects.get(id=R['womid']).workpermit:
+                        Wom.objects.filter(id=R['womid']).update(verifiers_status=Wom.WorkPermitVerifierStatus.APPROVED)
+                        if is_all_verified:
+                            wom_id = R['womid']
+                            wom = Wom.objects.get(id = wom_id)
+                            sitename = Bt.objects.get(id=wom.bu_id).buname
+                            permit_name = wom.other_data['wp_name']
+                            permit_no =   wom.other_data['wp_seqno']
+                            client_id = R.get('client_id')
+                            print("Client ID***********: ",client_id)
+                            report_obj = wom_utils.get_report_object(permit_name)
+                            report = report_obj(filename=permit_name,client_id=client_id,returnfile=True,formdata = {'id':wom_id},request=request)
+                            report_pdf_object = report.execute()
+                            vendor_name = Vendor.objects.get(id=wom.vendor_id).name
+                            pdf_path = wom_utils.save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=permit_no)
+                            print("Sending Email to Approver to approve the work permit")
+                            approvers = wom.other_data['wp_approvers']
+                            workpermit_status = Wom.WorkPermitStatus.PENDING
+                            approvers = [approver['name'] for approver in approvers]
+                            log.info("Sending Email to Approver to approve the work permit")
+                            send_email_notification_for_workpermit_approval.delay(wom_id,approvers,sitename,workpermit_status,permit_name,pdf_path,vendor_name,client_id)
+                    else:
+                        return render(request,P['email_template'],context={'alreadyverified':True})
+                cxt = {
+                    'status':Wom.WorkPermitVerifierStatus.APPROVED,
+                    'seqno':wp.other_data['wp_seqno'],
+                }
+            else:
+                cxt = {
+                    'alreadyrejected':True,
+                }
             return render(request,P['email_template'],context=cxt)
 
         elif R.get('action') == "rejected" and R.get("womid") and R.get('peopleid'):
@@ -705,6 +710,8 @@ class VerifierReplyWorkPermit(View):
             wom = Wom.objects.get(id = R['womid'])
             if wom.workpermit == Wom.WorkPermitStatus.APPROVED:
                 return render(request,P['email_template'],context={'alreadyverified':True})
+            if wom.workpermit == Wom.WorkPermitStatus.REJECTED:
+                return render(request,P['email_template'],context={'alreadyrejected':True})
             people = People.objects.get(id = R['peopleid'])
             wom.workpermit = Wom.WorkPermitVerifierStatus.REJECTED.value
             wom.save()
@@ -782,6 +789,8 @@ class ReplyWorkPermit(View):
             wp = Wom.objects.filter(id = R['womid']).first()
             if wp.workpermit == Wom.WorkPermitStatus.APPROVED:
                 return render(request, P['email_template'], context={'alreadyapproved':True})
+            if wp.workpermit == Wom.WorkPermitStatus.REJECTED:
+                return render(request, P['email_template'], context={'alreadyrejected':True})
             p = People.objects.filter(id = R['peopleid']).first()
             wp.workpermit = Wom.WorkPermitStatus.REJECTED.value
             wp.save()
@@ -816,9 +825,12 @@ class ReplySla(View):
                         wom = Wom.objects.get(uuid = wom_id)
                         sitename = Bt.objects.get(id=wom.bu_id).buname
                         id = wom.id
-                        sla_report_obj = ServiceLevelAgreement(filename='Service Level Agreement', formdata={'id':id,'bu__buname':sitename,'submit_button_flow':'true','filename':'Service Level Agreement','workpermit':wom.workpermit})
+                        sla_report_obj = ServiceLevelAgreement(returnfile=True,filename='Vendor Performance Report', formdata={'id':id,'bu__buname':sitename,'submit_button_flow':'true','filename':'Service Level Agreement','workpermit':wom.workpermit})
+                        log.info("sla_report_obj",sla_report_obj)
                         workpermit_attachment = sla_report_obj.execute()
-                        send_email_notification_for_sla_vendor.delay(R['womid'],workpermit_attachment,sitename)
+                        report_path = save_pdf_to_tmp_location(workpermit_attachment,report_name='Vendor Performance Report',report_number=wom.other_data['wp_seqno'])
+                        log.info("workpermit_attachment",report_path)
+                        send_email_notification_for_sla_vendor.delay(R['womid'],report_path,sitename)
                 else:
                     log.info("Else case")
                     return render(request, P['email_template'], context={'alreadyapproved':True})
@@ -947,16 +959,21 @@ class SLA_View(LoginRequiredMixin, View):
             return self.send_report(R, request)
         
         if action == 'approve_sla' and R.get('slaid'):
+            print("SLA ID Approve SLA : ",R['slaid'])
             S = request.session 
             wom = P['model'].objects.get(id = R['slaid'])
-            sla_obj = ServiceLevelAgreement(filename='Vendor Performance Report', client_id=S['client_id'], formdata={'id':R['slaid'],'bu__buname':S['sitename'],'submit_button_flow':'true','filename':'Service Level Agreement','workpermit':wom.workpermit})
+            filename = 'Vendor Performance Report'
+            sla_obj = ServiceLevelAgreement(returnfile=True,filename=filename, client_id=S['client_id'], formdata={'id':R['slaid'],'bu__buname':S['sitename'],'submit_button_flow':'true','filename':'Service Level Agreement','workpermit':wom.workpermit})
             sla_attachment = sla_obj.execute()
+            report_path = save_pdf_to_tmp_location(sla_attachment,report_name=filename,report_number=wom.other_data['wp_seqno'])
+            print(report_path)
             if is_all_approved := check_all_approved(wom.uuid, request.user.peoplecode):
                 Wom.objects.filter(id=R['slaid']).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
                 if is_all_approved:
+                    print("All Approved")
                     workpermit_status = 'APPROVED'
                     sla_uuid = wom.uuid
-                    send_email_notification_for_sla_vendor.delay(sla_uuid,sla_attachment,S['sitename'])
+                    send_email_notification_for_sla_vendor.delay(sla_uuid,report_path,S['sitename'])
             return rp.JsonResponse(data={'status': 'Approved'}, status=200)
         
 
@@ -981,7 +998,7 @@ class SLA_View(LoginRequiredMixin, View):
             obj = utils.get_model_obj(int(R['id']), request, P)
             sla_answer = Wom.objects.get_wp_answers(obj.id)
             wom_utils.get_overall_score(obj.id)
-            cxt = {'slaform':P['form'](request=request, instance=obj), 'ownerid':obj.uuid,'sla_details':sla_answer[1]}
+            cxt = {'slaform':P['form'](request=request, instance=obj), 'ownerid':obj.uuid,'sla_details':sla_answer}
             return render(request, P['template_form'], cxt)
         
         if R.get('qsetid'):

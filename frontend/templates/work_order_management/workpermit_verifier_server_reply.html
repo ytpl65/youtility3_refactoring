@@ -15,19 +15,6 @@
 <div class="container h-100">
         <div class="row h-100 justify-content-center align-items-center">
             <div class="col-xs-12 col-sm-10 col-md-8 col-lg-6">
-                    <!-- {% if alreadyverified is defined %}
-                    <div class="alert alert-success shadow" role="alert">
-                        <h4 class="alert-heading">Thank you!</h4>
-                        <p>This Workpermit is already verified by you!</p>
-                    </div>
-                    {% else %}
-                    
-                    <div class="alert alert-success shadow" role="alert">
-                        <h4 class="alert-heading">Thank you for your response!</h4>
-                        <p>Work Permit # {{ seqno }} has been {{ status }}</p>
-                    </div>
-                    {% endif %} -->
-
                     {% if action is defined and action == "rejected"%}
                     <form action="" method="post">
                         <input type="hidden" name="status" value="{{ status }}">
@@ -39,11 +26,15 @@
                         <textarea name="reason" placeholder="Reason for rejection"></textarea>
                         <input type="submit" value="Submit">
                     </form>
-
                     {% elif alreadyverified is defined and alreadyverified == True %}
                     <div class="alert alert-success shadow" role="alert">
                         <h4 class="alert-heading">Thank you!</h4>
                         <p>This Workpermit is already verified by you!</p>
+                    </div>
+                    {% elif alreadyrejected is defined and alreadyrejected == True %}
+                    <div class="alert alert-success shadow" role="alert">
+                        <h4 class="alert-heading">Thank you!</h4>
+                        <p>This Workpermit is already rejected by you!</p>
                     </div>
                     {% else %}
                     <div class="alert alert-success shadow" role="alert">

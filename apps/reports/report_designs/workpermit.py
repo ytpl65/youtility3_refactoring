@@ -57,7 +57,7 @@ class WorkPermit(BaseReportsExport):
         approver = ''
         for record in obj['other_data']['wp_approvers']:
             if record['status'] == 'APPROVED':
-                approver+= record['name'] + ' '
+                approver+= record['name'] + ', '
         return approver
 
     def __get_verifiers_name(id):
@@ -65,7 +65,7 @@ class WorkPermit(BaseReportsExport):
         verifier = ''
         for record in obj['other_data']['wp_verifiers']:
             if record['status'] == 'APPROVED':
-                verifier+= record['name'] + ' '
+                verifier+= record['name'] + ', '
         return verifier
 
 
