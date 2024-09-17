@@ -45,7 +45,7 @@ class ApproverManager(models.Manager):
     def get_approver_list(self, request, fields, related):
         R,S  = request.GET, request.session
         qobjs =  self.select_related(*related).filter(
-            Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites']) | Q(forallsites = True),
+           ( Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) & Q(client_id = S['client_id']))
         ).values(*fields)
         return qobjs or self.none()
 
@@ -71,8 +71,7 @@ class ApproverManager(models.Manager):
         S = request.session
         qset = self.annotate(
             text = F('people__peoplename'),
-        ).filter(approverfor__contains = ['SLA_TEMPLATE'],client_id=S['client_id'],bu_id=S['bu_id']).values('id', 'text')
-        print("Approver: ",qset)
+        ).filter( (Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) & Q(client_id = S['client_id'])),approverfor__contains = ['SLA_TEMPLATE']).values('id', 'text')
         return qset or self.none()
     
     def get_approver_list_for_mobile(self, buid, clientid):

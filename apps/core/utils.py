@@ -412,10 +412,10 @@ def save_user_session(request, people, ctzoffset=None):
         # Check if the user is an approver
         client_id = request.user.client.id
         site_id = request.user.bu.id
-        print("User: ",request.user.id)
-        is_approver = Approver.objects.filter(client_id=client_id, people=request.user.id,approverfor__contains = ['WORKPERMIT']).exists()
-        print("is_approver: ",is_approver)
-        request.session['is_wp_approver'] = is_approver
+        is_wp_approver = Approver.objects.filter(client_id=client_id, people=request.user.id,approverfor__contains = ['WORKPERMIT']).exists()
+        is_sla_approver = Approver.objects.filter(client_id=client_id, people=request.user.id,approverfor__contains = ['SLA_TEMPLATE']).exists()
+        request.session['is_wp_approver'] = is_wp_approver
+        request.session['is_sla_approver'] = is_sla_approver
     except ObjectDoesNotExist:
         logger.error('object not found...', exc_info=True)
         raise
