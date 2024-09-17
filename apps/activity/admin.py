@@ -117,12 +117,14 @@ class QuestionResource(resources.ModelResource):
             {field : f"{field} is required when Answer Type* is {row['Answer Type*']}"})
         
     def handle_nan_values(self, row):
-        values = ['Min', 'Max', 'Alert Below', 'Alert Above']
+        values = ["Min", "Max", "Alert Below", "Alert Above"]
         for val in values:
-            if row.get(val) == None:
+            print("vallllllll", row.get(val), val)
+            if type(row.get(val)) == int:
                 continue
-            else :
-                isnan(row.get(val))
+            elif row.get(val) == None:
+                continue
+            elif isnan(row.get(val)):
                 row[val] = None
 
     def validate_numeric_values(self, row):

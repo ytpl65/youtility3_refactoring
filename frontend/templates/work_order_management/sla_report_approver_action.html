@@ -46,18 +46,14 @@
         If the following report details are correct, please proceed to approve it with the
         <a style="margin-right:20px" class="ybtn-success"
         href="{{ HOST }}{{ url('work_order_management:reply_sla') }}?action=accepted&womid={{reportid}}&peopleid={{ peopleid }}&sitename={{ sitename }}"
-        target="_blank">
-        <button style="color: black; background-color:green">
-            Approve, it
-        </button>
+        target="_blank">Click Here to Approve
         </a>
         <br>
         <hr>
         Conversely, if any information is not correct you can reject it with
         <a class="ybtn-warn"
         href="{{ HOST }}{{ url('work_order_management:reply_sla') }}?action=rejected&womid={{reportid}}&peopleid={{ peopleid }}"
-        target="_blank">
-        <button style="color:black;background-color:red">Reject, it</button>
+        target="_blank">Click Here to Reject
         </a>
     
         <hr>

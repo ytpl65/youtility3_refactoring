@@ -43,6 +43,9 @@ var params = null
 $(document).ready(function(){
     urlname = "{{ url('work_order_management:sla')}}"
 
+    is_approver = session['is_wp_approver']
+    console.log(is_approver)
+
     table = $("#sla_list").DataTable({
         ajax:{
             url:'{{ url("work_order_management:sla") }}?action=list',
@@ -64,9 +67,8 @@ $(document).ready(function(){
 
             {title:'Vendor Name', data:'vendor__name'},
             {title:'Approval', data:'workpermit'},
-            {title:'Status', data:'workstatus'},
             {title:'Site', data:'bu__buname'},
-            {title:'Overall Score',data:'other_data__overall_score',visible:false},
+            {title:'Overall Score',data:'other_data__overall_score'},
              {title:'Remarks',data:'other_data__remarks',visible:false},
             {title:'Action', data:null, defaultContent:'<a href="#" class="edit-link">Report&nbsp;<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i></a>'},
             {title:'Site Code', data:'bu__bucode', visible:false},
@@ -95,14 +97,9 @@ $(document).ready(function(){
             }
         },
         {
-            targets:6,render:function(data,type,row,meta){
-                if(data === 'ASSIGNED'){
-                    return `<span class="badge fs-9 badge-secondary">${data}</span>`
-                }
-                else if (data === 'COMPLETED'){
-                    return `<span class="badge fs-9 badge-success">${data}</span>`
+            targets:7,render:function(data,type,row,meta){
+                return `<span>${data}%</span>`
             }
-        }
         }     
         ],
         buttons:[
@@ -127,6 +124,13 @@ $(document).ready(function(){
             }
         ]
     })
+
+    if (is_approver === true) {
+        $('.add_new_wp').hide();
+    }
+
+
+
     $('#sla_list tbody').on('click', '.edit-link', function () {
     var data = table.row($(this).parents('tr')).data();
     data['submit_button_flow'] = false

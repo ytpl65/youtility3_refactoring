@@ -45,7 +45,7 @@ class ApproverManager(models.Manager):
     def get_approver_list(self, request, fields, related):
         R,S  = request.GET, request.session
         qobjs =  self.select_related(*related).filter(
-            bu_id = S['bu_id'],
+            Q( bu_id__in = S['assignedsites'])
         ).values(*fields)
         return qobjs or self.none()
     
@@ -70,7 +70,8 @@ class ApproverManager(models.Manager):
         S = request.session
         qset = self.annotate(
             text = F('people__peoplename'),
-        ).filter(approverfor__contains = ['SLA_TEMPLATE'], bu_id = S['bu_id']).values('id', 'text')
+        ).filter(approverfor__contains = ['SLA_TEMPLATE'],client_id=S['client_id'],bu_id=S['bu_id']).values('id', 'text')
+        print("Approver: ",qset)
         return qset or self.none()
     
     def get_approver_list_for_mobile(self, buid, clientid):
@@ -392,7 +393,7 @@ class WorkOrderManager(models.Manager):
                 "section_weightage":child_sla.other_data['section_weightage']
             }
             sla_details.append(sq)
-        overall_score = sum(overall_score)-0.5
+        overall_score = sum(overall_score)
         question_ans = dict(zip(all_questions,all_answers))
         final_overall_score = overall_score * 10
         rounded_overall_score = round(final_overall_score,2)
