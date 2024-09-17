@@ -250,27 +250,27 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         report_subtitle_site = self.context['report_subtitle_site']
         report_subtitle_date = self.context['report_subtitle_date']
 
-        # Create a BytesIO object instead of a file
         output = BytesIO()
-
-        # Create the workbook
         workbook = xlsxwriter.Workbook(output)
         worksheet = workbook.add_worksheet('People Attendance Summary')
 
         # Define styles
         title_style = workbook.add_format({'font_size': 12, 'bold': True, 'align': 'center', 'border': 1})
         subtitle_style = workbook.add_format({'font_size': 10, 'align': 'center', 'border': 1})
-        header_style = workbook.add_format({'font_size': 10,'bold': True, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#E0E8F1', 'border': 1, 'border': 1})
-        cell_style = workbook.add_format({'font_size': 10,'align': 'center', 'valign': 'vcenter', 'border': 1, 'text_wrap': True, 'border': 1})
-        total_style = workbook.add_format({'font_size': 10,'bold': True, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#E0E8F1', 'border': 1})
+        header_style = workbook.add_format({'font_size': 10, 'bold': True, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#E0E8F1', 'border': 1})
+        cell_style = workbook.add_format({'font_size': 10, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'text_wrap': True})
+        total_style = workbook.add_format({'font_size': 10, 'bold': True, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#E0E8F1', 'border': 1})
+        sunday_style = workbook.add_format({'font_size': 10, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'text_wrap': True, 'bg_color': '#FF6F6F'})
+        less_than_8_style = workbook.add_format({'font_size': 10, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'text_wrap': True, 'bg_color': 'yellow'})
+        less_than_4_style = workbook.add_format({'font_size': 10, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'text_wrap': True, 'bg_color': '#FFA500'})
 
-        num_columns = len(header[0]) + 4
+        num_columns = len(header[0]) + 6
         # Add title and subtitle
         worksheet.merge_range(0, 0, 0, num_columns - 1, report_title, title_style)
         worksheet.merge_range(1, 0, 1, num_columns - 1, report_subtitle_site, subtitle_style)
         worksheet.merge_range(2, 0, 2, num_columns - 1, report_subtitle_date, subtitle_style)
 
-        # Set row height for rows 0 through 3 to 20
+        # Set row height for rows 0 through 5
         for row in range(6):
             worksheet.set_row(row, 20)
 
@@ -278,15 +278,18 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         current_row = 4
 
         # Add headers
-        headers = ['Department', 'Designation', 'People Name'] + header[0] + ['Total Hr\'s']
+        headers = ['Department', 'Designation', 'People Code', 'People Name', 'Values'] + header[0] + ['Total Hr\'s']
         for col, header_text in enumerate(headers):
             worksheet.write(current_row, col, header_text, header_style)
 
         current_row += 1
 
-        # Add day names
-        for col, day_name in enumerate(header[1], start=3):
+        # Add day names and apply Sunday style to entire column
+        for col, day_name in enumerate(header[1], start=5):
             worksheet.write(current_row, col, day_name, header_style)
+            if day_name == 'Sun':
+                for row in range(current_row + 1, 180):  # Apply to all rows
+                    worksheet.write(row, col, None, sunday_style)
 
         current_row += 1
 
@@ -295,31 +298,49 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
             dept_start_row = current_row
             for designation, people in designations.items():
                 design_start_row = current_row
-                for person, records in people.items():
+                for person_code, records in people.items():
+                    person_start_row = current_row
                     worksheet.write(current_row, 0, department, cell_style)
                     worksheet.write(current_row, 1, designation, cell_style)
-                    worksheet.write(current_row, 2, person, cell_style)
+                    worksheet.write(current_row, 2, person_code, cell_style)
+                    worksheet.write(current_row, 3, records[0]['peoplename'], cell_style)
 
                     total_minutes = 0
 
-                    for day_number in header[0]:
-                        col = header[0].index(day_number) + 3
-                        day_records = [r for r in records if r['day'] == day_number]
-                        if day_records:
-                            record = day_records[0]
-                            cell_value = f"{record['punch_intime']}\n{record['punch_outtime']}\n{record['totaltime']}"
-                            worksheet.write(current_row, col, cell_value, cell_style)
+                    for i, value_type in enumerate(['IN', 'OUT', 'Total Hr\'s']):
+                        worksheet.write(current_row + i, 4, value_type, cell_style)
+
+                        for day_number in header[0]:
+                            col = header[0].index(day_number) + 5
+                            day_records = [r for r in records if r['day'] == day_number]
+                            style = cell_style
                             
-                            # Calculate total time
-                            hours, minutes = map(int, record['totaltime'].split(':'))
-                            total_minutes += hours * 60 + minutes
+                            if day_records:
+                                record = day_records[0]
+                                if value_type == 'IN':
+                                    cell_value = record['punch_intime']
+                                elif value_type == 'OUT':
+                                    cell_value = record['punch_outtime']
+                                else:  # Total hr's
+                                    cell_value = record['totaltime']
+                                    # Calculate total time
+                                    hours, minutes = map(int, record['totaltime'].split(':'))
+                                    total_minutes += hours * 60 + minutes
+                                    
+                                    # Apply conditional formatting based on total time
+                                    if hours < 4:
+                                        style = less_than_4_style
+                                    elif hours < 8:
+                                        style = less_than_8_style
+                                
+                                worksheet.write(current_row + i, col, cell_value, style)
 
                     # Calculate and add total hours
                     total_hours, total_minutes = divmod(total_minutes, 60)
                     total_time = f"{total_hours:02d}:{total_minutes:02d}"
-                    worksheet.write(current_row, len(headers) - 1, total_time, total_style)
+                    worksheet.merge_range(person_start_row, len(headers) - 1, person_start_row + 2, len(headers) - 1, total_time, total_style)
 
-                    current_row += 1
+                    current_row += 3
 
                 # Merge designation cells
                 if design_start_row < current_row - 1:
@@ -330,18 +351,20 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
                 worksheet.merge_range(dept_start_row, 0, current_row - 1, 0, department, cell_style)
 
         # Adjust column widths
-        worksheet.set_column(0, 2, 12)  # Columns A-C
-        worksheet.set_column(3, len(headers) - 2, 6)  # Date columns
+        worksheet.set_column(0, 1, 12)  # Columns A-B (Department, Designation)
+        worksheet.set_column(2, 2, 10)  # Columns C (People Code)
+        worksheet.set_column(3, 3, 26)  # Columns D (People Name)
+        worksheet.set_column(4, 4, 8)   # Column E (Values)
+        worksheet.set_column(5, len(headers) - 2, 6)  # Date columns
         worksheet.set_column(len(headers) - 1, len(headers) - 1, 10)  # Total column
-        worksheet.set_default_row(45)
-        worksheet.freeze_panes(6, 3)
+        worksheet.set_default_row(15)  # Set default row height
+        worksheet.freeze_panes(6, 5)
         workbook.close()
 
         # Seek to the beginning of the BytesIO object
         output.seek(0)
 
-        return output
-                
+        return output  
             
 
 class ReportEssentials(object):
@@ -488,7 +511,7 @@ def format_data(data):
     for entry in data:
         department = entry['department'] if entry['department'] != "NONE" else "--"
         designation = entry['designation'] if entry['designation'] != "NONE" else "--"
-        peoplename = entry['peoplename']
+        peoplecode = entry['peoplecode']
         
         # Create nested dictionaries if they don't exist
         if department not in output:
@@ -497,12 +520,12 @@ def format_data(data):
         if designation not in output[department]:
             output[department][designation] = {}
         
-        if peoplename not in output[department][designation]:
-            output[department][designation][peoplename] = []
+        if peoplecode not in output[department][designation]:
+            output[department][designation][peoplecode] = []
         
         # Convert Decimal('day') to integer and prepare the entry
         formatted_entry = {
-            'peoplecode': entry['peoplecode'],
+            'peoplename' : entry['peoplename'],
             'day': int(entry['day']),  # Convert Decimal to int
             'day_of_week': entry['day_of_week'].strip(),  # Optionally strip whitespace
             'punch_intime': entry['punch_intime'],
@@ -511,7 +534,7 @@ def format_data(data):
         }
         
         # Append the entry to the corresponding department and designation
-        output[department][designation][peoplename].append(formatted_entry)
+        output[department][designation][peoplecode].append(formatted_entry)
     
     output_list = [output]
     return output_list

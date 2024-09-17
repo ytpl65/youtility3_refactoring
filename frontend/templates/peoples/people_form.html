@@ -954,28 +954,26 @@ style="background-image: url({% if peopleform.instance.peopleimg.name.endswith('
         //on form submit
         $("#id_peopleform").on('submit', function(e){
             e.preventDefault()
-            validator.onSuccess((event) => {
-                var form = $(this)
-                const params = {url: "{{ url('peoples:people') }}", modal:false}
-                const id = "{{ peopleform.instance.pk }}"
-                var formdata = new FormData();
-                formdata.append('formData', form.serialize())
-                var peopleimg = $("#id_peopleimg")[0].files[0]
-                formdata.append('peopleimg', peopleimg)
-                formdata.append('csrfmiddlewaretoken', '{{ csrf_token }}')
-                var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
-                if(id != 'None'){
-                    formdata.append('pk', id)
-                    //var newPayLoad = {...payLoad, 'pk':id}
-                    //payLoad = newPayLoad
-                }
-                fire_ajax_fileform_post(params, formdata)
-                .done((data, status, xhr) => { //function to submit post request
-                    show_successful_save_alert(update= id != 'None' ? true : false)
-                    window.setTimeout(function() {
-                        window.location.href = `{{ url('peoples:people') }}?id=${data.pk}`;
-                    }, 2000);
-                })
+            var form = $(this)
+            const params = {url: "{{ url('peoples:people') }}", modal:false}
+            const id = "{{ peopleform.instance.pk }}"
+            var formdata = new FormData();
+            formdata.append('formData', form.serialize())
+            var peopleimg = $("#id_peopleimg")[0].files[0]
+            formdata.append('peopleimg', peopleimg)
+            formdata.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+            var payLoad = {formData:form.serialize(), csrfmiddlewaretoken: '{{ csrf_token }}'}//payload for post request
+            if(id != 'None'){
+                formdata.append('pk', id)
+                //var newPayLoad = {...payLoad, 'pk':id}
+                //payLoad = newPayLoad
+            }
+            fire_ajax_fileform_post(params, formdata)
+            .done((data, status, xhr) => { //function to submit post request
+                show_successful_save_alert(update= id != 'None' ? true : false)
+                window.setTimeout(function() {
+                    window.location.href = `{{ url('peoples:people') }}?id=${data.pk}`;
+                }, 2000);
             })
         })
 
