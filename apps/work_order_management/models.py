@@ -133,7 +133,7 @@ class Wom(BaseModel, TenantAwareModel):
 class Vendor(BaseModel, TenantAwareModel):
     uuid        = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     code        = models.CharField(_("Code"), max_length=50, null=True, blank=False)
-    name        = models.CharField(_('Name'), max_length=55, null=True, blank=False)
+    name        = models.CharField(_('Name'), max_length=255, null=True, blank=False)
     type        = models.ForeignKey("onboarding.TypeAssist", verbose_name=_("Type"), null=True, on_delete=models.CASCADE)
     address     = models.TextField(max_length=500, verbose_name='Address', blank=True, null= True)
     gpslocation = PointField(_('GPS Location'),null = True, blank=True, geography = True, srid = 4326)

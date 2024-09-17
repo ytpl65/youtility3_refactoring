@@ -76,10 +76,12 @@ def clean_string(input_string, code=False):
 
 def validate_email(email):
     if email:
+        email = email.strip()  # Remove any leading or trailing whitespace
         # Regular expression for validating an Email
-        regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
-        # Using re to validate an Email
-        return bool((re.search(regex,email)))
+        regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        # Using re.fullmatch to validate an Email
+        return bool(re.fullmatch(regex, email))
+    return False
     
 def clean_array_string(string, service=False):
     if string:

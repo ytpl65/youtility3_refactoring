@@ -45,16 +45,17 @@ class ApproverManager(models.Manager):
     def get_approver_list(self, request, fields, related):
         R,S  = request.GET, request.session
         qobjs =  self.select_related(*related).filter(
-            bu_id = S['bu_id'],
+            Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites']) | Q(forallsites = True),
         ).values(*fields)
         return qobjs or self.none()
+
+    
     
     def get_approver_options_wp(self, request):
         S = request.session
         qset = self.annotate(
             text = F('people__peoplename'),
         ).filter(approverfor__contains = ['WORKPERMIT'], bu_id = S['bu_id'],identifier='APPROVER').values('id', 'text')
-        print("Approver: ",qset)
         return qset or self.none()
     
     def get_verifier_options_wp(self,request):
@@ -359,6 +360,9 @@ class WorkOrderManager(models.Manager):
     
     def get_sla_answers(self,slaid):
         child_slarecords = self.filter(parent_id = slaid).order_by('seqno')
+        print()
+        print('child_slarecords',child_slarecords)
+        print()
         # work_permit_no = childwoms[0].other_data['wp_seqno']
         sla_details = []
         overall_score = []
@@ -367,34 +371,58 @@ class WorkOrderManager(models.Manager):
         all_average_score = []
         remarks = []
         for child_sla in child_slarecords:
+            print()
+            print('child_sla',child_sla)
+            print()
             section_weight = child_sla.other_data['section_weightage']
+            print()
+            print('section_weight',section_weight)
+            print()
             ans = []
             answers = child_sla.womdetails_set.values('answer')
+            print()
+            print('answers',answers)
+            print()
             for answer in answers:
+                print()
+                print('answer',answer)
+                print()
                 if answer['answer'].isdigit():
                     all_answers.append(int(answer['answer']))
                     ans.append(int(answer['answer']))
                 else:
                     remarks.append(answer['answer'])
+            print()
+            print('ans',ans)
+            print()
             questions = child_sla.womdetails_set.values('question__quesname')
+            print()
+            print('questions',questions)
+            print()
             for que in questions:
+                print()
+                print('que',que)
+                print()
                 all_questions.append(que['question__quesname'])
+            print()
+            print('all_questions',all_questions)
+            print()
             if sum(ans)== 0 or len(ans)== 0:
                 pass
             else:
                 average_score = sum(ans)/len(ans)
-                print("Average Score",average_score)
             all_average_score.append(round(average_score,1))
             score = average_score * section_weight
-            print("Score",score)
             overall_score.append(score)
             sq = {
                 "section":child_sla.description,
                 "sectionID":child_sla.seqno,
                 "section_weightage":child_sla.other_data['section_weightage']
             }
+            print('rtthfujkjukvli')
+            print('s1111111111111111',sq)
             sla_details.append(sq)
-        overall_score = sum(overall_score)-0.5
+        overall_score = sum(overall_score)
         question_ans = dict(zip(all_questions,all_answers))
         final_overall_score = overall_score * 10
         rounded_overall_score = round(final_overall_score,2)
@@ -406,10 +434,8 @@ class WorkOrderManager(models.Manager):
 
     def sla_data_for_report(self,id):
         from apps.work_order_management.models import Wom
-        print("ID",id)  
         # id = Wom.objects.get(uuid=id).id
         sla_answers,overall_score,question_ans,all_average_score,remarks = self.get_sla_answers(id)
-        print("Remark ",remarks)
         return sla_answers,overall_score,question_ans,all_average_score,remarks
 
     def convert_the_queryset_to_list(self,workpermit_sections):
@@ -425,8 +451,6 @@ class WorkOrderManager(models.Manager):
         workpermit = ""
         permit_valid_upto = ""
         permit_valid_from = ""
-        print("Approval Status: ",approval_status)
-        print("Question: ",new_general_details['questions'])
         for question in new_general_details['questions']:
             quesname = question['question__quesname'].lower()  # Convert to lowercase for case-insensitive comparison
             if quesname == 'permit initiated by':
@@ -439,7 +463,6 @@ class WorkOrderManager(models.Manager):
                 permit_valid_from = question['answer']
             elif quesname == 'permit valid upto':
                 permit_valid_upto = question['answer']
-        print("Final Permit Authorized By: ",permit_authorized_by)
         from apps.work_order_management.models import Wom
             
         approvers = []
