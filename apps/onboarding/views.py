@@ -498,7 +498,7 @@ MODEL_RESOURCE_MAP = {
 MODEL_RESOURCE_MAP_UPDATE = {
     # 'MODELNAME'         : 'RESOURCE(ADMIN CLASS for the model which is used to validate and give error messages for importing data )'
     'TYPEASSIST'          : ob_admin.TaResourceUpdate,
-    'BU'                  : ob_admin.BtResource,
+    'BU'                  : ob_admin.BtResourceUpdate,
     'QUESTION'            : av_admin.QuestionResource,
     'LOCATION'            : av_admin.LocationResource,
     'PEOPLE'              : people_admin.PeopleResource,
@@ -762,6 +762,7 @@ class BtView(LoginRequiredMixin, View):
                 *self.params['related']).filter(
                     id__in=buids
             ).exclude(identifier__tacode='CLIENT').values(*self.params['fields']).order_by('buname')
+            print("-------------=====>>>>", list(objs))
             return rp.JsonResponse(data={'data': list(objs)})
 
         elif R.get('action', None) == 'form':
@@ -986,7 +987,7 @@ class BulkImportUpdate(LoginRequiredMixin,ParameterMixin, View):
             try:
                 results = res.import_data(
                     dataset=dataset, dry_run=True, raise_errors=False, use_transactions=True)
-                return render(request, 'onboarding/imported_data.html', {'result':results})
+                return render(request, 'onboarding/imported_data_update.html', {'result':results})
             except Exception as e:
                 logger.critical("error", exc_info=True)
                 return rp.JsonResponse({"error": "something went wrong!"}, status=500)

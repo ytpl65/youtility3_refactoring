@@ -14,7 +14,7 @@ from dateutil import parser
 import django.shortcuts as scts
 from django.contrib import messages as msg
 from django.contrib.gis.measure import Distance
-from django.db.models import Q
+from django.db.models import Q, F, Case, When, Value
 from django.http import JsonResponse
 from django.http import response as rp
 from django.template.loader import render_to_string
@@ -32,6 +32,7 @@ from icecream import ic
 from django.db import transaction
 from django.db.models import RestrictedError
 from apps.work_order_management.models import Approver
+from django.db import models
 
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -1945,7 +1946,7 @@ def excel_file_creation(R):
 
 HEADER_MAPPING_UPDATE = {
     'TYPEASSIST': [
-        'ID*', 'Name*', 'Code*', 'Type*', 'Client*'],
+        'ID*', 'Name', 'Code', 'Type', 'Client'],
     
     'PEOPLE': [
         'Code*', 'Name*', 'User For*', 'Employee Type*', 'Login ID*', 'Password*', 'Gender*',
@@ -1956,8 +1957,8 @@ HEADER_MAPPING_UPDATE = {
         'Current Address', 'Blacklist',  'Alert Mails'],
     
     'BU': [
-        'Code*', 'Name*', 'Belongs To*', 'Type*', 'Site Type', \
-        'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'State', 'Country', 'City'],
+        'ID*','Code', 'Name', 'Belongs To', 'Type', 'Site Type', \
+        'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'City', 'State', 'Country'],
     
     'QUESTION':[
         'Question Name*','Answer Type*', 'Min', 'Max','Alert Above', 'Alert Below', 'Is WorkFlow',
@@ -2015,9 +2016,9 @@ Example_data_update = {
     'TYPEASSIST': [('1975','Reception Area','RECEPTION' , 'LOCATIONTYPE', 'CLIENT_A'),
                    ('1976','Bank','BANK','SITETYPE','CLIENT_B'),
                    ('1977','Manager','MANAGER','DESIGNATIONTYPE','CLIENT_C')],
-            'BU': [('MUM001','Site A','NONE','BRANCH','BANK','John Doe','123','TRUE','19.05,73.51','123 main street, xyz city','California','USA','Valparaíso'),
-                   ('MUM002','Site B','MUM001','ZONE','OFFICE','Jane Smith','456','FALSE','19.05,73.51','124 main street, xyz city','New York','Canada','Hobart'),
-                   ('MUM003','Site C','NONE','SITE','SUPERMARKET','Ming Yang','789','TRUE','19.05,73.51','125 main street, xyz city','california','USA','Manarola')],
+            'BU': [('495','MUM001','Site A','NONE','BRANCH','BANK','John Doe','123','TRUE','19.05,73.51','123 main street, xyz city','Valparaíso','California','USA'),
+                   ('496','MUM002','Site B','MUM001','ZONE','OFFICE','Jane Smith','456','FALSE','19.05,73.51','124 main street, xyz city','Hobart','New York','Canada'),
+                   ('497','MUM003','Site C','NONE','SITE','SUPERMARKET','Ming Yang','789','TRUE','19.05,73.51','125 main street, xyz city','Manarola','California','USA')],
       'LOCATION': [('LOC001','Location A','GROUNDFLOOR','WORKING','TRUE','NONE','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
                     ('LOC002','Location B','MAINENTRANCE','SCRAPPED','FALSE','MUM001','SITE_B','CLIENT_A','19.05,73.52','FALSE'),
                     ('LOC003','Location C','FIRSTFLOOR','RUNNING','TRUE','NONE','SITE_C','CLIENT_A','19.05,73.53','TRUE')],
@@ -2115,13 +2116,27 @@ def get_type_data(type_name, S):
         'GROUPBELONGING': pm.Pgbelonging,
     }
     if type_name == 'TYPEASSIST':
-        
         objs = ob.TypeAssist.objects.select_related('parent','tatype', 'cuser', 'muser').filter(
                 ~Q(tacode='NONE'), ~Q(tatype__tacode='NONE'), Q(client_id=S['client_id']) | Q(cuser_id=1), enable=True,
         ).values_list('id', 'taname', 'tacode', 'tatype__tacode', 'client__bucode')
         return list(objs)
     if type_name == 'BU':
-        return list(ob.Bt.objects.values_list('bucode', 'buname', 'parent', 'butype', ''))
+        buids = ob.Bt.objects.get_whole_tree(clientid=S['client_id'])
+        objs = ob.Bt.objects.select_related('parent', 'identifier', 'butype', 'people').filter(id__in=buids
+        ).exclude(identifier__tacode='CLIENT'
+        ).annotate(address=F('bupreferences__address'),
+                   state=F('bupreferences__address2__state'),
+                   country=F('bupreferences__address2__country'),
+                   city=F('bupreferences__address2__city'),
+                   latlng=F('bupreferences__address2__latlng'),
+                   siteincharge_name=Case(
+                        When(siteincharge__enable=True, then=F('siteincharge__peoplename')),
+                        default=Value("NONE"),
+                        output_field=models.CharField()
+                    )
+        ).values_list('id', 'bucode', 'buname', 'parent__buname', 'identifier__taname', 'butype__taname', 'siteincharge_name', 
+                 'solid', 'enable', 'latlng', 'address', 'city', 'state', 'country',)
+        return list(objs)
     if type_name == 'LOCATION':
         return list(am.Location.objects.values_list('taname', 'tacode', 'tatype', 'client'))
     if type_name == 'ASSET':
