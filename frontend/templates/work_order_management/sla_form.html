@@ -26,7 +26,7 @@ SLA Form
 <div class="form-actions">
     {% if slaform.instance.id %}
     <div class="d-flex">
-        {% if slaform.instance.workpermit != 'APPROVED' and request.session['is_wp_approver'] %}
+        {% if slaform.instance.workpermit != 'APPROVED' and request.session['is_sla_approver'] %}
             <div class="dropdown me-2 action_btn">
             <button class="btn p-3 btn-primary2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 Action
