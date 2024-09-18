@@ -344,13 +344,12 @@ SLA Form
         }
 
         //load the questionaire of selected template
-        $("#load_questions").click((e) => {
+        $("#load_questions").click((e) => {            
+
             var qsetid = $("#id_qset").val()
             var approvers = $("#id_approvers").val()
             var workpermitname = $("#select2-id_qset-container").attr('title')
             var vendor = $("#id_vendor").val()
-
-            
             
             console.log(workpermitname,approvers,qsetid)
             if(qsetid.length == 0){
@@ -362,6 +361,8 @@ SLA Form
                 display_field_error('approvers', 'At least one approver needed!')
                 return
             }
+
+
             location.href = `${urlname}?qsetid=${qsetid}&approvers=${approvers}&vendor=${vendor}`
         })
 
@@ -369,6 +370,13 @@ SLA Form
         //hide load questionaire button if qset is selected
         if($("#id_qset").val().length > 0){
             $("#load_questions").addClass('d-none')
+        }
+
+        if ($("#id_qset").val().length > 0) {
+            $("#id_qset").attr('readonly', true);
+            $("#id_approvers").attr('readonly', true);
+            $("#id_seqno").attr('readonly', true);
+            $("#id_vendor").attr('readonly', true);
         }
 
         //set seqno once loaded
@@ -546,8 +554,8 @@ SLA Form
                     retrieve: true,
                     columns:[
                         { data: "id", visible: false },
-                        {title:'SL No.', width:"5%", data:null, defaultContent:null, render:function (data, type, row, meta) { return meta.row  + 1; }},
-                        { data: "filepath",  width:"5%", title:'File', render:function (data, type, row, meta) { return `<img src="{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}" class="card-img-top" target="_blank" alt="" style="width: 30px;height: 30px;">`; }},
+                        {title:'SL No.', width:"5%", data:null, defaultContent:null, render:function (data, type, row, meta) { return meta.row  + 1; } },
+                        { data: "filepath",  width:"5%", title:'File', render:function (data, type, row, meta) { return `<img src="{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}" class="card-img-top" target="_blank" alt="" style="width: 30px;height: 30px;">`; } },
                         { data: "filename",  title:'File Name' },
                         { data: null, width:"5%", defaultContent:null, title:"Action", render:function(data, type, row, meta ){
                         let file = `{{ MEDIA_URL }}${row.filepath.replace('youtility4_media/', "")}/${row.filename}`
