@@ -319,3 +319,66 @@ class ShiftAdmin(ImportExportModelAdmin):
     list_display_links = ('shiftname',)
 
 
+class TaResourceUpdate(resources.ModelResource):
+    CLIENT = fields.Field(
+        column_name='Client*',
+        attribute='client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default='NONE'
+    )
+    
+    TYPE = fields.Field(
+        column_name       = 'Type*',
+        attribute         = 'tatype',
+        default           = om.TypeAssist, 
+        widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        saves_null_values = True
+    )
+    CODE = fields.Field(attribute='tacode', column_name='Code*')
+    NAME = fields.Field(attribute='taname', column_name='Name*')
+    ID   = fields.Field(attribute='id', column_name='ID*')
+
+    class Meta: 
+        model = om.TypeAssist
+        skip_unchanged = True
+        import_id_fields = ['ID']
+        report_skipped = True
+        fields = ('ID','NAME', 'CODE', 'TYPE', 'CLIENT')
+
+        
+    def __init__(self, *args, **kwargs):
+        super(TaResourceUpdate, self).__init__(*args, **kwargs)
+        self.is_superuser = kwargs.pop('is_superuser', None)
+        self.request = kwargs.pop('request', None)
+    
+    def before_import_row(self, row, row_number, **kwargs):
+
+        '''cleaning in sence Handles empty string,Removes extra spaces, 
+        Converts to uppercase and replaces spaces with underscores (if code is True)'''
+        row['Code*'] = clean_string(row.get('Code*', 'NONE'), code=True)
+        row['Name*'] = clean_string(row.get('Name*', "NONE"))
+
+        # Validates that required fields (Code*, Type*, and Name*) are not empty.
+        if row['ID*'] in ['', None]: raise ValidationError("ID* is required field")
+        # if row['Type*'] in ['', None]: raise ValidationError("Type* is required field")
+        # if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
+        
+        ''' Validates the format of the Code* field using a regular expression.
+         It ensures no spaces and only allows alphanumeric characters, underscores, and hyphens.'''
+        regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
+        if " " in value: raise ValidationError("Please enter text without any spaces")
+        if  not re.match(regex, value):
+            raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
+
+        '''Checks for uniqueness of the record based on a combination of Code*, Type*, 
+        and CLIENT* fields. It raises an error if a duplicate record is found.'''
+        if not om.TypeAssist.objects.filter(id=row['ID*']).exists():    
+            raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
+
+        super().before_import_row(row, **kwargs)
+
+    #saving the instance before saving it to the database
+    def before_save_instance(self, instance, using_transactions, dry_run=False):
+        '''inserts data into the instance object before saving it to 
+        the database of cuser, muser, cdtz, and mdtz fields.'''
+        utils.save_common_stuff(self.request, instance, self.is_superuser)

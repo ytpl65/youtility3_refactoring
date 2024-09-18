@@ -495,11 +495,29 @@ MODEL_RESOURCE_MAP = {
     'SCHEDULEDTOURS'      : sc_admin.TourResource,
 }
 
+MODEL_RESOURCE_MAP_UPDATE = {
+    # 'MODELNAME'         : 'RESOURCE(ADMIN CLASS for the model which is used to validate and give error messages for importing data )'
+    'TYPEASSIST'          : ob_admin.TaResourceUpdate,
+    'BU'                  : ob_admin.BtResource,
+    'QUESTION'            : av_admin.QuestionResource,
+    'LOCATION'            : av_admin.LocationResource,
+    'PEOPLE'              : people_admin.PeopleResource,
+    'GROUP'               : people_admin.GroupResource,
+    'GROUPBELONGING'      : people_admin.GroupBelongingResource,
+    'ASSET'               : av_admin.AssetResource,
+    'VENDOR'              : VendorResource,
+    'QUESTIONSET'         : av_admin.QuestionSetResource,
+    'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResource,
+    'SCHEDULEDTASKS'      : sc_admin.TaskResource,
+    'SCHEDULEDTOURS'      : sc_admin.TourResource,
+}
 
 class ParameterMixin:
     mode_resource_map = MODEL_RESOURCE_MAP
+    mode_resource_map_update = MODEL_RESOURCE_MAP_UPDATE
     form = obforms.ImportForm
     template = 'onboarding/import.html'
+    template_import_update = 'onboarding/import_update.html'
     #header_mapping = HEADER_MAPPING
     
 class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
@@ -926,3 +944,95 @@ class LicenseSubscriptionView(LoginRequiredMixin, View):
             resp = P['model'].objects.handle_subscription_postdata(request)
             return rp.JsonResponse(resp, status=200)
         
+class BulkImportUpdate(LoginRequiredMixin,ParameterMixin, View):
+    def get(self, request, *args, **kwargs):
+        R, S = request.GET, request.session
+
+        if (R.get('action') == 'form'):
+
+            #removes the temp file created in the last import
+            self.remove_temp_file(request)
+            inst = utils.Instructions(tablename='TYPEASSIST')
+            '''getting the instructions from the instance and here json.dumps 
+            is used to convert the python dictionary to json.'''
+            get_instructions = inst.get_insructions()
+            get_instructions['general_instructions'][2] = "Columns marked with an asterisk (*) are required. Please delete any columns from the downloaded Excel sheet that you do not wish to update."
+            instructions = json.dumps(get_instructions)
+            cxt = {'importform': self.form(initial={'table': "TYPEASSIST"}), 'instructions':instructions}
+            return render(request, self.template_import_update, cxt)
+        
+        if R.get('action') == 'getInstructions':
+            inst = utils.Instructions(tablename=R.get('tablename'))
+            instructions = inst.get_insructions()
+            instructions['general_instructions'][2] = "Columns marked with an asterisk (*) are required. Please delete any columns from the downloaded Excel sheet that you do not wish to update."
+            return rp.JsonResponse({'instructions':instructions}, status=200)
+
+        if (request.GET.get('action') == 'downloadTemplate') and request.GET.get('template'):
+            buffer = utils.excel_file_creation_update(R, S)
+            return rp.FileResponse(
+                buffer, as_attachment=True, filename=f'{R["template"]}.xlsx'
+            )
+    
+    def post(self, request, *args, **kwargs):
+        R = request.POST
+        form = self.form(R, request.FILES)
+        if not form.is_valid() and R['action'] != 'confirmImport':
+            return rp.JsonResponse({'errors': form.errors}, status=404)
+        res, dataset = obutils.get_resource_and_dataset(request, form,self.mode_resource_map_update)
+        if R.get('action') == 'confirmImport':
+            results = res.import_data(dataset = dataset, dry_run = False, raise_errors = False)
+            return rp.JsonResponse({'totalrows':results.total_rows}, status = 200)
+        else:
+            try:
+                results = res.import_data(
+                    dataset=dataset, dry_run=True, raise_errors=False, use_transactions=True)
+                return render(request, 'onboarding/imported_data.html', {'result':results})
+            except Exception as e:
+                logger.critical("error", exc_info=True)
+                return rp.JsonResponse({"error": "something went wrong!"}, status=500)
+    
+    # def upload_bulk_image_format(self,R):
+    #     google_drive_link = R['google_drive_link']
+    #     file_id = extract_file_id(google_drive_link)
+    #     images_bulk_data = get_file_metadata(file_id)
+    #     is_coorect, correct_image_data, incorrect_image_data = is_bulk_image_data_correct(images_bulk_data['files'])
+    #     if not is_coorect:
+    #         return False,incorrect_image_data
+    #     print("Uploading")
+    #     return True,correct_image_data
+        
+
+    # def get_resource_and_dataset(self, request, form):
+    #     table = form.cleaned_data.get('table')
+    #     if request.POST.get('action') == 'confirmImport':
+    #         tempfile = request.session['temp_file_name']
+    #         with open(tempfile, 'rb') as file:
+    #             dataset = Dataset().load(file)
+    #     else:
+    #         file = request.FILES['importfile']
+    #         dataset = Dataset().load(file)
+    #         # print('dataset',dataset)
+    #         #save to temp storage
+    #         import tempfile
+    #         with tempfile.NamedTemporaryFile(delete=False) as tf:
+    #             for chunk in file.chunks():
+    #                 tf.write(chunk)
+    #             request.session['temp_file_name'] = tf.name
+    #     res = self.mode_resource_map[table](request=request, ctzoffset = form.cleaned_data.get('ctzoffset'))
+    #     return res, dataset
+
+    def get_readable_error(self, error):
+        if(isinstance(error, ObjectDoesNotExist)):
+            return "Related values does not exist, please check your data."
+        if(isinstance(error, IntegrityError)):
+            return "Record already exist, please check your data."
+        return str(error)
+    
+    def remove_temp_file(self, request):
+        filename = request.session.get('temp_file_name', '')
+        try:
+            os.remove(filename)
+        except FileNotFoundError:
+            print(f"The file {filename} does not exist.")
+        except Exception as e:
+            print(f"An error occurred while trying to remove the file {filename}: {str(e)}")
