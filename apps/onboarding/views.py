@@ -27,7 +27,7 @@ import apps.activity.models as am
 import apps.attendance.models as atm
 from apps.y_helpdesk.models import Ticket
 from apps.work_order_management.models import Wom
-from apps.work_order_management.admin import VendorResource
+from apps.work_order_management.admin import VendorResource, VendorResourceUpdate
 from django.core.exceptions import ObjectDoesNotExist
 from pprint import pformat
 import uuid
@@ -500,12 +500,12 @@ MODEL_RESOURCE_MAP_UPDATE = {
     'TYPEASSIST'          : ob_admin.TaResourceUpdate,
     'BU'                  : ob_admin.BtResourceUpdate,
     'QUESTION'            : av_admin.QuestionResource,
-    'LOCATION'            : av_admin.LocationResource,
+    'LOCATION'            : av_admin.LocationResourceUpdate,
     'PEOPLE'              : people_admin.PeopleResource,
     'GROUP'               : people_admin.GroupResource,
     'GROUPBELONGING'      : people_admin.GroupBelongingResource,
     'ASSET'               : av_admin.AssetResource,
-    'VENDOR'              : VendorResource,
+    'VENDOR'              : VendorResourceUpdate,
     'QUESTIONSET'         : av_admin.QuestionSetResource,
     'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResource,
     'SCHEDULEDTASKS'      : sc_admin.TaskResource,
@@ -762,7 +762,6 @@ class BtView(LoginRequiredMixin, View):
                 *self.params['related']).filter(
                     id__in=buids
             ).exclude(identifier__tacode='CLIENT').values(*self.params['fields']).order_by('buname')
-            print("-------------=====>>>>", list(objs))
             return rp.JsonResponse(data={'data': list(objs)})
 
         elif R.get('action', None) == 'form':

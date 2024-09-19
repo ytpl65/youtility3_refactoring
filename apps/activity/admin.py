@@ -776,3 +776,90 @@ class LocationResource(resources.ModelResource):
         
     def before_save_instance(self, instance, using_transactions, dry_run=False):
         utils.save_common_stuff(self.request, instance, self.is_superuser)
+
+
+class LocationResourceUpdate(resources.ModelResource):
+    Client = fields.Field(
+        column_name = 'Client',
+        attribute   = 'client',
+        widget      = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default     = utils.get_or_create_none_bv
+    )
+    BV = fields.Field(
+        column_name       = 'Site',
+        attribute         = 'bu',
+        widget            = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
+        default           = utils.get_or_create_none_bv
+    )
+    
+    PARENT = fields.Field(
+        column_name       = 'Belongs To',
+        attribute         = 'parent',
+        widget            = wg.ForeignKeyWidget(am.Location, 'loccode'),
+        saves_null_values = True,
+        default=utils.get_or_create_none_location
+    )
+
+    #django validates this field and throws error if the value is not valid 
+    Type = fields.Field(
+        column_name       = 'Type',
+        attribute         = 'type',
+        widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        saves_null_values = True,
+        default=default_ta
+    )
+    
+    ID = fields.Field(attribute='id', column_name="ID*")
+    ENABLE = fields.Field(attribute='enable', column_name='Enable', default=True)
+    CODE = fields.Field(attribute='loccode', column_name='Code')
+    NAME = fields.Field(attribute='locname', column_name='Name')
+    RS = fields.Field(attribute='locstatus',column_name='Status')
+    ISCRITICAL = fields.Field(attribute='iscritical', column_name='Is Critical', default=False)
+    GPS = fields.Field(attribute='gpslocation', column_name='GPS Location')
+    
+    class Meta:
+        model = am.Location
+        skip_unchanged = True
+        import_id_fields = ['ID']
+        report_skipped = True
+        fields = ['ID','CODE', 'NAME', 'PARENT', 'RS', 'ISCRITICAL', 'GPS', 'CLIENT', 'BV']
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_superuser = kwargs.pop('is_superuser', None)
+        self.request = kwargs.pop('request', None)
+
+    def check_valid_status(self, row):
+        status = row.get('Status')
+        valid_status = ['MAINTENANCE', 'STANDBY','WORKING','SCRAPPED']
+        if status not in valid_status:
+            raise ValidationError({status:f"{status} is not a valid status. Please select a valid status from {valid_status}"})
+    
+    def before_import_row(self, row, row_number=None, **kwargs):
+        if 'Code' in row:
+            row['Code'] = clean_string(row.get('Code'), code=True)
+        if 'Name' in row:
+            row['Name'] = clean_string(row.get('Name'))
+        if 'GPS Location' in row:
+            row['GPS Location'] = clean_point_field(row.get('GPS Location'))
+        #check required fields
+        if row.get('ID*') in  ['', None]:raise ValidationError("ID* is required field")
+
+        #status validation
+        self.check_valid_status(row)
+        
+        # code validation
+        if 'Code' in row:
+            regex, value = "^[a-zA-Z0-9\-_]*$", row['Code']
+            if " " in value: raise ValidationError("Please enter text without any spaces")
+            if  not re.match(regex, value):
+                raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
+
+        # unique record check
+        if not am.Location.objects.filter(id=row['ID*']).exists():
+            raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
+        super().before_import_row(row, row_number, **kwargs)
+        
+    def before_save_instance(self, instance, using_transactions, dry_run=False):
+        utils.save_common_stuff(self.request, instance, self.is_superuser)

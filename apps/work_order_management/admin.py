@@ -19,6 +19,13 @@ class VendorTypeFKW(wg.ForeignKeyWidget):
             tatype__tacode = 'VENDOR_TYPE',
         )
 
+class VendorTypeFKWUpdate(wg.ForeignKeyWidget):
+   def get_queryset(self, value, row, *args, **kwargs):
+        return self.model.objects.filter(
+            Q(client__bucode = row['Client']) |  Q(client_id = 1),
+            tatype__tacode = 'VENDOR_TYPE',
+        )
+
 
 class VendorResource(resources.ModelResource):
     Client = fields.Field(
@@ -102,6 +109,96 @@ class VendorResource(resources.ModelResource):
         
         # validate email
         if not validate_email(row.get('Email*')): raise ValidationError('Email is not valid!')
+        
+    def before_save_instance(self, instance, using_transactions, dry_run=False):
+        utils.save_common_stuff(self.request, instance, self.is_superuser)
+
+class VendorResourceUpdate(resources.ModelResource):
+    Client = fields.Field(
+        column_name = 'Client',
+        attribute   = 'client',
+        widget      = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default     = utils.get_or_create_none_bv
+    )
+    BV = fields.Field(
+        column_name       = 'Site',
+        attribute         = 'bu',
+        widget            = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
+        default           = utils.get_or_create_none_bv
+    )
+    Type = fields.Field(
+        column_name='Type',
+        attribute='type',
+        widget=VendorTypeFKWUpdate(om.TypeAssist, 'tacode'),
+        default=default_ta
+    )
+    
+    SHOWTOALLSITES = fields.Field(attribute='show_to_all_sites', column_name='Applicable to All Sites', default=False)
+    ID             = fields.Field(attribute='id', column_name="ID*")
+    CODE           = fields.Field(attribute='code', column_name='Code')
+    NAME           = fields.Field(attribute='name', column_name='Name')
+    ADDRESS        = fields.Field(attribute='address', column_name='Address')
+    ENABLE         = fields.Field(attribute='enable', column_name='Enable', default=True)
+    MOB            = fields.Field(attribute='mobno', column_name='Mob No')
+    EMAIL          = fields.Field(attribute='email', column_name='Email')
+    GPS            = fields.Field(attribute='gpslocation', column_name='GPS Location')
+    
+    class Meta:
+        model = wom.Vendor
+        skip_unchanged = True
+        import_id_fields = ['ID']
+        report_skipped = True
+        fields = [
+            'ID','CODE', 'NAME', 'GPS', 'CLIENT', 'BV', 'EMAIL',
+            'MOB', 'ENABLE', 'ADDRESS', 'SHOWTOALLSITES']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_superuser = kwargs.pop('is_superuser', None)
+        self.request = kwargs.pop('request', None)
+    
+    def before_import_row(self, row, row_number=None, **kwargs):
+        if 'Code' in row:
+            row['Code'] = clean_string(row.get('Code'), code=True)
+        if 'Name' in row:
+            row['Name'] = clean_string(row.get('Name'))
+        if 'Address' in row:
+            row['Address'] = clean_string(row.get('Address'))
+        if 'GPS Location' in row:
+            row['GPS Location'] = clean_point_field(row.get('GPS Location'))
+        if 'Mob No' in row:
+            row['Mob No'] = str(row['Mob No'])
+        
+        #check required fields
+        if row.get('ID*') in  ['', None]:raise ValidationError("ID* is required field")
+        
+        # code validation
+        if 'Code' in row:
+            regex, value = "^[a-zA-Z0-9\-_]*$", row['Code']
+            if " " in value: raise ValidationError("Please enter text without any spaces")
+            if  not re.match(regex, value):
+                raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
+        
+        # mob no validation
+        # if not utils.verify_mobno(str(row.get('Mob No*', -1))): raise ValidationError("Mob No* is not valid")
+
+        # mob no validation
+        if 'Mob No' in row:
+            if not utils.verify_mobno(str(row.get('Mob No', -1))):
+                raise ValidationError("Mob No is not valid")
+            else: 
+                mob_no = str(row['Mob No'])
+                row['Mob No'] = mob_no if '+' in mob_no else f'+{mob_no}'
+        
+        # unique record check
+        if not wom.Vendor.objects.filter(id=row['ID*']).exists():
+            raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
+        super().before_import_row(row, row_number, **kwargs)
+        
+        # validate email
+        if 'Email' in row:
+            if not validate_email(row.get('Email')): raise ValidationError('Email is not valid!')
         
     def before_save_instance(self, instance, using_transactions, dry_run=False):
         utils.save_common_stuff(self.request, instance, self.is_superuser)

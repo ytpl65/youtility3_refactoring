@@ -14,7 +14,7 @@ from dateutil import parser
 import django.shortcuts as scts
 from django.contrib import messages as msg
 from django.contrib.gis.measure import Distance
-from django.db.models import Q, F, Case, When, Value
+from django.db.models import Q, F, Case, When, Value, Func
 from django.http import JsonResponse
 from django.http import response as rp
 from django.template.loader import render_to_string
@@ -26,6 +26,7 @@ import apps.onboarding.models as ob
 import apps.peoples.utils as putils
 from apps.peoples import models as pm
 from apps.work_order_management.models  import Wom, Vendor
+from apps.work_order_management import models as wom
 from apps.tenants.models import Tenant
 from apps.core import exceptions as excp
 from icecream import ic
@@ -33,6 +34,8 @@ from django.db import transaction
 from django.db.models import RestrictedError
 from apps.work_order_management.models import Approver
 from django.db import models
+from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
+from django.db.models.functions import Cast, Concat
 
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -1981,12 +1984,12 @@ HEADER_MAPPING_UPDATE = {
     ],
 
     'VENDOR':[
-        'Code*', 'Name*', 'Type*', 'Address*', 'Email*', 'Applicable to All Sites',
-        'Mob No*', 'Site*', 'Client*', 'GPS Location', 'Enable'
+        'ID*','Code', 'Name', 'Type', 'Address', 'Email', 'Applicable to All Sites',
+        'Mob No', 'Site', 'Client', 'GPS Location', 'Enable'
     ],
     'LOCATION':[
-        'Code*', 'Name*', 'Type*', 'Status*', 'Is Critical', 'Belongs To',
-        'Site*', 'Client*', 'GPS Location', 'Enable'
+        'ID*','Code', 'Name', 'Type', 'Status', 'Is Critical', 'Belongs To',
+        'Site', 'Client', 'GPS Location', 'Enable'
     ],
     'QUESTIONSET':[
         'Seq No*', 'Question Set Name*', 'Belongs To*', 'QuestionSet Type*', 'Asset Includes', 'Site Includes', 'Site*',
@@ -2019,18 +2022,18 @@ Example_data_update = {
             'BU': [('495','MUM001','Site A','NONE','BRANCH','BANK','John Doe','123','TRUE','19.05,73.51','123 main street, xyz city','Valparaíso','California','USA'),
                    ('496','MUM002','Site B','MUM001','ZONE','OFFICE','Jane Smith','456','FALSE','19.05,73.51','124 main street, xyz city','Hobart','New York','Canada'),
                    ('497','MUM003','Site C','NONE','SITE','SUPERMARKET','Ming Yang','789','TRUE','19.05,73.51','125 main street, xyz city','Manarola','California','USA')],
-      'LOCATION': [('LOC001','Location A','GROUNDFLOOR','WORKING','TRUE','NONE','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
-                    ('LOC002','Location B','MAINENTRANCE','SCRAPPED','FALSE','MUM001','SITE_B','CLIENT_A','19.05,73.52','FALSE'),
-                    ('LOC003','Location C','FIRSTFLOOR','RUNNING','TRUE','NONE','SITE_C','CLIENT_A','19.05,73.53','TRUE')],
+      'LOCATION': [('47','LOC001','Location A','GROUNDFLOOR','WORKING','TRUE','NONE','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
+                    ('48','LOC002','Location B','MAINENTRANCE','SCRAPPED','FALSE','MUM001','SITE_B','CLIENT_A','19.05,73.52','FALSE'),
+                    ('49','LOC003','Location C','FIRSTFLOOR','RUNNING','TRUE','NONE','SITE_C','CLIENT_A','19.05,73.53','TRUE')],
         'ASSET' : [('ASSET01','Asset A','STANDBY','ASSET','TRUE','CLIENT_A','SITE_A','0.01','NONE','ELECTRICAL','19.05,73.51','NONE','NONE','BRAND_A','NONE','CLINET_A','TRUE',
                     'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE'),
                     ('ASSET02','Asset B','RUNNING','ASSET','FALSE','CLIENT_B','SITE_B','0.02','NONE','MECHANICAL','19.05,73.52','NONE','NONE','BRAND_B','NONE','CLINET_A','TRUE',
                     'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE'),
                     ('ASSET03','Asset C','RUNNING','CHECKPOINT','TRUE','CLIENT_C','SITE_C','0','NONE','ELECTRICAL','19.05,73.53','NONE','NONE','BRAND_C','NONE','CLINET_A','TRUE',
                     'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE')],
-        'VENDOR': [('VENDOR_A','Vendor A','ELECTRICAL','123 main street, xyz city','XYZ@gmail.com','TRUE','911234567891','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
-                   ('VENDOR_B','Vendor B','MECHANICAL','124 main street, xyz city','XYZ@gmail.com','FALSE','911478529630','SITE_B','CLIENT_B','19.05,73.51','FALSE'),
-                   ('VENDOR_C','Vendor C','ELECTRICAL','125 main street, xyz city','XYZ@gmail.com','TRUE','913698521470','SITE_C','CLIENT_C','19.05,73.51','TRUE')],
+        'VENDOR': [('527','VENDOR_A','Vendor A','ELECTRICAL','123 main street, xyz city','XYZ@gmail.com','TRUE','911234567891','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
+                   ('528','VENDOR_B','Vendor B','MECHANICAL','124 main street, xyz city','XYZ@gmail.com','FALSE','911478529630','SITE_B','CLIENT_B','19.05,73.51','FALSE'),
+                   ('529','VENDOR_C','Vendor C','ELECTRICAL','125 main street, xyz city','XYZ@gmail.com','TRUE','913698521470','SITE_C','CLIENT_C','19.05,73.51','TRUE')],
         'PEOPLE':[('PERSON_A','Person A','Web','STAFF','A123','XYZ','M','911234567891','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_A','SITE_A',
                     'MANAGER','HR','NONE','NONE','yyyy-mm-dd','513bb5f9c78c9117','TRUE',"SELFATTENDANCE, TICKET,INCIDENTREPORT,SOS,SITECRISIS,TOUR",'NONE',	
                     'TR_SS_SITEVISIT,DASHBOARD,TR_SS_SITEVISIT,TR_SS_CONVEYANCE,TR_GEOFENCETRACKING','NONE','123 main street, xyz city','FALSE','TRUE'),
@@ -2076,7 +2079,7 @@ def excel_file_creation_update(R, S):
     data_ex = Example_data_update.get(R['template'])
     get_data = get_type_data(R['template'], S)
     df = pd.DataFrame(data_ex, columns=columns)
-    # main_header = pd.DataFrame(get_data, columns=columns)
+    main_header = pd.DataFrame(get_data, columns=columns)
     empty_row = pd.DataFrame([[''] * len(df.columns)], columns=df.columns)
     buffer = BytesIO()
     
@@ -2084,7 +2087,7 @@ def excel_file_creation_update(R, S):
         df.to_excel(writer, index=False, header=True, startrow=2)
         empty_row.to_excel(writer, index=False, header=False, startrow=len(df) + 3)
         main_header = pd.DataFrame(get_data, columns=columns)
-        main_header.to_excel(writer, index=False, header=False, startrow=len(df) + 6)
+        main_header.to_excel(writer, index=False, header=False, startrow=len(df) + 7)
         workbook = writer.book
         worksheet = writer.sheets['Sheet1']
         bold_format = workbook.add_format({'bold': True,'border':1})
@@ -2131,18 +2134,58 @@ def get_type_data(type_name, S):
                    latlng=F('bupreferences__address2__latlng'),
                    siteincharge_name=Case(
                         When(siteincharge__enable=True, then=F('siteincharge__peoplename')),
-                        default=Value("NONE"),
+                        default=Value(None),
                         output_field=models.CharField()
                     )
         ).values_list('id', 'bucode', 'buname', 'parent__buname', 'identifier__taname', 'butype__taname', 'siteincharge_name', 
                  'solid', 'enable', 'latlng', 'address', 'city', 'state', 'country',)
         return list(objs)
     if type_name == 'LOCATION':
-        return list(am.Location.objects.values_list('taname', 'tacode', 'tatype', 'client'))
+        class JsonSubstring(Func):
+            function = 'SUBSTRING'
+            template = "%(function)s(%(expressions)s from '\\[(.+)\\]')"
+        objs = am.Location.objects.select_related('parent', 'type', 'bu').filter(
+            ~Q(loccode='NONE'),
+            bu_id = S['bu_id'],
+            client_id = S['client_id']
+        ).annotate(
+            gps_json=AsGeoJSON('gpslocation'),
+            coordinates_str=JsonSubstring('gps_json'),
+            lat=Cast(Func(F('coordinates_str'), Value(','), Value(2), function='split_part'), models.FloatField()),
+            lon=Cast(Func(F('coordinates_str'), Value(','), Value(1), function='split_part'), models.FloatField()),
+            coordinates=Concat(
+                Cast('lat', models.CharField()),
+                Value(', '),
+                Cast('lon', models.CharField()),
+                output_field=models.CharField()
+            )
+        ).values_list('id', 'loccode', 'locname', 'type__tacode', 'locstatus', 'iscritical', 'parent__loccode',
+                 'bu__bucode','client__bucode', 'coordinates', 'enable')
+        return list(objs)
     if type_name == 'ASSET':
         return list(am.Asset.objects.values_list('taname', 'tacode', 'tatype', 'client'))
     if type_name == 'VENDOR':
-        return list(Vendor.objects.values_list('taname', 'tacode', 'tatype', 'client'))
+        class JsonSubstring(Func):
+            function = 'SUBSTRING'
+            template = "%(function)s(%(expressions)s from '\\[(.+)\\]')"
+        objs = wom.Vendor.objects.select_related('parent', 'type', 'bu').filter(
+            ~Q(code='NONE'),
+            bu_id = S['bu_id'],
+            client_id = S['client_id']
+        ).annotate(
+            gps_json=AsGeoJSON('gpslocation'),
+            coordinates_str=JsonSubstring('gps_json'),
+            lat=Cast(Func(F('coordinates_str'), Value(','), Value(2), function='split_part'), models.FloatField()),
+            lon=Cast(Func(F('coordinates_str'), Value(','), Value(1), function='split_part'), models.FloatField()),
+            coordinates=Concat(
+                Cast('lat', models.CharField()),
+                Value(', '),
+                Cast('lon', models.CharField()),
+                output_field=models.CharField()
+            )
+        ).values_list('id', 'code', 'name', 'type__tacode', 'address', 'email', 'show_to_all_sites', 'mobno',
+                      'bu__bucode', 'client__bucode', 'coordinates', 'enable')
+        return list(objs)
     if type_name == 'PEOPLE':
         return list(pm.People.objects.values_list('taname', 'tacode', 'tatype', 'client'))
     if type_name == 'QUESTION':
