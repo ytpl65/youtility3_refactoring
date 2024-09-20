@@ -35,7 +35,7 @@ from django.db.models import RestrictedError
 from apps.work_order_management.models import Approver
 from django.db import models
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
-from django.db.models.functions import Cast, Concat
+from django.db.models.functions import Cast, Concat, Substr, StrIndex, Length
 
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -1964,8 +1964,8 @@ HEADER_MAPPING_UPDATE = {
         'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'City', 'State', 'Country'],
     
     'QUESTION':[
-        'Question Name*','Answer Type*', 'Min', 'Max','Alert Above', 'Alert Below', 'Is WorkFlow',
-        'Options', 'Alert On', 'Enable', 'Is AVPT' ,'AVPT Type','Client*', 'Unit', 'Category'],
+        'ID*','Question Name','Answer Type', 'Min', 'Max','Alert Above', 'Alert Below', 'Is WorkFlow',
+        'Options', 'Alert On', 'Enable', 'Is AVPT' , 'AVPT Type', 'Client', 'Unit', 'Category'],
     
     'ASSET':[
         'Code*', 'Name*', 'Running Status*', 'Identifier*','Is Critical',
@@ -1977,10 +1977,10 @@ HEADER_MAPPING_UPDATE = {
         'Purchase Date', 'Installation Date', 'PO Number', 'FAR Asset ID'
     ],
     'GROUP':[
-        'Group Name*', 'Type*', 'Client*', 'Site*', 'Enable'
+        'ID*','Group Name', 'Type', 'Client', 'Site', 'Enable'
     ],
     'GROUPBELONGING':[
-      'Group Name*', 'Of People', "Of Site", 'Client*', 'Site*'  
+      'ID*', 'Group Name', 'Of People', "Of Site", 'Client', 'Site'  
     ],
 
     'VENDOR':[
@@ -2041,9 +2041,9 @@ Example_data_update = {
                     'SUPERVISOR','TRAINING','NONE','NONE','yyyy-mm-dd','513bb5f9c78c9118','FALSE','NONE','NONE','NONE','NONE','124 main street, xyz city','FALSE','FALSE'),
                     ('PERSON_C','Person C','NONE','NONE','C8910','XYZ','O','912587891463','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_C','SITE_C','NONE',
                         'NONE','NONE','NONE','yyyy-mm-dd','513bb5f9c78c9119','TRUE','NONE','NONE','NONE','NONE','125 main street, xyz city', 'FALSE','TRUE')],
-       'QUESTION': [('Are s/staff found with correct accessories / pressed uniform?','MULTILINE','NONE','NONE','NONE','NONE','TRUE','','','TRUE','TRUE','NONE','CLIENT_A','NONE','NONE'),
-                    ('Electic Meter box is ok?','DROPDOWN','NONE','NONE','NONE','NONE','FALSE','No, Yes, N/A','','TRUE','TRUE','NONE','CLIENT_B','NONE','NONE'),
-                    ('All lights working','DROPDOWN','NONE','NONE','NONE','NONE','TRUE','No, Yes, N/A','','TRUE','TRUE','NONE','CLIENT_C', 'NONE','NONE')],
+       'QUESTION': [('995','Are s/staff found with correct accessories / pressed uniform?','MULTILINE','NONE','NONE','NONE','NONE','TRUE','','','TRUE','TRUE','NONE','CLIENT_A','NONE','NONE'),
+                    ('996','Electic Meter box is ok?','DROPDOWN','NONE','NONE','NONE','NONE','FALSE','No, Yes, N/A','','TRUE','TRUE','NONE','CLIENT_B','NONE','NONE'),
+                    ('997','All lights working','DROPDOWN','NONE','NONE','NONE','NONE','TRUE','No, Yes, N/A','','TRUE','TRUE','NONE','CLIENT_C', 'NONE','NONE')],
     'QUESTIONSET': [('1','Question Set A','NONE','CHECKLIST','ADMINBACK,CMRC','MUM001,MUM003','SITE_A','CLIENT_A','Group A,Group B','BANK,OFFICE','TRUE','NONE'),
                     ('1','Question Set B','Question Set A','INCIDENTREPORT',	'NONE',	'NONE',	'SITE_B','CLIENT_B','NONE','NONE','FALSE','NONE'),
                     ('1','Question Set C','Question Set A','WORKPERMIT','NONE','NONE','SITE_C','CLIENT_C','NONE','NONE','TRUE','NONE')],
@@ -2051,12 +2051,12 @@ Example_data_update = {
                              '1','FALSE','NONE','NONE','NONE','NONE','NONE','NONE','TRUE','FRONTCAMPIC'),
                              ('Electic Meter box is ok?','Question Set B','CLIENT_B','SITE_B','DROPDOWN','5','FALSE','NONE','NONE','NONE','NONE','No, Yes, N/A','NONE',	'FALSE','AUDIO'),
                              ('All lights working','Question Set C','CLIENT_C','SITE_C','DROPDOWN','3','TRUE','NONE','NONE','NONE','NONE','No, Yes, N/A','NONE','TRUE','NONE')],
-         'GROUP': [('Group A','PEOPLEGROUP','CLIENT_A','SITE_A','TRUE'),
-                    ('Group B','SITEGROUP','CLIENT_B','SITE_B','FALSE'),
-                    ('Group C','PEOPLEGROUP','CLIENT_C','SITE_C','TRUE')],
-    'GROUPBELONGING':[('Group A','Person A','NONE','CLIENT_A','Yout_logged_in_site'),
-                      ('Group B','Person B','NONE','CLIENT_B','SITE_A'),
-                      ('Group C','Person C','NONE','CLIENT_C','SITE_B')],
+         'GROUP': [('163','Group A','PEOPLEGROUP','CLIENT_A','SITE_A','TRUE'),
+                    ('164','Group B','SITEGROUP','CLIENT_B','SITE_B','FALSE'),
+                    ('165','Group C','PEOPLEGROUP','CLIENT_C','SITE_C','TRUE')],
+    'GROUPBELONGING':[('2764','Group A','Person A','NONE','CLIENT_A','Yout_logged_in_site'),
+                      ('2765','Group B','Person B','NONE','CLIENT_B','SITE_A'),
+                      ('2766','Group C','Person C','NONE','CLIENT_C','SITE_B')],
     'SCHEDULEDTASKS':[('Task A','Task A Inspection','0 20 * * *','ASSETA','Questionset A','PERSON_A','GROUP_A','15','5','5','RAISETICKETNOTIFY','YYYY-MM-DD HH:MM:SS',
                         'YYYY-MM-DD HH:MM:SS','NFC','CLIENT_A','SITE_A','HIGH','1','NONE','NONE','NONE'),
                         ('Task B','Task B Daily Reading','1 20 * * *','ASSETB','Checklist B','PERSON_B','GROUP_B','18','5','5','AUTOCLOSEDNOTIFY','2023-06-07 12:00:00',	
@@ -2189,12 +2189,42 @@ def get_type_data(type_name, S):
     if type_name == 'PEOPLE':
         return list(pm.People.objects.values_list('taname', 'tacode', 'tatype', 'client'))
     if type_name == 'QUESTION':
-        return list(am.Question.objects.values_list('taname', 'tacode', 'tatype', 'client'))
+        objs = am.Question.objects.select_related('unit', 'category', 'client').filter(
+                client_id = S['client_id'],
+            ).annotate(
+                alert_above=Case(
+                When(alerton__startswith='<', 
+                    then=Substr('alerton', 2, 
+                                StrIndex(Substr('alerton', 2), Value(',')) - 1)),
+                When(alerton__contains=',<', 
+                    then=Substr('alerton', 
+                                StrIndex('alerton', Value(',<')) + 2)),
+                default=Value("NONE"),
+                output_field=models.CharField()
+            ),
+            alert_below=Case(
+                When(alerton__contains='>', 
+                    then=Substr('alerton', 
+                                StrIndex('alerton', Value('>')) + 1)),
+                default=Value("NONE"),
+                output_field=models.CharField()
+            ),
+            min_str=Cast('min', output_field=models.CharField()),
+            max_str=Cast('max', output_field=models.CharField())
+            ).values_list('id', 'quesname', 'answertype', 'min_str', 'max_str', 'alert_above', 'alert_below', 'isworkflow', 'options', 
+                          'alerton', 'enable', 'isavpt', 'avpttype', 'client__bucode', 'unit__tacode', 'category__tacode')
+        return list(objs)
     if type_name == 'QUESTIONSET':
         return list(am.QuestionSet.objects.values_list('taname', 'tacode', 'tatype', 'client'))
     if type_name == 'QUESTIONSETBELONGING':
         return list(am.QuestionSetBelonging.objects.values_list('taname', 'tacode', 'tatype', 'client'))
     if type_name == 'GROUP':
-        return list(pm.Pgroup.objects.values_list('taname', 'tacode', 'tatype', 'client'))
+        objs = pm.Pgroup.objects.select_related('client', 'identifier', 'bu').filter(
+            ~Q(id=-1), bu_id = S['bu_id'], identifier__tacode='PEOPLEGROUP', client_id = S['client_id']
+        ).values_list('id', 'groupname', 'identifier__tacode', 'client__bucode', 'bu__bucode', 'enable')
+        return list(objs)
     if type_name == 'GROUPBELONGING':
-        return list(pm.Pgbelonging.objects.values_list('taname', 'tacode', 'tatype', 'client'))
+        objs = pm.Pgbelonging.objects.select_related('pgroup','people').filter(
+                client_id = S['client_id'],
+            ).values_list('id', 'pgroup__groupname', 'people__peoplecode', 'assignsites__bucode', 'client__bucode', 'bu__bucode')
+        return list(objs)

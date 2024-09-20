@@ -308,6 +308,26 @@ class SiteFKW(wg.ForeignKeyWidget):
             Q(client__bucode__exact=row["Client*"]),
         )
 
+class PgroupFKWUpdate(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        return self.model.objects.select_related().filter(
+            Q(client__bucode__exact=row["Client"]),
+        )
+class PeopleFKWUpdate(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        return self.model.objects.select_related().filter(
+            Q(client__bucode__exact=row["Client"]),
+        )
+
+class BVForeignKeyWidgetUpdate(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        client = om.Bt.objects.filter(bucode=row['Client']).first()
+        bu_ids = om.Bt.objects.get_whole_tree(client.id)
+        qset = self.model.objects.select_related('parent', 'identifier').filter(
+            id__in=bu_ids, identifier__tacode='SITE', parent__bucode=row['Client'])
+        return qset
+
+
 class GroupBelongingResource(resources.ModelResource):
     CLIENT = fields.Field(
         column_name='Client*',
@@ -443,3 +463,122 @@ class CapabilityAdmin(ImportExportModelAdmin):
         return pm.Capability.objects.select_related(
             'parent', 'cuser', 'muser').all()
 
+class GroupResourceUpdate(resources.ModelResource):
+    Client = fields.Field(
+        column_name='Client',
+        attribute='client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default='NONE'
+    )
+    BV = fields.Field(
+        column_name='Site',
+        attribute='bu',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
+        default='NONE'
+    )
+    Identifier = fields.Field(
+        attribute='identifier',
+        column_name='Type',
+        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+    )
+    ID = fields.Field(attribute='id', column_name='ID*')
+    Enable = fields.Field(attribute='enable', column_name='Enable', widget=wg.BooleanWidget(), default=True)
+    Name = fields.Field(attribute='groupname', column_name='Group Name')
+    
+    class Meta:
+        model = pm.Pgroup
+        skip_unchanged = True
+        import_id_fields = ['ID']
+        report_skipped = True,
+        fields = ['ID', 'Client', 'BV','Identifier', 'Enable', 'Name']
+    
+    def __init__(self, *args, **kwargs):
+        super(GroupResourceUpdate, self).__init__(*args, **kwargs)
+        self.is_superuser = kwargs.pop('is_superuser', None)
+        self.request = kwargs.pop('request', None)
+    
+    def before_import_row(self, row, row_number, **kwargs):
+        if 'Name' in row:
+            row['Name'] = clean_string(row.get('Name'))
+        # check required fields
+        if row.get('ID*') in ['', None]: raise ValidationError(
+            {'ID*':'This field is required'}
+        )
+        if 'Name' in row:
+            if row.get('Name') in ['', None]: raise ValidationError(
+                {'Name': "This field is required"})
+        if 'Type' in row:
+            if row.get('Type') in ['', None]: raise ValidationError(
+                {'Type':'This field is required'}
+            )
+            if row['Type'] not in ['PEOPLEGROUP', 'SITEGROUP']:
+                raise ValidationError({
+                    'Type':"The value must be from ['PEOPLEGROUP', 'SITEGROUP']"
+                })
+
+        # unique record check
+        if not Pgroup.objects.filter(id=row['ID*']).exists():
+            raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
+        super().before_import_row(row, **kwargs)
+
+    def before_save_instance(self, instance, using_transactions, dry_run=False):
+        utils.save_common_stuff(self.request, instance, self.is_superuser)
+
+class GroupBelongingResourceUpdate(resources.ModelResource):
+    CLIENT = fields.Field(
+        column_name='Client',
+        attribute='client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default=utils.get_or_create_none_bv
+    )
+    BV = fields.Field(
+        column_name='Site',
+        attribute='bu',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
+        default=utils.get_or_create_none_bv
+    )
+    GROUP = fields.Field(
+        column_name='Group Name',
+        attribute='pgroup',
+        widget = PgroupFKWUpdate(pm.Pgroup, 'groupname'),
+        default=utils.get_or_create_none_pgroup
+    )
+    PEOPLE = fields.Field(
+        column_name='Of People',
+        attribute='people',
+        widget=PeopleFKWUpdate(pm.People, 'peoplecode'),
+        default=utils.get_or_create_none_people
+    )
+    SITE = fields.Field(
+        column_name='Of Site',
+        widget= BVForeignKeyWidgetUpdate(om.Bt, 'bucode'),
+        attribute='assignsites',
+        default=utils.get_or_create_none_bv
+    )
+    ID = fields.Field(attribute='id')
+    class Meta:
+        model = pm.Pgbelonging
+        skip_unchanged = True
+        report_skipped = True
+        import_id_fields = ['ID']
+        fields = ['ID', 'GROUP', 'PEOPLE', 'CLIENT', 'BV', 'SITE']
+
+    def __init__(self, *args, **kwargs):
+        super(GroupBelongingResourceUpdate, self).__init__(*args, **kwargs)
+        self.is_superuser = kwargs.pop('is_superuser', None)
+        self.request = kwargs.pop('request', None)
+    
+    def before_import_row(self, row, row_number, **kwargs):
+        if row.get('ID*') in ['', 'NONE', None]: raise ValidationError({'ID*':"This field is required"})
+        if 'Group Name' in row:
+            if row.get('Group Name') in ['', 'NONE', None]: raise ValidationError({'Group Name':"This field is required"})
+        if 'Of Site' in row and 'Of People' in row:
+            if row.get('Of Site') in ['', 'NONE', None] and row.get('Of People') in ['', 'NONE', None]:
+                raise ValidationError("Either Site or People should be set, both cannot be None")
+        
+        # unique record check
+        if not pm.Pgbelonging.objects.filter(id=row['ID*']).exists():
+            raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
+        super().before_import_row(row, **kwargs)
