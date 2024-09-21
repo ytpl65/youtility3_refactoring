@@ -310,22 +310,26 @@ class SiteFKW(wg.ForeignKeyWidget):
 
 class PgroupFKWUpdate(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
-        return self.model.objects.select_related().filter(
-            Q(client__bucode__exact=row["Client"]),
-        )
+        if 'Client' in row:
+            return self.model.objects.select_related().filter(
+                Q(client__bucode__exact=row["Client"]),
+            )
+        
 class PeopleFKWUpdate(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
-        return self.model.objects.select_related().filter(
-            Q(client__bucode__exact=row["Client"]),
-        )
+        if 'Client' in row:
+            return self.model.objects.select_related().filter(
+                Q(client__bucode__exact=row["Client"]),
+            )
 
 class BVForeignKeyWidgetUpdate(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
-        client = om.Bt.objects.filter(bucode=row['Client']).first()
-        bu_ids = om.Bt.objects.get_whole_tree(client.id)
-        qset = self.model.objects.select_related('parent', 'identifier').filter(
-            id__in=bu_ids, identifier__tacode='SITE', parent__bucode=row['Client'])
-        return qset
+        if 'Client' in row:
+            client = om.Bt.objects.filter(bucode=row['Client']).first()
+            bu_ids = om.Bt.objects.get_whole_tree(client.id)
+            qset = self.model.objects.select_related('parent', 'identifier').filter(
+                id__in=bu_ids, identifier__tacode='SITE', parent__bucode=row['Client'])
+            return qset
 
 
 class GroupBelongingResource(resources.ModelResource):

@@ -1968,8 +1968,8 @@ HEADER_MAPPING_UPDATE = {
         'Options', 'Alert On', 'Enable', 'Is AVPT' , 'AVPT Type', 'Client', 'Unit', 'Category'],
     
     'ASSET':[
-        'Code*', 'Name*', 'Running Status*', 'Identifier*','Is Critical',
-        'Client*', 'Site*', 'Capacity', 'BelongsTo', 'Type',  'GPS Location',
+        'ID*','Code', 'Name', 'Running Status', 'Identifier','Is Critical',
+        'Client', 'Site', 'Capacity', 'BelongsTo', 'Type',  'GPS Location',
         'Category', 'SubCategory', 'Brand', 'Unit', 'Service Provider',
         'Enable', 'Is Meter', 'Is Non Engg. Asset', 'Meter', 'Model', 'Supplier',
         'Invoice No', 'Invoice Date', 'Service', 'Service From Date', 'Service To Date',
@@ -2025,11 +2025,11 @@ Example_data_update = {
       'LOCATION': [('47','LOC001','Location A','GROUNDFLOOR','WORKING','TRUE','NONE','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
                     ('48','LOC002','Location B','MAINENTRANCE','SCRAPPED','FALSE','MUM001','SITE_B','CLIENT_A','19.05,73.52','FALSE'),
                     ('49','LOC003','Location C','FIRSTFLOOR','RUNNING','TRUE','NONE','SITE_C','CLIENT_A','19.05,73.53','TRUE')],
-        'ASSET' : [('ASSET01','Asset A','STANDBY','ASSET','TRUE','CLIENT_A','SITE_A','0.01','NONE','ELECTRICAL','19.05,73.51','NONE','NONE','BRAND_A','NONE','CLINET_A','TRUE',
+        'ASSET' : [('1127','ASSET01','Asset A','STANDBY','ASSET','TRUE','CLIENT_A','SITE_A','0.01','NONE','ELECTRICAL','19.05,73.51','NONE','NONE','BRAND_A','NONE','CLINET_A','TRUE',
                     'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE'),
-                    ('ASSET02','Asset B','RUNNING','ASSET','FALSE','CLIENT_B','SITE_B','0.02','NONE','MECHANICAL','19.05,73.52','NONE','NONE','BRAND_B','NONE','CLINET_A','TRUE',
+                    ('1128','ASSET02','Asset B','RUNNING','ASSET','FALSE','CLIENT_B','SITE_B','0.02','NONE','MECHANICAL','19.05,73.52','NONE','NONE','BRAND_B','NONE','CLINET_A','TRUE',
                     'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE'),
-                    ('ASSET03','Asset C','RUNNING','CHECKPOINT','TRUE','CLIENT_C','SITE_C','0','NONE','ELECTRICAL','19.05,73.53','NONE','NONE','BRAND_C','NONE','CLINET_A','TRUE',
+                    ('1129','ASSET03','Asset C','RUNNING','CHECKPOINT','TRUE','CLIENT_C','SITE_C','0','NONE','ELECTRICAL','19.05,73.53','NONE','NONE','BRAND_C','NONE','CLINET_A','TRUE',
                     'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE')],
         'VENDOR': [('527','VENDOR_A','Vendor A','ELECTRICAL','123 main street, xyz city','XYZ@gmail.com','TRUE','911234567891','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
                    ('528','VENDOR_B','Vendor B','MECHANICAL','124 main street, xyz city','XYZ@gmail.com','FALSE','911478529630','SITE_B','CLIENT_B','19.05,73.51','FALSE'),
@@ -2163,7 +2163,52 @@ def get_type_data(type_name, S):
                  'bu__bucode','client__bucode', 'coordinates', 'enable')
         return list(objs)
     if type_name == 'ASSET':
-        return list(am.Asset.objects.values_list('taname', 'tacode', 'tatype', 'client'))
+        class JsonSubstring(Func):
+            function = 'SUBSTRING'
+            template = "%(function)s(%(expressions)s from '\\[(.+)\\]')"
+        objs = am.Asset.objects.select_related('parent', 'type', 'bu', 'category', 'subcategory', 'brand', 'unit', 'servprov').filter(
+            ~Q(assetcode='NONE'),
+            bu_id = S['bu_id'],
+            client_id = S['client_id'],
+            identifier='ASSET'
+        ).annotate(
+            gps_json=AsGeoJSON('gpslocation'),
+            coordinates_str=JsonSubstring('gps_json'),
+            lat=Cast(Func(F('coordinates_str'), Value(','), Value(2), function='split_part'), models.FloatField()),
+            lon=Cast(Func(F('coordinates_str'), Value(','), Value(1), function='split_part'), models.FloatField()),
+            coordinates=Concat(
+                Cast('lat', models.CharField()),
+                Value(', '),
+                Cast('lon', models.CharField()),
+                output_field=models.CharField()
+            ),
+            ismeter=F('asset_json__ismeter'),
+            isnonenggasset=F('asset_json__is_nonengg_asset'),
+            meter=F('asset_json__meter'),
+            model=F('asset_json__model'),
+            supplier=F('asset_json__supplier'),
+            invoice_no=F('asset_json__invoice_no'),
+            invoice_date=F('asset_json__invoice_date'),
+            service=F('asset_json__service'),
+            sfdate=F('asset_json__sfdate'),
+            stdate=F('asset_json__stdate'),
+            yom=F('asset_json__yom'),
+            msn=F('asset_json__msn'),
+            bill_val=F('asset_json__bill_val'),
+            bill_date=F('asset_json__bill_date'),
+            purchase_date=F('asset_json__purchase_date'),
+            inst_date=F('asset_json__inst_date'),
+            po_number=F('asset_json__po_number'),
+            far_asset_id=F('asset_json__far_asset_id'),
+            capacity_val=Cast('capacity', output_field=models.CharField()),
+        ).values_list('id', 'assetcode', 'assetname', 'runningstatus', 'identifier', 'iscritical', 'client__bucode', 'bu__bucode',
+                'capacity_val', 'parent__assetcode', 'type__tacode','coordinates', 'category__tacode', 'subcategory__tacode', 'brand__tacode',
+                'unit__tacode', 'servprov__bucode', 'enable', 'ismeter', 'isnonenggasset', 'meter', 'model', 'supplier',
+                'invoice_no', 'invoice_date', 'service', 'sfdate', 'stdate', 'yom', 'msn', 'bill_val', 'bill_date', 'purchase_date', 'inst_date',
+                'po_number', 'far_asset_id')
+        
+        print("ASSET------>", list(objs))
+        return list(objs)
     if type_name == 'VENDOR':
         class JsonSubstring(Func):
             function = 'SUBSTRING'
