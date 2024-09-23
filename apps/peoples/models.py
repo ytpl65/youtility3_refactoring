@@ -205,7 +205,7 @@ class Pgroup(BaseModel, TenantAwareModel):
 
 ############## Pgbelonging Table ###############
 class Pgbelonging(BaseModel, TenantAwareModel):
-    # id      = models.BigIntegerField(_("Pgbid"), primary_key = True)
+    # id          = models.BigIntegerField(_("Pgbid"), primary_key = True)
     pgroup      = models.ForeignKey('Pgroup', null = True, blank = True, on_delete = models.RESTRICT, related_name="pgbelongs_grps")
     people      = models.ForeignKey(settings.AUTH_USER_MODEL, null = True, blank = True, on_delete = models.RESTRICT,  related_name="pgbelongs_peoples")
     isgrouplead = models.BooleanField(_('Group Lead'), default = False)

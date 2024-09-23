@@ -830,10 +830,11 @@ class LocationResourceUpdate(resources.ModelResource):
         self.request = kwargs.pop('request', None)
 
     def check_valid_status(self, row):
-        status = row.get('Status')
-        valid_status = ['MAINTENANCE', 'STANDBY','WORKING','SCRAPPED']
-        if status not in valid_status:
-            raise ValidationError({status:f"{status} is not a valid status. Please select a valid status from {valid_status}"})
+        if 'Status' in row:
+            status = row.get('Status')
+            valid_status = ['MAINTENANCE', 'STANDBY','WORKING','SCRAPPED']
+            if status not in valid_status:
+                raise ValidationError({status:f"{status} is not a valid status. Please select a valid status from {valid_status}"})
     
     def before_import_row(self, row, row_number=None, **kwargs):
         if 'Code' in row:
@@ -1068,7 +1069,7 @@ class AssetResourceUpdate(resources.ModelResource):
 
     ServiceProvider = fields.Field(
         column_name       = 'Service Provider',
-        attribute         = 'serv_prov',
+        attribute         = 'servprov',
         widget            = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
         default=utils.get_or_create_none_bv,
@@ -1098,8 +1099,8 @@ class AssetResourceUpdate(resources.ModelResource):
         default=default_ta
     )
     Identifier       = fields.Field(attribute='identifier', column_name='Identifier', default='ASSET')
-    ID               = fields.Field(attribute='id', column_name='ID')
-    ENABLE           = fields.Field(attribute='id', column_name='Enable')
+    ID               = fields.Field(attribute='id', column_name='ID*')
+    ENABLE           = fields.Field(attribute='enable', column_name='Enable')
     is_critical      = fields.Field(attribute='iscritical', column_name='Is Critical', default=False, widget=wg.BooleanWidget())
     is_meter         = fields.Field(column_name='Is Meter', widget=wg.BooleanWidget(),  default=False)
     Code             = fields.Field(attribute='assetcode', column_name='Code')
@@ -1108,7 +1109,7 @@ class AssetResourceUpdate(resources.ModelResource):
     Capacity         = fields.Field(widget=wg.DecimalWidget(), column_name='Capacity', attribute='capacity', default=0.0)
     GPS              = fields.Field(attribute='gpslocation', column_name='GPS Location')
     is_nonengg_asset = fields.Field(column_name='Is Non Engg. Asset', default=False, widget=wg.BooleanWidget())
-    supplier         = fields.Field( column_name='Supplier', default="")
+    supplier         = fields.Field(column_name='Supplier', default="")
     meter            = fields.Field(column_name='Meter', default="")
     model            = fields.Field(column_name='Model', default="")
     invoice_no       = fields.Field(column_name='Invoice No', default="")
@@ -1197,31 +1198,32 @@ class AssetResourceUpdate(resources.ModelResource):
     
     def before_save_instance(self, instance, using_transactions, dry_run=False):
         asset_json = instance.asset_json
-
         attributes = {
-            'ismeter': self._ismeter,
-            'tempcode': self._ismeter,  # I assume this is intentional, otherwise, replace with the correct value
-            'is_nonengg_asset': self._is_nonengg_asset,
-            'supplier': self._supplier,
-            'service': self._service,
-            'meter': self._meter,
-            'model': self._model,
-            'bill_val': self._bill_val,
-            'invoice_date': self._invoice_date,
-            'invoice_no': self._invoice_no,
-            'msn': self._msn,
-            'bill_date': self._bill_date,
-            'purchase_date': self._purchase_date,  # I assume this is intentional, otherwise, replace with the correct value
-            'inst_date': self._inst_date,
-            'sfdate': self._sfdate,
-            'stdate': self._po_number,
-            'yom': self._yom,
-            'po_number': self._po_number,
-            'far_asset_id': self._far_asset_id
+            'ismeter': '_ismeter',
+            'tempcode': '_ismeter',  # I assume this is intentional, otherwise, replace with the correct value
+            'is_nonengg_asset': '_is_nonengg_asset',
+            'supplier': '_supplier',
+            'service': '_service',
+            'meter': '_meter',
+            'model': '_model',
+            'bill_val': '_bill_val',
+            'invoice_date': '_invoice_date',
+            'invoice_no': '_invoice_no',
+            'msn': '_msn',
+            'bill_date': '_bill_date',
+            'purchase_date': '_purchase_date',  # I assume this is intentional, otherwise, replace with the correct value
+            'inst_date': '_inst_date',
+            'sfdate': '_sfdate',
+            'stdate': '_po_number',
+            'yom': '_yom',
+            'po_number': '_po_number',
+            'far_asset_id': '_far_asset_id'
         }
 
-        for key, value in attributes.items():
-            asset_json[key] = value
+        for key, attr_name in attributes.items():
+            value = getattr(self, attr_name, None)
+            if value is not None:
+                asset_json[key] = value
         instance.asset_json.update(asset_json)
         utils.save_common_stuff(self.request, instance, self.is_superuser)
         
@@ -1279,7 +1281,7 @@ class AssetResourceUpdate(resources.ModelResource):
                 if isnan(row.get('Meter')):
                     row['Meter'] = ""
                 else:
-                    if 'Client' in row:
+                    if 'Client' in row and 'ASSETMETER' in row and 'ASSET_METER' in row:
                         obj = om.TypeAssist.objects.select_related('tatype').filter(
                             tatype__tacode=row['ASSETMETER', 'ASSET_METER'], client__bucode=row['Client']).first()
                         row['Meter'] = obj.id

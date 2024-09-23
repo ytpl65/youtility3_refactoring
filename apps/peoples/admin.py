@@ -561,7 +561,7 @@ class GroupBelongingResourceUpdate(resources.ModelResource):
         attribute='assignsites',
         default=utils.get_or_create_none_bv
     )
-    ID = fields.Field(attribute='id')
+    ID = fields.Field(attribute='id', column_name='ID*')
     class Meta:
         model = pm.Pgbelonging
         skip_unchanged = True

@@ -14,7 +14,7 @@ from dateutil import parser
 import django.shortcuts as scts
 from django.contrib import messages as msg
 from django.contrib.gis.measure import Distance
-from django.db.models import Q, F, Case, When, Value, Func
+from django.db.models import Q, F, Case, When, Value, Func, Prefetch
 from django.http import JsonResponse
 from django.http import response as rp
 from django.template.loader import render_to_string
@@ -35,7 +35,7 @@ from django.db.models import RestrictedError
 from apps.work_order_management.models import Approver
 from django.db import models
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
-from django.db.models.functions import Cast, Concat, Substr, StrIndex, Length
+from django.db.models.functions import Cast, Concat, Substr, StrIndex, Coalesce
 
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -1992,8 +1992,8 @@ HEADER_MAPPING_UPDATE = {
         'Site', 'Client', 'GPS Location', 'Enable'
     ],
     'QUESTIONSET':[
-        'Seq No*', 'Question Set Name*', 'Belongs To*', 'QuestionSet Type*', 'Asset Includes', 'Site Includes', 'Site*',
-        'Client*', 'Site Group Includes', 'Site Type Includes', 'Show To All Sites', 
+        'ID*','Seq No', 'Question Set Name', 'Belongs To', 'QuestionSet Type', 'Asset Includes', 'Site Includes', 'Site',
+        'Client', 'Site Group Includes', 'Site Type Includes', 'Show To All Sites', 
         'URL'
     ],
     'QUESTIONSETBELONGING':[
@@ -2044,9 +2044,9 @@ Example_data_update = {
        'QUESTION': [('995','Are s/staff found with correct accessories / pressed uniform?','MULTILINE','NONE','NONE','NONE','NONE','TRUE','','','TRUE','TRUE','NONE','CLIENT_A','NONE','NONE'),
                     ('996','Electic Meter box is ok?','DROPDOWN','NONE','NONE','NONE','NONE','FALSE','No, Yes, N/A','','TRUE','TRUE','NONE','CLIENT_B','NONE','NONE'),
                     ('997','All lights working','DROPDOWN','NONE','NONE','NONE','NONE','TRUE','No, Yes, N/A','','TRUE','TRUE','NONE','CLIENT_C', 'NONE','NONE')],
-    'QUESTIONSET': [('1','Question Set A','NONE','CHECKLIST','ADMINBACK,CMRC','MUM001,MUM003','SITE_A','CLIENT_A','Group A,Group B','BANK,OFFICE','TRUE','NONE'),
-                    ('1','Question Set B','Question Set A','INCIDENTREPORT',	'NONE',	'NONE',	'SITE_B','CLIENT_B','NONE','NONE','FALSE','NONE'),
-                    ('1','Question Set C','Question Set A','WORKPERMIT','NONE','NONE','SITE_C','CLIENT_C','NONE','NONE','TRUE','NONE')],
+    'QUESTIONSET': [('700','1','Question Set A','NONE','CHECKLIST','ADMINBACK,CMRC','MUM001,MUM003','SITE_A','CLIENT_A','Group A,Group B','BANK,OFFICE','TRUE','NONE'),
+                    ('701','1','Question Set B','Question Set A','INCIDENTREPORT',	'NONE',	'NONE',	'SITE_B','CLIENT_B','NONE','NONE','FALSE','NONE'),
+                    ('702','1','Question Set C','Question Set A','WORKPERMIT','NONE','NONE','SITE_C','CLIENT_C','NONE','NONE','TRUE','NONE')],
     'QUESTIONSETBELONGING':[('Are s/staff found with correct accessories / pressed uniform?','Question Set A','CLIENT_A','SITE_A','MULTILINE',
                              '1','FALSE','NONE','NONE','NONE','NONE','NONE','NONE','TRUE','FRONTCAMPIC'),
                              ('Electic Meter box is ok?','Question Set B','CLIENT_B','SITE_B','DROPDOWN','5','FALSE','NONE','NONE','NONE','NONE','No, Yes, N/A','NONE',	'FALSE','AUDIO'),
@@ -2206,8 +2206,6 @@ def get_type_data(type_name, S):
                 'unit__tacode', 'servprov__bucode', 'enable', 'ismeter', 'isnonenggasset', 'meter', 'model', 'supplier',
                 'invoice_no', 'invoice_date', 'service', 'sfdate', 'stdate', 'yom', 'msn', 'bill_val', 'bill_date', 'purchase_date', 'inst_date',
                 'po_number', 'far_asset_id')
-        
-        print("ASSET------>", list(objs))
         return list(objs)
     if type_name == 'VENDOR':
         class JsonSubstring(Func):
@@ -2260,6 +2258,30 @@ def get_type_data(type_name, S):
                           'alerton', 'enable', 'isavpt', 'avpttype', 'client__bucode', 'unit__tacode', 'category__tacode')
         return list(objs)
     if type_name == 'QUESTIONSET':
+        asset_ids = S['assignedsites']  # Assuming this contains the relevant asset IDs
+        print("-----", asset_ids)
+        # Prefetch the asset names for the IDs in the assetincludes array
+        assets_qs = am.Asset.objects.filter(id__in=asset_ids).only('id', 'assetcode')
+        print("assets_qs----", assets_qs)
+        asset_mapping = {asset.id: asset.assetcode for asset in assets_qs}
+        print("======>",asset_mapping)
+        objs = am.QuestionSet.objects.filter(Q(type='RPCHECKLIST') & Q(bu_id__in = S['assignedsites'])
+            | Q( Q(parent_id__isnull=True) | Q(parent_id=1), ~Q(qsetname='NONE'), Q(bu_id = S['bu_id']),Q(client_id = S['client_id']))
+        ).select_related('parent').prefetch_related(
+            Prefetch('assetincludes', queryset=assets_qs, to_attr='assetcode')
+        ).values('id', 'seqno', 'qsetname', 'parent__qsetname', 'type', 'assetincludes', 'buincludes', 'bu__bucode',
+                'client__bucode', 'site_grp_includes', 'site_type_includes', 'show_to_all_sites', 'url')
+        objs_list = list(objs)
+        print("objs_list",objs_list)
+        for obj in objs_list:
+            # Replace IDs with names in assetincludes
+            asset_ids_includes = obj.get('assetincludes', [])
+            asset_names = [asset_mapping.get(asset_id, asset_id) for asset_id in asset_ids_includes]
+            
+            obj['assetincludes'] = asset_names  # Replace IDs with names
+
+        print("objs------>",list(objs), len(objs_list))
+
         return list(am.QuestionSet.objects.values_list('taname', 'tacode', 'tatype', 'client'))
     if type_name == 'QUESTIONSETBELONGING':
         return list(am.QuestionSetBelonging.objects.values_list('taname', 'tacode', 'tatype', 'client'))

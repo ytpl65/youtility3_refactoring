@@ -355,8 +355,18 @@ class TaResourceUpdate(resources.ModelResource):
 
         '''cleaning in sence Handles empty string,Removes extra spaces, 
         Converts to uppercase and replaces spaces with underscores (if code is True)'''
-    
+        if 'Code' in row:
+            row['Code'] = clean_string(row.get('Code', 'NONE'), code=True)
+        if 'Name' in row:
+            row['Name'] = clean_string(row.get('Name', "NONE"))
+
         # Validates that required fields (Code*, Type*, and Name*) are not empty.
+        if 'Code' in row:
+            if row['Code'] in ['', None]: raise ValidationError("Code is required field")
+        if 'Type' in row:
+            if row['Type'] in ['', None]: raise ValidationError("Type is required field")
+        if 'Name' in row:
+            if row['Name'] in ['', None]: raise ValidationError("Name is required field")
         if row['ID*'] in ['', None]: raise ValidationError("ID* is required field", code='required_field_error')
         
         ''' Validates the format of the Code* field using a regular expression.
@@ -440,6 +450,10 @@ class BtResourceUpdate(resources.ModelResource):
         
     
     def before_import_row(self, row, **kwargs):
+        if 'Code' in row:
+            row['Code'] = clean_string(row.get('Code', 'NONE'), code=True)
+        if 'Name' in row:
+            row['Name'] = clean_string(row.get('Name', "NONE"))
         self._gpslocation = clean_point_field(row['GPS Location'])
         self._solid = row['Sol Id']
         self._address = row['Address']
@@ -449,7 +463,14 @@ class BtResourceUpdate(resources.ModelResource):
         self._latlng = row['GPS Location']
         # check required fields
         if row['ID*'] in ['', None]: raise ValidationError("ID* is required field")
-        
+        if 'Code' in row:
+            if row['Code'] in ['', None]: raise ValidationError("Code is required field")
+        if 'Type' in row:
+            if row['Type'] in ['', None]: raise ValidationError("Type is required field")
+        if 'Name' in row:
+            if row['Name'] in ['', None]: raise ValidationError("Name is required field")
+        if 'Belongs To' in row:
+            if row['Belongs To'] in ['', None]: raise ValidationError("Belongs To is required field")
         
         # code validation
         if 'Code' in row:
