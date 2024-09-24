@@ -501,7 +501,7 @@ MODEL_RESOURCE_MAP_UPDATE = {
     'BU'                  : ob_admin.BtResourceUpdate,
     'QUESTION'            : av_admin.QuestionResourceUpdate,
     'LOCATION'            : av_admin.LocationResourceUpdate,
-    'PEOPLE'              : people_admin.PeopleResource,
+    'PEOPLE'              : people_admin.PeopleResourceUpdate,
     'GROUP'               : people_admin.GroupResourceUpdate,
     'GROUPBELONGING'      : people_admin.GroupBelongingResourceUpdate,
     'ASSET'               : av_admin.AssetResourceUpdate,

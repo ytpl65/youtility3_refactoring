@@ -1952,9 +1952,9 @@ HEADER_MAPPING_UPDATE = {
         'ID*', 'Name', 'Code', 'Type', 'Client'],
     
     'PEOPLE': [
-        'Code*', 'Name*', 'User For*', 'Employee Type*', 'Login ID*', 'Password*', 'Gender*',
-        'Mob No*', 'Email*', 'Date of Birth*', 'Date of Join*', 'Client*', 
-        'Site*', 'Designation', 'Department', 'Work Type', 'Report To',
+        'ID*','Code', 'Name', 'User For', 'Employee Type', 'Login ID', 'Gender',
+        'Mob No', 'Email', 'Date of Birth', 'Date of Join', 'Client', 
+        'Site', 'Designation', 'Department', 'Work Type', 'Report To',
         'Date of Release', 'Device Id', 'Is Emergency Contact',
         'Mobile Capability', 'Report Capability', 'Web Capability', 'Portlet Capability',
         'Current Address', 'Blacklist',  'Alert Mails'],
@@ -2034,13 +2034,13 @@ Example_data_update = {
         'VENDOR': [('527','VENDOR_A','Vendor A','ELECTRICAL','123 main street, xyz city','XYZ@gmail.com','TRUE','911234567891','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
                    ('528','VENDOR_B','Vendor B','MECHANICAL','124 main street, xyz city','XYZ@gmail.com','FALSE','911478529630','SITE_B','CLIENT_B','19.05,73.51','FALSE'),
                    ('529','VENDOR_C','Vendor C','ELECTRICAL','125 main street, xyz city','XYZ@gmail.com','TRUE','913698521470','SITE_C','CLIENT_C','19.05,73.51','TRUE')],
-        'PEOPLE':[('PERSON_A','Person A','Web','STAFF','A123','XYZ','M','911234567891','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_A','SITE_A',
+        'PEOPLE':[('2422','PERSON_A','Person A','Web','STAFF','A123','M','911234567891','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_A','SITE_A',
                     'MANAGER','HR','NONE','NONE','yyyy-mm-dd','513bb5f9c78c9117','TRUE',"SELFATTENDANCE, TICKET,INCIDENTREPORT,SOS,SITECRISIS,TOUR",'NONE',	
                     'TR_SS_SITEVISIT,DASHBOARD,TR_SS_SITEVISIT,TR_SS_CONVEYANCE,TR_GEOFENCETRACKING','NONE','123 main street, xyz city','FALSE','TRUE'),
-                   ('PERSON_B','Person B','Mobile','SECURITY','B456','XYZ','F','913698521477','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_B','SITE_B',	
+                   ('2423','PERSON_B','Person B','Mobile','SECURITY','B456','F','913698521477','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_B','SITE_B',	
                     'SUPERVISOR','TRAINING','NONE','NONE','yyyy-mm-dd','513bb5f9c78c9118','FALSE','NONE','NONE','NONE','NONE','124 main street, xyz city','FALSE','FALSE'),
-                    ('PERSON_C','Person C','NONE','NONE','C8910','XYZ','O','912587891463','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_C','SITE_C','NONE',
-                        'NONE','NONE','NONE','yyyy-mm-dd','513bb5f9c78c9119','TRUE','NONE','NONE','NONE','NONE','125 main street, xyz city', 'FALSE','TRUE')],
+                   ('2424','PERSON_C','Person C','NONE','NONE','C8910','O','912587891463','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_C','SITE_C','NONE',
+                    'NONE','NONE','NONE','yyyy-mm-dd','513bb5f9c78c9119','TRUE','NONE','NONE','NONE','NONE','125 main street, xyz city', 'FALSE','TRUE')],
        'QUESTION': [('995','Are s/staff found with correct accessories / pressed uniform?','MULTILINE','NONE','NONE','NONE','NONE','TRUE','','','TRUE','TRUE','NONE','CLIENT_A','NONE','NONE'),
                     ('996','Electic Meter box is ok?','DROPDOWN','NONE','NONE','NONE','NONE','FALSE','No, Yes, N/A','','TRUE','TRUE','NONE','CLIENT_B','NONE','NONE'),
                     ('997','All lights working','DROPDOWN','NONE','NONE','NONE','NONE','TRUE','No, Yes, N/A','','TRUE','TRUE','NONE','CLIENT_C', 'NONE','NONE')],
@@ -2230,7 +2230,50 @@ def get_type_data(type_name, S):
                       'bu__bucode', 'client__bucode', 'coordinates', 'enable')
         return list(objs)
     if type_name == 'PEOPLE':
-        return list(pm.People.objects.values_list('taname', 'tacode', 'tatype', 'client'))
+        if S['is_admin']:
+            class FormatListAsString(Func):
+                function = 'REPLACE'
+                template = "(%(function)s(%(function)s(%(function)s(CAST(%(expressions)s AS VARCHAR), '[', ''), ']', ''), '''', '\"'))"
+            objs = pm.People.objects.filter(
+                ~Q(peoplecode='NONE'), 
+                client_id = S['client_id']
+                ).select_related('peopletype', 'bu', 'client', 'designation', 'department', 'worktype', 'reportto'
+                ).annotate(user_for=F('people_extras__userfor'),
+                            isemergencycontact=F('people_extras__isemergencycontact'),
+                            mobilecapability=FormatListAsString(F('people_extras__mobilecapability')),
+                            reportcapability=FormatListAsString(F('people_extras__reportcapability')),
+                            webcapability=FormatListAsString(F('people_extras__webcapability')),
+                            portletcapability=FormatListAsString(F('people_extras__portletcapability')),
+                            currentaddress=F('people_extras__currentaddress'),
+                            blacklist=F('people_extras__blacklist'),
+                            alertmails=F('people_extras__alertmails'),
+                ).values_list('id', 'peoplecode', 'peoplename', 'user_for', 'peopletype__tacode', 'loginid', 'gender', 'mobno', 'email', 'dateofbirth', 'dateofjoin',
+                        'client__bucode', 'bu__bucode', 'designation__tacode', 'department__tacode', 'worktype__tacode', 'reportto__peoplename', 'dateofreport',
+                        'deviceid', 'isemergencycontact', 'mobilecapability', 'reportcapability', 'webcapability', 'portletcapability', 'currentaddress', 
+                        'blacklist', 'alertmails')
+        else:
+            class FormatListAsString(Func):
+                function = 'REPLACE'
+                template = "(%(function)s(%(function)s(%(function)s(CAST(%(expressions)s AS VARCHAR), '[', ''), ']', ''), '''', '\"'))"
+            objs = pm.People.objects.filter(
+                ~Q(peoplecode='NONE'), 
+                client_id = S['client_id'],
+                bu_id__in = S['assignedsites']
+            ).select_related('peopletype', 'bu', 'client', 'designation', 'department', 'worktype', 'reportto'
+            ).annotate(user_for=F('people_extras__userfor'),
+                       isemergencycontact=F('people_extras__isemergencycontact'),
+                       mobilecapability=FormatListAsString(F('people_extras__mobilecapability')),
+                       reportcapability=FormatListAsString(F('people_extras__reportcapability')),
+                       webcapability=FormatListAsString(F('people_extras__webcapability')),
+                       portletcapability=FormatListAsString(F('people_extras__portletcapability')),
+                       currentaddress=F('people_extras__currentaddress'),
+                       blacklist=F('people_extras__blacklist'),
+                       alertmails=F('people_extras__alertmails'),
+            ).values_list('id', 'peoplecode', 'peoplename', 'user_for', 'peopletype__tacode', 'loginid', 'gender', 'mobno', 'email', 'dateofbirth', 'dateofjoin',
+                     'client__bucode', 'bu__bucode', 'designation__tacode', 'department__tacode', 'worktype__tacode', 'reportto__peoplename', 'dateofreport',
+                     'deviceid', 'isemergencycontact', 'mobilecapability', 'reportcapability', 'webcapability', 'portletcapability', 'currentaddress', 
+                     'blacklist', 'alertmails')
+        return list(objs)
     if type_name == 'QUESTION':
         objs = am.Question.objects.select_related('unit', 'category', 'client').filter(
                 client_id = S['client_id'],

@@ -130,7 +130,7 @@ class VendorResourceUpdate(resources.ModelResource):
     Type = fields.Field(
         column_name='Type',
         attribute='type',
-        widget=VendorTypeFKWUpdate(om.TypeAssist, 'tacode'),
+        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         default=default_ta
     )
     

@@ -308,30 +308,6 @@ class SiteFKW(wg.ForeignKeyWidget):
             Q(client__bucode__exact=row["Client*"]),
         )
 
-class PgroupFKWUpdate(wg.ForeignKeyWidget):
-    def get_queryset(self, value, row, *args, **kwargs):
-        if 'Client' in row:
-            return self.model.objects.select_related().filter(
-                Q(client__bucode__exact=row["Client"]),
-            )
-        
-class PeopleFKWUpdate(wg.ForeignKeyWidget):
-    def get_queryset(self, value, row, *args, **kwargs):
-        if 'Client' in row:
-            return self.model.objects.select_related().filter(
-                Q(client__bucode__exact=row["Client"]),
-            )
-
-class BVForeignKeyWidgetUpdate(wg.ForeignKeyWidget):
-    def get_queryset(self, value, row, *args, **kwargs):
-        if 'Client' in row:
-            client = om.Bt.objects.filter(bucode=row['Client']).first()
-            bu_ids = om.Bt.objects.get_whole_tree(client.id)
-            qset = self.model.objects.select_related('parent', 'identifier').filter(
-                id__in=bu_ids, identifier__tacode='SITE', parent__bucode=row['Client'])
-            return qset
-
-
 class GroupBelongingResource(resources.ModelResource):
     CLIENT = fields.Field(
         column_name='Client*',
@@ -546,18 +522,18 @@ class GroupBelongingResourceUpdate(resources.ModelResource):
     GROUP = fields.Field(
         column_name='Group Name',
         attribute='pgroup',
-        widget = PgroupFKWUpdate(pm.Pgroup, 'groupname'),
+        widget = wg.ForeignKeyWidget(pm.Pgroup, 'groupname'),
         default=utils.get_or_create_none_pgroup
     )
     PEOPLE = fields.Field(
         column_name='Of People',
         attribute='people',
-        widget=PeopleFKWUpdate(pm.People, 'peoplecode'),
+        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
         default=utils.get_or_create_none_people
     )
     SITE = fields.Field(
         column_name='Of Site',
-        widget= BVForeignKeyWidgetUpdate(om.Bt, 'bucode'),
+        widget= wg.ForeignKeyWidget(om.Bt, 'bucode'),
         attribute='assignsites',
         default=utils.get_or_create_none_bv
     )
@@ -586,3 +562,190 @@ class GroupBelongingResourceUpdate(resources.ModelResource):
         if not pm.Pgbelonging.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         super().before_import_row(row, **kwargs)
+
+class PeopleResourceUpdate(resources.ModelResource):
+    Client = fields.Field(
+        column_name='Client',  
+        attribute='client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default=utils.get_or_create_none_bv
+    )
+    BV = fields.Field(
+        column_name='Site',
+        attribute='bu',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        saves_null_values = True,
+        default=utils.get_or_create_none_bv
+    )
+    
+    Department = fields.Field(
+        column_name='Department',
+        attribute='department',
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        default=default_ta
+    )
+    Designation = fields.Field(
+        column_name='Designation',
+        attribute='designation',
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        default=default_ta
+    )
+    PeopleType = fields.Field(
+        column_name='Employee Type',
+        attribute='peopletype',
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        default=default_ta
+    )
+    WorkType = fields.Field(
+        column_name='Work Type',
+        attribute='worktype',
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        default=default_ta
+    )
+    Reportto = fields.Field(
+        column_name='Report To',
+        attribute='reportto',
+        widget = wg.ForeignKeyWidget(pm.People, 'peoplename'),
+        default=utils.get_or_create_none_people
+    )
+    DateOfBirth = fields.Field(
+        column_name='Date of Birth',
+        attribute='dateofbirth',
+        widget = wg.DateWidget()
+    )
+    
+    DateOfJoin = fields.Field(
+        column_name='Date of Join',
+        attribute='dateofjoin',
+        widget = wg.DateWidget()
+    )
+    
+    date_of_release = fields.Field(
+        column_name='Date of Release',
+        attribute='dateofreport',
+        widget = wg.DateWidget()
+    )
+    
+
+    ID                 = fields.Field(attribute='id', column_name='ID*')
+    Code               = fields.Field(attribute='peoplecode', column_name='Code')
+    userfor            = fields.Field(column_name='User For', default='Mobile')
+    deviceid           = fields.Field(attribute='deviceid', column_name='Device Id', default=-1)
+    Name               = fields.Field(attribute='peoplename', column_name='Name')
+    LoginId            = fields.Field(attribute='loginid', column_name='Login ID')
+    MobNo              = fields.Field(attribute='mobno', column_name='Mob No')
+    Email              = fields.Field(attribute='email', column_name='Email')
+    Gender             = fields.Field(attribute='gender', column_name='Gender')
+    Enable             = fields.Field(widget=wg.BooleanWidget(), attribute='enable', default=True)
+    isemergencycontact = fields.Field(widget=wg.BooleanWidget(), default=False, column_name='Emergency Contact')
+    alertmails         = fields.Field(default=False,  column_name='Alert Emails')
+    mobilecaps         = fields.Field(default='NONE', column_name='Mobile Capability')
+    reportcaps         = fields.Field(default='NONE', column_name='Report Capability')
+    webcaps            = fields.Field(default='NONE', column_name='Web Capability')
+    currentaddr        = fields.Field(default='NONE', column_name='Current Address')
+    permanentaddr      = fields.Field(default='NONE', column_name='Permanent Address')
+    portletcaps        = fields.Field(default='NONE', column_name='Portlet Capability')
+    blacklist          = fields.Field(widget=wg.BooleanWidget(), default=False, column_name='Blacklist')
+
+    class Meta:
+        model = pm.People
+        skip_unchanged = True
+        report_skipped = True
+        import_id_fields = ['ID']
+        fields = [
+            'ID', 'Code', 'Name', 'LoginId', 'Designation', 'Department', 'MobNo', 'Email', 'deviceid',
+            'Site', 'DateOfJoin', 'date_of_release', 'DateOfBirth', 'Gender', 'PeopleType','WorkType', 'Enable',
+            'Client', 'isemergencycontact', 'alertmails', 'mobilecaps', 'reportcaps', 'webcaps',
+            'portletcaps', 'blacklist', 'currentaddr', 'permanentaddr', 'Reportto', 'userfor']
+
+    def __init__(self, *args, **kwargs):
+        super(PeopleResourceUpdate, self).__init__(*args, **kwargs)
+        self.is_superuser = kwargs.pop('is_superuser', None)
+        self.request = kwargs.pop('request', None)
+    
+        
+    def before_import_row(self, row, **kwargs):
+        self.validations(row)
+        if 'Mobile Capability' in row:
+            self._mobilecaps         = clean_array_string(row['Mobile Capability']) if row.get('Mobile Capability') else []
+        if "Report Capability" in row:
+            self._reportcaps         = clean_array_string(row["Report Capability"]) if row.get('Report Capability') else []
+        if "Web Capability" in row:
+            self._webcaps            = clean_array_string(row["Web Capability"]) if row.get('Web Capability') else []
+        if "Portlet Capability" in row:
+            self._portletcaps        = clean_array_string(row["Portlet Capability"]) if row.get('Portlet Capability') else []
+        if 'Alert Emails' in row:
+            self._alertmails         = row.get('Alert Emails') or False
+        if 'Blacklist' in row:
+            self._blacklist          = row.get('Blacklist') or False
+        if 'Current Address' in row:
+            self._currentaddr        = row.get('Current Address', "")
+        if 'Permanent Address' in row:
+            self._permanentaddr      = row.get('Permanent Address', "")
+        if 'Emergency Contact' in row:
+            self._isemergencycontact = row.get('Emergency Contact') or False
+        if 'User For' in row:
+            self._userfor            = row.get('User For') or 'Mobile'
+        if 'Mob No' in row:
+            row['Mob No'] = str(row['Mob No'])
+
+    def before_save_instance(self, instance, using_transactions, dry_run):
+        instance.email        = instance.email.lower()
+        if hasattr(self, '_mobilecaps'):
+            instance.people_extras['mobilecapability']   = self._mobilecaps
+        if hasattr(self, '_reportcaps'):
+            instance.people_extras['reportcapability']   = self._reportcaps
+        if hasattr(self, '_webcaps'):
+            instance.people_extras['webcapability']      = self._webcaps
+        if hasattr(self, '_portletcaps'):
+            instance.people_extras['portletcapability']  = self._portletcaps
+        if hasattr(self, '_blacklist'):
+            instance.people_extras['blacklist']          = self._blacklist
+        if hasattr(self, '_isemergencycontact'):
+            instance.people_extras['isemergencycontact'] = self._isemergencycontact
+        if hasattr(self, '_alertmails'):
+            instance.people_extras['alertmails']         = self._alertmails
+        if hasattr(self, '_currentaddr'):
+            instance.people_extras['currentaddress']     = clean_string(self._currentaddr)
+        if hasattr(self, '_permanentaddr'):
+            instance.people_extras['permanentaddress']   = clean_string(self._permanentaddr)
+        if hasattr(self, '_userfor'):
+            instance.people_extras['userfor']          = self._userfor
+        utils.save_common_stuff(self.request, instance)
+    
+    def validations(self, row):
+        if 'Code' in row:
+            row['Code'] = clean_string(row.get('Code', 'NONE'), code=True)
+        if 'Name' in row:
+            row['Name'] = clean_string(row.get('Name', "NONE"))
+        # check required fields
+        if row['ID*'] in ['', None]: raise ValidationError("ID* is required field")
+        if 'Code' in row:
+            if row['Code'] in ['', None]: raise ValidationError("Code is required field")
+        if 'Employee Type' in row:
+            if row['Employee Type'] in ['', None]: raise ValidationError("Employee Type is required field")
+        if 'Name' in row:
+            if row['Name'] in ['', None]: raise ValidationError("Name is required field")
+        if 'User For' in row:
+            if row['User For'] in ['', None]: raise ValidationError("User For is required field")
+        
+        # code validation
+        if 'Code' in row:
+            regex, value = "^[a-zA-Z0-9\-_]*$", row['Code']
+            if " " in value: raise ValidationError("Please enter text without any spaces")
+            if  not re.match(regex, value):
+                raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
+        
+
+
+        # mob no validation
+        if 'Mob No' in row:
+            if not utils.verify_mobno(str(row.get('Mob No', -1))):
+                raise ValidationError("Mob No is not valid")
+            else: 
+                mob_no = str(row['Mob No'])
+                row['Mob No'] = mob_no if '+' in mob_no else f'+{mob_no}'
+        
+        # unique record check
+        if not pm.People.objects.filter(id=row['ID*']).exists():
+            raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
