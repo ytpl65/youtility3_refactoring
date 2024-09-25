@@ -1,6 +1,5 @@
 {% extends 'globals/base_list.html' %}
 
-
 {% block extra_css %}{% endblock extra_css %}
 
 {% block pagebreadcumb %}
@@ -34,9 +33,7 @@
         {% elif result.has_validation_errors()  %}
             {% block validation_errors %}
                 <h2 class="invalid_rows">Some rows failed to validate</h2>
-
                 <p>Please correct these errors in your data where possible, then reupload it using the form above.</p>
-
                 <table id="import_table" class="import-preview">
                     <thead>
                     <tr>
@@ -90,7 +87,6 @@
         {% else %}
             {% block preview %}
                 <h2>Preview</h2>
-
                 <table id="import_table" class="import-preview display cell-bordered compact">
                     <thead>
                     <tr>
@@ -159,7 +155,6 @@ function onClickConfirmButton(){
     }
 }
 
-
 $(document).ready(() => {
     table = $("#import_table").DataTable({
         deferRenderer:true,
@@ -174,16 +169,11 @@ $(document).ready(() => {
                 onClickConfirmButton()
             }
         }]
-
     })
     //hide or show
     if($("h2.invalid_rows").is(':visible')){
         $(".confirm_import").hide()
     }
-
-
-
-
 })
 
 </script>

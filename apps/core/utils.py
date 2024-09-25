@@ -1997,8 +1997,8 @@ HEADER_MAPPING_UPDATE = {
         'URL'
     ],
     'QUESTIONSETBELONGING':[
-        'Question Name*', 'Question Set*', 'Client*', 'Site*', 'Answer Type*',
-        'Seq No*', 'Is AVPT', 'Min', 'Max', 'Alert Above', 'Alert Below', 'Options',
+        'ID*','Question Name', 'Question Set', 'Client', 'Site', 'Answer Type',
+        'Seq No', 'Is AVPT', 'Min', 'Max', 'Alert Above', 'Alert Below', 'Options',
         'Alert On', 'Is Mandatory', 'AVPT Type',
     ],
     'SCHEDULEDTASKS':[
@@ -2047,10 +2047,10 @@ Example_data_update = {
     'QUESTIONSET': [('700','1','Question Set A','NONE','CHECKLIST','ADMINBACK,CMRC','MUM001,MUM003','SITE_A','CLIENT_A','Group A,Group B','BANK,OFFICE','TRUE','NONE'),
                     ('701','1','Question Set B','Question Set A','INCIDENTREPORT',	'NONE',	'NONE',	'SITE_B','CLIENT_B','NONE','NONE','FALSE','NONE'),
                     ('702','1','Question Set C','Question Set A','WORKPERMIT','NONE','NONE','SITE_C','CLIENT_C','NONE','NONE','TRUE','NONE')],
-    'QUESTIONSETBELONGING':[('Are s/staff found with correct accessories / pressed uniform?','Question Set A','CLIENT_A','SITE_A','MULTILINE',
-                             '1','FALSE','NONE','NONE','NONE','NONE','NONE','NONE','TRUE','FRONTCAMPIC'),
-                             ('Electic Meter box is ok?','Question Set B','CLIENT_B','SITE_B','DROPDOWN','5','FALSE','NONE','NONE','NONE','NONE','No, Yes, N/A','NONE',	'FALSE','AUDIO'),
-                             ('All lights working','Question Set C','CLIENT_C','SITE_C','DROPDOWN','3','TRUE','NONE','NONE','NONE','NONE','No, Yes, N/A','NONE','TRUE','NONE')],
+    'QUESTIONSETBELONGING':[('1567','Are s/staff found with correct accessories / pressed uniform?','Question Set A','CLIENT_A','SITE_A','MULTILINE',
+                    '1','FALSE','NONE','NONE','NONE','NONE','NONE','NONE','TRUE','FRONTCAMPIC'),
+                    ('1568','Electic Meter box is ok?','Question Set B','CLIENT_B','SITE_B','DROPDOWN','5','FALSE','NONE','NONE','NONE','NONE','No, Yes, N/A','NONE',	'FALSE','AUDIO'),
+                    ('1569','All lights working','Question Set C','CLIENT_C','SITE_C','DROPDOWN','3','TRUE','NONE','NONE','NONE','NONE','No, Yes, N/A','NONE','TRUE','NONE')],
          'GROUP': [('163','Group A','PEOPLEGROUP','CLIENT_A','SITE_A','TRUE'),
                     ('164','Group B','SITEGROUP','CLIENT_B','SITE_B','FALSE'),
                     ('165','Group C','PEOPLEGROUP','CLIENT_C','SITE_C','TRUE')],
@@ -2233,7 +2233,7 @@ def get_type_data(type_name, S):
         if S['is_admin']:
             class FormatListAsString(Func):
                 function = 'REPLACE'
-                template = "(%(function)s(%(function)s(%(function)s(CAST(%(expressions)s AS VARCHAR), '[', ''), ']', ''), '''', '\"'))"
+                template = "(%(function)s(%(function)s(%(function)s(%(function)s(CAST(%(expressions)s AS VARCHAR), '[', ''), ']', ''), '''', ''), '\"', ''))"
             objs = pm.People.objects.filter(
                 ~Q(peoplecode='NONE'), 
                 client_id = S['client_id']
@@ -2254,7 +2254,7 @@ def get_type_data(type_name, S):
         else:
             class FormatListAsString(Func):
                 function = 'REPLACE'
-                template = "(%(function)s(%(function)s(%(function)s(CAST(%(expressions)s AS VARCHAR), '[', ''), ']', ''), '''', '\"'))"
+                template = "(%(function)s(%(function)s(%(function)s(%(function)s(CAST(%(expressions)s AS VARCHAR), '[', ''), ']', ''), '''', ''), '\"', ''))"
             objs = pm.People.objects.filter(
                 ~Q(peoplecode='NONE'), 
                 client_id = S['client_id'],
@@ -2327,7 +2327,31 @@ def get_type_data(type_name, S):
 
         return list(am.QuestionSet.objects.values_list('taname', 'tacode', 'tatype', 'client'))
     if type_name == 'QUESTIONSETBELONGING':
-        return list(am.QuestionSetBelonging.objects.values_list('taname', 'tacode', 'tatype', 'client'))
+        objs = am.QuestionSetBelonging.objects.select_related('qset', 'question', 'client', 'bu').filter(
+                client_id = S['client_id'],
+            ).annotate(
+            alert_above=Case(
+                When(alerton__startswith='<', 
+                    then=Substr('alerton', 2, 
+                                StrIndex(Substr('alerton', 2), Value(',')) - 1)),
+                When(alerton__contains=',<', 
+                    then=Substr('alerton', 
+                                StrIndex('alerton', Value(',<')) + 2)),
+                default=Value("NONE"),
+                output_field=models.CharField()
+            ),
+            alert_below=Case(
+                When(alerton__contains='>', 
+                    then=Substr('alerton', 
+                                StrIndex('alerton', Value('>')) + 1)),
+                default=Value("NONE"),
+                output_field=models.CharField()
+            ),
+            min_str=Cast('min', output_field=models.CharField()),
+            max_str=Cast('max', output_field=models.CharField())
+            ).values_list('id', 'question__quesname', 'qset__qsetname', 'client__bucode', 'bu__bucode', 'answertype', 'seqno', 'isavpt',
+                          'min_str', 'max_str', 'alert_above', 'alert_below', 'options', 'alerton', 'ismandatory', 'avpttype')
+        return list(objs)
     if type_name == 'GROUP':
         objs = pm.Pgroup.objects.select_related('client', 'identifier', 'bu').filter(
             ~Q(id=-1), bu_id = S['bu_id'], identifier__tacode='PEOPLEGROUP', client_id = S['client_id']

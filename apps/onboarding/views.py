@@ -507,7 +507,7 @@ MODEL_RESOURCE_MAP_UPDATE = {
     'ASSET'               : av_admin.AssetResourceUpdate,
     'VENDOR'              : VendorResourceUpdate,
     'QUESTIONSET'         : av_admin.QuestionSetResource,
-    'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResource,
+    'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResourceUpdate,
     'SCHEDULEDTASKS'      : sc_admin.TaskResource,
     'SCHEDULEDTOURS'      : sc_admin.TourResource,
 }

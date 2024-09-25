@@ -4,7 +4,8 @@ from apps.onboarding import models as om
 from apps.peoples import models as pm
 from import_export import widgets as wg
 from apps.core.widgets import(BVForeignKeyWidget, TypeAssistDepartmentFKW, TypeAssistDesignationFKW, 
-                              TypeAssistEmployeeTypeFKW, TypeAssistWorkTypeFKW)
+                              TypeAssistEmployeeTypeFKW, TypeAssistWorkTypeFKW, TypeAssistDepartmentFKWUpdate,
+                              TypeAssistDesignationFKWUpdate, TypeAssistEmployeeTypeFKWUpdate, TypeAssistWorkTypeFKWUpdate)
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
 from django.db.models import Q
@@ -563,6 +564,7 @@ class GroupBelongingResourceUpdate(resources.ModelResource):
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         super().before_import_row(row, **kwargs)
 
+
 class PeopleResourceUpdate(resources.ModelResource):
     Client = fields.Field(
         column_name='Client',  
@@ -581,25 +583,25 @@ class PeopleResourceUpdate(resources.ModelResource):
     Department = fields.Field(
         column_name='Department',
         attribute='department',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = TypeAssistDepartmentFKWUpdate(om.TypeAssist, 'tacode'),
         default=default_ta
     )
     Designation = fields.Field(
         column_name='Designation',
         attribute='designation',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = TypeAssistDesignationFKWUpdate(om.TypeAssist, 'tacode'),
         default=default_ta
     )
     PeopleType = fields.Field(
         column_name='Employee Type',
         attribute='peopletype',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = TypeAssistEmployeeTypeFKWUpdate(om.TypeAssist, 'tacode'),
         default=default_ta
     )
     WorkType = fields.Field(
         column_name='Work Type',
         attribute='worktype',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = TypeAssistWorkTypeFKWUpdate(om.TypeAssist, 'tacode'),
         default=default_ta
     )
     Reportto = fields.Field(
@@ -626,10 +628,9 @@ class PeopleResourceUpdate(resources.ModelResource):
         widget = wg.DateWidget()
     )
     
-
     ID                 = fields.Field(attribute='id', column_name='ID*')
     Code               = fields.Field(attribute='peoplecode', column_name='Code')
-    userfor            = fields.Field(column_name='User For', default='Mobile')
+    userfor            = fields.Field(column_name='User For', attribute='people_extras.userfor', default='Mobile')
     deviceid           = fields.Field(attribute='deviceid', column_name='Device Id', default=-1)
     Name               = fields.Field(attribute='peoplename', column_name='Name')
     LoginId            = fields.Field(attribute='loginid', column_name='Login ID')
@@ -637,15 +638,14 @@ class PeopleResourceUpdate(resources.ModelResource):
     Email              = fields.Field(attribute='email', column_name='Email')
     Gender             = fields.Field(attribute='gender', column_name='Gender')
     Enable             = fields.Field(widget=wg.BooleanWidget(), attribute='enable', default=True)
-    isemergencycontact = fields.Field(widget=wg.BooleanWidget(), default=False, column_name='Emergency Contact')
-    alertmails         = fields.Field(default=False,  column_name='Alert Emails')
-    mobilecaps         = fields.Field(default='NONE', column_name='Mobile Capability')
-    reportcaps         = fields.Field(default='NONE', column_name='Report Capability')
-    webcaps            = fields.Field(default='NONE', column_name='Web Capability')
-    currentaddr        = fields.Field(default='NONE', column_name='Current Address')
-    permanentaddr      = fields.Field(default='NONE', column_name='Permanent Address')
-    portletcaps        = fields.Field(default='NONE', column_name='Portlet Capability')
-    blacklist          = fields.Field(widget=wg.BooleanWidget(), default=False, column_name='Blacklist')
+    isemergencycontact = fields.Field(column_name='Is Emergency Contact', attribute='people_extras.isemergencycontact', widget=wg.BooleanWidget(), default=False)
+    alertmails         = fields.Field(column_name='Alert Mails', attribute='people_extras.alertmails', widget=wg.BooleanWidget(), default=False)
+    mobilecaps         = fields.Field(column_name='Mobile Capability', attribute='people_extras.mobilecapability', default=[])
+    reportcaps         = fields.Field(column_name='Report Capability', attribute='people_extras.reportcapability', default=[])
+    webcaps            = fields.Field(column_name='Web Capability', attribute='people_extras.webcapability', default=[])
+    currentaddr        = fields.Field(column_name='Current Address', attribute='people_extras.currentaddress', default="")
+    portletcaps        = fields.Field(column_name='Portlet Capability', attribute='people_extras.portletcapability', default=[])
+    blacklist          = fields.Field(column_name='Blacklist', attribute='people_extras.blacklist', widget=wg.BooleanWidget(), default=False)
 
     class Meta:
         model = pm.People
@@ -656,7 +656,7 @@ class PeopleResourceUpdate(resources.ModelResource):
             'ID', 'Code', 'Name', 'LoginId', 'Designation', 'Department', 'MobNo', 'Email', 'deviceid',
             'Site', 'DateOfJoin', 'date_of_release', 'DateOfBirth', 'Gender', 'PeopleType','WorkType', 'Enable',
             'Client', 'isemergencycontact', 'alertmails', 'mobilecaps', 'reportcaps', 'webcaps',
-            'portletcaps', 'blacklist', 'currentaddr', 'permanentaddr', 'Reportto', 'userfor']
+            'portletcaps', 'blacklist', 'currentaddr', 'Reportto', 'userfor']
 
     def __init__(self, *args, **kwargs):
         super(PeopleResourceUpdate, self).__init__(*args, **kwargs)
@@ -665,6 +665,7 @@ class PeopleResourceUpdate(resources.ModelResource):
     
         
     def before_import_row(self, row, **kwargs):
+        print("----",row)
         self.validations(row)
         if 'Mobile Capability' in row:
             self._mobilecaps         = clean_array_string(row['Mobile Capability']) if row.get('Mobile Capability') else []
@@ -674,16 +675,14 @@ class PeopleResourceUpdate(resources.ModelResource):
             self._webcaps            = clean_array_string(row["Web Capability"]) if row.get('Web Capability') else []
         if "Portlet Capability" in row:
             self._portletcaps        = clean_array_string(row["Portlet Capability"]) if row.get('Portlet Capability') else []
-        if 'Alert Emails' in row:
-            self._alertmails         = row.get('Alert Emails') or False
+        if 'Alert Mails' in row:
+            self._alertmails         = row.get('Alert Mails') or False
         if 'Blacklist' in row:
             self._blacklist          = row.get('Blacklist') or False
         if 'Current Address' in row:
             self._currentaddr        = row.get('Current Address', "")
-        if 'Permanent Address' in row:
-            self._permanentaddr      = row.get('Permanent Address', "")
-        if 'Emergency Contact' in row:
-            self._isemergencycontact = row.get('Emergency Contact') or False
+        if 'Is Emergency Contact' in row:
+            self._isemergencycontact = row.get('Is Emergency Contact') or False
         if 'User For' in row:
             self._userfor            = row.get('User For') or 'Mobile'
         if 'Mob No' in row:
@@ -691,6 +690,8 @@ class PeopleResourceUpdate(resources.ModelResource):
 
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.email        = instance.email.lower()
+        if not hasattr(instance, 'people_extras') or instance.people_extras is None:
+            instance.people_extras = {}
         if hasattr(self, '_mobilecaps'):
             instance.people_extras['mobilecapability']   = self._mobilecaps
         if hasattr(self, '_reportcaps'):
@@ -707,10 +708,9 @@ class PeopleResourceUpdate(resources.ModelResource):
             instance.people_extras['alertmails']         = self._alertmails
         if hasattr(self, '_currentaddr'):
             instance.people_extras['currentaddress']     = clean_string(self._currentaddr)
-        if hasattr(self, '_permanentaddr'):
-            instance.people_extras['permanentaddress']   = clean_string(self._permanentaddr)
         if hasattr(self, '_userfor'):
             instance.people_extras['userfor']          = self._userfor
+        print("After import:", instance.people_extras) 
         utils.save_common_stuff(self.request, instance)
     
     def validations(self, row):
@@ -736,8 +736,6 @@ class PeopleResourceUpdate(resources.ModelResource):
             if  not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
-
-
         # mob no validation
         if 'Mob No' in row:
             if not utils.verify_mobno(str(row.get('Mob No', -1))):
