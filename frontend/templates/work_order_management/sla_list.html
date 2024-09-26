@@ -44,6 +44,7 @@ $(document).ready(function(){
     urlname = "{{ url('work_order_management:sla')}}"
 
     is_approver = session['is_wp_approver']
+    is_sla_approver = session['is_sla_approver']
     console.log(is_approver)
 
     table = $("#sla_list").DataTable({

@@ -27,7 +27,7 @@ import apps.activity.models as am
 import apps.attendance.models as atm
 from apps.y_helpdesk.models import Ticket
 from apps.work_order_management.models import Wom
-from apps.work_order_management.admin import VendorResource
+from apps.work_order_management.admin import VendorResource, VendorResourceUpdate
 from django.core.exceptions import ObjectDoesNotExist
 from pprint import pformat
 import uuid
@@ -498,16 +498,16 @@ MODEL_RESOURCE_MAP = {
 MODEL_RESOURCE_MAP_UPDATE = {
     # 'MODELNAME'         : 'RESOURCE(ADMIN CLASS for the model which is used to validate and give error messages for importing data )'
     'TYPEASSIST'          : ob_admin.TaResourceUpdate,
-    'BU'                  : ob_admin.BtResource,
-    'QUESTION'            : av_admin.QuestionResource,
-    'LOCATION'            : av_admin.LocationResource,
-    'PEOPLE'              : people_admin.PeopleResource,
-    'GROUP'               : people_admin.GroupResource,
-    'GROUPBELONGING'      : people_admin.GroupBelongingResource,
-    'ASSET'               : av_admin.AssetResource,
-    'VENDOR'              : VendorResource,
+    'BU'                  : ob_admin.BtResourceUpdate,
+    'QUESTION'            : av_admin.QuestionResourceUpdate,
+    'LOCATION'            : av_admin.LocationResourceUpdate,
+    'PEOPLE'              : people_admin.PeopleResourceUpdate,
+    'GROUP'               : people_admin.GroupResourceUpdate,
+    'GROUPBELONGING'      : people_admin.GroupBelongingResourceUpdate,
+    'ASSET'               : av_admin.AssetResourceUpdate,
+    'VENDOR'              : VendorResourceUpdate,
     'QUESTIONSET'         : av_admin.QuestionSetResource,
-    'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResource,
+    'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResourceUpdate,
     'SCHEDULEDTASKS'      : sc_admin.TaskResource,
     'SCHEDULEDTOURS'      : sc_admin.TourResource,
 }
@@ -986,7 +986,7 @@ class BulkImportUpdate(LoginRequiredMixin,ParameterMixin, View):
             try:
                 results = res.import_data(
                     dataset=dataset, dry_run=True, raise_errors=False, use_transactions=True)
-                return render(request, 'onboarding/imported_data.html', {'result':results})
+                return render(request, 'onboarding/imported_data_update.html', {'result':results})
             except Exception as e:
                 logger.critical("error", exc_info=True)
                 return rp.JsonResponse({"error": "something went wrong!"}, status=500)

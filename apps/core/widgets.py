@@ -35,3 +35,36 @@ class BVForeignKeyWidget(wg.ForeignKeyWidget):
             id__in=bu_ids, identifier__tacode='SITE', parent__bucode=row['Client*'])
         ic(qset)
         return qset
+
+class TypeAssistEmployeeTypeFKWUpdate(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        if 'Client' in row:
+            return self.model.objects.select_related().filter(
+                Q(client__bucode__exact=row["Client"]),
+                Q(tatype__tacode__exact = 'PEOPLETYPE')| Q(tatype__tacode__exact='NONE'), 
+            )
+        return self.model.objects.none()
+class TypeAssistWorkTypeFKWUpdate(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        if 'Client' in row:
+            return self.model.objects.select_related().filter(
+                Q(client__bucode__exact=row["Client"]),
+                tatype__tacode__exact = 'WORKTYPE'
+            )
+        return self.model.objects.none()
+class TypeAssistDepartmentFKWUpdate(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        if 'Client' in row:
+            return self.model.objects.select_related().filter(
+                Q(client__bucode__exact=row["Client"]),
+                tatype__tacode__exact = 'DEPARTMENT'
+            )
+        return self.model.objects.none()
+class TypeAssistDesignationFKWUpdate(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        if 'Client' in row:
+            return self.model.objects.select_related().filter(
+                Q(client__bucode__exact=row["Client"]),
+                tatype__tacode__exact = 'DESIGNATION'
+            )
+        return self.model.objects.none()
