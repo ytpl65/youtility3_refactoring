@@ -446,23 +446,26 @@ class CapabilityAdmin(ImportExportModelAdmin):
 
 class GroupResourceUpdate(resources.ModelResource):
     Client = fields.Field(
-        column_name='Client',
-        attribute='client',
+        column_name = 'Client',
+        attribute = 'client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default='NONE'
+        default = 'NONE'
     )
+
     BV = fields.Field(
-        column_name='Site',
-        attribute='bu',
+        column_name = 'Site',
+        attribute = 'bu',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
-        default='NONE'
+        default = 'NONE'
     )
+
     Identifier = fields.Field(
-        attribute='identifier',
-        column_name='Type',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        attribute = 'identifier',
+        column_name = 'Type',
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
     )
+
     ID = fields.Field(attribute='id', column_name='ID*')
     Enable = fields.Field(attribute='enable', column_name='Enable', widget=wg.BooleanWidget(), default=True)
     Name = fields.Field(attribute='groupname', column_name='Group Name')
@@ -508,37 +511,43 @@ class GroupResourceUpdate(resources.ModelResource):
 
 class GroupBelongingResourceUpdate(resources.ModelResource):
     CLIENT = fields.Field(
-        column_name='Client',
-        attribute='client',
+        column_name = 'Client',
+        attribute = 'client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default=utils.get_or_create_none_bv
+        default = utils.get_or_create_none_bv
     )
+
     BV = fields.Field(
-        column_name='Site',
-        attribute='bu',
+        column_name = 'Site',
+        attribute = 'bu',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
-        default=utils.get_or_create_none_bv
+        default = utils.get_or_create_none_bv
     )
+
     GROUP = fields.Field(
-        column_name='Group Name',
-        attribute='pgroup',
+        column_name = 'Group Name',
+        attribute = 'pgroup',
         widget = wg.ForeignKeyWidget(pm.Pgroup, 'groupname'),
-        default=utils.get_or_create_none_pgroup
+        default = utils.get_or_create_none_pgroup
     )
+
     PEOPLE = fields.Field(
-        column_name='Of People',
-        attribute='people',
-        widget=wg.ForeignKeyWidget(pm.People, 'peoplecode'),
-        default=utils.get_or_create_none_people
+        column_name = 'Of People',
+        attribute = 'people',
+        widget = wg.ForeignKeyWidget(pm.People, 'peoplecode'),
+        default = utils.get_or_create_none_people
     )
+
     SITE = fields.Field(
-        column_name='Of Site',
-        widget= wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        attribute='assignsites',
-        default=utils.get_or_create_none_bv
+        column_name = 'Of Site',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        attribute = 'assignsites',
+        default = utils.get_or_create_none_bv
     )
+
     ID = fields.Field(attribute='id', column_name='ID*')
+    
     class Meta:
         model = pm.Pgbelonging
         skip_unchanged = True
@@ -567,52 +576,58 @@ class GroupBelongingResourceUpdate(resources.ModelResource):
 
 class PeopleResourceUpdate(resources.ModelResource):
     Client = fields.Field(
-        column_name='Client',  
-        attribute='client',
+        column_name = 'Client',  
+        attribute = 'client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default=utils.get_or_create_none_bv
+        default = utils.get_or_create_none_bv
     )
+
     BV = fields.Field(
-        column_name='Site',
-        attribute='bu',
+        column_name = 'Site',
+        attribute = 'bu',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
-        default=utils.get_or_create_none_bv
+        default = utils.get_or_create_none_bv
     )
     
     Department = fields.Field(
-        column_name='Department',
-        attribute='department',
+        column_name = 'Department',
+        attribute = 'department',
         widget = TypeAssistDepartmentFKWUpdate(om.TypeAssist, 'tacode'),
-        default=default_ta
+        default = default_ta
     )
+
     Designation = fields.Field(
-        column_name='Designation',
-        attribute='designation',
+        column_name = 'Designation',
+        attribute = 'designation',
         widget = TypeAssistDesignationFKWUpdate(om.TypeAssist, 'tacode'),
-        default=default_ta
+        default = default_ta
     )
+
     PeopleType = fields.Field(
-        column_name='Employee Type',
-        attribute='peopletype',
+        column_name = 'Employee Type',
+        attribute = 'peopletype',
         widget = TypeAssistEmployeeTypeFKWUpdate(om.TypeAssist, 'tacode'),
-        default=default_ta
+        default = default_ta
     )
+
     WorkType = fields.Field(
-        column_name='Work Type',
-        attribute='worktype',
+        column_name = 'Work Type',
+        attribute = 'worktype',
         widget = TypeAssistWorkTypeFKWUpdate(om.TypeAssist, 'tacode'),
-        default=default_ta
+        default = default_ta
     )
+
     Reportto = fields.Field(
-        column_name='Report To',
-        attribute='reportto',
+        column_name = 'Report To',
+        attribute = 'reportto',
         widget = wg.ForeignKeyWidget(pm.People, 'peoplename'),
-        default=utils.get_or_create_none_people
+        default = utils.get_or_create_none_people
     )
+
     DateOfBirth = fields.Field(
-        column_name='Date of Birth',
-        attribute='dateofbirth',
+        column_name = 'Date of Birth',
+        attribute = 'dateofbirth',
         widget = wg.DateWidget()
     )
     
@@ -662,10 +677,8 @@ class PeopleResourceUpdate(resources.ModelResource):
         super(PeopleResourceUpdate, self).__init__(*args, **kwargs)
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
-    
         
     def before_import_row(self, row, **kwargs):
-        print("----",row)
         self.validations(row)
         if 'Mobile Capability' in row:
             self._mobilecaps         = clean_array_string(row['Mobile Capability']) if row.get('Mobile Capability') else []
@@ -710,7 +723,6 @@ class PeopleResourceUpdate(resources.ModelResource):
             instance.people_extras['currentaddress']     = clean_string(self._currentaddr)
         if hasattr(self, '_userfor'):
             instance.people_extras['userfor']          = self._userfor
-        print("After import:", instance.people_extras) 
         utils.save_common_stuff(self.request, instance)
     
     def validations(self, row):
@@ -733,7 +745,7 @@ class PeopleResourceUpdate(resources.ModelResource):
         if 'Code' in row:
             regex, value = "^[a-zA-Z0-9\-_]*$", row['Code']
             if " " in value: raise ValidationError("Please enter text without any spaces")
-            if  not re.match(regex, value):
+            if not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
         # mob no validation

@@ -321,19 +321,20 @@ class ShiftAdmin(ImportExportModelAdmin):
 
 class TaResourceUpdate(resources.ModelResource):
     CLIENT = fields.Field(
-        column_name='Client',
-        attribute='client',
+        column_name = 'Client',
+        attribute ='client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default='NONE'
+        default = 'NONE'
     )
     
     TYPE = fields.Field(
-        column_name       = 'Type',
-        attribute         = 'tatype',
-        default           = om.TypeAssist, 
-        widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        column_name = 'Type',
+        attribute = 'tatype',
+        default = om.TypeAssist, 
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True
     )
+
     CODE = fields.Field(attribute='tacode', column_name='Code')
     NAME = fields.Field(attribute='taname', column_name='Name')
     ID   = fields.Field(attribute='id', column_name='ID*')
@@ -345,7 +346,6 @@ class TaResourceUpdate(resources.ModelResource):
         report_skipped = True
         fields = ('ID','NAME', 'CODE', 'TYPE', 'CLIENT')
 
-        
     def __init__(self, *args, **kwargs):
         super(TaResourceUpdate, self).__init__(*args, **kwargs)
         self.is_superuser = kwargs.pop('is_superuser', None)
@@ -392,33 +392,33 @@ class TaResourceUpdate(resources.ModelResource):
 
 class BtResourceUpdate(resources.ModelResource):
     BelongsTo = fields.Field(
-        column_name='Belongs To',
-        default=utils.get_or_create_none_bv,
-        attribute='parent',
+        column_name = 'Belongs To',
+        default = utils.get_or_create_none_bv,
+        attribute = 'parent',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'))
 
     BuType = fields.Field(
-        column_name='Site Type',
-        default=default_ta,
-        attribute='butype',
+        column_name = 'Site Type',
+        default = default_ta,
+        attribute = 'butype',
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
 
     tenant = fields.Field(
-        column_name='Tenant',
-        default=utils.get_or_create_none_tenant,
-        attribute='tenant',
+        column_name = 'Tenant',
+        default = utils.get_or_create_none_tenant,
+        attribute = 'tenant',
         widget = wg.ForeignKeyWidget(tm.Tenant, 'tenantname'))
 
     Identifier = fields.Field(
-        column_name='Type',
-        attribute='identifier',
-        default=default_ta,
+        column_name = 'Type',
+        attribute = 'identifier',
+        default = default_ta,
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
     
     Sitemanager = fields.Field(
-        column_name='Site Manager',
-        attribute='siteincharge',
-        default=utils.get_or_create_none_people,
+        column_name = 'Site Manager',
+        attribute = 'siteincharge',
+        default = utils.get_or_create_none_people,
         widget = wg.ForeignKeyWidget(pm.People, 'peoplecode'))
     
     ID      = fields.Field(attribute='id', column_name="ID*")
@@ -448,7 +448,6 @@ class BtResourceUpdate(resources.ModelResource):
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
         
-    
     def before_import_row(self, row, **kwargs):
         if 'Code' in row:
             row['Code'] = clean_string(row.get('Code', 'NONE'), code=True)
@@ -461,6 +460,7 @@ class BtResourceUpdate(resources.ModelResource):
         self._city = row['City']
         self._country = row['Country']
         self._latlng = row['GPS Location']
+        
         # check required fields
         if row['ID*'] in ['', None]: raise ValidationError("ID* is required field")
         if 'Code' in row:
@@ -483,7 +483,6 @@ class BtResourceUpdate(resources.ModelResource):
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         
         super().before_import_row(row, **kwargs)
-
 
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.gpslocation = self._gpslocation

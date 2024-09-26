@@ -2301,31 +2301,96 @@ def get_type_data(type_name, S):
                           'alerton', 'enable', 'isavpt', 'avpttype', 'client__bucode', 'unit__tacode', 'category__tacode')
         return list(objs)
     if type_name == 'QUESTIONSET':
-        asset_ids = S['assignedsites']  # Assuming this contains the relevant asset IDs
-        print("-----", asset_ids)
-        # Prefetch the asset names for the IDs in the assetincludes array
-        assets_qs = am.Asset.objects.filter(id__in=asset_ids).only('id', 'assetcode')
-        print("assets_qs----", assets_qs)
-        asset_mapping = {asset.id: asset.assetcode for asset in assets_qs}
-        print("======>",asset_mapping)
-        objs = am.QuestionSet.objects.filter(Q(type='RPCHECKLIST') & Q(bu_id__in = S['assignedsites'])
-            | Q( Q(parent_id__isnull=True) | Q(parent_id=1), ~Q(qsetname='NONE'), Q(bu_id = S['bu_id']),Q(client_id = S['client_id']))
-        ).select_related('parent').prefetch_related(
-            Prefetch('assetincludes', queryset=assets_qs, to_attr='assetcode')
-        ).values('id', 'seqno', 'qsetname', 'parent__qsetname', 'type', 'assetincludes', 'buincludes', 'bu__bucode',
-                'client__bucode', 'site_grp_includes', 'site_type_includes', 'show_to_all_sites', 'url')
+        objs = am.QuestionSet.objects.filter(
+            Q(type='RPCHECKLIST') & Q(bu_id__in=S['assignedsites']) |
+            (Q(parent_id=1) & ~Q(qsetname='NONE') & 
+            Q(bu_id=S['bu_id']) & Q(client_id=S['client_id']))
+        ).select_related('parent').values(
+            'id', 'seqno', 'qsetname', 'parent__qsetname', 'type',
+            'assetincludes', 'buincludes', 'bu__bucode',
+            'client__bucode', 'site_grp_includes', 'site_type_includes',
+            'show_to_all_sites', 'url'
+        )
+
+        # Convert the queryset to a list
         objs_list = list(objs)
-        print("objs_list",objs_list)
+
+        # Create mappings for asset codes, BU codes, site group names, and site type names
+        asset_ids = set()
+        bu_ids = set()
+        site_group_ids = set()
+        site_type_ids = set()
+
         for obj in objs_list:
-            # Replace IDs with names in assetincludes
-            asset_ids_includes = obj.get('assetincludes', [])
-            asset_names = [asset_mapping.get(asset_id, asset_id) for asset_id in asset_ids_includes]
+            # Validate and collect asset IDs
+            if obj['assetincludes']:
+                asset_ids.update(str(asset_id) for asset_id in obj['assetincludes'] if str(asset_id).isdigit())
             
-            obj['assetincludes'] = asset_names  # Replace IDs with names
+            # Validate and collect BU IDs
+            if obj['buincludes']:
+                bu_ids.update(str(bu_id) for bu_id in obj['buincludes'] if str(bu_id).isdigit())
+            
+            # Validate and collect site group IDs
+            if obj['site_grp_includes']:
+                site_group_ids.update(str(group_id) for group_id in obj['site_grp_includes'] if str(group_id).isdigit())
+            
+            # Validate and collect site type IDs
+            if obj['site_type_includes']:
+                site_type_ids.update(str(type_id) for type_id in obj['site_type_includes'] if str(type_id).isdigit())
 
-        print("objs------>",list(objs), len(objs_list))
+        # Fetch asset codes
+        asset_codes = am.Asset.objects.filter(id__in=asset_ids).values_list('id', 'assetcode')
+        asset_code_map = {str(asset_id): code for asset_id, code in asset_codes}
 
-        return list(am.QuestionSet.objects.values_list('taname', 'tacode', 'tatype', 'client'))
+        # Fetch BU codes
+        bu_codes = ob.Bt.objects.filter(id__in=bu_ids).values_list('id', 'bucode')
+        bu_code_map = {str(bu_id): code for bu_id, code in bu_codes}
+
+        # Fetch site group names
+        site_group_names = pm.Pgroup.objects.filter(id__in=site_group_ids).values_list('id', 'groupname')
+        site_group_map = {str(group_id): name for group_id, name in site_group_names}
+
+        # Fetch site type names
+        site_type_names = ob.TypeAssist.objects.filter(id__in=site_type_ids).values_list('id', 'taname')
+        site_type_map = {str(type_id): name for type_id, name in site_type_names}
+
+        # Update the lists in the original objects
+        for obj in objs_list:
+            # Update assetincludes
+            if obj['assetincludes']:
+                obj['assetincludes'] = ','.join(asset_code_map.get(str(asset_id), '') for asset_id in obj['assetincludes'] if str(asset_id) in asset_code_map)
+            else:
+                obj['assetincludes'] = ''
+            
+            # Update buincludes
+            if obj['buincludes']:
+                obj['buincludes'] = ','.join(bu_code_map.get(str(bu_id), '') for bu_id in obj['buincludes'] if str(bu_id) in bu_code_map)
+            else:
+                obj['buincludes'] = ''
+            
+            # Update site_grp_includes
+            if obj['site_grp_includes']:
+                obj['site_grp_includes'] = ','.join(site_group_map.get(str(group_id), '') for group_id in obj['site_grp_includes'] if str(group_id) in site_group_map)
+            else:
+                obj['site_grp_includes'] = ''
+            
+            # Update site_type_includes
+            if obj['site_type_includes']:
+                obj['site_type_includes'] = ','.join(site_type_map.get(str(type_id), '') for type_id in obj['site_type_includes'] if str(type_id) in site_type_map)
+            else:
+                obj['site_type_includes'] = ''
+
+        # Resulting objs_list with modified fields
+        # output = objs_list
+
+        fields = ['id', 'seqno', 'qsetname', 'parent__qsetname', 'type', 'assetincludes', 'buincludes', 
+          'bu__bucode', 'client__bucode', 'site_grp_includes', 'site_type_includes', 
+          'show_to_all_sites', 'url']
+
+        output = [tuple(obj[field] for field in fields) for obj in objs_list]
+
+        print("-------->", output)
+        return output
     if type_name == 'QUESTIONSETBELONGING':
         objs = am.QuestionSetBelonging.objects.select_related('qset', 'question', 'client', 'bu').filter(
                 client_id = S['client_id'],
@@ -2337,14 +2402,14 @@ def get_type_data(type_name, S):
                 When(alerton__contains=',<', 
                     then=Substr('alerton', 
                                 StrIndex('alerton', Value(',<')) + 2)),
-                default=Value("NONE"),
+                default=Value(None),
                 output_field=models.CharField()
             ),
             alert_below=Case(
                 When(alerton__contains='>', 
                     then=Substr('alerton', 
                                 StrIndex('alerton', Value('>')) + 1)),
-                default=Value("NONE"),
+                default=Value(None),
                 output_field=models.CharField()
             ),
             min_str=Cast('min', output_field=models.CharField()),
