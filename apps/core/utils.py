@@ -2388,8 +2388,6 @@ def get_type_data(type_name, S):
           'show_to_all_sites', 'url']
 
         output = [tuple(obj[field] for field in fields) for obj in objs_list]
-
-        print("-------->", output)
         return output
     if type_name == 'QUESTIONSETBELONGING':
         objs = am.QuestionSetBelonging.objects.select_related('qset', 'question', 'client', 'bu').filter(

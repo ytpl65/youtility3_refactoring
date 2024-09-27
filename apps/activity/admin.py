@@ -1480,22 +1480,23 @@ class QuestionSetBelongingResourceUpdate(resources.ModelResource):
 
 class QuestionSetResourceUpdate(resources.ModelResource):
     CLIENT = fields.Field(
-        column_name='Client',
-        attribute='client',
+        column_name = 'Client',
+        attribute = 'client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default=utils.get_or_create_none_bv
+        default = utils.get_or_create_none_bv
     )
+
     BV = fields.Field(
-        column_name='Site',
-        attribute='bu',
+        column_name = 'Site',
+        attribute = 'bu',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default=utils.get_or_create_none_bv
+        default = utils.get_or_create_none_bv
     )
     
     BelongsTo = fields.Field(
-        column_name='Belongs To',
-        default=utils.get_or_create_none_qset,
-        attribute='parent',
+        column_name = 'Belongs To',
+        default = utils.get_or_create_none_qset,
+        attribute = 'parent',
         widget = wg.ForeignKeyWidget(am.QuestionSet, 'qsetname'))
     
     ID               = fields.Field(attribute='id', column_name='ID*')
@@ -1553,26 +1554,29 @@ class QuestionSetResourceUpdate(resources.ModelResource):
         
     def validate_row(self, row):
         models_mapping = {
-            'Site Group Includes': ('peoples', 'Pgroup', 'groupname'),
-            'Site Includes': ('onboarding', 'Bt', 'bucode'),
-            'Asset Includes': ('activity', 'Asset', 'assetcode'),
-            'Site Type Includes': ('onboarding', 'TypeAssist', 'tacode'),
+            'Site Group Includes': ('peoples', 'Pgroup', 'id','groupname'),
+            'Site Includes': ('onboarding', 'Bt', 'id','bucode'),
+            'Asset Includes': ('activity', 'Asset', 'id','assetcode'),
+            'Site Type Includes': ('onboarding', 'TypeAssist', 'id', 'tacode'),
         }
 
-        for field, (app_name, model_name, lookup_field) in models_mapping.items():
-            if field in row:
-                if field_value := row.get(field):
-                    model = apps.get_model(app_name, model_name)
-                    values = field_value.replace(" ", "").split(',')
-                    count = model.objects.filter(**{f'{lookup_field}__in': values}).count()
-                    if len(values) != count:
-                        raise ValidationError({field: f"Some of the values specified in {field} do not exist in the system"})
-                    row[field] = values
-
+        for field, (app_name, model_name, lookup_field, model_field) in models_mapping.items():
+            if field_value := row.get(field):
+                model = apps.get_model(app_name, model_name)
+                values = field_value.split(',')
+                list_value = []
+                for val in values:
+                    get_value = list(model.objects.filter(**{f'{model_field}': val}).values())
+                    list_value.append(str(get_value[0]['id']))
+                count = model.objects.filter(**{f'{lookup_field}__in': list_value}).count()
+                if len(values) != count:
+                    raise ValidationError({field: f"Some of the values specified in {field} do not exist in the system"})
+                row[field] = list_value
+    
     def unique_record_check(self, row):
         # unique record check
-        if not am.QuestionSet.objects.filter(id=row['ID*']).exists():
-            raise ValidationError(f"Record with these values already exist {row.values()}")
-
+        if not am.QuestionSet.objects.select_related().filter(id=row['ID*']).exists():
+            raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
+        
     def before_save_instance(self, instance, using_transactions, dry_run=False):
         utils.save_common_stuff(self.request, instance, self.is_superuser)
