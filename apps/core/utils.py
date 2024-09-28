@@ -14,7 +14,7 @@ from dateutil import parser
 import django.shortcuts as scts
 from django.contrib import messages as msg
 from django.contrib.gis.measure import Distance
-from django.db.models import Q, F, Case, When, Value, Func, Prefetch
+from django.db.models import Q, F, Case, When, Value, Func
 from django.http import JsonResponse
 from django.http import response as rp
 from django.template.loader import render_to_string
@@ -34,8 +34,8 @@ from django.db import transaction
 from django.db.models import RestrictedError
 from apps.work_order_management.models import Approver
 from django.db import models
-from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
-from django.db.models.functions import Cast, Concat, Substr, StrIndex, Coalesce
+from django.contrib.gis.db.models.functions import AsGeoJSON
+from django.db.models.functions import Cast, Concat, Substr, StrIndex, TruncSecond
 
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -1949,24 +1949,24 @@ def excel_file_creation(R):
 
 HEADER_MAPPING_UPDATE = {
     'TYPEASSIST': [
-        'ID*', 'Name', 'Code', 'Type', 'Client'],
-    
+        'ID*', 'Name', 'Code', 'Type', 'Client'
+    ],
     'PEOPLE': [
         'ID*','Code', 'Name', 'User For', 'Employee Type', 'Login ID', 'Gender',
         'Mob No', 'Email', 'Date of Birth', 'Date of Join', 'Client', 
         'Site', 'Designation', 'Department', 'Work Type', 'Report To',
         'Date of Release', 'Device Id', 'Is Emergency Contact',
         'Mobile Capability', 'Report Capability', 'Web Capability', 'Portlet Capability',
-        'Current Address', 'Blacklist',  'Alert Mails'],
-    
+        'Current Address', 'Blacklist',  'Alert Mails'
+    ],
     'BU': [
         'ID*','Code', 'Name', 'Belongs To', 'Type', 'Site Type', \
-        'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'City', 'State', 'Country'],
-    
+        'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'City', 'State', 'Country'
+    ],
     'QUESTION':[
         'ID*','Question Name','Answer Type', 'Min', 'Max','Alert Above', 'Alert Below', 'Is WorkFlow',
-        'Options', 'Alert On', 'Enable', 'Is AVPT' , 'AVPT Type', 'Client', 'Unit', 'Category'],
-    
+        'Options', 'Alert On', 'Enable', 'Is AVPT' , 'AVPT Type', 'Client', 'Unit', 'Category'
+    ],
     'ASSET':[
         'ID*','Code', 'Name', 'Running Status', 'Identifier','Is Critical',
         'Client', 'Site', 'Capacity', 'BelongsTo', 'Type',  'GPS Location',
@@ -1982,7 +1982,6 @@ HEADER_MAPPING_UPDATE = {
     'GROUPBELONGING':[
       'ID*', 'Group Name', 'Of People', "Of Site", 'Client', 'Site'  
     ],
-
     'VENDOR':[
         'ID*','Code', 'Name', 'Type', 'Address', 'Email', 'Applicable to All Sites',
         'Mob No', 'Site', 'Client', 'GPS Location', 'Enable'
@@ -2002,16 +2001,16 @@ HEADER_MAPPING_UPDATE = {
         'Alert On', 'Is Mandatory', 'AVPT Type',
     ],
     'SCHEDULEDTASKS':[
-        'Name*', 'Description*', 'Scheduler*', 'Asset*', 'Question Set/Checklist*', 'People*', 'Group Name*',
-        'Plan Duration*', 'Gracetime Before*', 'Gracetime After*', 'Notify Category*',
-        'From Date*', 'Upto Date*', 'Scan Type*', 'Client*', 'Site*',
-        'Priority*','Seq No', 'Start Time', 'End Time', 'Belongs To*'
+        'ID*','Name', 'Description', 'Scheduler', 'Asset', 'Question Set/Checklist', 
+        'People', 'Group Name', 'Plan Duration', 'Gracetime Before', 'Gracetime After', 
+        'Notify Category', 'From Date', 'Upto Date', 'Scan Type', 'Client', 'Site',
+        'Priority','Seq No', 'Start Time', 'End Time', 'Belongs To'
     ],
     'SCHEDULEDTOURS':[
-        'Name*', 'Description*', 'Scheduler*', 'Asset*', 'Question Set/Checklist*', 'People*', 'Group Name*',
-        'Plan Duration*', 'Gracetime*', 'Expiry Time*', 'Notify Category*',
-        'From Date*', 'Upto Date*', 'Scan Type*', 'Client*', 'Site*',
-        'Priority*','Seq No*', 'Start Time', 'End Time', 'Belongs To*'
+        'ID*','Name', 'Description', 'Scheduler', 'Asset', 'Question Set/Checklist', 
+        'People', 'Group Name', 'Plan Duration', 'Gracetime', 'Expiry Time', 
+        'Notify Category', 'From Date', 'Upto Date', 'Scan Type', 'Client', 'Site',
+        'Priority','Seq No', 'Start Time', 'End Time', 'Belongs To'
     ]
 }
 
@@ -2057,20 +2056,18 @@ Example_data_update = {
     'GROUPBELONGING':[('2764','Group A','Person A','NONE','CLIENT_A','Yout_logged_in_site'),
                       ('2765','Group B','Person B','NONE','CLIENT_B','SITE_A'),
                       ('2766','Group C','Person C','NONE','CLIENT_C','SITE_B')],
-    'SCHEDULEDTASKS':[('Task A','Task A Inspection','0 20 * * *','ASSETA','Questionset A','PERSON_A','GROUP_A','15','5','5','RAISETICKETNOTIFY','YYYY-MM-DD HH:MM:SS',
-                        'YYYY-MM-DD HH:MM:SS','NFC','CLIENT_A','SITE_A','HIGH','1','NONE','NONE','NONE'),
-                        ('Task B','Task B Daily Reading','1 20 * * *','ASSETB','Checklist B','PERSON_B','GROUP_B','18','5','5','AUTOCLOSEDNOTIFY','2023-06-07 12:00:00',	
-                        '2023-06-07 16:00:00','QR','CLIENT_B','SITE_B','LOW','6','NONE','NONE','Task A Inspection'),
-                        ('Task C','Task C Inspection','2 20 * * *','ASSETC','Questionset C','PERSON_C','GROUP_C','20','5','5','NONE','2024-02-04 23:00:00',
-                        '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')],
-    'SCHEDULEDTOURS':[('TOUR A','Inspection Tour A','55 11,16 * * *','ASSET_A','Questionset A','PERSON_A','GROUP_A','15','5','5',
+    'SCHEDULEDTASKS':[('2824','Task A','Task A Inspection','0 20 * * *','ASSETA','Questionset A','PERSON_A','GROUP_A','15','5','5','RAISETICKETNOTIFY','YYYY-MM-DD HH:MM:SS',
+                       'YYYY-MM-DD HH:MM:SS','NFC','CLIENT_A','SITE_A','HIGH','1','NONE','NONE','NONE'),
+                      ('2825','Task B','Task B Daily Reading','1 20 * * *','ASSETB','Checklist B','PERSON_B','GROUP_B','18','5','5','AUTOCLOSEDNOTIFY','2023-06-07 12:00:00',	
+                       '2023-06-07 16:00:00','QR','CLIENT_B','SITE_B','LOW','6','NONE','NONE','Task A Inspection'),
+                      ('2826','Task C','Task C Inspection','2 20 * * *','ASSETC','Questionset C','PERSON_C','GROUP_C','20','5','5','NONE','2024-02-04 23:00:00',
+                       '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')],
+    'SCHEDULEDTOURS':[('2824','TOUR A','Inspection Tour A','55 11,16 * * *','ASSET_A','Questionset A','PERSON_A','GROUP_A','15','5','5',
                        'RAISETICKETNOTIFY','YYYY-MM-DD HH:MM:SS','YYYY-MM-DD HH:MM:SS','NFC','CLIENT_A','SITE_A','HIGH','1','NONE','NONE','NONE'),
-                       ('TOUR B','Inspection Tour B','56 11,16 * * *','ASSET_B','Checklist B','PERSON_B','GROUP_B','18','5','5',
+                       ('2825','TOUR B','Inspection Tour B','56 11,16 * * *','ASSET_B','Checklist B','PERSON_B','GROUP_B','18','5','5',
                         'AUTOCLOSEDNOTIFY','2023-06-07 12:00:00','2023-06-07 16:00:00','QR','CLIENT_B','SITE_B','LOW','6','NONE','NONE','Task A Inspection'),
-                        ('TOUR C','Inspection Tour C','57 11,16 * * *','ASSET_C','Questionset C','PERSON_C','GROUP_C','20','5','5','NONE','2024-02-04 23:00:00',
+                        ('2826','TOUR C','Inspection Tour C','57 11,16 * * *','ASSET_C','Questionset C','PERSON_C','GROUP_C','20','5','5','NONE','2024-02-04 23:00:00',
                          '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')]}
-
-
 
 def excel_file_creation_update(R, S):
     import pandas as pd
@@ -2424,4 +2421,49 @@ def get_type_data(type_name, S):
         objs = pm.Pgbelonging.objects.select_related('pgroup','people').filter(
                 client_id = S['client_id'],
             ).values_list('id', 'pgroup__groupname', 'people__peoplecode', 'assignsites__bucode', 'client__bucode', 'bu__bucode')
+        return list(objs)
+    if type_name == 'SCHEDULEDTASKS':
+        objs = am.Job.objects.annotate(
+            assignedto = Case(
+                When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), Value(' [PEOPLE]'))),
+                When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), Value(' [GROUP]'))),
+            ),
+            formatted_fromdate=Cast(TruncSecond('fromdate'), output_field=models.CharField()),
+            formatted_uptodate=Cast(TruncSecond('uptodate'), output_field=models.CharField()),
+            formatted_starttime=Cast(TruncSecond('starttime'), output_field=models.CharField()),
+            formatted_endtime=Cast(TruncSecond('endtime'), output_field=models.CharField()),
+            ).filter(~Q(jobname='NONE') | ~Q(id=1),
+            Q(parent__jobname = 'NONE') | Q(parent_id = 1),
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            identifier = 'TASK',
+        ).select_related('pgroup', 'people', 'asset', 'bu', 'qset', 'ticketcategory'
+        ).values_list('id','jobname', 'jobdesc', 'cron', 'asset__assetcode', 'qset__qsetname',
+                 'people__peoplecode', 'pgroup__groupname', 'planduration', 'gracetime',
+                 'expirytime', 'ticketcategory__tacode', 'formatted_fromdate', 'formatted_uptodate', 
+                 'scantype', 'client__bucode', 'bu__bucode', 'priority', 'seqno', 'formatted_starttime', 
+                 'formatted_endtime', 'parent__jobname')
+        return list(objs)
+    if type_name == 'SCHEDULEDTOURS':
+        objs = am.Job.objects.select_related('pgroup', 'people', 'asset', 'bu', 'qset', 'ticketcategory').annotate(
+                assignedto = Case(
+                When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), Value(' [PEOPLE]'))),
+                When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), Value(' [GROUP]'))),
+                ),
+                formatted_fromdate=Cast(TruncSecond('fromdate'), output_field=models.CharField()),
+                formatted_uptodate=Cast(TruncSecond('uptodate'), output_field=models.CharField()),
+                formatted_starttime=Cast(TruncSecond('starttime'), output_field=models.CharField()),
+                formatted_endtime=Cast(TruncSecond('endtime'), output_field=models.CharField()),
+        ).filter(
+                Q(parent__jobname = 'NONE') | Q(parent_id = 1),
+                ~Q(jobname='NONE') | ~Q(id=1),
+                bu_id__in = S['assignedsites'],
+                client_id = S['client_id'],
+                identifier__exact='INTERNALTOUR',
+                enable=True
+        ).values_list('id', 'jobname', 'jobdesc', 'cron', 'asset__assetcode','qset__qsetname',
+                 'people__peoplecode', 'pgroup__groupname', 'planduration', 'gracetime', 
+                 'expirytime', 'ticketcategory__tacode','formatted_fromdate', 
+                 'formatted_uptodate', 'scantype', 'client__bucode', 'bu__bucode',
+                 'priority', 'seqno', 'formatted_starttime', 'formatted_endtime', 'parent__jobname')
         return list(objs)
