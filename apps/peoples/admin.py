@@ -486,20 +486,13 @@ class GroupResourceUpdate(resources.ModelResource):
         if 'Name' in row:
             row['Name'] = clean_string(row.get('Name'))
         # check required fields
-        if row.get('ID*') in ['', None]: raise ValidationError(
-            {'ID*':'This field is required'}
-        )
+        if row.get('ID*') in ['', None]: raise ValidationError({'ID*':'This field is required'})
         if 'Name' in row:
-            if row.get('Name') in ['', None]: raise ValidationError(
-                {'Name': "This field is required"})
+            if row.get('Name') in ['', None]: raise ValidationError({'Name': "This field is required"})
         if 'Type' in row:
-            if row.get('Type') in ['', None]: raise ValidationError(
-                {'Type':'This field is required'}
-            )
+            if row.get('Type') in ['', None]: raise ValidationError({'Type':'This field is required'})
             if row['Type'] not in ['PEOPLEGROUP', 'SITEGROUP']:
-                raise ValidationError({
-                    'Type':"The value must be from ['PEOPLEGROUP', 'SITEGROUP']"
-                })
+                raise ValidationError({'Type':"The value must be from ['PEOPLEGROUP', 'SITEGROUP']"})
 
         # unique record check
         if not Pgroup.objects.filter(id=row['ID*']).exists():
@@ -568,7 +561,7 @@ class GroupBelongingResourceUpdate(resources.ModelResource):
             if row.get('Of Site') in ['', 'NONE', None] and row.get('Of People') in ['', 'NONE', None]:
                 raise ValidationError("Either Site or People should be set, both cannot be None")
         
-        # unique record check
+        # check record exists
         if not pm.Pgbelonging.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         super().before_import_row(row, **kwargs)
@@ -669,9 +662,9 @@ class PeopleResourceUpdate(resources.ModelResource):
         import_id_fields = ['ID']
         fields = [
             'ID', 'Code', 'Name', 'LoginId', 'Designation', 'Department', 'MobNo', 'Email', 'deviceid',
-            'Site', 'DateOfJoin', 'date_of_release', 'DateOfBirth', 'Gender', 'PeopleType','WorkType', 'Enable',
-            'Client', 'isemergencycontact', 'alertmails', 'mobilecaps', 'reportcaps', 'webcaps',
-            'portletcaps', 'blacklist', 'currentaddr', 'Reportto', 'userfor']
+            'Site', 'DateOfJoin', 'date_of_release', 'DateOfBirth', 'Gender', 'PeopleType','WorkType', 
+            'Enable', 'Client', 'isemergencycontact', 'alertmails', 'mobilecaps', 'reportcaps', 
+            'webcaps', 'portletcaps', 'blacklist', 'currentaddr', 'Reportto', 'userfor']
 
     def __init__(self, *args, **kwargs):
         super(PeopleResourceUpdate, self).__init__(*args, **kwargs)
@@ -756,6 +749,6 @@ class PeopleResourceUpdate(resources.ModelResource):
                 mob_no = str(row['Mob No'])
                 row['Mob No'] = mob_no if '+' in mob_no else f'+{mob_no}'
         
-        # unique record check
+        # check record exists
         if not pm.People.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")

@@ -861,7 +861,7 @@ class LocationResourceUpdate(resources.ModelResource):
         if 'GPS Location' in row:
             row['GPS Location'] = clean_point_field(row.get('GPS Location'))
         #check required fields
-        if row.get('ID*') in  ['', None]:raise ValidationError("ID* is required field")
+        if row.get('ID*') in  ['', None]: raise ValidationError("ID* is required field")
 
         #status validation
         self.check_valid_status(row)
@@ -873,7 +873,7 @@ class LocationResourceUpdate(resources.ModelResource):
             if not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
 
-        # unique record check
+        # check record exists
         if not am.Location.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         super().before_import_row(row, row_number, **kwargs)
@@ -941,7 +941,7 @@ class QuestionResourceUpdate(resources.ModelResource):
         self.check_answertype_fields(row)
         self.validate_options_values(row)
         self.set_alert_on_value(row)
-        self.check_unique_record(row)
+        self.check_record_exists(row)
         super().before_import_row(row, **kwargs)
 
     def check_answertype_fields(self,row):
@@ -1046,7 +1046,7 @@ class QuestionResourceUpdate(resources.ModelResource):
                 else:
                     raise ValidationError('Alert Above, Alert Below and Alert On Field is required')
     
-    def check_unique_record(self, row):
+    def check_record_exists(self, row):
         if not am.Question.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
 
@@ -1157,13 +1157,12 @@ class AssetResourceUpdate(resources.ModelResource):
         skip_unchanged = True
         import_id_fields = ['ID']
         report_skipped = True
-        fields = ['ID', 'Code', 'Name',  'GPS', 'Identifier' 'is_critical',
-                  'RunningStatus', 'Capacity', 'BelongsTo', 'Type', 'Client', 'BV',
-                  'Category', 'SubCategory', 'Brand', 'Unit', 'ServiceProvider',
-                  'ENABLE', 'is_critical', 'is_meter', 'is_nonengg_asset', 'supplier',
-                  'meter', 'model', 'invoice_no', 'invoice_date','service','sfdate',
-                  'stdate', 'yom','msn', 'bill_val', 'bill_date', 'purchase_date',
-                  'inst_date', 'po_number', 'far_asset_id'
+        fields = ['ID', 'Code', 'Name',  'GPS', 'Identifier' 'is_critical','RunningStatus', 
+                  'Capacity', 'BelongsTo', 'Type', 'Client', 'BV','Category', 'SubCategory', 
+                  'Brand', 'Unit', 'ServiceProvider','ENABLE', 'is_critical', 'is_meter', 
+                  'is_nonengg_asset', 'supplier', 'meter', 'model', 'invoice_no', 
+                  'invoice_date','service','sfdate', 'stdate', 'yom','msn', 'bill_val', 
+                  'bill_date', 'purchase_date', 'inst_date', 'po_number', 'far_asset_id'
         ]
     
     def __init__(self, *args, **kwargs):
@@ -1277,7 +1276,7 @@ class AssetResourceUpdate(resources.ModelResource):
             if  not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
 
-        # unique record check
+        # check record exists
         if not am.Asset.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         
@@ -1378,7 +1377,7 @@ class QuestionSetBelongingResourceUpdate(resources.ModelResource):
         self.validate_numeric_values(row)
         self.validate_options_values(row)
         self.set_alert_on_value(row)
-        self.check_unique_record(row)
+        self.check_record_exists(row)
         self.check_AVPT_fields(row)
         super().before_import_row(row, **kwargs)
 
@@ -1461,7 +1460,7 @@ class QuestionSetBelongingResourceUpdate(resources.ModelResource):
                 else:
                     raise ValidationError('Alert Above, Alert Below and Alert On Field is required')
 
-    def check_unique_record(self, row):
+    def check_record_exists(self, row):
         if not am.QuestionSetBelonging.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
 
@@ -1515,8 +1514,8 @@ class QuestionSetResourceUpdate(resources.ModelResource):
         skip_unchanged = True
         import_id_fields = ['ID']
         report_skipped = True 
-        fields = ['ID','Question Set Name', 'ASSETINCLUDES', 'SITEINCLUDES', 'SITEGRPINCLUDES', 'SITETYPEINCLUDES', 
-                  'SHOWTOALLSITES', 'URL', 'BV', 'CLIENT', 'Type', 'BelongsTo', 'SEQNO']
+        fields = ['ID','Question Set Name', 'ASSETINCLUDES', 'SITEINCLUDES', 'SITEGRPINCLUDES', 
+                  'SITETYPEINCLUDES', 'SHOWTOALLSITES', 'URL', 'BV', 'CLIENT', 'Type', 'BelongsTo', 'SEQNO']
 
     def __init__(self, *args, **kwargs):
         super(QuestionSetResourceUpdate, self).__init__(*args, **kwargs)
@@ -1526,7 +1525,7 @@ class QuestionSetResourceUpdate(resources.ModelResource):
     def before_import_row(self, row, row_number, **kwargs):
         self.check_required_fields(row)
         self.validate_row(row)
-        self.unique_record_check(row)
+        self.check_record_exists(row)
         self.verify_valid_questionset_type(row)
         super().before_import_row(row, **kwargs)
 
@@ -1573,8 +1572,7 @@ class QuestionSetResourceUpdate(resources.ModelResource):
                     raise ValidationError({field: f"Some of the values specified in {field} do not exist in the system"})
                 row[field] = list_value
     
-    def unique_record_check(self, row):
-        # unique record check
+    def check_record_exists(self, row):
         if not am.QuestionSet.objects.select_related().filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         

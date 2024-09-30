@@ -173,7 +173,7 @@ class VendorResourceUpdate(resources.ModelResource):
             row['Mob No'] = str(row['Mob No'])
         
         #check required fields
-        if row.get('ID*') in ['', None]:raise ValidationError("ID* is required field")
+        if row.get('ID*') in ['', None]: raise ValidationError("ID* is required field")
         
         # code validation
         if 'Code' in row:
@@ -193,7 +193,7 @@ class VendorResourceUpdate(resources.ModelResource):
                 mob_no = str(row['Mob No'])
                 row['Mob No'] = mob_no if '+' in mob_no else f'+{mob_no}'
         
-        # unique record check
+        # check record exists
         if not wom.Vendor.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         super().before_import_row(row, row_number, **kwargs)

@@ -269,8 +269,8 @@ class TaskResourceUpdate(resources.ModelResource):
     PRIORITY    = fields.Field(attribute='priority', column_name='Priority', default='LOW')
     PEOPLE      = fields.Field(attribute='people', column_name='People', widget= PeopleFKWUpdate(pm.People, 'peoplecode'))
     PGROUP      = fields.Field(attribute='pgroup', column_name='Group Name', widget=PgroupFKWUpdate(pm.Pgroup, 'groupname'))
-    STARTTIME   = fields.Field(attribute='starttime', column_name='Start Time', default=time(0,0,0))
-    ENDTIME     = fields.Field(attribute='endtime', column_name='End Time', default=time(0,0,0))
+    STARTTIME   = fields.Field(attribute='starttime', column_name='Start Time', default=time(0,0,0), widget=wg.TimeWidget())
+    ENDTIME     = fields.Field(attribute='endtime', column_name='End Time', default=time(0,0,0), widget=wg.TimeWidget())
     SEQNO       = fields.Field(attribute='seqno', column_name='Seq No', default=-1)
     ID          = fields.Field(attribute='id', column_name='ID*')
     
@@ -280,9 +280,9 @@ class TaskResourceUpdate(resources.ModelResource):
         import_id_fields = ['ID']
         report_skipped = True
         fields = [
-            'ID','CLIENT', 'SITE', 'NAME', 'DESC', 'QSET', 'ASSET','PDURATION', 'GRACETIME', 'EXPTIME',
-            'CRON', 'FROMDATE', 'UPTODATE', 'SCANTYPE', 'TKTCATEGORY', 'PRIORITY', 'PEOPLE',
-            'PGROUP', 'STARTTIME', 'ENDTIME', 'SEQNO', 'PARENT'
+            'ID','CLIENT', 'SITE', 'NAME', 'DESC', 'QSET', 'ASSET','PDURATION', 'GRACETIME', 
+            'EXPTIME', 'CRON', 'FROMDATE', 'UPTODATE', 'SCANTYPE', 'TKTCATEGORY', 'PRIORITY', 
+            'PEOPLE', 'PGROUP', 'STARTTIME', 'ENDTIME', 'SEQNO', 'PARENT'
         ]
     
     def __init__(self, *args, **kwargs):
@@ -293,7 +293,7 @@ class TaskResourceUpdate(resources.ModelResource):
     def before_import_row(self, row, row_number, **kwargs):
         self.check_required_fields(row)
         self.validate_row(row)
-        self.unique_record_check(row)
+        self.check_record_exists(row)
         self.check_valid_scantype(row)
         self.check_valid_priority(row)
         super().before_import_row(row, **kwargs)
@@ -347,11 +347,9 @@ class TaskResourceUpdate(resources.ModelResource):
         # check valid cron
         if 'Scheduler' in row:
             if not validate_cron(row['Scheduler']):
-                raise ValidationError({
-                    'Scheduler': "Invalid value or Problematic Cron Expression for scheduler"
-                })
+                raise ValidationError({'Scheduler': "Invalid value or Problematic Cron Expression for scheduler"})
     
-    def unique_record_check(self, row):
+    def check_record_exists(self, row):
         if not Job.objects.filter(id = row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
     
@@ -377,8 +375,8 @@ class TourResourceUpdate(resources.ModelResource):
     PRIORITY    = fields.Field(attribute='priority', column_name='Priority', default='LOW')
     PEOPLE      = fields.Field(attribute='people', column_name='People', widget= PeopleFKWUpdate(pm.People, 'peoplecode'))
     PGROUP      = fields.Field(attribute='pgroup', column_name='Group Name', widget=PgroupFKWUpdate(pm.Pgroup, 'groupname'))
-    STARTTIME   = fields.Field(attribute='starttime', column_name='Start Time', default=time(0,0,0))
-    ENDTIME     = fields.Field(attribute='endtime', column_name='End Time', default=time(0,0,0))
+    STARTTIME   = fields.Field(attribute='starttime', column_name='Start Time', default=time(0,0,0), widget=wg.TimeWidget())
+    ENDTIME     = fields.Field(attribute='endtime', column_name='End Time', default=time(0,0,0), widget=wg.TimeWidget())
     SEQNO       = fields.Field(attribute='seqno', column_name='Seq No', default=-1)
     ID          = fields.Field(attribute='id', column_name='ID*')
 
@@ -388,9 +386,9 @@ class TourResourceUpdate(resources.ModelResource):
         import_id_fields = ['ID']
         report_skipped = True
         fields = [
-            'ID','CLIENT', 'SITE', 'NAME', 'DESC', 'QSET', 'PDURATION', 'GRACETIME', 'EXPTIME',
-            'CRON', 'FROMDATE', 'UPTODATE', 'SCANTYPE', 'TKTCATEGORY', 'PRIORITY', 'PEOPLE',
-            'PGROUP', 'STARTTIME', 'ENDTIME', 'SEQNO', 'PARENT', 'ASSET'
+            'ID','CLIENT', 'SITE', 'NAME', 'DESC', 'QSET', 'PDURATION', 'GRACETIME', 
+            'EXPTIME','CRON', 'FROMDATE', 'UPTODATE', 'SCANTYPE', 'TKTCATEGORY', 'PRIORITY', 
+            'PEOPLE', 'PGROUP', 'STARTTIME', 'ENDTIME', 'SEQNO', 'PARENT', 'ASSET'
         ]
     
     def __init__(self, *args, **kwargs):
@@ -402,15 +400,15 @@ class TourResourceUpdate(resources.ModelResource):
     def before_import_row(self, row, row_number, **kwargs):
         self.check_required_fields(row)
         self.validate_row(row)
-        self.unique_record_check(row)
+        self.check_record_exists(row)
         super().before_import_row(row, **kwargs)
         
     def check_required_fields(self, row):
         if row.get('ID*') in  ['', None]:raise ValidationError("ID* is required field")
         required_fields = [
-            'Name', 'From Date', 'Upto Date', 'Scheduler',
-            'Notify Category', 'Plan Duration', 'Expiry Time', 'Gracetime', 'Seq No',
-            'Question Set/Checklist', 'Asset', 'Priority', 'People', 'Group Name', 'Belongs To']
+            'Name', 'From Date', 'Upto Date', 'Scheduler','Notify Category', 'Plan Duration', 
+            'Expiry Time', 'Gracetime', 'Seq No','Question Set/Checklist', 'Asset', 'Priority', 
+            'People', 'Group Name', 'Belongs To']
         integer_fields = ['Plan Duration', 'Gracetime Before', 'Gracetime After', 'Seq No']
     
         for field in required_fields:
@@ -444,17 +442,11 @@ class TourResourceUpdate(resources.ModelResource):
         # check valid cron
         if 'Scheduler' in row:
             if not validate_cron(row['Scheduler']):
-                raise ValidationError({
-                    'Scheduler': "Invalid value or Problematic Cron Expression for scheduler"
-                })
+                raise ValidationError({'Scheduler': "Invalid value or Problematic Cron Expression for scheduler"})
     
-    def unique_record_check(self, row):
+    def check_record_exists(self, row):
         if not Job.objects.filter(id = row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
     
     def before_save_instance(self, instance, using_transactions, dry_run=False):
-        parent = instance.parent
-        if parent and parent.jobname !='NONE':
-            instance.jobdesc = f"{parent.jobname} :: {instance.asset.assetname} :: {instance.qset.qsetname}"
-            instance.save()
         utils.save_common_stuff(self.request, instance, self.is_superuser)

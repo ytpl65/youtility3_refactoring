@@ -352,7 +352,6 @@ class TaResourceUpdate(resources.ModelResource):
         self.request = kwargs.pop('request', None)
     
     def before_import_row(self, row, row_number, **kwargs):
-
         '''cleaning in sence Handles empty string,Removes extra spaces, 
         Converts to uppercase and replaces spaces with underscores (if code is True)'''
         if 'Code' in row:
@@ -377,8 +376,7 @@ class TaResourceUpdate(resources.ModelResource):
             if not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
 
-        '''Checks for uniqueness of the record based on a combination of Code*, Type*, 
-        and CLIENT* fields. It raises an error if a duplicate record is found.'''
+        '''check record exists '''
         if not om.TypeAssist.objects.filter(id=row['ID*']).exists():    
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
 
@@ -438,10 +436,8 @@ class BtResourceUpdate(resources.ModelResource):
         import_id_fields = ['ID']
         report_skipped = True
         fields = (
-            'ID','Name', 'Code', 'BuType', 'SOLID', 
-            'Enable', 'GPS', 'ID','Address', 'State',
-            'City', 'Country',
-            'Identifier', 'BelongsTo', 'tenant')
+            'ID', 'Name', 'Code', 'BuType', 'SOLID', 'Enable', 'GPS', 'Address', 
+            'State', 'City', 'Country', 'Identifier', 'BelongsTo', 'tenant')
 
     def __init__(self, *args, **kwargs):
         super(BtResourceUpdate, self).__init__(*args, **kwargs)
@@ -479,6 +475,7 @@ class BtResourceUpdate(resources.ModelResource):
             if  not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
+        # check record exists
         if not om.Bt.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         
@@ -497,6 +494,3 @@ class BtResourceUpdate(resources.ModelResource):
             instance.solid = None
             
         utils.save_common_stuff(self.request, instance)
-    
-    def get_queryset(self):
-        return om.Bt.objects.select_related().all()

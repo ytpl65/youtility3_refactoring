@@ -2060,14 +2060,14 @@ Example_data_update = {
                        'YYYY-MM-DD HH:MM:SS','NFC','CLIENT_A','SITE_A','HIGH','1','NONE','NONE','NONE'),
                       ('2825','Task B','Task B Daily Reading','1 20 * * *','ASSETB','Checklist B','PERSON_B','GROUP_B','18','5','5','AUTOCLOSEDNOTIFY','2023-06-07 12:00:00',	
                        '2023-06-07 16:00:00','QR','CLIENT_B','SITE_B','LOW','6','NONE','NONE','Task A Inspection'),
-                      ('2826','Task C','Task C Inspection','2 20 * * *','ASSETC','Questionset C','PERSON_C','GROUP_C','20','5','5','NONE','2024-02-04 23:00:00',
+                      ('2826','Task C','Task C Inspection','2 20 * * *','ASSETC','Questionset C','PERSON_C','GROUP_C','20','5','5','AUTOCLOSED','2024-02-04 23:00:00',
                        '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')],
     'SCHEDULEDTOURS':[('2824','TOUR A','Inspection Tour A','55 11,16 * * *','ASSET_A','Questionset A','PERSON_A','GROUP_A','15','5','5',
                        'RAISETICKETNOTIFY','YYYY-MM-DD HH:MM:SS','YYYY-MM-DD HH:MM:SS','NFC','CLIENT_A','SITE_A','HIGH','1','NONE','NONE','NONE'),
-                       ('2825','TOUR B','Inspection Tour B','56 11,16 * * *','ASSET_B','Checklist B','PERSON_B','GROUP_B','18','5','5',
+                      ('2825','TOUR B','Inspection Tour B','56 11,16 * * *','ASSET_B','Checklist B','PERSON_B','GROUP_B','18','5','5',
                         'AUTOCLOSEDNOTIFY','2023-06-07 12:00:00','2023-06-07 16:00:00','QR','CLIENT_B','SITE_B','LOW','6','NONE','NONE','Task A Inspection'),
-                        ('2826','TOUR C','Inspection Tour C','57 11,16 * * *','ASSET_C','Questionset C','PERSON_C','GROUP_C','20','5','5','NONE','2024-02-04 23:00:00',
-                         '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')]}
+                      ('2826','TOUR C','Inspection Tour C','57 11,16 * * *','ASSET_C','Questionset C','PERSON_C','GROUP_C','20','5','5','AUTOCLOSED','2024-02-04 23:00:00',
+                        '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')]}
 
 def excel_file_creation_update(R, S):
     import pandas as pd
@@ -2102,19 +2102,6 @@ def excel_file_creation_update(R, S):
     return buffer
 
 def get_type_data(type_name, S):
-    type_dict = {
-        'TYPEASSIST': ob.TypeAssist,
-        'BU': ob.Bt,
-        'LOCATION': am.Location,
-        'ASSET': am.Asset,
-        'VENDOR': Vendor,
-        'PEOPLE': pm.People,
-        'QUESTION': am.Question,
-        'QUESTIONSET': am.QuestionSet,
-        'QUESTIONSETBELONGING': am.QuestionSetBelonging,
-        'GROUP': pm.Pgroup,
-        'GROUPBELONGING': pm.Pgbelonging,
-    }
     if type_name == 'TYPEASSIST':
         objs = ob.TypeAssist.objects.select_related('parent','tatype', 'cuser', 'muser').filter(
                 ~Q(tacode='NONE'), ~Q(tatype__tacode='NONE'), Q(client_id=S['client_id']) | Q(cuser_id=1), enable=True,
