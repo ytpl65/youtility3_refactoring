@@ -2116,12 +2116,12 @@ def get_type_data(type_name, S):
                    country=F('bupreferences__address2__country'),
                    city=F('bupreferences__address2__city'),
                    latlng=F('bupreferences__address2__latlng'),
-                   siteincharge_name=Case(
-                        When(siteincharge__enable=True, then=F('siteincharge__peoplename')),
+                   siteincharge_peoplecode=Case(
+                        When(siteincharge__enable=True, then=F('siteincharge__peoplecode')),
                         default=Value(None),
                         output_field=models.CharField()
                     )
-        ).values_list('id', 'bucode', 'buname', 'parent__buname', 'identifier__taname', 'butype__taname', 'siteincharge_name', 
+        ).values_list('id', 'bucode', 'buname', 'parent__bucode', 'identifier__tacode', 'butype__tacode', 'siteincharge_peoplecode', 
                  'solid', 'enable', 'latlng', 'address', 'city', 'state', 'country',)
         return list(objs)
     if type_name == 'LOCATION':

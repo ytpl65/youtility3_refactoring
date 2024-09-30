@@ -401,11 +401,6 @@ class BtResourceUpdate(resources.ModelResource):
         attribute = 'butype',
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
 
-    tenant = fields.Field(
-        column_name = 'Tenant',
-        default = utils.get_or_create_none_tenant,
-        attribute = 'tenant',
-        widget = wg.ForeignKeyWidget(tm.Tenant, 'tenantname'))
 
     Identifier = fields.Field(
         column_name = 'Type',
@@ -423,12 +418,12 @@ class BtResourceUpdate(resources.ModelResource):
     Code    = fields.Field(attribute='bucode', column_name='Code')
     Name    = fields.Field(attribute='buname', column_name='Name')
     GPS     = fields.Field(attribute='gpslocation', column_name='GPS Location', saves_null_values=True)
-    Address = fields.Field(column_name='Address', widget=wg.CharWidget(), saves_null_values=True)
-    State   = fields.Field(column_name='State', widget=wg.CharWidget(), saves_null_values=True)
-    City    = fields.Field(column_name='City', widget=wg.CharWidget(), saves_null_values=True)
-    Country = fields.Field(column_name='Country', widget=wg.CharWidget(), saves_null_values=True)
+    Address = fields.Field(column_name='Address', attribute = 'bupreferences.address', widget=wg.CharWidget(), saves_null_values=True)
+    State   = fields.Field(column_name='State', attribute = 'bupreferences.address2.state', widget=wg.CharWidget(), saves_null_values=True)
+    City    = fields.Field(column_name='City', attribute = 'bupreferences.address2.city', widget=wg.CharWidget(), saves_null_values=True)
+    Country = fields.Field(column_name='Country', attribute = 'bupreferences.address2.country', widget=wg.CharWidget(), saves_null_values=True)
     SOLID   = fields.Field(attribute='solid', column_name='Sol Id', widget=wg.CharWidget())
-    Enable  = fields.Field(attribute='enable', column_name='Enable', default=True)
+    Enable  = fields.Field(attribute='enable', column_name='Enable', widget=wg.BooleanWidget(), default=True)
 
     class Meta:
         model = om.Bt
@@ -437,7 +432,7 @@ class BtResourceUpdate(resources.ModelResource):
         report_skipped = True
         fields = (
             'ID', 'Name', 'Code', 'BuType', 'SOLID', 'Enable', 'GPS', 'Address', 
-            'State', 'City', 'Country', 'Identifier', 'BelongsTo', 'tenant')
+            'State', 'City', 'Country', 'Identifier', 'BelongsTo')
 
     def __init__(self, *args, **kwargs):
         super(BtResourceUpdate, self).__init__(*args, **kwargs)
@@ -446,9 +441,9 @@ class BtResourceUpdate(resources.ModelResource):
         
     def before_import_row(self, row, **kwargs):
         if 'Code' in row:
-            row['Code'] = clean_string(row.get('Code', 'NONE'), code=True)
+            row['Code'] = clean_string(row.get('Code'), code=True)
         if 'Name' in row:
-            row['Name'] = clean_string(row.get('Name', "NONE"))
+            row['Name'] = clean_string(row.get('Name'))
         self._gpslocation = clean_point_field(row['GPS Location'])
         self._solid = row['Sol Id']
         self._address = row['Address']
