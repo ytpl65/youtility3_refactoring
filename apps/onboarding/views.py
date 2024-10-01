@@ -947,16 +947,16 @@ class LicenseSubscriptionView(LoginRequiredMixin, View):
 class BulkImportUpdate(LoginRequiredMixin,ParameterMixin, View):
     def get(self, request, *args, **kwargs):
         R, S = request.GET, request.session
-
         if (R.get('action') == 'form'):
-
             #removes the temp file created in the last import
             self.remove_temp_file(request)
             inst = utils.Instructions(tablename='TYPEASSIST')
             '''getting the instructions from the instance and here json.dumps 
             is used to convert the python dictionary to json.'''
             get_instructions = inst.get_insructions()
-            get_instructions['general_instructions'][2] = "Columns marked with an asterisk (*) are required. Please delete any columns from the downloaded Excel sheet that you do not wish to update."
+            get_column = inst.get_column_names_update()
+            get_instructions['general_instructions'][2] = "Columns marked with an asterisk (*) are required. Please delete any columns from the downloaded Excel sheet that you do not wish to update other then the ID* column."
+            get_instructions['column_names'] = "Columns: ${}&".format(', '.join(get_column))
             instructions = json.dumps(get_instructions)
             cxt = {'importform': self.form(initial={'table': "TYPEASSIST"}), 'instructions':instructions}
             return render(request, self.template_import_update, cxt)
@@ -964,7 +964,9 @@ class BulkImportUpdate(LoginRequiredMixin,ParameterMixin, View):
         if R.get('action') == 'getInstructions':
             inst = utils.Instructions(tablename=R.get('tablename'))
             instructions = inst.get_insructions()
-            instructions['general_instructions'][2] = "Columns marked with an asterisk (*) are required. Please delete any columns from the downloaded Excel sheet that you do not wish to update."
+            get_column = inst.get_column_names_update()
+            instructions['general_instructions'][2] = "Columns marked with an asterisk (*) are required. Please delete any columns from the downloaded Excel sheet that you do not wish to update other then the ID* column."
+            instructions['column_names'] = "Columns: ${}&".format(', '.join(get_column))
             return rp.JsonResponse({'instructions':instructions}, status=200)
 
         if (request.GET.get('action') == 'downloadTemplate') and request.GET.get('template'):

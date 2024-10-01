@@ -1657,6 +1657,7 @@ class Instructions(object):
         self.tablename = tablename
         self.model_source_map = MODEL_RESOURCE_MAP
         self.header_mapping = HEADER_MAPPING
+        self.header_mapping_update = HEADER_MAPPING_UPDATE
 
     #Helper function for get_valid_choices_if_any() which returns the valid choices for the given choice field 
     def field_choices_map(self, choice_field):
@@ -1733,6 +1734,9 @@ class Instructions(object):
     #list returning column names for the given tablename
     def get_column_names(self):
         return self.header_mapping.get(self.tablename)
+    
+    def get_column_names_update(self):
+        return self.header_mapping_update.get(self.tablename)
         
     #list returning valid choices for the given tablename
     def get_valid_choices_if_any(self):
@@ -2094,7 +2098,7 @@ def excel_file_creation_update(R, S):
                     'bg_color': '#E2F4FF','border':1
                 })
         Text_for_sample_data = "[ Refernce Data ] Take the Reference of the below data to fill data in correct format :-"
-        Text_for_actual_data = "[ Actual Data ] Start filling data below the following headers :-"
+        Text_for_actual_data = "[ Actual Data ] Please update the data only for the columns in the database table that need to be changed :-"
         worksheet.merge_range("A2:D2",Text_for_sample_data, merge_format)
         worksheet.merge_range("A9:D9",Text_for_actual_data, merge_format)
 

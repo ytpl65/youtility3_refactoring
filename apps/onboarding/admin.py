@@ -445,12 +445,18 @@ class BtResourceUpdate(resources.ModelResource):
         if 'Name' in row:
             row['Name'] = clean_string(row.get('Name'))
         self._gpslocation = clean_point_field(row['GPS Location'])
-        self._solid = row['Sol Id']
-        self._address = row['Address']
-        self._state = row['State']
-        self._city = row['City']
-        self._country = row['Country']
-        self._latlng = row['GPS Location']
+        if 'Sol Id' in row:
+            self._solid = row['Sol Id']
+        required_fields = ['Address', 'State', 'City', 'Country', 'GPS Location']
+        present_fields = [field for field in required_fields if field in row]
+        if len(present_fields) == len(required_fields):
+            self._address = row['Address']
+            self._state = row['State']
+            self._city = row['City']
+            self._country = row['Country']
+            self._latlng = row['GPS Location']
+        elif len(present_fields) > 0:
+            raise ValidationError("To create a complete address, you need to provide the Address, State, City, Country, and GPS Location.")
         
         # check required fields
         if row['ID*'] in ['', None]: raise ValidationError("ID* is required field")
