@@ -1502,7 +1502,7 @@ class QuestionSetResourceUpdate(resources.ModelResource):
     QSETNAME         = fields.Field(attribute='qsetname', column_name='Question Set Name')
     Type             = fields.Field(attribute='type', column_name='QuestionSet Type')
     ASSETINCLUDES    = fields.Field(attribute='assetincludes', column_name='Asset Includes', default=[])
-    SITEINCLUDES     = fields.Field(attribute='siteincludes', column_name='Site Includes', default=[])
+    SITEINCLUDES     = fields.Field(attribute='buincludes', column_name='Site Includes', default=[])
     SITEGRPINCLUDES  = fields.Field(attribute='site_grp_includes', column_name='Site Group Includes', default=[])
     SITETYPEINCLUDES = fields.Field(attribute='site_type_includes', column_name='Site Type Includes', default=[])
     SHOWTOALLSITES   = fields.Field(attribute='show_to_all_sites', column_name='Show To All Sites', default=False)
