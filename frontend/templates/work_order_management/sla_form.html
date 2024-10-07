@@ -380,12 +380,10 @@ SLA Form
         }
 
         //set seqno once loaded
-        
         $("#id_seqno").val("{{ slaform.instance.other_data['wp_seqno'] }}")
 
         //submit workpermit form
         $("#slaform").submit((e) => {
-            console.log('on click submit ')
             e.preventDefault()
 
             if (!validateNumericInputs()) {
@@ -399,15 +397,12 @@ SLA Form
                 return false;
             }
 
-            console.log("this is also submitted")
             const params = {
                 url: $("#slaform").attr("action"),
                 modal: false
             }
-            console.log("Paramas",params)
             var element = document.getElementById("select2-id_qset-container");
             var text = element.textContent
-            console.log("Text :",text)
             var payLoad = {
                 formData: $("#slaform").serialize(),
                 sladetails : $("#sla_details_form").serialize(),
@@ -427,7 +422,6 @@ SLA Form
                             }, 2000);
                         })
                         .fail((xhr, status, error) => {
-                            console.log(xhr)
                             if (!typeof (xhr.responseJSON.errors) === 'object') {
                                 show_error_alert(xhr.responseJSON.errors, "Failed to save!")
                             } else {}
