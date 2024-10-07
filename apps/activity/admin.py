@@ -294,6 +294,23 @@ class QuesFKW(wg.ForeignKeyWidget):
             client__bucode__exact=row["Client*"],
             enable=True            
         )
+    
+class QsetFKWUpdate(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        if "Client" in row and 'Site' in row:
+            return self.model.objects.select_related('client', 'bu').filter(
+                client__bucode__exact=row["Client"],
+                bu__bucode__exact=row['Site'],
+                enable=True
+            )
+
+class QuesFKWUpdate(wg.ForeignKeyWidget):
+    def get_queryset(self, value, row, *args, **kwargs):
+        if "Client" in row:
+            return self.model.objects.filter(
+                client__bucode__exact=row["Client"],
+                enable=True        
+            )
 
 class QuestionSetBelongingResource(resources.ModelResource):
     Name = fields.Field(
@@ -780,33 +797,33 @@ class LocationResource(resources.ModelResource):
 class LocationResourceUpdate(resources.ModelResource):
     Client = fields.Field(
         column_name = 'Client',
-        attribute   = 'client',
-        widget      = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default     = utils.get_or_create_none_bv
+        attribute = 'client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default = utils.get_or_create_none_bv
     )
+
     BV = fields.Field(
-        column_name       = 'Site',
-        attribute         = 'bu',
-        widget            = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        column_name = 'Site',
+        attribute = 'bu',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
-        default           = utils.get_or_create_none_bv
+        default = utils.get_or_create_none_bv
     )
     
     PARENT = fields.Field(
-        column_name       = 'Belongs To',
-        attribute         = 'parent',
-        widget            = wg.ForeignKeyWidget(am.Location, 'loccode'),
+        column_name = 'Belongs To',
+        attribute = 'parent',
+        widget = wg.ForeignKeyWidget(am.Location, 'loccode'),
         saves_null_values = True,
-        default=utils.get_or_create_none_location
+        default = utils.get_or_create_none_location
     )
 
-    #django validates this field and throws error if the value is not valid 
     Type = fields.Field(
-        column_name       = 'Type',
-        attribute         = 'type',
-        widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        column_name = 'Type',
+        attribute = 'type',
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True,
-        default=default_ta
+        default = default_ta
     )
     
     ID = fields.Field(attribute='id', column_name="ID*")
@@ -844,7 +861,7 @@ class LocationResourceUpdate(resources.ModelResource):
         if 'GPS Location' in row:
             row['GPS Location'] = clean_point_field(row.get('GPS Location'))
         #check required fields
-        if row.get('ID*') in  ['', None]:raise ValidationError("ID* is required field")
+        if row.get('ID*') in  ['', None]: raise ValidationError("ID* is required field")
 
         #status validation
         self.check_valid_status(row)
@@ -853,10 +870,10 @@ class LocationResourceUpdate(resources.ModelResource):
         if 'Code' in row:
             regex, value = "^[a-zA-Z0-9\-_]*$", row['Code']
             if " " in value: raise ValidationError("Please enter text without any spaces")
-            if  not re.match(regex, value):
+            if not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
 
-        # unique record check
+        # check record exists
         if not am.Location.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         super().before_import_row(row, row_number, **kwargs)
@@ -866,24 +883,26 @@ class LocationResourceUpdate(resources.ModelResource):
 
 class QuestionResourceUpdate(resources.ModelResource):
     Unit = fields.Field(
-        column_name       = 'Unit',
-        attribute         = 'unit',
-        widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        column_name = 'Unit',
+        attribute = 'unit',
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True,
-        default=default_ta
+        default = default_ta
     )
+
     Category = fields.Field(
-        column_name       = 'Category',
-        attribute         = 'category',
-        widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        column_name = 'Category',
+        attribute = 'category',
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True,
-        default=default_ta
+        default = default_ta
     )
+
     Client = fields.Field(
-        column_name='Client',
-        attribute='client',
+        column_name = 'Client',
+        attribute = 'client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default=utils.get_or_create_none_bv
+        default = utils.get_or_create_none_bv
     )
 
     ID         = fields.Field(attribute='id', column_name='ID*')
@@ -900,7 +919,6 @@ class QuestionResourceUpdate(resources.ModelResource):
     AttType    = fields.Field(attribute='avpttype', column_name='AVPT Type', saves_null_values=True)
     isworkflow = fields.Field(attribute='isworkflow', column_name='Is WorkFlow', default=False)
     
-    
     class Meta:
         model = am.Question
         skip_unchanged = True
@@ -908,7 +926,6 @@ class QuestionResourceUpdate(resources.ModelResource):
         report_skipped = True
         fields = ['Name', 'Type',  'Unit', 'Options',  'Enable', 'IsAvpt', 'AttType',
                   'ID', 'Client', 'Min', 'Max', 'AlertON', 'isworkflow', 'Category']
-    
     
     def __init__(self, *args, **kwargs):
         super(QuestionResourceUpdate, self).__init__(*args, **kwargs)
@@ -924,9 +941,8 @@ class QuestionResourceUpdate(resources.ModelResource):
         self.check_answertype_fields(row)
         self.validate_options_values(row)
         self.set_alert_on_value(row)
-        self.check_unique_record(row)
+        self.check_record_exists(row)
         super().before_import_row(row, **kwargs)
-
 
     def check_answertype_fields(self,row):
         if 'Answer Type' in row:
@@ -1021,12 +1037,16 @@ class QuestionResourceUpdate(resources.ModelResource):
                 if 'Alert Below' in row and 'Alert Above' in row and 'Alert On' in row:
                     alert_below = row.get('Alert Below')
                     alert_above = row.get('Alert Above')
-                    if alert_above and alert_below:
-                        row['Alert On'] = f"<{alert_below}, >{alert_above}"
+                    alert_below_str = 'null' if alert_below is None or alert_below == '' or (isinstance(alert_below, float) and isnan(alert_below)) else alert_below
+                    alert_above_str = 'null' if alert_above is None or alert_above == '' or (isinstance(alert_above, float) and isnan(alert_above)) else alert_above
+                    if alert_above_str != 'null' and alert_below_str != 'null':
+                        row['Alert On'] = f"<{alert_below_str}, >{alert_above_str}"
+                    else:
+                        row['Alert On'] = None
                 else:
                     raise ValidationError('Alert Above, Alert Below and Alert On Field is required')
     
-    def check_unique_record(self, row):
+    def check_record_exists(self, row):
         if not am.Question.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
 
@@ -1036,69 +1056,74 @@ class QuestionResourceUpdate(resources.ModelResource):
 class AssetResourceUpdate(resources.ModelResource):
     Client = fields.Field(
         column_name = 'Client',
-        attribute   = 'client',
-        widget      = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default     = utils.get_or_create_none_bv
+        attribute = 'client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default = utils.get_or_create_none_bv
     )
+
     BV = fields.Field(
-        column_name       = 'Site',
-        attribute         = 'bu',
-        widget            = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        column_name = 'Site',
+        attribute = 'bu',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
-        default           = utils.get_or_create_none_bv
+        default = utils.get_or_create_none_bv
     )
+
     Unit = fields.Field(
-        column_name       = 'Unit',
-        attribute         = 'unit',
-        widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        column_name = 'Unit',
+        attribute = 'unit',
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = default_ta
     )
+
     Category = fields.Field(
-        column_name       = 'Category',
-        attribute         = 'category',
-        widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        column_name = 'Category',
+        attribute = 'category',
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True,
-        default=default_ta
+        default = default_ta
     )
+
     Brand = fields.Field(
-        column_name       = 'Brand',
-        attribute         = 'brand',
-        widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        column_name = 'Brand',
+        attribute = 'brand',
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True,
-        default=default_ta
+        default = default_ta
     )
 
     ServiceProvider = fields.Field(
-        column_name       = 'Service Provider',
-        attribute         = 'servprov',
-        widget            = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        column_name = 'Service Provider',
+        attribute = 'servprov',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
-        default=utils.get_or_create_none_bv,
+        default = utils.get_or_create_none_bv,
     )
 
     SubCategory = fields.Field(
-        column_name       = 'Sub Category',
-        attribute         = 'subcategory',
-        widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        column_name = 'Sub Category',
+        attribute = 'subcategory',
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True,
-        default=default_ta
+        default = default_ta
     )
 
     BelongsTo = fields.Field(
-        column_name       = 'Belongs To',
-        attribute         = 'parent',
-        widget            = wg.ForeignKeyWidget(am.Asset, 'tacode'),
+        column_name = 'Belongs To',
+        attribute = 'parent',
+        widget = wg.ForeignKeyWidget(am.Asset, 'tacode'),
         saves_null_values = True,
-        default=utils.get_or_create_none_asset
+        default = utils.get_or_create_none_asset
     )
     
     Type = fields.Field(
-        column_name       = 'Asset Type',
-        attribute         = 'type',
-        widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        column_name = 'Asset Type',
+        attribute = 'type',
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True,
-        default=default_ta
+        default = default_ta
     )
+
     Identifier       = fields.Field(attribute='identifier', column_name='Identifier', default='ASSET')
     ID               = fields.Field(attribute='id', column_name='ID*')
     ENABLE           = fields.Field(attribute='enable', column_name='Enable')
@@ -1132,20 +1157,18 @@ class AssetResourceUpdate(resources.ModelResource):
         skip_unchanged = True
         import_id_fields = ['ID']
         report_skipped = True
-        fields = ['ID', 'Code', 'Name',  'GPS', 'Identifier' 'is_critical',
-                  'RunningStatus', 'Capacity', 'BelongsTo', 'Type', 'Client', 'BV',
-                  'Category', 'SubCategory', 'Brand', 'Unit', 'ServiceProvider',
-                  'ENABLE', 'is_critical', 'is_meter', 'is_nonengg_asset', 'supplier',
-                  'meter', 'model', 'invoice_no', 'invoice_date','service','sfdate',
-                  'stdate', 'yom','msn', 'bill_val', 'bill_date', 'purchase_date',
-                  'inst_date', 'po_number', 'far_asset_id'
+        fields = ['ID', 'Code', 'Name',  'GPS', 'Identifier' 'is_critical','RunningStatus', 
+                  'Capacity', 'BelongsTo', 'Type', 'Client', 'BV','Category', 'SubCategory', 
+                  'Brand', 'Unit', 'ServiceProvider','ENABLE', 'is_critical', 'is_meter', 
+                  'is_nonengg_asset', 'supplier', 'meter', 'model', 'invoice_no', 
+                  'invoice_date','service','sfdate', 'stdate', 'yom','msn', 'bill_val', 
+                  'bill_date', 'purchase_date', 'inst_date', 'po_number', 'far_asset_id'
         ]
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
-    
     
     def before_import_row(self, row, row_number=None, **kwargs):
         self.validations(row)
@@ -1196,7 +1219,6 @@ class AssetResourceUpdate(resources.ModelResource):
                     value = None
                 setattr(self, attribute_name, value)
 
-    
     def before_save_instance(self, instance, using_transactions, dry_run=False):
         asset_json = instance.asset_json
         attributes = {
@@ -1254,7 +1276,7 @@ class AssetResourceUpdate(resources.ModelResource):
             if  not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
 
-        # unique record check
+        # check record exists
         if not am.Asset.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         
@@ -1274,6 +1296,7 @@ class AssetResourceUpdate(resources.ModelResource):
                         row['Service'] = obj.id
                         if not obj:
                             raise ValidationError(f"Service {row['Service']} does not exist")
+        
         if 'Meter' in row:
             if row.get('Meter'):
                 if row.get('Meter') == 'NONE':
@@ -1291,33 +1314,33 @@ class AssetResourceUpdate(resources.ModelResource):
 
 class QuestionSetBelongingResourceUpdate(resources.ModelResource):
     Name = fields.Field(
-        column_name       = 'Question Name',
-        attribute         = 'question',
-        widget            = QuesFKW(am.Question, 'quesname'),
+        column_name = 'Question Name',
+        attribute = 'question',
+        widget = QuesFKWUpdate(am.Question, 'quesname'),
         saves_null_values = True,
-        default=utils.get_or_create_none_question
+        default = utils.get_or_create_none_question
     )
+
     QSET = fields.Field(
-        column_name='Question Set',
-        attribute='qset',
-        widget            = QsetFKW(am.QuestionSet, 'qsetname'),
+        column_name = 'Question Set',
+        attribute = 'qset',
+        widget = QsetFKWUpdate(am.QuestionSet, 'qsetname'),
         saves_null_values = True,
-        default=utils.get_or_create_none_qset
-        
+        default = utils.get_or_create_none_qset  
     )
     
     CLIENT = fields.Field(
-        column_name='Client',
-        attribute='client',
+        column_name = 'Client',
+        attribute = 'client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default=utils.get_or_create_none_bv
+        default = utils.get_or_create_none_bv
     )
     
     BV = fields.Field(
-        column_name='Site',
-        attribute='bu',
+        column_name = 'Site',
+        attribute = 'bu',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default=utils.get_or_create_none_bv
+        default = utils.get_or_create_none_bv
     )
     
     ANSTYPE     = fields.Field(attribute='answertype',column_name='Answer Type')
@@ -1343,7 +1366,7 @@ class QuestionSetBelongingResourceUpdate(resources.ModelResource):
             'ID', 'MIN', 'MAX',  'ISMANDATORY', 'SEQNO', 'ANSTYPE', 'ALERTON']
         
     def __init__(self, *args, **kwargs):
-        super(QuestionSetBelongingResource, self).__init__(*args, **kwargs)
+        super(QuestionSetBelongingResourceUpdate, self).__init__(*args, **kwargs)
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
     
@@ -1354,7 +1377,7 @@ class QuestionSetBelongingResourceUpdate(resources.ModelResource):
         self.validate_numeric_values(row)
         self.validate_options_values(row)
         self.set_alert_on_value(row)
-        self.check_unique_record(row)
+        self.check_record_exists(row)
         self.check_AVPT_fields(row)
         super().before_import_row(row, **kwargs)
 
@@ -1398,7 +1421,7 @@ class QuestionSetBelongingResourceUpdate(resources.ModelResource):
 
     def convert_to_float(self, row, field):
         value = row.get(field)
-        if value is not None:
+        if value is not None and value!='NONE':
             row[field] = float(value)
         elif field in ['Min', 'Max']: raise ValidationError(f"{field} is required when Answer Type is {row['Answer Type']}")
 
@@ -1428,22 +1451,130 @@ class QuestionSetBelongingResourceUpdate(resources.ModelResource):
                 if 'Alert Below' in row and 'Alert Above' in row and 'Alert On' in row:
                     alert_below = row.get('Alert Below')
                     alert_above = row.get('Alert Above')
-                    if alert_above and alert_below:
-                        row['Alert On'] = f"<{alert_below}, >{alert_above}"
+                    alert_below_str = 'null' if alert_below is None or alert_below == '' or (isinstance(alert_below, float) and isnan(alert_below)) else alert_below
+                    alert_above_str = 'null' if alert_above is None or alert_above == '' or (isinstance(alert_above, float) and isnan(alert_above)) else alert_above
+                    if alert_above_str != 'null' and alert_below_str != 'null':
+                        row['Alert On'] = f"<{alert_below_str}, >{alert_above_str}"
+                    else:
+                        row['Alert On'] = None
                 else:
                     raise ValidationError('Alert Above, Alert Below and Alert On Field is required')
 
-    def check_unique_record(self, row):
+    def check_record_exists(self, row):
         if not am.QuestionSetBelonging.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
 
     def validate_options_values(self, row):
-        if row['Answer Type*'] in ['CHECKBOX', 'DROPDOWN']:
-            if row.get('Options') is None: raise ValidationError(
-                "Options is required when Answer Type* is in [DROPDOWN, CHECKBOX]")
-            if row.get('Alert On') and row['Alert On'] not in row['Options']:
-                raise ValidationError("Alert On needs to be in Options")
+        if 'Answer Type' in row:
+            if row['Answer Type'] in ['CHECKBOX', 'DROPDOWN']:
+                if 'Options' in row:
+                    if row.get('Options') is None: raise ValidationError(
+                        "Options is required when Answer Type is in [DROPDOWN, CHECKBOX]")
+                if 'Alert On' in row and 'Options' in row:
+                    if row.get('Alert On') and row['Alert On'] not in row['Options']:
+                        raise ValidationError({"Alert On": "Alert On needs to be in Options"})
             
- 
+    def before_save_instance(self, instance, using_transactions, dry_run=False):
+        utils.save_common_stuff(self.request, instance, self.is_superuser)
+
+class QuestionSetResourceUpdate(resources.ModelResource):
+    CLIENT = fields.Field(
+        column_name = 'Client',
+        attribute = 'client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default = utils.get_or_create_none_bv
+    )
+
+    BV = fields.Field(
+        column_name = 'Site',
+        attribute = 'bu',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default = utils.get_or_create_none_bv
+    )
+    
+    BelongsTo = fields.Field(
+        column_name = 'Belongs To',
+        default = utils.get_or_create_none_qset,
+        attribute = 'parent',
+        widget = wg.ForeignKeyWidget(am.QuestionSet, 'qsetname'))
+    
+    ID               = fields.Field(attribute='id', column_name='ID*')
+    SEQNO            = fields.Field(attribute='seqno', column_name="Seq No",default=-1)
+    QSETNAME         = fields.Field(attribute='qsetname', column_name='Question Set Name')
+    Type             = fields.Field(attribute='type', column_name='QuestionSet Type')
+    ASSETINCLUDES    = fields.Field(attribute='assetincludes', column_name='Asset Includes', default=[])
+    SITEINCLUDES     = fields.Field(attribute='siteincludes', column_name='Site Includes', default=[])
+    SITEGRPINCLUDES  = fields.Field(attribute='site_grp_includes', column_name='Site Group Includes', default=[])
+    SITETYPEINCLUDES = fields.Field(attribute='site_type_includes', column_name='Site Type Includes', default=[])
+    SHOWTOALLSITES   = fields.Field(attribute='show_to_all_sites', column_name='Show To All Sites', default=False)
+    URL              = fields.Field(attribute='url', column_name='URL', default='NONE')
+    
+    class Meta:
+        model = am.QuestionSet
+        skip_unchanged = True
+        import_id_fields = ['ID']
+        report_skipped = True 
+        fields = ['ID','Question Set Name', 'ASSETINCLUDES', 'SITEINCLUDES', 'SITEGRPINCLUDES', 
+                  'SITETYPEINCLUDES', 'SHOWTOALLSITES', 'URL', 'BV', 'CLIENT', 'Type', 'BelongsTo', 'SEQNO']
+
+    def __init__(self, *args, **kwargs):
+        super(QuestionSetResourceUpdate, self).__init__(*args, **kwargs)
+        self.is_superuser = kwargs.pop('is_superuser', None)
+        self.request = kwargs.pop('request', None)
+    
+    def before_import_row(self, row, row_number, **kwargs):
+        self.check_required_fields(row)
+        self.validate_row(row)
+        self.check_record_exists(row)
+        self.verify_valid_questionset_type(row)
+        super().before_import_row(row, **kwargs)
+
+    def verify_valid_questionset_type(self,row):
+        if 'QuestionSet Type' in row:
+            Authorized_Questionset_type = ['CHECKLIST','RPCHECKLIST','INCIDENTREPORT',
+                                        'SITEREPORT','WORKPERMIT','RETURN_WORK_PERMIT',
+                                        'KPITEMPLATE','SCRAPPEDTEMPLATE','ASSETAUDIT',
+                                        'ASSETMAINTENANCE','WORK_ORDER']
+            questionset_type = row.get('QuestionSet Type')
+            if questionset_type not in Authorized_Questionset_type:
+                raise ValidationError({questionset_type:f"{questionset_type} is not a valid Questionset Type. Please select a valid QuestionSet."})
+
+    def check_required_fields(self, row):
+        required_fields = ['QuestionSet Type', 'Question Set Name','Seq No']
+        for field in required_fields:
+            if field in row:
+                if not row.get(field):
+                    raise ValidationError({field: f"{field} is a required field"})
+
+        ''' optional_fields = ['Site Group Includes', 'Site Includes', 'Asset Includes', 'Site Type Includes']
+        if all(not row.get(field) for field in optional_fields):
+            raise ValidationError("You should provide a value for at least one field from the following: "
+                                "'Site Group Includes', 'Site Includes', 'Asset Includes', 'Site Type Includes'") '''
+        
+    def validate_row(self, row):
+        models_mapping = {
+            'Site Group Includes': ('peoples', 'Pgroup', 'id','groupname'),
+            'Site Includes': ('onboarding', 'Bt', 'id','bucode'),
+            'Asset Includes': ('activity', 'Asset', 'id','assetcode'),
+            'Site Type Includes': ('onboarding', 'TypeAssist', 'id', 'tacode'),
+        }
+
+        for field, (app_name, model_name, lookup_field, model_field) in models_mapping.items():
+            if field_value := row.get(field):
+                model = apps.get_model(app_name, model_name)
+                values = field_value.split(',')
+                list_value = []
+                for val in values:
+                    get_value = list(model.objects.filter(**{f'{model_field}': val}).values())
+                    list_value.append(str(get_value[0]['id']))
+                count = model.objects.filter(**{f'{lookup_field}__in': list_value}).count()
+                if len(values) != count:
+                    raise ValidationError({field: f"Some of the values specified in {field} do not exist in the system"})
+                row[field] = list_value
+    
+    def check_record_exists(self, row):
+        if not am.QuestionSet.objects.select_related().filter(id=row['ID*']).exists():
+            raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
+        
     def before_save_instance(self, instance, using_transactions, dry_run=False):
         utils.save_common_stuff(self.request, instance, self.is_superuser)

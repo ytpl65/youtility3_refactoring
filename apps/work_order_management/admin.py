@@ -116,22 +116,24 @@ class VendorResource(resources.ModelResource):
 class VendorResourceUpdate(resources.ModelResource):
     Client = fields.Field(
         column_name = 'Client',
-        attribute   = 'client',
-        widget      = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default     = utils.get_or_create_none_bv
+        attribute = 'client',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        default = utils.get_or_create_none_bv
     )
+
     BV = fields.Field(
-        column_name       = 'Site',
-        attribute         = 'bu',
-        widget            = wg.ForeignKeyWidget(om.Bt, 'bucode'),
+        column_name = 'Site',
+        attribute = 'bu',
+        widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
         saves_null_values = True,
-        default           = utils.get_or_create_none_bv
+        default = utils.get_or_create_none_bv
     )
+
     Type = fields.Field(
-        column_name='Type',
-        attribute='type',
-        widget=wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
-        default=default_ta
+        column_name = 'Type',
+        attribute = 'type',
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        default = default_ta
     )
     
     SHOWTOALLSITES = fields.Field(attribute='show_to_all_sites', column_name='Applicable to All Sites', default=False)
@@ -171,13 +173,13 @@ class VendorResourceUpdate(resources.ModelResource):
             row['Mob No'] = str(row['Mob No'])
         
         #check required fields
-        if row.get('ID*') in  ['', None]:raise ValidationError("ID* is required field")
+        if row.get('ID*') in ['', None]: raise ValidationError("ID* is required field")
         
         # code validation
         if 'Code' in row:
             regex, value = "^[a-zA-Z0-9\-_]*$", row['Code']
             if " " in value: raise ValidationError("Please enter text without any spaces")
-            if  not re.match(regex, value):
+            if not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
         # mob no validation
@@ -191,7 +193,7 @@ class VendorResourceUpdate(resources.ModelResource):
                 mob_no = str(row['Mob No'])
                 row['Mob No'] = mob_no if '+' in mob_no else f'+{mob_no}'
         
-        # unique record check
+        # check record exists
         if not wom.Vendor.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         super().before_import_row(row, row_number, **kwargs)

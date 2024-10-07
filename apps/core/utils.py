@@ -14,7 +14,7 @@ from dateutil import parser
 import django.shortcuts as scts
 from django.contrib import messages as msg
 from django.contrib.gis.measure import Distance
-from django.db.models import Q, F, Case, When, Value, Func, Prefetch
+from django.db.models import Q, F, Case, When, Value, Func
 from django.http import JsonResponse
 from django.http import response as rp
 from django.template.loader import render_to_string
@@ -34,8 +34,8 @@ from django.db import transaction
 from django.db.models import RestrictedError
 from apps.work_order_management.models import Approver
 from django.db import models
-from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
-from django.db.models.functions import Cast, Concat, Substr, StrIndex, Coalesce
+from django.contrib.gis.db.models.functions import AsGeoJSON
+from django.db.models.functions import Cast, Concat, Substr, StrIndex, TruncSecond
 
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -1657,6 +1657,7 @@ class Instructions(object):
         self.tablename = tablename
         self.model_source_map = MODEL_RESOURCE_MAP
         self.header_mapping = HEADER_MAPPING
+        self.header_mapping_update = HEADER_MAPPING_UPDATE
 
     #Helper function for get_valid_choices_if_any() which returns the valid choices for the given choice field 
     def field_choices_map(self, choice_field):
@@ -1733,6 +1734,9 @@ class Instructions(object):
     #list returning column names for the given tablename
     def get_column_names(self):
         return self.header_mapping.get(self.tablename)
+    
+    def get_column_names_update(self):
+        return self.header_mapping_update.get(self.tablename)
         
     #list returning valid choices for the given tablename
     def get_valid_choices_if_any(self):
@@ -1949,24 +1953,24 @@ def excel_file_creation(R):
 
 HEADER_MAPPING_UPDATE = {
     'TYPEASSIST': [
-        'ID*', 'Name', 'Code', 'Type', 'Client'],
-    
+        'ID*', 'Name', 'Code', 'Type', 'Client'
+    ],
     'PEOPLE': [
         'ID*','Code', 'Name', 'User For', 'Employee Type', 'Login ID', 'Gender',
         'Mob No', 'Email', 'Date of Birth', 'Date of Join', 'Client', 
         'Site', 'Designation', 'Department', 'Work Type', 'Report To',
         'Date of Release', 'Device Id', 'Is Emergency Contact',
         'Mobile Capability', 'Report Capability', 'Web Capability', 'Portlet Capability',
-        'Current Address', 'Blacklist',  'Alert Mails'],
-    
+        'Current Address', 'Blacklist',  'Alert Mails'
+    ],
     'BU': [
         'ID*','Code', 'Name', 'Belongs To', 'Type', 'Site Type', \
-        'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'City', 'State', 'Country'],
-    
+        'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'City', 'State', 'Country'
+    ],
     'QUESTION':[
         'ID*','Question Name','Answer Type', 'Min', 'Max','Alert Above', 'Alert Below', 'Is WorkFlow',
-        'Options', 'Alert On', 'Enable', 'Is AVPT' , 'AVPT Type', 'Client', 'Unit', 'Category'],
-    
+        'Options', 'Alert On', 'Enable', 'Is AVPT' , 'AVPT Type', 'Client', 'Unit', 'Category'
+    ],
     'ASSET':[
         'ID*','Code', 'Name', 'Running Status', 'Identifier','Is Critical',
         'Client', 'Site', 'Capacity', 'BelongsTo', 'Type',  'GPS Location',
@@ -1982,7 +1986,6 @@ HEADER_MAPPING_UPDATE = {
     'GROUPBELONGING':[
       'ID*', 'Group Name', 'Of People', "Of Site", 'Client', 'Site'  
     ],
-
     'VENDOR':[
         'ID*','Code', 'Name', 'Type', 'Address', 'Email', 'Applicable to All Sites',
         'Mob No', 'Site', 'Client', 'GPS Location', 'Enable'
@@ -2002,16 +2005,16 @@ HEADER_MAPPING_UPDATE = {
         'Alert On', 'Is Mandatory', 'AVPT Type',
     ],
     'SCHEDULEDTASKS':[
-        'Name*', 'Description*', 'Scheduler*', 'Asset*', 'Question Set/Checklist*', 'People*', 'Group Name*',
-        'Plan Duration*', 'Gracetime Before*', 'Gracetime After*', 'Notify Category*',
-        'From Date*', 'Upto Date*', 'Scan Type*', 'Client*', 'Site*',
-        'Priority*','Seq No', 'Start Time', 'End Time', 'Belongs To*'
+        'ID*','Name', 'Description', 'Scheduler', 'Asset', 'Question Set/Checklist', 
+        'People', 'Group Name', 'Plan Duration', 'Gracetime Before', 'Gracetime After', 
+        'Notify Category', 'From Date', 'Upto Date', 'Scan Type', 'Client', 'Site',
+        'Priority','Seq No', 'Start Time', 'End Time', 'Belongs To'
     ],
     'SCHEDULEDTOURS':[
-        'Name*', 'Description*', 'Scheduler*', 'Asset*', 'Question Set/Checklist*', 'People*', 'Group Name*',
-        'Plan Duration*', 'Gracetime*', 'Expiry Time*', 'Notify Category*',
-        'From Date*', 'Upto Date*', 'Scan Type*', 'Client*', 'Site*',
-        'Priority*','Seq No*', 'Start Time', 'End Time', 'Belongs To*'
+        'ID*','Name', 'Description', 'Scheduler', 'Asset', 'Question Set/Checklist', 
+        'People', 'Group Name', 'Plan Duration', 'Gracetime', 'Expiry Time', 
+        'Notify Category', 'From Date', 'Upto Date', 'Scan Type', 'Client', 'Site',
+        'Priority','Seq No', 'Start Time', 'End Time', 'Belongs To'
     ]
 }
 
@@ -2057,20 +2060,18 @@ Example_data_update = {
     'GROUPBELONGING':[('2764','Group A','Person A','NONE','CLIENT_A','Yout_logged_in_site'),
                       ('2765','Group B','Person B','NONE','CLIENT_B','SITE_A'),
                       ('2766','Group C','Person C','NONE','CLIENT_C','SITE_B')],
-    'SCHEDULEDTASKS':[('Task A','Task A Inspection','0 20 * * *','ASSETA','Questionset A','PERSON_A','GROUP_A','15','5','5','RAISETICKETNOTIFY','YYYY-MM-DD HH:MM:SS',
-                        'YYYY-MM-DD HH:MM:SS','NFC','CLIENT_A','SITE_A','HIGH','1','NONE','NONE','NONE'),
-                        ('Task B','Task B Daily Reading','1 20 * * *','ASSETB','Checklist B','PERSON_B','GROUP_B','18','5','5','AUTOCLOSEDNOTIFY','2023-06-07 12:00:00',	
-                        '2023-06-07 16:00:00','QR','CLIENT_B','SITE_B','LOW','6','NONE','NONE','Task A Inspection'),
-                        ('Task C','Task C Inspection','2 20 * * *','ASSETC','Questionset C','PERSON_C','GROUP_C','20','5','5','NONE','2024-02-04 23:00:00',
-                        '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')],
-    'SCHEDULEDTOURS':[('TOUR A','Inspection Tour A','55 11,16 * * *','ASSET_A','Questionset A','PERSON_A','GROUP_A','15','5','5',
+    'SCHEDULEDTASKS':[('2824','Task A','Task A Inspection','0 20 * * *','ASSETA','Questionset A','PERSON_A','GROUP_A','15','5','5','RAISETICKETNOTIFY','YYYY-MM-DD HH:MM:SS',
+                       'YYYY-MM-DD HH:MM:SS','NFC','CLIENT_A','SITE_A','HIGH','1','NONE','NONE','NONE'),
+                      ('2825','Task B','Task B Daily Reading','1 20 * * *','ASSETB','Checklist B','PERSON_B','GROUP_B','18','5','5','AUTOCLOSEDNOTIFY','2023-06-07 12:00:00',	
+                       '2023-06-07 16:00:00','QR','CLIENT_B','SITE_B','LOW','6','NONE','NONE','Task A Inspection'),
+                      ('2826','Task C','Task C Inspection','2 20 * * *','ASSETC','Questionset C','PERSON_C','GROUP_C','20','5','5','AUTOCLOSED','2024-02-04 23:00:00',
+                       '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')],
+    'SCHEDULEDTOURS':[('2824','TOUR A','Inspection Tour A','55 11,16 * * *','ASSET_A','Questionset A','PERSON_A','GROUP_A','15','5','5',
                        'RAISETICKETNOTIFY','YYYY-MM-DD HH:MM:SS','YYYY-MM-DD HH:MM:SS','NFC','CLIENT_A','SITE_A','HIGH','1','NONE','NONE','NONE'),
-                       ('TOUR B','Inspection Tour B','56 11,16 * * *','ASSET_B','Checklist B','PERSON_B','GROUP_B','18','5','5',
+                      ('2825','TOUR B','Inspection Tour B','56 11,16 * * *','ASSET_B','Checklist B','PERSON_B','GROUP_B','18','5','5',
                         'AUTOCLOSEDNOTIFY','2023-06-07 12:00:00','2023-06-07 16:00:00','QR','CLIENT_B','SITE_B','LOW','6','NONE','NONE','Task A Inspection'),
-                        ('TOUR C','Inspection Tour C','57 11,16 * * *','ASSET_C','Questionset C','PERSON_C','GROUP_C','20','5','5','NONE','2024-02-04 23:00:00',
-                         '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')]}
-
-
+                      ('2826','TOUR C','Inspection Tour C','57 11,16 * * *','ASSET_C','Questionset C','PERSON_C','GROUP_C','20','5','5','AUTOCLOSED','2024-02-04 23:00:00',
+                        '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')]}
 
 def excel_file_creation_update(R, S):
     import pandas as pd
@@ -2097,7 +2098,7 @@ def excel_file_creation_update(R, S):
                     'bg_color': '#E2F4FF','border':1
                 })
         Text_for_sample_data = "[ Refernce Data ] Take the Reference of the below data to fill data in correct format :-"
-        Text_for_actual_data = "[ Actual Data ] Start filling data below the following headers :-"
+        Text_for_actual_data = "[ Actual Data ] Please update the data only for the columns in the database table that need to be changed :-"
         worksheet.merge_range("A2:D2",Text_for_sample_data, merge_format)
         worksheet.merge_range("A9:D9",Text_for_actual_data, merge_format)
 
@@ -2105,19 +2106,6 @@ def excel_file_creation_update(R, S):
     return buffer
 
 def get_type_data(type_name, S):
-    type_dict = {
-        'TYPEASSIST': ob.TypeAssist,
-        'BU': ob.Bt,
-        'LOCATION': am.Location,
-        'ASSET': am.Asset,
-        'VENDOR': Vendor,
-        'PEOPLE': pm.People,
-        'QUESTION': am.Question,
-        'QUESTIONSET': am.QuestionSet,
-        'QUESTIONSETBELONGING': am.QuestionSetBelonging,
-        'GROUP': pm.Pgroup,
-        'GROUPBELONGING': pm.Pgbelonging,
-    }
     if type_name == 'TYPEASSIST':
         objs = ob.TypeAssist.objects.select_related('parent','tatype', 'cuser', 'muser').filter(
                 ~Q(tacode='NONE'), ~Q(tatype__tacode='NONE'), Q(client_id=S['client_id']) | Q(cuser_id=1), enable=True,
@@ -2132,12 +2120,12 @@ def get_type_data(type_name, S):
                    country=F('bupreferences__address2__country'),
                    city=F('bupreferences__address2__city'),
                    latlng=F('bupreferences__address2__latlng'),
-                   siteincharge_name=Case(
-                        When(siteincharge__enable=True, then=F('siteincharge__peoplename')),
+                   siteincharge_peoplecode=Case(
+                        When(siteincharge__enable=True, then=F('siteincharge__peoplecode')),
                         default=Value(None),
                         output_field=models.CharField()
                     )
-        ).values_list('id', 'bucode', 'buname', 'parent__buname', 'identifier__taname', 'butype__taname', 'siteincharge_name', 
+        ).values_list('id', 'bucode', 'buname', 'parent__bucode', 'identifier__tacode', 'butype__tacode', 'siteincharge_peoplecode', 
                  'solid', 'enable', 'latlng', 'address', 'city', 'state', 'country',)
         return list(objs)
     if type_name == 'LOCATION':
@@ -2301,31 +2289,94 @@ def get_type_data(type_name, S):
                           'alerton', 'enable', 'isavpt', 'avpttype', 'client__bucode', 'unit__tacode', 'category__tacode')
         return list(objs)
     if type_name == 'QUESTIONSET':
-        asset_ids = S['assignedsites']  # Assuming this contains the relevant asset IDs
-        print("-----", asset_ids)
-        # Prefetch the asset names for the IDs in the assetincludes array
-        assets_qs = am.Asset.objects.filter(id__in=asset_ids).only('id', 'assetcode')
-        print("assets_qs----", assets_qs)
-        asset_mapping = {asset.id: asset.assetcode for asset in assets_qs}
-        print("======>",asset_mapping)
-        objs = am.QuestionSet.objects.filter(Q(type='RPCHECKLIST') & Q(bu_id__in = S['assignedsites'])
-            | Q( Q(parent_id__isnull=True) | Q(parent_id=1), ~Q(qsetname='NONE'), Q(bu_id = S['bu_id']),Q(client_id = S['client_id']))
-        ).select_related('parent').prefetch_related(
-            Prefetch('assetincludes', queryset=assets_qs, to_attr='assetcode')
-        ).values('id', 'seqno', 'qsetname', 'parent__qsetname', 'type', 'assetincludes', 'buincludes', 'bu__bucode',
-                'client__bucode', 'site_grp_includes', 'site_type_includes', 'show_to_all_sites', 'url')
+        objs = am.QuestionSet.objects.filter(
+            Q(type='RPCHECKLIST') & Q(bu_id__in=S['assignedsites']) |
+            (Q(parent_id=1) & ~Q(qsetname='NONE') & 
+            Q(bu_id=S['bu_id']) & Q(client_id=S['client_id']))
+        ).select_related('parent').values(
+            'id', 'seqno', 'qsetname', 'parent__qsetname', 'type',
+            'assetincludes', 'buincludes', 'bu__bucode',
+            'client__bucode', 'site_grp_includes', 'site_type_includes',
+            'show_to_all_sites', 'url'
+        )
+
+        # Convert the queryset to a list
         objs_list = list(objs)
-        print("objs_list",objs_list)
+
+        # Create mappings for asset codes, BU codes, site group names, and site type names
+        asset_ids = set()
+        bu_ids = set()
+        site_group_ids = set()
+        site_type_ids = set()
+
         for obj in objs_list:
-            # Replace IDs with names in assetincludes
-            asset_ids_includes = obj.get('assetincludes', [])
-            asset_names = [asset_mapping.get(asset_id, asset_id) for asset_id in asset_ids_includes]
+            # Validate and collect asset IDs
+            if obj['assetincludes']:
+                asset_ids.update(str(asset_id) for asset_id in obj['assetincludes'] if str(asset_id).isdigit())
             
-            obj['assetincludes'] = asset_names  # Replace IDs with names
+            # Validate and collect BU IDs
+            if obj['buincludes']:
+                bu_ids.update(str(bu_id) for bu_id in obj['buincludes'] if str(bu_id).isdigit())
+            
+            # Validate and collect site group IDs
+            if obj['site_grp_includes']:
+                site_group_ids.update(str(group_id) for group_id in obj['site_grp_includes'] if str(group_id).isdigit())
+            
+            # Validate and collect site type IDs
+            if obj['site_type_includes']:
+                site_type_ids.update(str(type_id) for type_id in obj['site_type_includes'] if str(type_id).isdigit())
 
-        print("objs------>",list(objs), len(objs_list))
+        # Fetch asset codes
+        asset_codes = am.Asset.objects.filter(id__in=asset_ids).values_list('id', 'assetcode')
+        asset_code_map = {str(asset_id): code for asset_id, code in asset_codes}
 
-        return list(am.QuestionSet.objects.values_list('taname', 'tacode', 'tatype', 'client'))
+        # Fetch BU codes
+        bu_codes = ob.Bt.objects.filter(id__in=bu_ids).values_list('id', 'bucode')
+        bu_code_map = {str(bu_id): code for bu_id, code in bu_codes}
+
+        # Fetch site group names
+        site_group_names = pm.Pgroup.objects.filter(id__in=site_group_ids).values_list('id', 'groupname')
+        site_group_map = {str(group_id): name for group_id, name in site_group_names}
+
+        # Fetch site type names
+        site_type_names = ob.TypeAssist.objects.filter(id__in=site_type_ids).values_list('id', 'taname')
+        site_type_map = {str(type_id): name for type_id, name in site_type_names}
+
+        # Update the lists in the original objects
+        for obj in objs_list:
+            # Update assetincludes
+            if obj['assetincludes']:
+                obj['assetincludes'] = ','.join(asset_code_map.get(str(asset_id), '') for asset_id in obj['assetincludes'] if str(asset_id) in asset_code_map)
+            else:
+                obj['assetincludes'] = ''
+            
+            # Update buincludes
+            if obj['buincludes']:
+                obj['buincludes'] = ','.join(bu_code_map.get(str(bu_id), '') for bu_id in obj['buincludes'] if str(bu_id) in bu_code_map)
+            else:
+                obj['buincludes'] = ''
+            
+            # Update site_grp_includes
+            if obj['site_grp_includes']:
+                obj['site_grp_includes'] = ','.join(site_group_map.get(str(group_id), '') for group_id in obj['site_grp_includes'] if str(group_id) in site_group_map)
+            else:
+                obj['site_grp_includes'] = ''
+            
+            # Update site_type_includes
+            if obj['site_type_includes']:
+                obj['site_type_includes'] = ','.join(site_type_map.get(str(type_id), '') for type_id in obj['site_type_includes'] if str(type_id) in site_type_map)
+            else:
+                obj['site_type_includes'] = ''
+
+        # Resulting objs_list with modified fields
+        # output = objs_list
+
+        fields = ['id', 'seqno', 'qsetname', 'parent__qsetname', 'type', 'assetincludes', 'buincludes', 
+          'bu__bucode', 'client__bucode', 'site_grp_includes', 'site_type_includes', 
+          'show_to_all_sites', 'url']
+
+        output = [tuple(obj[field] for field in fields) for obj in objs_list]
+        return output
     if type_name == 'QUESTIONSETBELONGING':
         objs = am.QuestionSetBelonging.objects.select_related('qset', 'question', 'client', 'bu').filter(
                 client_id = S['client_id'],
@@ -2337,14 +2388,14 @@ def get_type_data(type_name, S):
                 When(alerton__contains=',<', 
                     then=Substr('alerton', 
                                 StrIndex('alerton', Value(',<')) + 2)),
-                default=Value("NONE"),
+                default=Value(None),
                 output_field=models.CharField()
             ),
             alert_below=Case(
                 When(alerton__contains='>', 
                     then=Substr('alerton', 
                                 StrIndex('alerton', Value('>')) + 1)),
-                default=Value("NONE"),
+                default=Value(None),
                 output_field=models.CharField()
             ),
             min_str=Cast('min', output_field=models.CharField()),
@@ -2361,4 +2412,49 @@ def get_type_data(type_name, S):
         objs = pm.Pgbelonging.objects.select_related('pgroup','people').filter(
                 client_id = S['client_id'],
             ).values_list('id', 'pgroup__groupname', 'people__peoplecode', 'assignsites__bucode', 'client__bucode', 'bu__bucode')
+        return list(objs)
+    if type_name == 'SCHEDULEDTASKS':
+        objs = am.Job.objects.annotate(
+            assignedto = Case(
+                When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), Value(' [PEOPLE]'))),
+                When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), Value(' [GROUP]'))),
+            ),
+            formatted_fromdate=Cast(TruncSecond('fromdate'), output_field=models.CharField()),
+            formatted_uptodate=Cast(TruncSecond('uptodate'), output_field=models.CharField()),
+            formatted_starttime=Cast(TruncSecond('starttime'), output_field=models.CharField()),
+            formatted_endtime=Cast(TruncSecond('endtime'), output_field=models.CharField()),
+            ).filter(~Q(jobname='NONE') | ~Q(id=1),
+            Q(parent__jobname = 'NONE') | Q(parent_id = 1),
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            identifier = 'TASK',
+        ).select_related('pgroup', 'people', 'asset', 'bu', 'qset', 'ticketcategory'
+        ).values_list('id','jobname', 'jobdesc', 'cron', 'asset__assetcode', 'qset__qsetname',
+                 'people__peoplecode', 'pgroup__groupname', 'planduration', 'gracetime',
+                 'expirytime', 'ticketcategory__tacode', 'formatted_fromdate', 'formatted_uptodate', 
+                 'scantype', 'client__bucode', 'bu__bucode', 'priority', 'seqno', 'formatted_starttime', 
+                 'formatted_endtime', 'parent__jobname')
+        return list(objs)
+    if type_name == 'SCHEDULEDTOURS':
+        objs = am.Job.objects.select_related('pgroup', 'people', 'asset', 'bu', 'qset', 'ticketcategory').annotate(
+                assignedto = Case(
+                When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), Value(' [PEOPLE]'))),
+                When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), Value(' [GROUP]'))),
+                ),
+                formatted_fromdate=Cast(TruncSecond('fromdate'), output_field=models.CharField()),
+                formatted_uptodate=Cast(TruncSecond('uptodate'), output_field=models.CharField()),
+                formatted_starttime=Cast(TruncSecond('starttime'), output_field=models.CharField()),
+                formatted_endtime=Cast(TruncSecond('endtime'), output_field=models.CharField()),
+        ).filter(
+                Q(parent__jobname = 'NONE') | Q(parent_id = 1),
+                ~Q(jobname='NONE') | ~Q(id=1),
+                bu_id__in = S['assignedsites'],
+                client_id = S['client_id'],
+                identifier__exact='INTERNALTOUR',
+                enable=True
+        ).values_list('id', 'jobname', 'jobdesc', 'cron', 'asset__assetcode','qset__qsetname',
+                 'people__peoplecode', 'pgroup__groupname', 'planduration', 'gracetime', 
+                 'expirytime', 'ticketcategory__tacode','formatted_fromdate', 
+                 'formatted_uptodate', 'scantype', 'client__bucode', 'bu__bucode',
+                 'priority', 'seqno', 'formatted_starttime', 'formatted_endtime', 'parent__jobname')
         return list(objs)

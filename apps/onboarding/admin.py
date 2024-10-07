@@ -321,19 +321,20 @@ class ShiftAdmin(ImportExportModelAdmin):
 
 class TaResourceUpdate(resources.ModelResource):
     CLIENT = fields.Field(
-        column_name='Client',
-        attribute='client',
+        column_name = 'Client',
+        attribute ='client',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'),
-        default='NONE'
+        default = 'NONE'
     )
     
     TYPE = fields.Field(
-        column_name       = 'Type',
-        attribute         = 'tatype',
-        default           = om.TypeAssist, 
-        widget            = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        column_name = 'Type',
+        attribute = 'tatype',
+        default = om.TypeAssist, 
+        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True
     )
+
     CODE = fields.Field(attribute='tacode', column_name='Code')
     NAME = fields.Field(attribute='taname', column_name='Name')
     ID   = fields.Field(attribute='id', column_name='ID*')
@@ -345,14 +346,12 @@ class TaResourceUpdate(resources.ModelResource):
         report_skipped = True
         fields = ('ID','NAME', 'CODE', 'TYPE', 'CLIENT')
 
-        
     def __init__(self, *args, **kwargs):
         super(TaResourceUpdate, self).__init__(*args, **kwargs)
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
     
     def before_import_row(self, row, row_number, **kwargs):
-
         '''cleaning in sence Handles empty string,Removes extra spaces, 
         Converts to uppercase and replaces spaces with underscores (if code is True)'''
         if 'Code' in row:
@@ -377,8 +376,7 @@ class TaResourceUpdate(resources.ModelResource):
             if not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
 
-        '''Checks for uniqueness of the record based on a combination of Code*, Type*, 
-        and CLIENT* fields. It raises an error if a duplicate record is found.'''
+        '''check record exists '''
         if not om.TypeAssist.objects.filter(id=row['ID*']).exists():    
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
 
@@ -392,45 +390,40 @@ class TaResourceUpdate(resources.ModelResource):
 
 class BtResourceUpdate(resources.ModelResource):
     BelongsTo = fields.Field(
-        column_name='Belongs To',
-        default=utils.get_or_create_none_bv,
-        attribute='parent',
+        column_name = 'Belongs To',
+        default = utils.get_or_create_none_bv,
+        attribute = 'parent',
         widget = wg.ForeignKeyWidget(om.Bt, 'bucode'))
 
     BuType = fields.Field(
-        column_name='Site Type',
-        default=default_ta,
-        attribute='butype',
+        column_name = 'Site Type',
+        default = default_ta,
+        attribute = 'butype',
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
 
-    tenant = fields.Field(
-        column_name='Tenant',
-        default=utils.get_or_create_none_tenant,
-        attribute='tenant',
-        widget = wg.ForeignKeyWidget(tm.Tenant, 'tenantname'))
 
     Identifier = fields.Field(
-        column_name='Type',
-        attribute='identifier',
-        default=default_ta,
+        column_name = 'Type',
+        attribute = 'identifier',
+        default = default_ta,
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
     
     Sitemanager = fields.Field(
-        column_name='Site Manager',
-        attribute='siteincharge',
-        default=utils.get_or_create_none_people,
+        column_name = 'Site Manager',
+        attribute = 'siteincharge',
+        default = utils.get_or_create_none_people,
         widget = wg.ForeignKeyWidget(pm.People, 'peoplecode'))
     
     ID      = fields.Field(attribute='id', column_name="ID*")
     Code    = fields.Field(attribute='bucode', column_name='Code')
     Name    = fields.Field(attribute='buname', column_name='Name')
     GPS     = fields.Field(attribute='gpslocation', column_name='GPS Location', saves_null_values=True)
-    Address = fields.Field(column_name='Address', widget=wg.CharWidget(), saves_null_values=True)
-    State   = fields.Field(column_name='State', widget=wg.CharWidget(), saves_null_values=True)
-    City    = fields.Field(column_name='City', widget=wg.CharWidget(), saves_null_values=True)
-    Country = fields.Field(column_name='Country', widget=wg.CharWidget(), saves_null_values=True)
+    Address = fields.Field(column_name='Address', attribute = 'bupreferences.address', widget=wg.CharWidget(), saves_null_values=True)
+    State   = fields.Field(column_name='State', attribute = 'bupreferences.address2.state', widget=wg.CharWidget(), saves_null_values=True)
+    City    = fields.Field(column_name='City', attribute = 'bupreferences.address2.city', widget=wg.CharWidget(), saves_null_values=True)
+    Country = fields.Field(column_name='Country', attribute = 'bupreferences.address2.country', widget=wg.CharWidget(), saves_null_values=True)
     SOLID   = fields.Field(attribute='solid', column_name='Sol Id', widget=wg.CharWidget())
-    Enable  = fields.Field(attribute='enable', column_name='Enable', default=True)
+    Enable  = fields.Field(attribute='enable', column_name='Enable', widget=wg.BooleanWidget(), default=True)
 
     class Meta:
         model = om.Bt
@@ -438,29 +431,33 @@ class BtResourceUpdate(resources.ModelResource):
         import_id_fields = ['ID']
         report_skipped = True
         fields = (
-            'ID','Name', 'Code', 'BuType', 'SOLID', 
-            'Enable', 'GPS', 'ID','Address', 'State',
-            'City', 'Country',
-            'Identifier', 'BelongsTo', 'tenant')
+            'ID', 'Name', 'Code', 'BuType', 'SOLID', 'Enable', 'GPS', 'Address', 
+            'State', 'City', 'Country', 'Identifier', 'BelongsTo')
 
     def __init__(self, *args, **kwargs):
         super(BtResourceUpdate, self).__init__(*args, **kwargs)
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
         
-    
     def before_import_row(self, row, **kwargs):
         if 'Code' in row:
-            row['Code'] = clean_string(row.get('Code', 'NONE'), code=True)
+            row['Code'] = clean_string(row.get('Code'), code=True)
         if 'Name' in row:
-            row['Name'] = clean_string(row.get('Name', "NONE"))
+            row['Name'] = clean_string(row.get('Name'))
         self._gpslocation = clean_point_field(row['GPS Location'])
-        self._solid = row['Sol Id']
-        self._address = row['Address']
-        self._state = row['State']
-        self._city = row['City']
-        self._country = row['Country']
-        self._latlng = row['GPS Location']
+        if 'Sol Id' in row:
+            self._solid = row['Sol Id']
+        required_fields = ['Address', 'State', 'City', 'Country', 'GPS Location']
+        present_fields = [field for field in required_fields if field in row]
+        if len(present_fields) == len(required_fields):
+            self._address = row['Address']
+            self._state = row['State']
+            self._city = row['City']
+            self._country = row['Country']
+            self._latlng = row['GPS Location']
+        elif len(present_fields) > 0:
+            raise ValidationError("To create a complete address, you need to provide the Address, State, City, Country, and GPS Location.")
+        
         # check required fields
         if row['ID*'] in ['', None]: raise ValidationError("ID* is required field")
         if 'Code' in row:
@@ -479,11 +476,11 @@ class BtResourceUpdate(resources.ModelResource):
             if  not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
+        # check record exists
         if not om.Bt.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         
         super().before_import_row(row, **kwargs)
-
 
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.gpslocation = self._gpslocation
@@ -498,6 +495,3 @@ class BtResourceUpdate(resources.ModelResource):
             instance.solid = None
             
         utils.save_common_stuff(self.request, instance)
-    
-    def get_queryset(self):
-        return om.Bt.objects.select_related().all()
