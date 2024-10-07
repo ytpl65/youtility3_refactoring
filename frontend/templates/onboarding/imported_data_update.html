@@ -109,7 +109,6 @@
         {% endif %}
     {% endif %}
 {% endblock table %}
-
 {% block extra_scripts %}
 <script>
 var table= null
@@ -128,7 +127,7 @@ function ConfirmImport(){
             localStorage.removeItem('table')
             Swal.fire({
                 icon: "success",
-                title: `Total ${res.totalrows} updated successfully!`,
+                title: `Total ${res.totalrows} record processed successfully!`,
             }).then((res) => {
                 location.href = "{{ url('onboarding:import_update') }}?action=form"
             })
@@ -166,6 +165,5 @@ $(document).ready(() => {
         $(".confirm_import").hide()
     }
 })
-
 </script>
 {% endblock extra_scripts %}

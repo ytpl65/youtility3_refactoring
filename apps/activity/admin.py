@@ -12,7 +12,7 @@ import re
 from math import isnan
 from django.core.exceptions import ValidationError
 from django.apps import apps
-from apps.core.widgets import BVForeignKeyWidget
+from apps.core.widgets import BVForeignKeyWidget, EnabledTypeAssistWidget
 
 
 
@@ -821,7 +821,7 @@ class LocationResourceUpdate(resources.ModelResource):
     Type = fields.Field(
         column_name = 'Type',
         attribute = 'type',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = EnabledTypeAssistWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True,
         default = default_ta
     )
@@ -861,7 +861,7 @@ class LocationResourceUpdate(resources.ModelResource):
         if 'GPS Location' in row:
             row['GPS Location'] = clean_point_field(row.get('GPS Location'))
         #check required fields
-        if row.get('ID*') in  ['', None]: raise ValidationError("ID* is required field")
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
 
         #status validation
         self.check_valid_status(row)
@@ -885,7 +885,7 @@ class QuestionResourceUpdate(resources.ModelResource):
     Unit = fields.Field(
         column_name = 'Unit',
         attribute = 'unit',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = EnabledTypeAssistWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True,
         default = default_ta
     )
@@ -893,7 +893,7 @@ class QuestionResourceUpdate(resources.ModelResource):
     Category = fields.Field(
         column_name = 'Category',
         attribute = 'category',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = EnabledTypeAssistWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True,
         default = default_ta
     )
@@ -952,8 +952,7 @@ class QuestionResourceUpdate(resources.ModelResource):
                 raise ValidationError({Answer_type_val:f"{Answer_type_val} is a not a valid Answertype.Please select a valid AnswerType."})
     
     def check_required_fields(self, row):
-        if row.get('ID*') in ['', None]:
-            raise ValidationError({'ID*' : f"{'ID*'} is a required field"})
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         required_fields = ['Answer Type', 'Question Name',  'Client']
         for field in required_fields:
             if field in row:
@@ -1072,14 +1071,15 @@ class AssetResourceUpdate(resources.ModelResource):
     Unit = fields.Field(
         column_name = 'Unit',
         attribute = 'unit',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
-        saves_null_values = default_ta
+        widget = EnabledTypeAssistWidget(om.TypeAssist, 'tacode'),
+        saves_null_values = True,
+        default = default_ta
     )
 
     Category = fields.Field(
         column_name = 'Category',
         attribute = 'category',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = EnabledTypeAssistWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True,
         default = default_ta
     )
@@ -1087,7 +1087,7 @@ class AssetResourceUpdate(resources.ModelResource):
     Brand = fields.Field(
         column_name = 'Brand',
         attribute = 'brand',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = EnabledTypeAssistWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True,
         default = default_ta
     )
@@ -1101,9 +1101,9 @@ class AssetResourceUpdate(resources.ModelResource):
     )
 
     SubCategory = fields.Field(
-        column_name = 'Sub Category',
+        column_name = 'SubCategory',
         attribute = 'subcategory',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = EnabledTypeAssistWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True,
         default = default_ta
     )
@@ -1117,9 +1117,9 @@ class AssetResourceUpdate(resources.ModelResource):
     )
     
     Type = fields.Field(
-        column_name = 'Asset Type',
+        column_name = 'Type',
         attribute = 'type',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = EnabledTypeAssistWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True,
         default = default_ta
     )
@@ -1259,7 +1259,7 @@ class AssetResourceUpdate(resources.ModelResource):
             row['GPS Location'] = clean_point_field(row.get('GPS Location'))
         
         #check required fields
-        if row.get('ID*') in  ['', None]:raise ValidationError("ID* is required field")
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         if 'Code' in row:
             if row.get('Code') in  ['', None]:raise ValidationError("Code is required field")
         if 'Name' in row:
@@ -1390,8 +1390,7 @@ class QuestionSetBelongingResourceUpdate(resources.ModelResource):
                     raise ValidationError({avpt_type:f"{avpt_type} is not a valid AVPT Type. Please select a valid AVPT Type from {valid_avpt}"})
 
     def check_required_fields(self, row):
-        if row.get('ID*') in ['', None]:
-            raise ValidationError({'ID*' : f"{'ID*'} is a required field"})
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         required_fields = ['Answer Type', 'Question Name', 'Question Set', 'Client', 'Site']
         for field in required_fields:
             if field in row:
@@ -1540,6 +1539,7 @@ class QuestionSetResourceUpdate(resources.ModelResource):
                 raise ValidationError({questionset_type:f"{questionset_type} is not a valid Questionset Type. Please select a valid QuestionSet."})
 
     def check_required_fields(self, row):
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         required_fields = ['QuestionSet Type', 'Question Set Name','Seq No']
         for field in required_fields:
             if field in row:

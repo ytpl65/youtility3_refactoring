@@ -12,6 +12,7 @@ from apps.core import utils
 from django.core.exceptions import ValidationError
 import re
 from math import isnan
+from apps.core.widgets import EnabledTypeAssistWidget
 
 class BaseResource(resources.ModelResource):
     CLIENT = fields.Field(
@@ -319,6 +320,9 @@ class ShiftAdmin(ImportExportModelAdmin):
     list_display_links = ('shiftname',)
 
 
+
+
+        
 class TaResourceUpdate(resources.ModelResource):
     CLIENT = fields.Field(
         column_name = 'Client',
@@ -331,7 +335,7 @@ class TaResourceUpdate(resources.ModelResource):
         column_name = 'Type',
         attribute = 'tatype',
         default = om.TypeAssist, 
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = EnabledTypeAssistWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True
     )
 
@@ -355,9 +359,9 @@ class TaResourceUpdate(resources.ModelResource):
         '''cleaning in sence Handles empty string,Removes extra spaces, 
         Converts to uppercase and replaces spaces with underscores (if code is True)'''
         if 'Code' in row:
-            row['Code'] = clean_string(row.get('Code', 'NONE'), code=True)
+            row['Code'] = clean_string(row.get('Code'), code=True)
         if 'Name' in row:
-            row['Name'] = clean_string(row.get('Name', "NONE"))
+            row['Name'] = clean_string(row.get('Name'))
 
         # Validates that required fields (Code*, Type*, and Name*) are not empty.
         if 'Code' in row:
@@ -366,7 +370,7 @@ class TaResourceUpdate(resources.ModelResource):
             if row['Type'] in ['', None]: raise ValidationError("Type is required field")
         if 'Name' in row:
             if row['Name'] in ['', None]: raise ValidationError("Name is required field")
-        if row['ID*'] in ['', None]: raise ValidationError("ID* is required field", code='required_field_error')
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         
         ''' Validates the format of the Code* field using a regular expression.
          It ensures no spaces and only allows alphanumeric characters, underscores, and hyphens.'''
@@ -400,7 +404,6 @@ class BtResourceUpdate(resources.ModelResource):
         default = default_ta,
         attribute = 'butype',
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
-
 
     Identifier = fields.Field(
         column_name = 'Type',
@@ -459,7 +462,7 @@ class BtResourceUpdate(resources.ModelResource):
             raise ValidationError("To create a complete address, you need to provide the Address, State, City, Country, and GPS Location.")
         
         # check required fields
-        if row['ID*'] in ['', None]: raise ValidationError("ID* is required field")
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         if 'Code' in row:
             if row['Code'] in ['', None]: raise ValidationError("Code is required field")
         if 'Type' in row:
