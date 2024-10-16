@@ -957,6 +957,7 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):
     # Open the PDF
     document = fitz.open(input_pdf_path)
     pages_to_keep = []
+    orange_color = (1, 0.647, 0)  # RGB values for orange
 
     # Check and highlight text on the first page
     if document.page_count > 0:
@@ -970,6 +971,7 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):
                     first_page_has_highlight = True
                     for inst in text_instances:
                         highlight = first_page.add_highlight_annot(inst)
+                        highlight.set_colors(stroke=orange_color)  # Set highlight color
                         highlight.update()
         
         # Always keep the first page
@@ -986,6 +988,7 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):
                     page_has_highlight = True
                     for inst in text_instances:
                         highlight = page.add_highlight_annot(inst)
+                        highlight.set_colors(stroke=orange_color)  # Set highlight color
                         highlight.update()
         if page_has_highlight:
             pages_to_keep.append(page_num)
