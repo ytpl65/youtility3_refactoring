@@ -274,8 +274,6 @@ class PgroupForm(forms.ModelForm):
         return value
 
 class SiteGroupForm(PgroupForm):
-    peoples = None
-
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         S = self.request.session
