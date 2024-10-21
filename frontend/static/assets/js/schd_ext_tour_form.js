@@ -247,9 +247,6 @@ function d2DrawMarker(
 
   google.maps.event.addListener(markerC, "click", function () {
     var d2infowindow = new google.maps.InfoWindow({ content: "", maxWidth: 350 });
-    //var infoWindowHtml= '<h3 style="background-color: #FFF8C9;font-weight:bold;">' + row['buname'] + '</h3>';
-    var starttime = convert_to_local(row["performedtime"])
-    var endtime = convert_to_local(row["performedendtime"])
     var infoWindowHtml =
 
     "<table style='border: 1px solid black;'>" +
@@ -261,10 +258,10 @@ function d2DrawMarker(
     row["people__peoplename"] + "</td>" + "</tr>" +
     "<tr style='border: 1px solid black;'>" +
     "<td style='font-weight: bold; font-size: 16px;'>StartTime:</td> " + "<td>" +
-    starttime + "</td>" + "</tr>" +
+    row["starttime"] + "</td>" + "</tr>" +
     "<tr style='border: 1px solid black;'>" +
     "<td style='font-weight: bold; font-size: 16px;'>EndTime:</td> " + "<td>" +
-    endtime + "</td>" + "</tr>" +
+    row["endtime"] + "</td>" + "</tr>" +
     "</table>";
     
     d2infowindow.setContent(infoWindowHtml);
@@ -277,7 +274,7 @@ function d2DrawMarker(
   d2markersArray.push(markerC);
   //set map zoom
   //d2map.setZoom(12);
-  d2map.fitBounds(d2bounds);
+  //d2map.fitBounds(d2bounds);
 }
 
 function secondsToString(seconds) {

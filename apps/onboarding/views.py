@@ -516,6 +516,7 @@ class ParameterMixin:
     mode_resource_map = MODEL_RESOURCE_MAP
     mode_resource_map_update = MODEL_RESOURCE_MAP_UPDATE
     form = obforms.ImportForm
+    form_update = obforms.ImportFormUpdate
     template = 'onboarding/import.html'
     template_import_update = 'onboarding/import_update.html'
     #header_mapping = HEADER_MAPPING
@@ -958,7 +959,7 @@ class BulkImportUpdate(LoginRequiredMixin,ParameterMixin, View):
             get_instructions['general_instructions'][2] = "Columns marked with an asterisk (*) are required. Please delete any columns from the downloaded Excel sheet that you do not wish to update other then the ID* column."
             get_instructions['column_names'] = "Columns: ${}&".format(', '.join(get_column))
             instructions = json.dumps(get_instructions)
-            cxt = {'importform': self.form(initial={'table': "TYPEASSIST"}), 'instructions':instructions}
+            cxt = {'importform': self.form_update(initial={'table': "TYPEASSIST"}), 'instructions':instructions}
             return render(request, self.template_import_update, cxt)
         
         if R.get('action') == 'getInstructions':
@@ -992,36 +993,6 @@ class BulkImportUpdate(LoginRequiredMixin,ParameterMixin, View):
             except Exception as e:
                 logger.critical("error", exc_info=True)
                 return rp.JsonResponse({"error": "something went wrong!"}, status=500)
-    
-    # def upload_bulk_image_format(self,R):
-    #     google_drive_link = R['google_drive_link']
-    #     file_id = extract_file_id(google_drive_link)
-    #     images_bulk_data = get_file_metadata(file_id)
-    #     is_coorect, correct_image_data, incorrect_image_data = is_bulk_image_data_correct(images_bulk_data['files'])
-    #     if not is_coorect:
-    #         return False,incorrect_image_data
-    #     print("Uploading")
-    #     return True,correct_image_data
-        
-
-    # def get_resource_and_dataset(self, request, form):
-    #     table = form.cleaned_data.get('table')
-    #     if request.POST.get('action') == 'confirmImport':
-    #         tempfile = request.session['temp_file_name']
-    #         with open(tempfile, 'rb') as file:
-    #             dataset = Dataset().load(file)
-    #     else:
-    #         file = request.FILES['importfile']
-    #         dataset = Dataset().load(file)
-    #         # print('dataset',dataset)
-    #         #save to temp storage
-    #         import tempfile
-    #         with tempfile.NamedTemporaryFile(delete=False) as tf:
-    #             for chunk in file.chunks():
-    #                 tf.write(chunk)
-    #             request.session['temp_file_name'] = tf.name
-    #     res = self.mode_resource_map[table](request=request, ctzoffset = form.cleaned_data.get('ctzoffset'))
-    #     return res, dataset
 
     def get_readable_error(self, error):
         if(isinstance(error, ObjectDoesNotExist)):

@@ -5,7 +5,8 @@ from apps.peoples import models as pm
 from import_export import widgets as wg
 from apps.core.widgets import(BVForeignKeyWidget, TypeAssistDepartmentFKW, TypeAssistDesignationFKW, 
                               TypeAssistEmployeeTypeFKW, TypeAssistWorkTypeFKW, TypeAssistDepartmentFKWUpdate,
-                              TypeAssistDesignationFKWUpdate, TypeAssistEmployeeTypeFKWUpdate, TypeAssistWorkTypeFKWUpdate)
+                              TypeAssistDesignationFKWUpdate, TypeAssistEmployeeTypeFKWUpdate, TypeAssistWorkTypeFKWUpdate, 
+                              EnabledTypeAssistWidget)
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
 from django.db.models import Q
@@ -14,7 +15,7 @@ from django.core.exceptions import ValidationError
 from apps.service.validators import clean_string, clean_point_field, clean_array_string
 from django.contrib import admin
 import logging
-import re
+import re, math
 
 log = logging.getLogger('__main__')
 
@@ -463,7 +464,7 @@ class GroupResourceUpdate(resources.ModelResource):
     Identifier = fields.Field(
         attribute = 'identifier',
         column_name = 'Type',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = EnabledTypeAssistWidget(om.TypeAssist, 'tacode'),
     )
 
     ID = fields.Field(attribute='id', column_name='ID*')
@@ -486,7 +487,7 @@ class GroupResourceUpdate(resources.ModelResource):
         if 'Name' in row:
             row['Name'] = clean_string(row.get('Name'))
         # check required fields
-        if row.get('ID*') in ['', None]: raise ValidationError({'ID*':'This field is required'})
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and math.isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         if 'Name' in row:
             if row.get('Name') in ['', None]: raise ValidationError({'Name': "This field is required"})
         if 'Type' in row:
@@ -554,7 +555,7 @@ class GroupBelongingResourceUpdate(resources.ModelResource):
         self.request = kwargs.pop('request', None)
     
     def before_import_row(self, row, row_number, **kwargs):
-        if row.get('ID*') in ['', 'NONE', None]: raise ValidationError({'ID*':"This field is required"})
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and math.isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         if 'Group Name' in row:
             if row.get('Group Name') in ['', 'NONE', None]: raise ValidationError({'Group Name':"This field is required"})
         if 'Of Site' in row and 'Of People' in row:
@@ -724,15 +725,21 @@ class PeopleResourceUpdate(resources.ModelResource):
         if 'Name' in row:
             row['Name'] = clean_string(row.get('Name', "NONE"))
         # check required fields
-        if row['ID*'] in ['', None]: raise ValidationError("ID* is required field")
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and math.isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         if 'Code' in row:
             if row['Code'] in ['', None]: raise ValidationError("Code is required field")
         if 'Employee Type' in row:
-            if row['Employee Type'] in ['', None]: raise ValidationError("Employee Type is required field")
+            if row['Employee Type'] in ['', None, 'NONE']: raise ValidationError("Employee Type is required field & should not be NONE")
         if 'Name' in row:
             if row['Name'] in ['', None]: raise ValidationError("Name is required field")
         if 'User For' in row:
             if row['User For'] in ['', None]: raise ValidationError("User For is required field")
+        if 'Work Type' in row:
+            if row['Work Type'] in ['', None, 'NONE']: raise ValidationError("Work Type is required field & should not be NONE")
+        if 'Designation' in row:
+            if row['Designation'] in ['', None, 'NONE']: raise ValidationError("Designation is required field & should not be NONE")
+        if 'Department' in row:
+            if row['Department'] in ['', None, 'NONE']: raise ValidationError("Department is required field & should not be NONE")
         
         # code validation
         if 'Code' in row:

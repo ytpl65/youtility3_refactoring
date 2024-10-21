@@ -6,7 +6,8 @@ from django.db.models import Q
 from import_export import fields, resources, widgets as wg
 from apps.work_order_management import models as wom
 from apps.onboarding import models as om
-import re
+import re, math
+from apps.core.widgets import EnabledTypeAssistWidget
 
 # Register your models here
 def default_ta():
@@ -132,7 +133,7 @@ class VendorResourceUpdate(resources.ModelResource):
     Type = fields.Field(
         column_name = 'Type',
         attribute = 'type',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = EnabledTypeAssistWidget(om.TypeAssist, 'tacode'),
         default = default_ta
     )
     
@@ -173,7 +174,7 @@ class VendorResourceUpdate(resources.ModelResource):
             row['Mob No'] = str(row['Mob No'])
         
         #check required fields
-        if row.get('ID*') in ['', None]: raise ValidationError("ID* is required field")
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and math.isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         
         # code validation
         if 'Code' in row:

@@ -1,10 +1,7 @@
-var directionsRenderer = new google.maps.DirectionsRenderer({
-    suppressMarkers: true,
-  });
+var d2geocoder;
+var d2map;
+var d2oms;
 var d2markersArray = [];
-var directionService = new google.maps.DirectionsService();
-    const infoWindow = new google.maps.InfoWindow();
-    const mapBounds = new google.maps.LatLngBounds();
 
     /*Initializes the map and related objects for the application.
         This function creates a Google Map centered on a specified location, 
@@ -12,6 +9,9 @@ var directionService = new google.maps.DirectionsService();
         creates a Geocoder object for geocoding purposes, and sets the directionsRenderer 
         on the map.*/
     function d2InitializeMap() {
+        var directionsRenderer = new google.maps.DirectionsRenderer({
+            suppressMarkers: true,
+          });
         d2map = new google.maps.Map(document.getElementById("d2Map"), {
           zoom: 2,
           center: new google.maps.LatLng(23.248917, 77.651367), //locations[0],
@@ -172,15 +172,16 @@ var directionService = new google.maps.DirectionsService();
             return new google.maps.LatLng(coords[1], coords[0]); 
             }
         }
-        return null; assigned_sites
+        return null
     }
 
 
     //plots LatLng data into map
     function plotLocationsOnMap(tabAssigned_sites) {
-        assignedSites = tabAssigned_sites.rows().data().toArray()
+        const assignedSites = tabAssigned_sites.rows().data().toArray()
+        const mapBounds = new google.maps.LatLngBounds();
+        const infoWindow = new google.maps.InfoWindow();
         d2ClearMarker();
-        console.log(assignedSites)
         assignedSites.forEach(site => {
             const latLng = getLatLngFromGPSData(site.gps);
             if (latLng) {
@@ -190,7 +191,7 @@ var directionService = new google.maps.DirectionsService();
                 title: site.buname 
             });
             d2markersArray.push(marker); 
-
+            
             mapBounds.extend(latLng);
 
             google.maps.event.addListener(marker, 'click', function() {
@@ -200,5 +201,7 @@ var directionService = new google.maps.DirectionsService();
             });
             }
         });
-        d2map.fitBounds(mapBounds);
+        if (!mapBounds.isEmpty()) {
+            d2map.fitBounds(mapBounds);
+        }
     }

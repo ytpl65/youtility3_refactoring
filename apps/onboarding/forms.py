@@ -459,4 +459,27 @@ class ImportForm(forms.Form):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
 
+class ImportFormUpdate(forms.Form):
+    TABLECHOICES = [
+        ('TYPEASSIST', 'User Defined Types'),
+        ('BU', 'Business Unit'),
+        ('LOCATION', 'Location'),
+        ('ASSET', 'Asset'),
+        ('VENDOR', 'Vendor'),
+        ('PEOPLE', 'People'),
+        ('QUESTION', 'Question'),
+        ('QUESTIONSET', 'Question Set'),
+        ('QUESTIONSETBELONGING', 'Question Set Belonging'),
+        ('GROUP', 'Group'),
+        ('GROUPBELONGING', 'Group Belongings'),
+        ('SCHEDULEDTASKS', 'Scheduled Tasks'),
+        ('SCHEDULEDTOURS', 'Scheduled Tours'),
+    ]
+    importfile = forms.FileField(required = True, label='Import File', max_length = 50, allow_empty_file = False)
+    ctzoffset = forms.IntegerField()
+    table = forms.ChoiceField(required = True, choices = TABLECHOICES, label='Select Type of Data', initial='TYPEASSISTS', widget=s2forms.Select2Widget)
 
+    def __init__(self, *args, **kwargs):
+        """Initializes form"""
+        super().__init__(*args, **kwargs)
+        utils.initailize_form_fields(self)

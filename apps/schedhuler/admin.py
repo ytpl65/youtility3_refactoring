@@ -12,7 +12,7 @@ from apps.onboarding import models as om
 from apps.activity import models as am
 from apps.core.widgets import BVForeignKeyWidget, BVForeignKeyWidgetUpdate, QsetFKWUpdate, TktCategoryFKWUpdate, AssetFKWUpdate, PeopleFKWUpdate, PgroupFKWUpdate
 from datetime import time
-
+import math
 from apps.core import utils
 
 def default_ta():
@@ -313,7 +313,7 @@ class TaskResourceUpdate(resources.ModelResource):
                 raise ValidationError({'Priority': f"Invalid Priority {priority}, select a valid one from {valid_priorities}"})
         
     def check_required_fields(self, row):
-        if row.get('ID*') in  ['', None]:raise ValidationError("ID* is required field")
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and math.isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         required_fields = [
             'Name', 'From Date', 'Upto Date', 'Scheduler','Notify Category', 'Plan Duration', 
             'Gracetime Before', 'Gracetime After','Question Set/Checklist', 'Asset', 'Priority',
@@ -404,7 +404,7 @@ class TourResourceUpdate(resources.ModelResource):
         super().before_import_row(row, **kwargs)
         
     def check_required_fields(self, row):
-        if row.get('ID*') in  ['', None]:raise ValidationError("ID* is required field")
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and math.isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         required_fields = [
             'Name', 'From Date', 'Upto Date', 'Scheduler','Notify Category', 'Plan Duration', 
             'Expiry Time', 'Gracetime', 'Seq No','Question Set/Checklist', 'Asset', 'Priority', 
