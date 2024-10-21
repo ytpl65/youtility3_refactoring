@@ -226,7 +226,7 @@ class BtResource(resources.ModelResource):
         if row['Code*'] in ['', None]: raise ValidationError("Code* is required field")
         if row['Type*'] in ['', None]: raise ValidationError("Type* is required field")
         if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
-        if row['Belongs To*'] in ['', None]: raise ValidationError("Name* is required field")
+        if row['Belongs To*'] in ['', None]: raise ValidationError("Belongs To* is required field")
         
         # code validation
         regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
