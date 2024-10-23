@@ -87,7 +87,7 @@ class VendorResource(resources.ModelResource):
         
         # code validation
         regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
-        if " " in value: raise ValidationError("Please enter text without any spaces")
+        if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
         if  not re.match(regex, value):
             raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
@@ -179,7 +179,7 @@ class VendorResourceUpdate(resources.ModelResource):
         # code validation
         if 'Code' in row:
             regex, value = "^[a-zA-Z0-9\-_]*$", row['Code']
-            if " " in value: raise ValidationError("Please enter text without any spaces")
+            if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
             if not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         

@@ -115,7 +115,7 @@ class TaResource(resources.ModelResource):
         ''' Validates the format of the Code* field using a regular expression.
          It ensures no spaces and only allows alphanumeric characters, underscores, and hyphens.'''
         regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
-        if " " in value: raise ValidationError("Please enter text without any spaces")
+        if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
         if  not re.match(regex, value):
             raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
 
@@ -231,7 +231,7 @@ class BtResource(resources.ModelResource):
         
         # code validation
         regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
-        if " " in value: raise ValidationError("Please enter text without any spaces")
+        if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
         if  not re.match(regex, value):
             raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
@@ -376,7 +376,7 @@ class TaResourceUpdate(resources.ModelResource):
          It ensures no spaces and only allows alphanumeric characters, underscores, and hyphens.'''
         if 'Code' in row:
             regex, value = "^[a-zA-Z0-9\-_]*$", row['Code']
-            if " " in value: raise ValidationError("Please enter text without any spaces")
+            if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
             if not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
 
@@ -447,7 +447,8 @@ class BtResourceUpdate(resources.ModelResource):
             row['Code'] = clean_string(row.get('Code'), code=True)
         if 'Name' in row:
             row['Name'] = clean_string(row.get('Name'))
-        self._gpslocation = clean_point_field(row['GPS Location'])
+        if 'GPS Location' in row:
+            self._gpslocation = clean_point_field(row['GPS Location'])
         if 'Sol Id' in row:
             self._solid = row['Sol Id']
         required_fields = ['Address', 'State', 'City', 'Country', 'GPS Location']
@@ -475,7 +476,7 @@ class BtResourceUpdate(resources.ModelResource):
         # code validation
         if 'Code' in row:
             regex, value = "^[a-zA-Z0-9\-_]*$", row['Code']
-            if " " in value: raise ValidationError("Please enter text without any spaces")
+            if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
             if  not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
@@ -486,12 +487,17 @@ class BtResourceUpdate(resources.ModelResource):
         super().before_import_row(row, **kwargs)
 
     def before_save_instance(self, instance, using_transactions, dry_run):
-        instance.gpslocation = self._gpslocation
-        instance.bupreferences['address'] = self._address
+        if hasattr(self, '_gpslocation') and self._gpslocation is not None:
+            instance.gpslocation = self._gpslocation
+        if hasattr(self, '_address') and self._gpslocation is not None:
+            instance.bupreferences['address'] = self._address
         instance.bupreferences['address2'] = {
-            'city':self._city, 'country':self._country,
-            'state':self._state, 'formattedAddress':self._address,
-            'latlng':self._latlng}
+            'city': self._city if hasattr(self, '_city') and self._city is not None else None,
+            'country': self._country if hasattr(self, '_country') and self._country is not None else None,
+            'state': self._state if hasattr(self, '_state') and self._state is not None else None,
+            'formattedAddress': self._address if hasattr(self, '_address') and self._address is not None else None,
+            'latlng': self._latlng if hasattr(self, '_latlng') and self._latlng is not None else None,
+            }
         if self._solid and not (isinstance(self._solid, float) and isnan(self._solid)):
             instance.solid = int(self._solid)
         else:

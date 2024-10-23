@@ -868,7 +868,7 @@ class AssetResource(resources.ModelResource):
 
         # code validation
         regex, value = "^[a-zA-Z0-9\-_]*$", row["Code*"]
-        if " " in value:
+        if re.search(r'\s|__', value):
             raise ValidationError("Please enter text without any spaces")
         if not re.match(regex, value):
             raise ValidationError(
@@ -1018,7 +1018,7 @@ class LocationResource(resources.ModelResource):
 
         # code validation
         regex, value = "^[a-zA-Z0-9\-_]*$", row["Code*"]
-        if " " in value:
+        if re.search(r'\s|__', value):
             raise ValidationError("Please enter text without any spaces")
         if not re.match(regex, value):
             raise ValidationError(
@@ -1131,7 +1131,7 @@ class LocationResourceUpdate(resources.ModelResource):
         # code validation
         if "Code" in row:
             regex, value = "^[a-zA-Z0-9\-_]*$", row["Code"]
-            if " " in value:
+            if re.search(r'\s|__', value):
                 raise ValidationError("Please enter text without any spaces")
             if not re.match(regex, value):
                 raise ValidationError(
@@ -1490,7 +1490,7 @@ class AssetResourceUpdate(resources.ModelResource):
         widget=wg.BooleanWidget(),
     )
     is_meter = fields.Field(
-        column_name="Is Meter", widget=wg.BooleanWidget(), default=False
+        column_name="Is Meter", attribute='asset_json.is_meter', widget=wg.BooleanWidget(), default=False
     )
     Code = fields.Field(attribute="assetcode", column_name="Code")
     Name = fields.Field(attribute="assetname", column_name="Name")
@@ -1505,24 +1505,24 @@ class AssetResourceUpdate(resources.ModelResource):
     )
     GPS = fields.Field(attribute="gpslocation", column_name="GPS Location")
     is_nonengg_asset = fields.Field(
-        column_name="Is Non Engg. Asset", default=False, widget=wg.BooleanWidget()
+        column_name="Is Non Engg. Asset", attribute='asset_json.is_nonengg_asset', default=False, widget=wg.BooleanWidget()
     )
-    supplier = fields.Field(column_name="Supplier", default="")
-    meter = fields.Field(column_name="Meter", default="")
-    model = fields.Field(column_name="Model", default="")
-    invoice_no = fields.Field(column_name="Invoice No", default="")
-    invoice_date = fields.Field(column_name="Invoice Date", default="")
-    service = fields.Field(column_name="Service", default="")
-    sfdate = fields.Field(column_name="Service From Date", default="")
-    stdate = fields.Field(column_name="Service To Date", default="")
-    yom = fields.Field(column_name="Year of Manufacture", default="")
-    msn = fields.Field(column_name="Manufactured Serial No", default="")
-    bill_val = fields.Field(column_name="Bill Value", default="")
-    bill_date = fields.Field(column_name="Bill Date", default="")
-    purchase_date = fields.Field(column_name="Purchase Date", default="")
-    inst_date = fields.Field(column_name="Installation Date", default="")
-    po_number = fields.Field(column_name="PO Number", default="")
-    far_asset_id = fields.Field(column_name="FAR Asset ID", default="")
+    supplier = fields.Field(column_name="Supplier", attribute='asset_json.supplier', default="")
+    meter = fields.Field(column_name="Meter", attribute='asset_json.meter', default="")
+    model = fields.Field(column_name="Model", attribute='asset_json.model', default="")
+    invoice_no = fields.Field(column_name="Invoice No", attribute='asset_json.invoice_no', default="")
+    invoice_date = fields.Field(column_name="Invoice Date", attribute='asset_json.invoice_date', default="")
+    service = fields.Field(column_name="Service", attribute='asset_json.service', default="")
+    sfdate = fields.Field(column_name="Service From Date", attribute='asset_json.sfdate', default="")
+    stdate = fields.Field(column_name="Service To Date", attribute='asset_json.stdate', default="")
+    yom = fields.Field(column_name="Year of Manufacture", attribute='asset_json.yom', default="")
+    msn = fields.Field(column_name="Manufactured Serial No", attribute='asset_json.msn', default="")
+    bill_val = fields.Field(column_name="Bill Value", attribute='asset_json.bill_val', default="")
+    bill_date = fields.Field(column_name="Bill Date", attribute='asset_json.bill_date', default="")
+    purchase_date = fields.Field(column_name="Purchase Date", attribute='asset_json.purchase_date', default="")
+    inst_date = fields.Field(column_name="Installation Date", attribute='asset_json.inst_date', default="")
+    po_number = fields.Field(column_name="PO Number", attribute='asset_json.po_number', default="")
+    far_asset_id = fields.Field(column_name="FAR Asset ID", attribute='asset_json.far_asset_id', default="")
 
     class Meta:
         model = am.Asset
@@ -1534,7 +1534,8 @@ class AssetResourceUpdate(resources.ModelResource):
             "Code",
             "Name",
             "GPS",
-            "Identifier" "is_critical",
+            "Identifier",
+            "is_critical",
             "RunningStatus",
             "Capacity",
             "BelongsTo",
@@ -1683,7 +1684,7 @@ class AssetResourceUpdate(resources.ModelResource):
         # code validation
         if "Code" in row:
             regex, value = "^[a-zA-Z0-9\-_]*$", row["Code"]
-            if " " in value:
+            if re.search(r'\s|__', value):
                 raise ValidationError("Please enter text without any spaces")
             if not re.match(regex, value):
                 raise ValidationError(
@@ -1784,18 +1785,14 @@ class QuestionSetBelongingResourceUpdate(resources.ModelResource):
     ID = fields.Field(attribute="id", column_name="ID*")
     SEQNO = fields.Field(attribute="seqno", column_name="Seq No")
     ISAVPT = fields.Field(attribute="isavpt", column_name="Is AVPT", default=False)
-    AVPTType = fields.Field(
-        attribute="avpttype", column_name="AVPT Type", saves_null_values=True
-    )
+    AVPTType = fields.Field(attribute="avpttype", column_name="AVPT Type", saves_null_values=True)
     MIN = fields.Field(attribute="min", column_name="Min")
     ALERTON = fields.Field(attribute="alerton", column_name="Alert On")
     ALERTABOVE = fields.Field(column_name="Alert Above", saves_null_values=True)
     ALERTBELOW = fields.Field(column_name="Alert Below", saves_null_values=True)
     MAX = fields.Field(attribute="max", column_name="Max")
     OPTIONS = fields.Field(attribute="options", column_name="Options")
-    ISMANDATORY = fields.Field(
-        attribute="ismandatory", column_name="Is Mandatory", default=True
-    )
+    ISMANDATORY = fields.Field(attribute="ismandatory", column_name="Is Mandatory", default=True)
 
     class Meta:
         model = am.QuestionSetBelonging
@@ -1961,9 +1958,14 @@ class QuestionSetBelongingResourceUpdate(resources.ModelResource):
                             "Options is required when Answer Type is in [DROPDOWN, CHECKBOX]"
                         )
                 if "Alert On" in row and "Options" in row:
-                    if row.get("Alert On") and row["Alert On"] not in row["Options"]:
+                  if row.get("Alert On"):
+                    # Convert comma-separated strings to lists
+                    alert_on_list = [item.strip() for item in row["Alert On"].split(',') if item.strip()]
+                    options_list = [item.strip() for item in row["Options"].split(',') if item.strip()]
+                    invalid_items = [item for item in alert_on_list if item not in options_list]
+                    if invalid_items:
                         raise ValidationError(
-                            {"Alert On": "Alert On needs to be in Options"}
+                            {"Alert On": f"The following items are not in Options: {', '.join(invalid_items)}"}
                         )
 
     def before_save_instance(self, instance, using_transactions, dry_run=False):

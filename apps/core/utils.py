@@ -1056,8 +1056,6 @@ def save_common_stuff(request, instance, is_superuser=False, ctzoffset=-1):
     else:
         instance.cuser_id = instance.muser_id = userid
     instance.ctzoffset = int(request.session['ctzoffset'])
-    print('instance ctzoffset',instance.ctzoffset)
-    print('instance',instance.cdtz)
     return instance
 
 
@@ -2029,7 +2027,7 @@ Example_data_update = {
                    ('497','MUM003','Site C','NONE','SITE','SUPERMARKET','Ming Yang','789','TRUE','19.05,73.51','125 main street, xyz city','Manarola','California','USA')],
       'LOCATION': [('47','LOC001','Location A','GROUNDFLOOR','WORKING','TRUE','NONE','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
                     ('48','LOC002','Location B','MAINENTRANCE','SCRAPPED','FALSE','MUM001','SITE_B','CLIENT_A','19.05,73.52','FALSE'),
-                    ('49','LOC003','Location C','FIRSTFLOOR','RUNNING','TRUE','NONE','SITE_C','CLIENT_A','19.05,73.53','TRUE')],
+                    ('49','LOC003','Location C','FIRSTFLOOR','MAINTENANCE','TRUE','NONE','SITE_C','CLIENT_A','19.05,73.53','TRUE')],
         'ASSET' : [('1127','ASSET01','Asset A','STANDBY','ASSET','TRUE','CLIENT_A','SITE_A','0.01','NONE','ELECTRICAL','19.05,73.51','NONE','NONE','BRAND_A','NONE','CLINET_A','TRUE',
                     'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE'),
                     ('1128','ASSET02','Asset B','MAINTENANCE','ASSET','FALSE','CLIENT_B','SITE_B','0.02','NONE','MECHANICAL','19.05,73.52','NONE','NONE','BRAND_B','NONE','CLINET_A','TRUE',
@@ -2108,6 +2106,11 @@ def excel_file_creation_update(R, S):
     return buffer
 
 def get_type_data(type_name, S):
+    site_ids = S.get('assignedsites', [])
+    if not isinstance(site_ids, (list, tuple)):
+        site_ids = [site_ids]
+    if isinstance(site_ids, (int, str)):
+        site_ids = [site_ids]
     if type_name == 'TYPEASSIST':
         objs = ob.TypeAssist.objects.select_related('parent','tatype', 'cuser', 'muser').filter(
                 ~Q(tacode='NONE'), ~Q(tatype__tacode='NONE'), Q(client_id=S['client_id']) | Q(cuser_id=1), enable=True,
@@ -2136,7 +2139,7 @@ def get_type_data(type_name, S):
             template = "%(function)s(%(expressions)s from '\\[(.+)\\]')"
         objs = am.Location.objects.select_related('parent', 'type', 'bu').filter(
             ~Q(loccode='NONE'),
-            bu_id = S['bu_id'],
+            bu_id__in = site_ids,
             client_id = S['client_id']
         ).annotate(
             gps_json=AsGeoJSON('gpslocation'),
@@ -2158,7 +2161,7 @@ def get_type_data(type_name, S):
             template = "%(function)s(%(expressions)s from '\\[(.+)\\]')"
         objs = am.Asset.objects.select_related('parent', 'type', 'bu', 'category', 'subcategory', 'brand', 'unit', 'servprov').filter(
             ~Q(assetcode='NONE'),
-            bu_id = S['bu_id'],
+            bu_id__in = site_ids,
             client_id = S['client_id'],
             identifier='ASSET'
         ).annotate(
@@ -2203,7 +2206,7 @@ def get_type_data(type_name, S):
             template = "%(function)s(%(expressions)s from '\\[(.+)\\]')"
         objs = wom.Vendor.objects.select_related('parent', 'type', 'bu').filter(
             ~Q(code='NONE'),
-            bu_id = S['bu_id'],
+            bu_id__in = site_ids,
             client_id = S['client_id']
         ).annotate(
             gps_json=AsGeoJSON('gpslocation'),
@@ -2226,6 +2229,7 @@ def get_type_data(type_name, S):
                 template = "(%(function)s(%(function)s(%(function)s(%(function)s(CAST(%(expressions)s AS VARCHAR), '[', ''), ']', ''), '''', ''), '\"', ''))"
             objs = pm.People.objects.filter(
                 ~Q(peoplecode='NONE'), 
+                bu_id__in = site_ids,
                 client_id = S['client_id']
                 ).select_related('peopletype', 'bu', 'client', 'designation', 'department', 'worktype', 'reportto'
                 ).annotate(user_for=F('people_extras__userfor'),
@@ -2294,7 +2298,7 @@ def get_type_data(type_name, S):
         objs = am.QuestionSet.objects.filter(
             Q(type='RPCHECKLIST') & Q(bu_id__in=S['assignedsites']) |
             (Q(parent_id=1) & ~Q(qsetname='NONE') & 
-            Q(bu_id=S['bu_id']) & Q(client_id=S['client_id']))
+            Q(bu_id__in = site_ids) & Q(client_id=S['client_id']))
         ).select_related('parent').values(
             'id', 'seqno', 'qsetname', 'parent__qsetname', 'type',
             'assetincludes', 'buincludes', 'bu__bucode',
@@ -2381,6 +2385,7 @@ def get_type_data(type_name, S):
         return output
     if type_name == 'QUESTIONSETBELONGING':
         objs = am.QuestionSetBelonging.objects.select_related('qset', 'question', 'client', 'bu').filter(
+                bu_id__in = site_ids,
                 client_id = S['client_id'],
             ).annotate(
             alert_above=Case(
@@ -2407,11 +2412,12 @@ def get_type_data(type_name, S):
         return list(objs)
     if type_name == 'GROUP':
         objs = pm.Pgroup.objects.select_related('client', 'identifier', 'bu').filter(
-            ~Q(id=-1), bu_id = S['bu_id'], identifier__tacode='PEOPLEGROUP', client_id = S['client_id']
+            ~Q(id=-1), bu_id__in = site_ids, identifier__tacode='PEOPLEGROUP', client_id = S['client_id']
         ).values_list('id', 'groupname', 'identifier__tacode', 'client__bucode', 'bu__bucode', 'enable')
         return list(objs)
     if type_name == 'GROUPBELONGING':
         objs = pm.Pgbelonging.objects.select_related('pgroup','people').filter(
+                bu_id__in = site_ids,
                 client_id = S['client_id'],
             ).values_list('id', 'pgroup__groupname', 'people__peoplecode', 'assignsites__bucode', 'client__bucode', 'bu__bucode')
         return list(objs)
