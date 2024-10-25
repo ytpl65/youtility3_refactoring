@@ -954,20 +954,16 @@ class BulkImportUpdate(LoginRequiredMixin,ParameterMixin, View):
             inst = utils.Instructions(tablename='TYPEASSIST')
             '''getting the instructions from the instance and here json.dumps 
             is used to convert the python dictionary to json.'''
-            get_instructions = inst.get_insructions()
-            get_column = inst.get_column_names_update()
-            get_instructions['general_instructions'][2] = "Columns marked with an asterisk (*) are required. Please delete any columns from the downloaded Excel sheet that you do not wish to update other then the ID* column."
-            get_instructions['column_names'] = "Columns: ${}&".format(', '.join(get_column))
-            instructions = json.dumps(get_instructions)
-            cxt = {'importform': self.form_update(initial={'table': "TYPEASSIST"}), 'instructions':instructions}
+            get_instructions = inst.get_insructions_update_info()
+            cxt = {'importform': self.form_update(initial={'table': "TYPEASSIST"}), 'instructions':get_instructions}
             return render(request, self.template_import_update, cxt)
         
         if R.get('action') == 'getInstructions':
             inst = utils.Instructions(tablename=R.get('tablename'))
-            instructions = inst.get_insructions()
-            get_column = inst.get_column_names_update()
-            instructions['general_instructions'][2] = "Columns marked with an asterisk (*) are required. Please delete any columns from the downloaded Excel sheet that you do not wish to update other then the ID* column."
-            instructions['column_names'] = "Columns: ${}&".format(', '.join(get_column))
+            instructions = inst.get_insructions_update_info()
+            # get_column = inst.get_column_names_update()
+            # instructions['general_instructions'][2] = "Columns marked with an asterisk (*) are required. Please delete any columns from the downloaded Excel sheet that you do not wish to update other then the ID* column."
+            # instructions['column_names'] = "Columns: ${}&".format(', '.join(get_column))
             return rp.JsonResponse({'instructions':instructions}, status=200)
 
         if (request.GET.get('action') == 'downloadTemplate') and request.GET.get('template'):

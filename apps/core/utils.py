@@ -1696,6 +1696,61 @@ class Instructions(object):
                 'general_instructions':bulk_import_image_instructions
             }
         
+    def get_insructions_update_info(self):
+        if self.tablename != 'BULKIMPORTIMAGE':
+            general_instructions = self.get_instruction_update()
+            return  {
+                'general_instructions': general_instructions,
+            }
+
+    def get_instruction_update(self):
+        return [
+        "Download the Import Update Sheet:",
+        [
+            "On clicking the \"Bulk Import Update\" section of the application, navigate to the field titled - \"Select type of Data.\"",
+            "Download the Excel sheet for the specific table you want to update after the appropriate selection (e.g., \"People\", \"Business Unit\", etc.), by clicking on the Download button.",
+            "This sheet will contain all records from the selected table.",
+            "The first column, titled \"ID*\", contains the primary key for each record. Do not modify this column as it is used to match records in the database."
+        ],
+        "Identify Records That Need Updates:",
+        [
+            "Review the downloaded sheet and determine which records require updates (e.g., adding missing data, altering incorrect information or changed value for the same data, or deleting existing data in specific fields (cells)).",
+            "Only focus on the records that require changes. If a record does not require any updates, you must remove it from the sheet (see Step 5)."
+        ],
+        "Make the Required Changes to Records (For the records that require updates, make the following changes as needed):",
+        [
+            "Add Missing Data: Locate the fields (cells) that are currently blank or incomplete and fill them with the necessary information.",
+            "Alter Existing Data: If any field (cell) contains incorrect or outdated information, modify the data by replacing it with the correct information.",
+            "Delete Existing Data: If you want to delete data from a particular field (cell), simply leave the cell empty. Leaving a cell blank signals the system to delete the existing data in that field for the specific record. This is only for multi select type value fields(cells) such as mobile capability in \"People\". Or else use the disable function present in the adjacent cell for tables that download a disable column. Eg. Group Belongings"
+        ],
+        "Important Notes:",
+        [
+            "Do not make any changes to fields (cells) that do not require an update.",
+            "This ensures that only the required fields (cells) are altered while leaving the existing data intact.",
+            "Do not modify the \"ID*\" field (first column), as it is critical for identifying the correct record for updating."
+        ],
+        "Remove Records That Do Not Need Updates:",
+        [
+            "If a record does not require any updates, delete the entire row from the Excel sheet.",
+            "For example, if your downloaded sheet contains 100 records and you only want to update 10 of them, remove the other 90 records.",
+            "This helps avoid unnecessary processing of unchanged records during the update process."
+        ],
+        "Final Review Before Uploading:",
+        [
+            "Ensure that only the records requiring updates remain in the sheet.",
+            "Double-check that all changes made are accurate and that fields (cells) not requiring updates remain unaltered."
+        ],
+        "Save the Updated Sheet:",
+        [
+            "After making the necessary changes, save the Excel sheet in a compatible format (.xlsx)."
+        ],
+        "Upload the Sheet:",
+        [
+            "Go back to the application and upload the modified sheet to complete the import update process.",
+            "The system will process the updates and reflect the changes in the database for the affected records only."
+        ]
+    ]
+        
     def get_bulk_import_image_instructions(self):
         """
         This functions return instrucitons for bulk import of people image
