@@ -1707,12 +1707,12 @@ class Instructions(object):
         return [
         "Download the Import Update Sheet:",
         [
-            "On clicking the \"Bulk Import Update\" section of the application, navigate to the field titled - \"Select type of Data.\"",
+            "On clicking the \"Bulk Import Update\" section of the application, navigate to the field titled - \"Select Type of Data.\"",
             "Download the Excel sheet for the specific table you want to update after the appropriate selection (e.g., \"People\", \"Business Unit\", etc.), by clicking on the Download button.",
             "This sheet will contain all records from the selected table.",
             "The first column, titled \"ID*\", contains the primary key for each record. Do not modify this column as it is used to match records in the database."
         ],
-        "Identify Records That Need Updates:",
+        "Identify Records that Need Updates:",
         [
             "Review the downloaded sheet and determine which records require updates (e.g., adding missing data, altering incorrect information or changed value for the same data, or deleting existing data in specific fields (cells)).",
             "Only focus on the records that require changes. If a record does not require any updates, you must remove it from the sheet (see Step 5)."
@@ -1729,7 +1729,7 @@ class Instructions(object):
             "This ensures that only the required fields (cells) are altered while leaving the existing data intact.",
             "Do not modify the \"ID*\" field (first column), as it is critical for identifying the correct record for updating."
         ],
-        "Remove Records That Do Not Need Updates:",
+        "Remove Records that Do Not Need Updates:",
         [
             "If a record does not require any updates, delete the entire row from the Excel sheet.",
             "For example, if your downloaded sheet contains 100 records and you only want to update 10 of them, remove the other 90 records.",
