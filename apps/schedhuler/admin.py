@@ -59,7 +59,7 @@ class BaseJobResource(resources.ModelResource):
     CLIENT      = fields.Field(attribute='client', column_name='Client*',widget=wg.ForeignKeyWidget(om.Bt, 'bucode'))
     SITE        = fields.Field(attribute='bu', column_name='Site*',widget=BVForeignKeyWidget(om.Bt, 'bucode'))
     NAME        = fields.Field(attribute='jobname', column_name='Name*')
-    DESC        = fields.Field(attribute='jobdesc', column_name='Description*')
+    DESC        = fields.Field(attribute='jobdesc', column_name='Description*', default='')
     QSET        = fields.Field(attribute='qset', column_name='Question Set/Checklist*', widget=QsetFKW(am.QuestionSet, 'qsetname'))
     ASSET       = fields.Field(attribute='asset', column_name='Asset*', widget=AssetFKW(am.Asset, 'assetcode'))
     PARENT      = fields.Field(attribute='parent', column_name='Belongs To*', widget=wg.ForeignKeyWidget(am.Job, 'jobname'), default=utils.get_or_create_none_job)
@@ -67,16 +67,15 @@ class BaseJobResource(resources.ModelResource):
     GRACETIME   = fields.Field(attribute='gracetime', column_name='Gracetime Before*')
     EXPTIME     = fields.Field(attribute='expirytime', column_name='Gracetime After*')
     CRON        = fields.Field(attribute='cron', column_name='Scheduler*')
-    FROMDATE    = fields.Field(attribute='fromdate', column_name='From Date*', widget=wg.DateWidget())
-    UPTODATE    = fields.Field(attribute='uptodate', column_name='Upto Date*', widget=wg.DateWidget())
+    FROMDATE    = fields.Field(attribute='fromdate', column_name='From Date*', widget=wg.DateTimeWidget())
+    UPTODATE    = fields.Field(attribute='uptodate', column_name='Upto Date*', widget=wg.DateTimeWidget())
     SCANTYPE    = fields.Field(attribute='scantype', column_name='Scan Type*', default='QR')
     TKTCATEGORY = fields.Field(attribute='ticketcategory', column_name='Notify Category*', widget=TktCategoryFKW(om.TypeAssist, 'tacode'), default=default_ta)
     PRIORITY    = fields.Field(attribute='priority', column_name='Priority*', default='LOW')
     PEOPLE      = fields.Field(attribute='people', column_name='People*', widget= PeopleFKW(pm.People, 'peoplecode'))
     PGROUP      = fields.Field(attribute='pgroup', column_name='Group Name*', widget=PgroupFKW(pm.Pgroup, 'groupname'))
-    IDF         = fields.Field(attribute='identifier', column_name='Identifier*')
-    STARTTIME   = fields.Field(attribute='starttime', column_name='Start Time', default=time(0,0,0))
-    ENDTIME     = fields.Field(attribute='endtime', column_name='End Time', default=time(0,0,0))
+    STARTTIME   = fields.Field(attribute='starttime', column_name='Start Time', default=time(0,0,0), widget=wg.TimeWidget())
+    ENDTIME     = fields.Field(attribute='endtime', column_name='End Time', default=time(0,0,0), widget=wg.TimeWidget())
     SEQNO       = fields.Field(attribute='seqno', column_name='Seq No', default=-1)
     ID          = fields.Field(attribute='id', column_name='ID')
     
@@ -85,11 +84,6 @@ class BaseJobResource(resources.ModelResource):
         skip_unchanged = True
         import_id_fields = ['ID']
         report_skipped = True
-    
-
-    
-   
-
 
 class TaskResource(BaseJobResource):
     IDF         = fields.Field(attribute='identifier', column_name='Identifier*', default='TASK')
@@ -117,6 +111,8 @@ class TaskResource(BaseJobResource):
         self.unique_record_check(row)
         self.check_valid_scantype(row)
         self.check_valid_priority(row)
+        if not row.get('Identifier*'):
+            row['Identifier*'] = 'TASK'
         super().before_import_row(row, **kwargs)
 
     def check_valid_scantype(self,row):
@@ -133,12 +129,23 @@ class TaskResource(BaseJobResource):
         
     def check_required_fields(self, row):
         required_fields = [
-            'Name*', 'Description*', 'From Date*', 'Upto Date*', 'Scheduler*',
+            'Name*', 'From Date*', 'Upto Date*', 'Scheduler*',
             'Notify Category*', 'Plan Duration*', 'Gracetime Before*', 'Gracetime After*',
             'Question Set/Checklist*', 'Asset*', 'Priority*', 'People*', 'Group Name*', 'Belongs To*']
+        integer_fields = ['Plan Duration*', 'Gracetime Before*', 'Gracetime After*']
+    
         for field in required_fields:
-            if not row.get(field):
-                raise ValidationError({field: f"{field} is a required field"})
+            if field in row:
+                value = row.get(field)
+                if field in integer_fields:
+                    try:
+                        int_value = int(value)
+                        if int_value < 0:
+                            raise ValidationError({field: f"{field} must be a non-negative integer"})
+                    except (ValueError, TypeError):
+                        raise ValidationError({field: f"{field} must be a valid integer"})
+                elif value in [None, '']:
+                    raise ValidationError({field: f"{field} is a required field"})
     
     def validate_row(self, row):
         row['Name*'] = clean_string(row['Name*'])
@@ -168,7 +175,7 @@ class TourResource(resources.ModelResource):
     CLIENT      = fields.Field(attribute='client', column_name='Client*',widget=wg.ForeignKeyWidget(om.Bt, 'bucode'), default=utils.get_or_create_none_bv)
     SITE        = fields.Field(attribute='bu', column_name='Site*',widget=BVForeignKeyWidget(om.Bt, 'bucode'))
     NAME        = fields.Field(attribute='jobname', column_name='Name*')
-    DESC        = fields.Field(attribute='jobdesc', column_name='Description*')
+    DESC        = fields.Field(attribute='jobdesc', column_name='Description*', default='')
     QSET        = fields.Field(attribute='qset', column_name='Question Set/Checklist*', widget=QsetFKW(am.QuestionSet, 'qsetname'))
     ASSET       = fields.Field(attribute='asset', column_name='Asset*', widget=AssetFKW(am.Asset, 'assetcode'))
     PARENT      = fields.Field(attribute='parent', column_name='Belongs To*', widget=wg.ForeignKeyWidget(am.Job, 'jobname'), default=utils.get_or_create_none_job)
@@ -184,8 +191,8 @@ class TourResource(resources.ModelResource):
     PEOPLE      = fields.Field(attribute='people', column_name='People*', widget= PeopleFKW(pm.People, 'peoplecode'))
     PGROUP      = fields.Field(attribute='pgroup', column_name='Group Name*', widget=PgroupFKW(pm.Pgroup, 'groupname'))
     IDF         = fields.Field(attribute='identifier', column_name='Identifier*', default='INTERNALTOUR')
-    STARTTIME   = fields.Field(attribute='starttime', column_name='Start Time', default=time(0,0,0))
-    ENDTIME     = fields.Field(attribute='endtime', column_name='End Time', default=time(0,0,0))
+    STARTTIME   = fields.Field(attribute='starttime', column_name='Start Time', default=time(0,0,0), widget=wg.TimeWidget())
+    ENDTIME     = fields.Field(attribute='endtime', column_name='End Time', default=time(0,0,0), widget=wg.TimeWidget())
     SEQNO       = fields.Field(attribute='seqno', column_name='Seq No*', default=-1)
     ID          = fields.Field(attribute='id', column_name='ID')
 
@@ -215,12 +222,23 @@ class TourResource(resources.ModelResource):
         
     def check_required_fields(self, row):
         required_fields = [
-            'Name*', 'Description*', 'From Date*', 'Upto Date*', 'Scheduler*',
-            'Notify Category*', 'Plan Duration*', 'Expiry Time*', 'Gracetime*', 'Seq No*',
+            'Name*', 'From Date*', 'Upto Date*', 'Scheduler*', 'Plan Duration*',
+            'Notify Category*', 'Expiry Time*', 'Gracetime*', 'Seq No*',
             'Question Set/Checklist*', 'Asset*', 'Priority*', 'People*', 'Group Name*', 'Belongs To*']
+        integer_fields = ['Plan Duration*', 'Gracetime*', 'Expiry Time*', 'Seq No*']
+    
         for field in required_fields:
-            if not row.get(field):
-                raise ValidationError({field: f"{field} is a required field"})
+            if field in row:
+                value = row.get(field)
+                if field in integer_fields:
+                    try:
+                        int_value = int(value)
+                        if int_value < 0:
+                            raise ValidationError({field: f"{field} must be a non-negative integer"})
+                    except (ValueError, TypeError):
+                        raise ValidationError({field: f"{field} must be a valid integer"})
+                elif value in [None, '']:
+                    raise ValidationError({field: f"{field} is a required field"})
     
     def validate_row(self, row):
         row['Identifier*'] = 'INTERNALTOUR'
@@ -409,7 +427,7 @@ class TourResourceUpdate(resources.ModelResource):
             'Name', 'From Date', 'Upto Date', 'Scheduler','Notify Category', 'Plan Duration', 
             'Expiry Time', 'Gracetime', 'Seq No','Question Set/Checklist', 'Asset', 'Priority', 
             'People', 'Group Name', 'Belongs To']
-        integer_fields = ['Plan Duration', 'Gracetime Before', 'Gracetime After', 'Seq No']
+        integer_fields = ['Plan Duration', 'Gracetime', 'Expiry Time', 'Seq No']
     
         for field in required_fields:
             if field in row:
