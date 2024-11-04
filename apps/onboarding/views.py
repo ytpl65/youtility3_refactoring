@@ -831,7 +831,8 @@ class DashboardView(LoginRequiredMixin, View):
     P = {
         "RP": "dashboard/RP_d/rp_dashboard.html",
         "pel_model": atm.PeopleEventlog,
-        "jn_model": am.Jobneed
+        "jn_model": am.Jobneed,
+        "wp_model": Wom
     }
 
     def get(self, request, *args, **kwargs):
@@ -893,7 +894,8 @@ class DashboardView(LoginRequiredMixin, View):
             'route_count': P['jn_model'].objects.get_schdroutes_count_forcard(request),
             'diversion_count': P['pel_model'].objects.get_diversion_countorlist(request, count=True),
             'sitecrisis_count': P['pel_model'].objects.get_sitecrisis_count_forcard(request),
-            'dynamic_tour_count':P['jn_model'].objects.get_dynamic_tour_count(request)
+            'dynamic_tour_count':P['jn_model'].objects.get_dynamic_tour_count(request),
+            'workpermit_count':P['wp_model'].objects.get_workpermit_count(request)
         }
     
     def other_chart_data(self, request):

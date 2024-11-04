@@ -590,6 +590,21 @@ class WorkOrderManager(models.Manager):
             data['name_of_requester'] = name_of_requester
 
         return data
+    
+    def get_workpermit_count(self, request):
+        R, S = request.GET, request.session
+        pd1 = R.get('from', datetime.now().date())
+        pd2 = R.get('upto', datetime.now().date())
+        qobjs = self.select_related('cuser', 'bu', 'qset','vendor').filter(
+        ~Q(workpermit__in =  ['NOT_REQUIRED', 'NOTREQUIRED']),
+            ~Q(identifier = 'SLA'),
+            parent_id = 1,
+            client_id = S['client_id'],
+            bu_id = S['bu_id'],
+            cdtz__date__gte = pd1,
+            cdtz__date__lte = pd2,
+        ).count()
+        return qobjs or 0    
 
 
 class WOMDetailsManager(models.Manager):
