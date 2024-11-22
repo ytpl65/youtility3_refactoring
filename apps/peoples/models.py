@@ -48,7 +48,6 @@ def upload_peopleimg(instance, filename):
     try:
         logger.info('uploading peopleimg...')
         from os.path import join
-
         peoplecode = instance.peoplecode
         peoplename = instance.peoplename.replace(" ", "_")
         full_filename = f'{peoplecode}_{peoplename}__{filename}'
@@ -59,6 +58,8 @@ def upload_peopleimg(instance, filename):
         filepath = join(basedir, client, foldertype, full_filename)
         filepath = str(filepath).lower()
         fullpath = filepath
+
+        print("Full path",fullpath)
     except Exception:
         logger.critical(
             'upload_peopleimg(instance, filename)... FAILED', exc_info = True)

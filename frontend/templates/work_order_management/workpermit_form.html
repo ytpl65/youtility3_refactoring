@@ -26,8 +26,8 @@ Work Permit Form
 <div class="form-actions">
     {% if wpform.instance.id %}
     <div class="d-flex">
-        {% if wpform.instance.workpermit != 'APPROVED'  %}
-            <div class="dropdown me-2 action_btn d-none">
+        {% if wpform.instance.workpermit != 'APPROVED' and identifier == 'APPROVER'  %}
+            <div class="dropdown me-2 action_btn">
             <button class="btn p-3 btn-primary2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 Action
             </button>
@@ -35,7 +35,17 @@ Work Permit Form
                 <li><a class="dropdown-item approve-wp" href="#">Approve</a></li>
                 <li><a class="dropdown-item reject-wp" href="#">Reject</a></li>
             </ul>
-        </div>
+            </div>
+        {% elif wpform.instance.workpermit != 'APPROVED' and identifier == 'VERIFIER' %}
+        <div class="dropdown me-2 action_btn">
+            <button class="btn p-3 btn-primary2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Action
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item verifier-approve-wp" href="#">Approve</a></li>
+                <li><a class="dropdown-item verifier-reject-wp" href="#">Reject</a></li>
+            </ul>
+            </div>
         {% endif %}
         {% if work_status is defined and work_status!='COMPLETED' %}
         <div>
@@ -88,7 +98,6 @@ Work Permit Form
 {% endblock breadcumbactions %}
 
 {% block form %}
-{{ request.user.id }}
 <form action="{{ url('work_order_management:work_permit') }}" method="post" id="wpform">
     <!--------------------------CSRF MIDDLEWARE TOKEN---------------------->
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -150,16 +159,16 @@ Work Permit Form
 
 
 {% block extras %}
-{% if wp_details is defined %}
-<div class="approvers py-4 my-4 ">
-    <h4>Approver / Verifier Status</h4>
-    <table id="tabApprovers" class="display"></table>
-</div>
-<br>
+    {% if wp_details is defined and  wpform.instance.id %}
+    <div class="approvers py-4 my-4 ">
+        <h4>Approver / Verifier Status</h4>
+        <table id="tabApprovers" class="display"></table>
+    </div>
+    {% endif %}
 
 <!-- Remarks Section Start-->
 
-    {% if remarks is defined and remarks != 'None' and remarks %}
+{% if remarks is defined and remarks != 'None' and remarks %}
     <h4>Remarks</h4>
     <div class="border border-1 p-4 rounded-2">
         <div class="card">
@@ -177,6 +186,8 @@ Work Permit Form
 </div>
 <!-- Remarks section ends -->
  <br>
+
+{% if wp_details is defined and wp_details %}
 <div class="border border-1 p-4 rounded-2 mb-3  workpermit-details-section">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3 class="">Work Permit Details</h3>
@@ -195,8 +206,9 @@ Work Permit Form
         </form>
     </div>
 </div>
+{% endif %}
 <div class="border border-1 p-4 rounded-2  returnworkpermit-details-section">
-    {% if rwp_details is defined %}
+    {% if rwp_details is defined and rwp_details != 'None' and rwp_details %}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="d-flex justify-content-between">
             <h3 class="">Return Work Permit Details&nbsp;</h3>
@@ -222,7 +234,8 @@ Work Permit Form
     </div>
     {% endif %}
 </div>
-{% endif %}
+
+
 
 
 
@@ -338,9 +351,10 @@ Work Permit Form
 
 
         if("{{ wpform.instance.id }}" !== "None"){
-            makeReadonlyFieldsUnderClass("wp_section")
-            makeRangeReadonly(".wp_section input[type=range]")
+           makeReadonlyFields()
         }
+
+        $('.returnworkpermit-details-section').prop('readonly', false)
         
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -540,11 +554,12 @@ Work Permit Form
 
         $(".approve-wp").click((e) => {
             //appprove workpermit
-            submit_form_alert(text=null, title = 'Approve Work Permit!').then((res) => {
+            submit_form_alert(text=null, title = 'Approve Work Permit?').then((res) => {
                 if(res.isConfirmed){
                     let womid = "{{ wpform.instance.id }}"
+                    let permit_name = "{{ wpform.instance.other_data.get('wp_name', 'Creating New WorkPermit') }}";
                     fire_ajax_get({
-                        url:`${urlname}?action=approve_wp&womid=${womid}`,
+                        url:`${urlname}?action=approve_wp&womid=${womid}&permit_name=${permit_name}`,
                     }).done((data, status, xhr) => {
 
                         Swal.fire({
@@ -561,7 +576,51 @@ Work Permit Form
                 }
             })
         })
+
+        $(".verifier-approve-wp").click((e) => {
+            submit_form_alert(text=null,title = 'Verify Work Permit!').then((res) => {
+                let womid = "{{ wpform.instance.id }}"
+                let permit_name = "{{ wpform.instance.other_data.get('wp_name', 'Creating New WorkPermit') }}"
+                fire_ajax_get({
+                    url:`${urlname}?action=verifier_approve_wp&womid=${womid}&permit_name=${permit_name}`,
+                }).done((data, status, xhr) => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Work Permit has been verified',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                    window.setTimeout(function(){
+                        window.location.href = `${urlname}?id={{ wpform.instance.id }}`;
+                    }, 1500)
+                })
+            })
+        } )
         
+        $(".verifier-reject-wp").click((e) => {
+            //appprove workpermit
+            submit_form_alert(text=null, title = 'Reject Work Permit!').then((res) => {
+                if(res.isConfirmed){
+                    let womid = "{{ wpform.instance.id }}"
+                    fire_ajax_get({
+                        url:`${urlname}?action=verifier_reject_wp&womid=${womid}`,
+                    }).done((data, status, xhr) => {
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Work Permit has been rejected',
+                            showConfirmButton: false,
+                            timer: 1500
+                        })
+                        window.setTimeout(function(){
+                            window.location.href = `${urlname}?id={{ wpform.instance.id }}`;
+                        }, 1500)
+                    
+                    })
+                }
+            })
+        })
+
         $(".reject-wp").click((e) => {
             //appprove workpermit
             submit_form_alert(text=null, title = 'Reject Work Permit!').then((res) => {

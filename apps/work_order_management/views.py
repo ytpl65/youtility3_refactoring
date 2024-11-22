@@ -19,7 +19,7 @@ import os
 from django.utils import timezone
 from apps.reports import utils as rutils
 from apps.work_order_management import utils as wom_utils
-from apps.reports.report_designs.workpermit import GeneralWorkPermit
+# from apps.reports.report_designs.workpermit import GeneralWorkPermit
 from apps.reports.report_designs.service_level_agreement import ServiceLevelAgreement
 from apps.onboarding.models import TypeAssist,Bt
 import json
@@ -358,33 +358,87 @@ class WorkPermit(LoginRequiredMixin, View):
         # first load the template
         if R.get('template'):
             return render(request, self.params['template_list'])
-
+        
         # then load the table with objects for table_view
         action = R.get('action')
         if action == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.get_workpermitlist(request)
             return rp.JsonResponse(data={'data': list(objs)}, safe=False)
+        
+        if action == 'verifier_approve_wp' and R.get('womid'):
+            wom = P['model'].objects.get(id=R['womid'])
+            wp = Wom.objects.filter(id = R['womid']).first()
+            if wom.workpermit == Wom.Workstatus.CANCELLED:
+                return rp.JsonResponse(data={'data': 'Work Permit is already cancelled'}, status=200)
+            #p = People.objects.filter(id = R['peopleid']).first()
+            S = request.session
+            if is_all_verified := check_all_verified(wp.uuid, request.user.peoplecode):
+                if Wom.WorkPermitVerifierStatus.APPROVED != Wom.objects.get(id=R['womid']).workpermit:
+                    Wom.objects.filter(id=R['womid']).update(verifiers_status=Wom.WorkPermitVerifierStatus.APPROVED)
+                    if is_all_verified:
+                        wom_id = R['womid']
+                        wom = Wom.objects.get(id = wom_id)
+                        sitename = Bt.objects.get(id=wom.bu_id).buname
+                        permit_name = wom.other_data['wp_name']
+                        permit_no =   wom.other_data['wp_seqno']
+                        client_id = S.get('client_id')
+                        print("Client ID***********: ",client_id)
+                        report_obj = wom_utils.get_report_object(permit_name)
+                        report = report_obj(filename=permit_name,client_id=client_id,returnfile=True,formdata = {'id':wom_id},request=request)
+                        report_pdf_object = report.execute()
+                        vendor_name = Vendor.objects.get(id=wom.vendor_id).name
+                        pdf_path = wom_utils.save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=permit_no)
+                        print("Sending Email to Approver to approve the work permit")
+                        wp_approvers = wom.other_data['wp_approvers']
+                        workpermit_status = Wom.WorkPermitStatus.PENDING
+                        approvers_name = [approver['name'] for approver in wp_approvers]
+                        approvers_code = [approver['peoplecode'] for approver in wp_approvers]
+                        log.info(f"Sending Email to Approver {approvers_name} to approve the work permit")
+                        send_email_notification_for_workpermit_approval.delay(wom_id,approvers_name,approvers_code,sitename,workpermit_status,permit_name,pdf_path,vendor_name,client_id)
+            return rp.JsonResponse(data={'data': 'Verified'}, status=200)
+
+
 
         if action == 'approve_wp' and R.get('womid'):
             S = request.session
             wom = P['model'].objects.get(id=R['womid'])
-            is_submit_button_flow='true'
-            permit_name = 'General Work Permit'
+            if wom.workpermit == Wom.Workstatus.CANCELLED:
+                return rp.JsonResponse(data={'data': 'Work Permit is already cancelled'}, status=200)
+            ReportObject = self.get_report_object(R['permit_name'])
+            client_id = request.session.get('client_id')
+            permit_name = R['permit_name']
+            report = ReportObject(filename=permit_name,client_id=client_id,returnfile=True,formdata={'id':R['womid']},request=request)
             sitename = Bt.objects.model(id=wom.bu_id).buname
-            workpermit_obj = GeneralWorkPermit(filename=permit_name, client_id=S['client_id'], formdata={'id':R['womid'],'sitename':sitename,'submit_button_flow':is_submit_button_flow,'filename':permit_name,'workpermit':wom.workpermit})
-            workpermit_attachment = workpermit_obj.execute()
+            workpermit_attachment = report.execute()
+            vendor_name = Vendor.objects.get(id=wom.vendor_id).name
+            permit_no   = wom.other_data['wp_seqno']
+            pdf_path = wom_utils.save_pdf_to_tmp_location(workpermit_attachment,report_name=permit_name,report_number=permit_no)
             if is_all_approved := check_all_approved(wom.uuid, request.user.peoplecode):
                 Wom.objects.filter(id=R['womid']).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
+                print("Is all approved: ",is_all_approved)
                 if is_all_approved:
                     workpermit_status = 'APPROVED'
-                    send_email_notification_for_vendor_and_security.delay(R['womid'],workpermit_attachment,sitename,workpermit_status)
+                    Wom.objects.filter(id=R['womid']).update(workstatus=Wom.Workstatus.INPROGRESS.value)
+
+                    send_email_notification_for_vendor_and_security.delay(R['womid'],sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no)
             return rp.JsonResponse(data={'status': 'Approved'}, status=200)
 
+
+        if R.get('action') == "verifier_reject_wp" and R.get("womid"):
+            log.info("Rejected Request:%s",R)
+            wom = Wom.objects.get(id = R['womid'])
+            wom.verifiers_status = Wom.WorkPermitVerifierStatus.REJECTED.value
+            wom.workstatus = Wom.Workstatus.CANCELLED.value
+            wom.workpermit = Wom.WorkPermitStatus.PENDING.value
+            wom.save()
+            reject_workpermit_verifier(wom.uuid,request.user.peoplecode)
+            return rp.JsonResponse(data={'status': 'Rejected'}, status=200)
+        
         if action == 'reject_wp' and R.get('womid'):
             wom = P['model'].objects.get(id=R['womid'])
-            Wom.objects.filter(id=R['womid']).update(workpermit=Wom.WorkPermitStatus.REJECTED.value)
+            Wom.objects.filter(id=R['womid']).update(workpermit=Wom.WorkPermitStatus.REJECTED.value,workstatus=Wom.Workstatus.CANCELLED.value)
             reject_workpermit(wom.uuid, request.user.peoplecode)
-            return rp.JsonResponse(data={'status': 'Approved'}, status=200)
+            return rp.JsonResponse(data={'status': 'Rejected'}, status=200)
 
         if action == 'form':
             import uuid
@@ -402,11 +456,13 @@ class WorkPermit(LoginRequiredMixin, View):
             wp_details = Wom.objects.get_workpermit_details(request, R['qsetid'])
             approver_codes = R['approvers'].split(',')
             approvers = wom_utils.get_approvers(approver_codes)
-            wp_details.pop(-1)
+            rwp_details = wp_details.pop(-1)
+            
             logged_in_user = request.user.peoplecode
             print(logged_in_user)
+            print("RWP Details:  ",rwp_details)
             form = P['form'](request=request, initial={'qset': R['qsetid'], 'approvers': R['approvers'].split(','),'vendor':R['vendor'],'verifiers':R['verifiers'].split(',')})
-            context = {"wp_details": wp_details, 'wpform': form, 'ownerid': uuid.uuid4(),'approvers':approvers,'remarks':'None','logged_in_user':logged_in_user}    
+            context = {"wp_details": wp_details,'wpform': form, 'ownerid': uuid.uuid4(),'approvers':approvers,'remarks':'None','logged_in_user':logged_in_user}    
             return render(request, P['template_form'], context=context)
 
         if action == 'get_answers_of_template' and R.get('qsetid') and R.get('womid'):
@@ -423,19 +479,31 @@ class WorkPermit(LoginRequiredMixin, View):
 
         if 'id' in R:   
             log.info("In this view")
+            print("Hello")
             # get work permit questionnaire
+            from apps.work_order_management.models import Approver
             obj = utils.get_model_obj(int(R['id']), request, P)
             wp_answers = Wom.objects.get_wp_answers(obj.id)
+            print("WP Answers",wp_answers)
             work_status = Wom.objects.get(id=R['id']).workstatus
             remarks  = Wom.objects.get(id=R['id']).remarks
             logged_in_user = request.user.peoplecode
+            print(logged_in_user)
+            try:
+                identifier = Approver.objects.get(people_id__peoplecode=logged_in_user).identifier
+            except Approver.DoesNotExist:
+                identifier = None
+            print("Identifier", identifier)
             cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers}
             cxt['remarks'] ='None' if remarks is None else remarks
             cxt['logged_in_user']=logged_in_user
+            cxt['identifier']=identifier
             if obj.workpermit == Wom.WorkPermitStatus.APPROVED and obj.workstatus != Wom.Workstatus.COMPLETED:
-                rwp_details = Wom.objects.get_return_wp_details(request)
+                qset_id = obj.qset.id
+                rwp_details = Wom.objects.get_return_wp_details(qset_id)
+                print("RWP DETAILS",rwp_details)
                 log.info(f"return work permit details are as follows: {rwp_details}")
-                cxt['rwp_details'] = rwp_details
+                cxt['rwp_details'] = [rwp_details]
                 cxt['work_status'] = work_status
                 
             return render(request, P['template_form'], cxt)
@@ -688,11 +756,12 @@ class VerifierReplyWorkPermit(View):
                             vendor_name = Vendor.objects.get(id=wom.vendor_id).name
                             pdf_path = wom_utils.save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=permit_no)
                             print("Sending Email to Approver to approve the work permit")
-                            approvers = wom.other_data['wp_approvers']
+                            wp_approvers = wom.other_data['wp_approvers']
                             workpermit_status = Wom.WorkPermitStatus.PENDING
-                            approvers = [approver['name'] for approver in approvers]
-                            log.info("Sending Email to Approver to approve the work permit")
-                            send_email_notification_for_workpermit_approval.delay(wom_id,approvers,sitename,workpermit_status,permit_name,pdf_path,vendor_name,client_id)
+                            approvers_name = [approver['name'] for approver in wp_approvers]
+                            approvers_code = [approver['peoplecode'] for approver in wp_approvers]
+                            log.info(f"Sending Email to Approver {approvers_name} to approve the work permit")
+                            send_email_notification_for_workpermit_approval.delay(wom_id,approvers_name,approvers_code,sitename,workpermit_status,permit_name,pdf_path,vendor_name,client_id)
                     else:
                         return render(request,P['email_template'],context={'alreadyverified':True})
                 cxt = {
@@ -777,6 +846,7 @@ class ReplyWorkPermit(View):
                         report_pdf_object = report.execute()
                         vendor_name = Vendor.objects.get(id=wom.vendor_id).name
                         pdf_path = wom_utils.save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=permit_no)
+                        Wom.objects.filter(id=R['womid']).update(workstatus=Wom.Workstatus.INPROGRESS.value)
                         send_email_notification_for_vendor_and_security.delay(wom_id,sitename,worpermit_status,vendor_name,pdf_path,permit_name,permit_no)
                 else:
                     return render(request, P['email_template'], context={'alreadyapproved':True})

@@ -1292,7 +1292,7 @@ def upload(request, vendor=False):
         
     else:
         fullpath = f'{home_dir}/master/{S["clientcode"]}_{S["client_id"]}/{foldertype}/'
-    print("Full Path",fullpath)
+    print("Full Path of saving image",fullpath)
     logger.info(f'{fullpath = }')
 
     

@@ -69,11 +69,18 @@ class QuestionSetManager(models.Manager):
     
     def handle_qsetpostdata(self, request):
         R, S = request.POST, request.session
+        from apps.activity.models import QuestionSet
+        parent_record = QuestionSet.objects.get(id=R['parent_id'])
+        assetincludes = parent_record.assetincludes
+        buincludes = parent_record.buincludes
+        site_grp_includes = parent_record.site_grp_includes
+        site_type_includes = parent_record.site_type_includes
         postdata = {'parent_id':R['parent_id'], 'ctzoffset':R['ctzoffset'], 'seqno':R['seqno'],
                     'qsetname':R['qsetname'], 'cuser':request.user, 'muser':request.user,
                     'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
                     'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
-                    'type':R['type'], 'client_id':S['client_id'], 'bu_id':S['bu_id']}
+                    'type':R['type'], 'client_id':S['client_id'], 'bu_id':S['bu_id'],'show_to_all_sites':True if R['show_to_all_sites']=='true' else False,
+                    'assetincludes':assetincludes,'buincludes':buincludes,'site_grp_includes':site_grp_includes,'site_type_includes':site_type_includes}
         if R['action'] == 'create':
             ID = self.create(**postdata).id
         
@@ -1520,6 +1527,7 @@ class QsetBlngManager(models.Manager):
         return qset or self.none()
     
     def handle_questionpostdata(self, request):
+        from .models import QuestionSet
         R, S, Id, r = request.POST, request.session, None, {}
         r['ismandatory'] = R.get('ismandatory', False) == 'true'
         r['isavpt'] = R.get('isavpt', False) == 'true'
@@ -1533,12 +1541,16 @@ class QsetBlngManager(models.Manager):
         elif R['answertype'] == 'NUMERIC' and (R['alertbelow'] or R['alertabove']):
             r['alerton'] = f"<{R['alertbelow']}, >{R['alertabove']}"
 
+        print("Question Post Data", R)
+        questionset_data = QuestionSet.objects.get(id=R['parent_id'])
+        buincludes = questionset_data.buincludes
         PostData = {'qset_id':R['parent_id'], 'answertype':R['answertype'], 'min':r.get('min', '0.0'), 'max':r.get('max', '0.0'),
                 'alerton':r.get('alerton'), 'ismandatory':r['ismandatory'], 'question_id': R['question_id'],
                 'isavpt':r['isavpt'], 'avpttype':R['avpttype'],
                 'options':r.get('options'), 'seqno':R['seqno'], 'client_id':S['client_id'], 'bu_id':S['bu_id'],
                 'cuser':request.user, 'muser':request.user, 'cdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
-                'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset'])}
+                'mdtz':utils.getawaredatetime(datetime.now(), R['ctzoffset']),
+                'buincludes':buincludes}
         if R['action'] == 'create':
             if self.filter(
                 qset_id = PostData['qset_id'], question_id = PostData['question_id'],

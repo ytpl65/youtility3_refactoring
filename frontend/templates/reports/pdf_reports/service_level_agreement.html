@@ -55,29 +55,110 @@ p {
 }
 
 .info{
-  font-size: 10px;
+  font-size: 15px;
   font-weight: bold;
-  text-decoration: underline;
 }
 
 .summary{
   display: flex;
-  font-size: 8px;
+  font-size: 15px;
+  font-weight: bold;
   justify-content: flex-end;
-  text-decoration: underline;
 }
 
+.head{
+  display: flex;
+  justify-content: space-between;
+}
+
+  .footer-notes-table {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .footer-table{
+    right: 0px;
+    margin-bottom: 5px;
+    width: 100%;
+    max-width: 400px; /* Increased from 100px */
+  }
+
+  .footer-table  table {
+    width: 100%;
+    border: 1px solid black;
+    margin: 0 auto;
+  }
+
+  .footer-table  caption {
+    font-size: 12px;
+    font-weight: bold;
+    padding: 10px 0;
+    text-align: center;
+  }
+
+  .footer-table  thead td {
+    background-color: #f5f5f5;
+    padding: 8px 15px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .footer-table tbody td {
+    padding: 8px 15px;
+    text-align: center;
+  }
+
+  .footer-table-approver{
+    width: 100%;
+    max-width: 150px;
+    margin-bottom: 5px;
+    right: 0px;
+  }
+
+  .footer-table-approver  table {
+    width: 100%;
+    border: 1px solid black;
+    margin: 0 auto;
+  }
+
+  .footer-table-approver  caption {
+    font-size: 12px;
+    font-weight: bold;
+    padding: 10px 0;
+    text-align: center;
+  }
+
+  .footer-table-approver  thead td {
+    background-color: #f5f5f5;
+    padding: 8px 15px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .footer-table-approver tbody td {
+    padding: 8px 15px;
+    text-align: center;
+  }
+
+  .footer-notes{
+    width: 100%;
+    max-width: 400px;
+  }
 
 </style>
 {% endblock %}
 
 {% block static_content %}
 <div>
-      <div class="info">Supplier Performance Tool</div>
-      <div class="summary"><span>Summary</span></div>
+      <div class="head" style="margin-bottom:10px;">
+        <div class="info">Vendor Partner Performance for - {{month_year}}</span></div>
+        <div class="summary"><span>Site - {{ sitename }}</span></div>
+        <div><img src="{{ static('assets/media/logos/capgemini_logo.svg') }}" height="30px" alt="Capgemini Logo"/></div>
+      </div>
+      <div></div>
       <div class="header">
-        <span>{{ vendor_description }}</span>
-        <span>{{ vendor_name }}</span>
+        <span>Vendor Name: {{ vendor_name }}</span>
+        <span>Service Description: {{ vendor_description }}</span>
       </div>
       <table>
         <thead>
@@ -222,17 +303,56 @@ p {
         </tbody>
     </table>
 
-
-  <p>Key for reappointment</p>
-  <p>Less than 50% score - Vendor needs to be replaced</p>
-  <p>Between 50% to 60%  - Vendor Business needs to be reduced</p>
-  <p>Between 60% to 80%  - Vendor has to be continued with option of alternate vendor </p>
-  <p>Above 80%           - Vendor has to be continued with additional business also </p>
-
-<br>
-<br>
-
-  <p><b>Score is low because of:- {{ remarks[0]}} </b></p>
+  <div class="footer-notes-table">
+      <div class="footer-notes">
+          <h6 style="font-weight:bold; margin-bottom:-5px;">Key for reappointment</h6>
+            <ul style="font-size: 10px;">
+              <li>Less than 50% score - Vendor needs to be replaced</li>
+              <li>Between 50% to 60%  - Vendor Business needs to be reduced</li>
+              <li>Between 60% to 80%  - Vendor has to be continued with option of alternate vendor</li>
+              <li>Above 80%           - Vendor has to be continued with additional business also</li>
+            </ul>
+      </div>
+      {% if workpermit_status=='APPROVED' %}
+      <div class="footer-table-approver">
+        <table>
+          <caption>Approved By</caption>
+          <tbody>
+            {% for approver in sla_report_approvers %}
+              <tr>
+                <td>{{ approver }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+      <div class="footer-table">
+        <table>
+          <caption>Last 3 Month Performance</caption>
+          <thead>
+            <tr>
+                <td>Month</td>
+                <td>Score</td>
+            </tr>
+          </thead>
+        <tbody>
+            {% for month, score in sla_last_three_month_report.items() %}
+            <tr>
+                <td>{{ month }}</td>
+                <td>{{ score }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+      </div>
+    </div>
+    <br>
+  </div>
+  <div style="font-size: 10px;">
+    <b>Score is low because of </b> - {{ remarks[0]}}
+  </div>
+  
 </div>
 
 {% endblock static_content %}

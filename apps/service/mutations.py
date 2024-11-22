@@ -168,6 +168,7 @@ class InsertRecord(graphene.Mutation):
     def mutate(cls, root, info, records):
         log.warning("\n\ninsert-record mutations start [+]")
         db = cutils.get_current_db_name()
+        log.info(f"Records: {records}")
         o = sutils.perform_insertrecord(records=records, db=db)
         log.info(f"Response: # records updated:{o.recordcount}, msg:{o.msg}, rc:{o.rc}, traceback:{o.traceback}")
         log.warning("insert-record mutations end [-]")

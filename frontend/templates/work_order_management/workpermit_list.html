@@ -65,13 +65,13 @@ $(document).ready(function(){
             { data:'id', visible:false, searchable:false, className:'noVis'},
             {title:'Plandatetime', data:'cdtz'},
             {title:'Permit No', data:'other_data__wp_seqno', width:"10%"},
-            {title:'Work Permit Report', data:'qset__qsetname'},
+            {title:'Permit Name', data:'qset__qsetname'},
             {title:'Verifer Status',data:'verifiers_status'},
             {title:'Approval Status', data:'workpermit'},
             {title:'Work Status', data:'workstatus'},
             {title:'Vendor Name',data:'vendor__name'},
             {title:'Site', data:'bu__buname',visible:false},
-            {title:'Action', data:null, defaultContent:'<a href="#" class="edit-link">Report&nbsp;<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i></a>'},
+            {title:'Action', data:null, defaultContent:'<a href="#" class="edit-link">View&nbsp;<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i></a>'},
             {title:'Site Code', data:'bu__bucode', visible:false},
             {visible:false, data:"ctzoffset", className:'noVis'}
         ],
@@ -107,7 +107,8 @@ $(document).ready(function(){
             }
         },
             {targets:6, render:function(data, type, row, meta){
-                if(data === 'ASSIGNED'){return `<span class="badge fs-9 badge-secondary">${data}</span>`}
+                if(data === 'ASSIGNED'){return `<span class="badge fs-9 badge-primary">${data}</span>`}
+                else if (data === 'INPROGRESS'){return `<span class="badge fs-9 badge-warning">${data}</span>`}
                 else if (data === 'COMPLETED'){return `<span class="badge fs-9 badge-success">${data}</span>`}
                 else if (data === 'CANCELLED'){return `<span class="badge fs-9 badge-danger">${data}</span>`}
             }

@@ -175,6 +175,8 @@ function makeReadonlyFields() {
 }
 
 function makeReadonlyFieldsUnderClass(className) {
+
+  console.log("Class Name: ",className)
   // Disable checkboxes
   $("." + className + " input[type='checkbox']").prop("disabled", true);
   // Disable text fields

@@ -2,7 +2,7 @@
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
-SLA List
+Vendor Performance
 {% endblock card_title %}
 <!----- END CARD TITLE -------->
 
@@ -12,7 +12,7 @@ SLA List
 <!------------------------------------ BEGIN PAGE BREADCUMBS ------------------------------------>
 {% block pagebreadcumb %}
 {{ super() }}
-<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">SLA List</a></li>
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Vendor Performance</a></li>
 {% endblock pagebreadcumb %}
 <!------------------------------------- END PAGE BREADCUMBS ------------------------------------->
 
@@ -124,6 +124,14 @@ $(document).ready(function(){
                 }
             }
         ]
+    })
+
+    initDateRangeHtml()
+    initDateRange("#id_daterange").on('apply.daterangepicker', function(e, picker){
+        from_pd = picker.startDate.format('YYYY-MM-DD');
+        to_pd = picker.endDate.format('YYYY-MM-DD');
+        let filters = {from:from_pd, to:to_pd}
+        reloadTable(table, filters)
     })
 
     if (is_sla_approver === true) {

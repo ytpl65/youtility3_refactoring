@@ -307,51 +307,122 @@ def create_ppm_job(jobid=None):
     return resp, F, d, result
 
 
+# @app.task(bind=True, default_retry_delay=300, max_retries=5, name='Face recognition')
+# def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
+#     # sourcery skip: remove-redundant-except-handler
+#     result = {'story': "perform_facerecognition_bgt()\n", "traceback": ""}
+#     result['story'] += f"inputs are {pel_uuid = } {peopleid = }, {db = }\n"
+#     try:
+#         mqlog.info("perform_facerecognition ...start [+]")
+#         with transaction.atomic(using=utils.get_current_db_name()):
+#             utils.set_db_for_router(db)
+#             if pel_uuid not in [None, 'NONE', '', 1] and peopleid not in [None, 'NONE', 1, ""]:
+#                 Attachment = apps.get_model('activity', 'Attachment')
+#                 pel_att = Attachment.objects.get_people_pic(
+#                     pel_uuid, db)  # people event pic
+#                 # people default profile pic
+#                 People = apps.get_model('peoples', 'People')
+#                 people_obj = People.objects.get(id=peopleid)
+#                 default_peopleimg = f'{settings.MEDIA_ROOT}/{people_obj.peopleimg.url.replace("/youtility4_media/", "")}'
+#                 default_peopleimg = static('assets/media/images/blank.png') if default_peopleimg.endswith('blank.png') else default_peopleimg  
+#                 if default_peopleimg and pel_att.people_event_pic:
+#                     images_info = f"default image path:{default_peopleimg} and uploaded file path:{pel_att.people_event_pic}"
+#                     mqlog.info(f'{images_info}')
+#                     result['story'] += f'{images_info}\n'
+#                     from deepface import DeepFace
+#                     fr_results = DeepFace.verify(
+#                         img1_path=default_peopleimg, img2_path=pel_att.people_event_pic, enforce_detection=True, detector_backend='ssd')
+#                     mqlog.info(
+#                         f"deepface verification completed and results are {fr_results}")
+#                     result[
+#                         'story'] += f"deepface verification completed and results are {fr_results}\n"
+#                     PeopleEventlog = apps.get_model(
+#                         'attendance', 'PeopleEventlog')
+#                     if PeopleEventlog.objects.update_fr_results(fr_results, pel_uuid, peopleid, db):
+#                         mqlog.info(
+#                             "updation of fr_results in peopleeventlog is completed...")
+#     except ValueError as v:
+#         mqlog.error(
+#             "face recogntion image not found or face is not there...", exc_info=True)
+#         result['traceback'] += f'{tb.format_exc()}'
+#     except Exception as e:
+#         mqlog.critical(
+#             "something went wrong! while performing face-recogntion in background", exc_info=True)
+#         result['traceback'] += f'{tb.format_exc()}'
+#         self.retry(e)
+#         raise
+#     return result
+    
 @app.task(bind=True, default_retry_delay=300, max_retries=5, name='Face recognition')
 def perform_facerecognition_bgt(self, pel_uuid, peopleid, db='default'):
-    # sourcery skip: remove-redundant-except-handler
     result = {'story': "perform_facerecognition_bgt()\n", "traceback": ""}
     result['story'] += f"inputs are {pel_uuid = } {peopleid = }, {db = }\n"
+    
+    # Threshold for 85% similarity (0.15 in cosine distance metric)
+    threshold = 0.15
+    
     try:
-        mqlog.info("perform_facerecognition ...start [+]")
+        log.info("perform_facerecognition ...start [+]")
         with transaction.atomic(using=utils.get_current_db_name()):
             utils.set_db_for_router(db)
             if pel_uuid not in [None, 'NONE', '', 1] and peopleid not in [None, 'NONE', 1, ""]:
+                # Retrieve the event picture
                 Attachment = apps.get_model('activity', 'Attachment')
-                pel_att = Attachment.objects.get_people_pic(
-                    pel_uuid, db)  # people event pic
-                # people default profile pic
+                pel_att = Attachment.objects.get_people_pic(pel_uuid, db)  # people event pic
+                
+                # Retrieve the default profile picture of the person
                 People = apps.get_model('peoples', 'People')
                 people_obj = People.objects.get(id=peopleid)
                 default_peopleimg = f'{settings.MEDIA_ROOT}/{people_obj.peopleimg.url.replace("/youtility4_media/", "")}'
+                
+                # Use a placeholder image if the default one is blank
                 default_peopleimg = static('assets/media/images/blank.png') if default_peopleimg.endswith('blank.png') else default_peopleimg  
+                
                 if default_peopleimg and pel_att.people_event_pic:
                     images_info = f"default image path:{default_peopleimg} and uploaded file path:{pel_att.people_event_pic}"
-                    mqlog.info(f'{images_info}')
+                    log.info(f'{images_info}')
                     result['story'] += f'{images_info}\n'
+                    
+                    # Perform face verification using DeepFace
                     from deepface import DeepFace
                     fr_results = DeepFace.verify(
-                        img1_path=default_peopleimg, img2_path=pel_att.people_event_pic, enforce_detection=True, detector_backend='ssd')
-                    mqlog.info(
-                        f"deepface verification completed and results are {fr_results}")
-                    result[
-                        'story'] += f"deepface verification completed and results are {fr_results}\n"
-                    PeopleEventlog = apps.get_model(
-                        'attendance', 'PeopleEventlog')
+                        img1_path=default_peopleimg, 
+                        img2_path=pel_att.people_event_pic, 
+                        threshold=0.4,
+                        enforce_detection=True, 
+                        detector_backend='mtcnn', 
+                        model_name='Facenet512',  # Using a stronger model
+                        distance_metric='cosine'  # Cosine distance metric for similarity comparison
+                    )
+                    
+                    log.info(f"deepface verification completed and results are {fr_results}")
+                    result['story'] += f"deepface verification completed and results are {fr_results}\n"
+                    
+                    # Manually check the distance against the 85% threshold (0.15)
+                    if fr_results['distance'] <= threshold:
+                        log.info(f"Faces match with at least 85% similarity")
+                        result['story'] += f"Faces match with at least 85% similarity\n"
+                    else:
+                        log.info(f"Faces do not match (distance {fr_results['distance']} > {threshold})")
+                        result['story'] += f"Faces do not match (distance {fr_results['distance']} > {threshold})\n"
+                    
+                    # Update the face recognition results in the event log
+                    PeopleEventlog = apps.get_model('attendance', 'PeopleEventlog')
+                    log.info("%s %s %s",fr_results,pel_uuid,peopleid)
                     if PeopleEventlog.objects.update_fr_results(fr_results, pel_uuid, peopleid, db):
-                        mqlog.info(
-                            "updation of fr_results in peopleeventlog is completed...")
+                        log.info("updation of fr_results in peopleeventlog is completed...")
+                        
     except ValueError as v:
-        mqlog.error(
-            "face recogntion image not found or face is not there...", exc_info=True)
+        log.error("face recognition image not found or face is not there...", exc_info=True)
         result['traceback'] += f'{tb.format_exc()}'
     except Exception as e:
-        mqlog.critical(
-            "something went wrong! while performing face-recogntion in background", exc_info=True)
+        log.critical("something went wrong! while performing face-recognition in background", exc_info=True)
         result['traceback'] += f'{tb.format_exc()}'
         self.retry(e)
         raise
+    
     return result
+
 
 
 @app.task(bind=True,  name="alert_sendmail()")
@@ -438,7 +509,7 @@ def create_report_history(self, formdata, userid, buid, EI):
 
 
 @shared_task(bind=True, name="Send Email Notification to Approver")
-def send_email_notification_for_workpermit_approval(self,womid,approvers,sitename,workpermit_status,permit_name,workpermit_attachment,vendor_name,client_id):
+def send_email_notification_for_workpermit_approval(self,womid,approvers,approvers_code,sitename,workpermit_status,permit_name,workpermit_attachment,vendor_name,client_id):
     jsonresp = {'story': "", "traceback": ""}
     try:
         from django.apps import apps 
@@ -450,10 +521,13 @@ def send_email_notification_for_workpermit_approval(self,womid,approvers,sitenam
         # log.info(f"wp_details: {wp_details}")
         log.info(f"Approvers: {approvers}")
         jsonresp['story'] += f"\n{wp_details}"
+        log.info(f"WP Details{wp_details}")
         if wp_details:
-            qset = People.objects.filter(peoplecode__in = approvers)
+            qset = People.objects.filter(peoplecode__in = approvers_code)
+            log.info(f"Qset {qset}")
             for p in qset.values('email','id'):
                 log.info(f"Sending Email to {p['email'] = }")
+                log.info(f"{permit_name}-{wp_obj.other_data['wp_seqno']}-{sitename}-Approval Pending")
                 msg = EmailMessage()
                 msg.subject = f"{permit_name}-{wp_obj.other_data['wp_seqno']}-{sitename}-Approval Pending"            
                 msg.to = [p['email']]
@@ -469,11 +543,13 @@ def send_email_notification_for_workpermit_approval(self,womid,approvers,sitenam
                     'vendor_name':vendor_name,
                     'client_id':client_id,
                 }
+                log.info(f'Context: {cxt}')
                 html = render_to_string(
                     'work_order_management/workpermit_approver_action.html',context=cxt
                 )
                 msg.body = html
                 msg.content_subtype = 'html'
+                log.info(f'Attachment {workpermit_attachment}')
                 msg.attach_file(workpermit_attachment, mimetype='application/pdf')
                 msg.send()
                 dlog.info(f"Email sent to {p['email'] = }")
@@ -632,31 +708,38 @@ def send_email_notification_for_sla_vendor(self,wom_id,report_attachment,sitenam
         from apps.work_order_management.models import Vendor
         from django.template.loader import render_to_string
         from dateutil.relativedelta import relativedelta
-
+        from apps.work_order_management.utils import approvers_email_and_name,get_peoplecode
         wom = Wom.objects.filter(uuid=wom_id)
         month = (datetime.now() - relativedelta(months=1)).strftime('%B')
         current_year = datetime.now().year
         vendor_details = Vendor.objects.filter(id=wom[0].vendor_id).values('name','email')
         vendor_name = vendor_details[0].get('name')
         vendor_email = vendor_details[0].get('email')
+        wp_approvers = wom[0].other_data['wp_approvers']
+        people_codes = get_peoplecode(wp_approvers)
+        approver_emails,approver_name = approvers_email_and_name(people_codes)
         msg = EmailMessage()
         sla_seqno = wom[0].other_data['wp_seqno']
-        msg.subject = f" {sitename} Vendor Performance of {vendor_name} of {month}-{current_year}:"
+        msg.subject = f" {sitename}: Vendor Performance of {vendor_name} of {month}-{current_year}"
         msg.to = [vendor_email]
+        msg.cc = approver_emails
         msg.from_email = settings.EMAIL_HOST_USER
-
+        approvedby = ''
+        for name in approver_name:
+            approvedby+=name+' '
         
         cxt = {
-            'sla_report_no':sla_seqno,
-            'sitename':sitename,
-            'report_name':'Vendor Performance Report',
+            "sla_report_no": sla_seqno,
+            "sitename": sitename,
+            "report_name": "Vendor Performance Report",
+            "approvedby": approvedby,
+            "service_month":(datetime.now() - relativedelta(months=1)).strftime('%B %Y')
         }
         html = render_to_string(
             'work_order_management/sla_vendor.html', context=cxt)
         msg.body = html
         msg.content_subtype = 'html'
 
-        
         msg.attach_file(report_attachment, mimetype='application/pdf')
         msg.send()
         dlog.info(f"email sent to {vendor_email}")
@@ -930,7 +1013,7 @@ def send_email_notification_for_sla_report(self,slaid,sitename):
                 cxt = {'sections': sla_details, 'peopleid':p['id'],
                     "HOST": settings.HOST, "slaid": slaid,'sitename':sitename,'rounded_overall_score':rounded_overall_score,
                     'peopleid':p['id'],'reportid':uuid,'report_name':'Vendor Performance','report_no':report_no,'status':status,
-                    'vendorname':vendor_name
+                    'vendorname':vendor_name,'service_month':(datetime.now() - relativedelta(months=1)).strftime('%B %Y')
                     }
                 html = render_to_string(
                     'work_order_management/sla_report_approver_action.html', context=cxt)
@@ -945,3 +1028,12 @@ def send_email_notification_for_sla_report(self,slaid,sitename):
         dlog.critical("something went wrong while runing sending email to approvers", exc_info=True)
         jsonresp['traceback'] += tb.format_exc()
     return jsonresp
+
+
+
+@shared_task(name="send mismatch notification")
+def send_mismatch_notification(mismatch_data):
+    # This task sends mismatch data to the NOC dashboard
+    print(f"Mismatch detected: {mismatch_data}")
+    log.info(f"Mismatched detected: {mismatch_data}")
+    # Add logic to send data to NOC dashboard

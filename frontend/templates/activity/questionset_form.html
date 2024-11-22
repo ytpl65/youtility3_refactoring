@@ -139,7 +139,7 @@ Question Set
 <div class="row report_section" style="display:none;">
     <div class="card">
         <div class="card-body">
-            <h4 class="ch4 sections">#List Of Sections</h4>
+            <h4 class="ch4 sections">List Of Sections</h4>
             <table id="tabSitereports" class="display sections cell-border compact hover">
             </table>
             <br>
@@ -198,6 +198,7 @@ Question Set
 
 
     function showSectionConfiguration(){
+        let show_to_all_sites = $('#id_show_to_all_sites').is(':checked')
         //editor section table
         parentEditor = new $.fn.dataTable.Editor({
             table: "#tabSitereports",
@@ -215,6 +216,7 @@ Question Set
                     d.qsetname = $('#DTE_Field_qsetname').val()
                     d.type = 'SITEREPORTTEMPLATE'
                     d.seqno = $('#DTE_Field_seqno').val()
+                    d.show_to_all_sites = show_to_all_sites
                 }
             },
             idSrc:  'id',

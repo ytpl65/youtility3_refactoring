@@ -17,7 +17,7 @@ import getpass
 logger = logging.getLogger('__main__')
 log = logger
 import os
-from apps.reports.report_designs.workpermit import GeneralWorkPermit
+# from apps.reports.report_designs.workpermit import GeneralWorkPermit
 def check_attachments_if_any(wo):
     from apps.activity.models import Attachment
     return Attachment.objects.get_att_given_owner(wo.uuid)
@@ -77,6 +77,7 @@ def check_all_verified(womuuid,usercode):
     return all_verified
         
 def check_all_approved(womuuid, usercode):
+    print("Here I am ")
     w = Wom.objects.filter(uuid = womuuid).first()
     all_approved = True
     log.info(f"{usercode}, {womuuid}")
@@ -93,7 +94,9 @@ def check_all_approved(womuuid, usercode):
     
 def reject_workpermit(womuuid, usercode):
     w = Wom.objects.filter(uuid = womuuid).first()
-    for approver in w.other_data['wp_approvers']:
+    for approver in w.other_data['wp_verifiers']:
+        print("User Code",usercode)
+        print("Approver Code ",approver['peoplecode'])
         if approver['peoplecode'] == usercode:
             approver['status'] = 'REJECTED'
     w.save()
@@ -102,8 +105,12 @@ def reject_workpermit(womuuid, usercode):
 def reject_workpermit_verifier(womuuid, usercode):
     w = Wom.objects.filter(uuid = womuuid).first()
     for verifier in w.other_data['wp_verifiers']:
-        if verifier['name'] == usercode:
+        print("Verifier: data ",verifier)
+        if verifier['peoplecode'] == usercode:
             verifier['status'] = 'REJECTED'
+    for approver in w.other_data['wp_approvers']:
+        print(approver)
+        approver['status'] = 'PENDING'
     w.save()
     
 def save_approvers_injson(wp):
@@ -318,3 +325,74 @@ def get_report_object(permit_name):
     }.get(permit_name)
 
 
+
+from django.db.models import Max
+from datetime import datetime, timedelta
+
+def get_last_3_months_sla_reports(vendor_id, bu_id):
+    sla_reports = {}
+
+    # Get the last 3 months' approved records, excluding the current month
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+
+    months = ['January', 'February', 'March', 'April', 'May', 'June',
+              'July', 'August', 'September', 'October', 'November', 'December']
+
+    for i in range(1, 4):
+        month = current_month - i
+        year = current_year
+        if month <= 0:
+            month += 12
+            year -= 1
+
+        month_name = months[month - 1]
+        month_year = f"{month_name} {year}"
+
+        latest_report = Wom.objects.filter(
+            vendor_id=vendor_id,
+            identifier='SLA',
+            bu_id=bu_id,
+            workpermit=Wom.WorkPermitStatus.APPROVED,
+            cdtz__month=month,
+            cdtz__year=year
+        ).aggregate(max_date=Max('cdtz'))
+
+        if latest_report['max_date']:
+            report = Wom.objects.filter(
+                vendor_id=vendor_id,
+                identifier='SLA',
+                bu_id=bu_id,
+                workpermit=Wom.WorkPermitStatus.APPROVED,
+                cdtz=latest_report['max_date']
+            ).first()
+            sla_reports[month_year] = report.other_data['overall_score']
+        else:
+            sla_reports[month_year] = '-'
+
+    return sla_reports
+
+
+def get_sla_report_approvers(sla_approvers):
+    approver_name = []
+    print(sla_approvers)
+    for data in sla_approvers:
+        approver_name.append(data['name'])
+    return approver_name
+
+def get_peoplecode(wp_approvers):
+    people_codes = []
+    for approver_data in wp_approvers:
+        peoplecode = approver_data['peoplecode']
+        people_codes.append(peoplecode)
+    return people_codes
+
+def approvers_email_and_name(people_codes):
+    approvers_email = []
+    approvers_name  = []
+    for people_code in people_codes:
+        data = People.objects.filter(peoplecode=people_code).values('peoplename','email')[0]
+        name,email  = data['peoplename'],data['email']
+        approvers_email.append(email)
+        approvers_name.append(name)
+    return approvers_email,approvers_name

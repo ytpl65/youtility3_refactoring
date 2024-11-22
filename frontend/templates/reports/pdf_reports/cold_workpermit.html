@@ -203,7 +203,8 @@ li {
         <h5>Approved by: </h5>{{ approvers }}
     </div>
     
-
+    {% if approvers %}
+    <p>Hello</p>
     <h4>Return Permit Details :</h4>
     <table border="1">
         {% for question in rwp_info['questions'] %}
@@ -213,6 +214,7 @@ li {
         </tr>
         {% endfor %}
     </table>
+    {% endif %}
 </div>
 
 

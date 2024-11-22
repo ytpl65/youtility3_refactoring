@@ -96,15 +96,15 @@ class QuestionSet(BaseModel, TenantAwareModel):
 
     qsetname           = models.CharField(_("QuestionSet Name"), max_length = 200)
     enable             = models.BooleanField(_("Enable"), default = True)
-    assetincludes      = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Asset Includes"))
-    buincludes         = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Bu Includes"))
+    assetincludes      = ArrayField(models.CharField(max_length = 100, blank = True), null = True, blank = True, verbose_name= _("Asset Includes"))
+    buincludes         = ArrayField(models.CharField(max_length = 100, blank = True), null = True, blank = True, verbose_name= _("Bu Includes"))
     seqno              = models.SmallIntegerField(_("Sl No."), default = 1)
     parent             = models.ForeignKey("self", verbose_name = _("Belongs To"), on_delete = models.RESTRICT, null = True, blank = True)
     type               = models.CharField( _("Type"), choices = Type.choices, null = True, max_length = 50)
     bu                 = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, related_name='qset_bus', null = True, blank = True)
     client             = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete = models.RESTRICT, related_name='qset_clients', null = True, blank = True)
-    site_grp_includes  = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Site Group Includes"))
-    site_type_includes = ArrayField(models.CharField(max_length = 50, blank = True), null = True, blank = True, verbose_name= _("Site Type Includes"))
+    site_grp_includes  = ArrayField(models.CharField(max_length = 100, blank = True), null = True, blank = True, verbose_name= _("Site Group Includes"))
+    site_type_includes = ArrayField(models.CharField(max_length = 100, blank = True), null = True, blank = True, verbose_name= _("Site Type Includes"))
     show_to_all_sites = models.BooleanField(_("Applicable to all sites"), default=False)
     url                = models.CharField(_("Url"), max_length = 250, null = True, blank = True, default="NONE")
 
@@ -173,6 +173,7 @@ class QuestionSetBelonging(BaseModel, TenantAwareModel):
     client            = models.ForeignKey("onboarding.Bt", verbose_name = _("Client"), on_delete = models.RESTRICT, null = True, blank = True, related_name='qsetbelong_client')
     alertmails_sendto = models.JSONField( _("Alert mails send to"), encoder = DjangoJSONEncoder, default = alertmails_sendto)
     bu                = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='qsetbelong_bu')
+    buincludes        = ArrayField(models.CharField(max_length = 100, blank = True), null = True, blank = True, verbose_name= _("Bu Includes"))
 
     objects = QsetBlngManager()
     class Meta(BaseModel.Meta):

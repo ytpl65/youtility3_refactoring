@@ -57,7 +57,7 @@ const formid          = "#approverform"
                 {title:"Sites", data:"sites"},
                 {title:"Approver", data:"people__peoplename"},
                 {title:"All Sites",data:"forallsites", render:function(data, type, row, meta){
-                    return data === true ? '<i class="bi bi-check-circle-fill text-success"></i> Active': '<i class="bi bi-x-circle-fill text-danger"></i> Inactive' 
+                    return data === true ? '<i class="bi bi-check-circle-fill text-success"></i> True': '<i class="bi bi-x-circle-fill text-danger"></i> False' 
                 }},
                 {title:"Created By", data:"cuser__peoplename"},
                 {title:"Role",data:"identifier"},

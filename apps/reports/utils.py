@@ -186,6 +186,7 @@ class BaseReportsExport(WeasyTemplateResponseMixin):
         return response
     
     def get_client_logo(self):
+        print("Client ID: ",self.client_id)
         bt = Bt.objects.get(id=self.client_id)
         uuid, buname = bt.uuid, bt.buname
         log.info("UUID: %s",uuid)

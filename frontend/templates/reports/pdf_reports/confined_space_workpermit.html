@@ -1,126 +1,10 @@
-{# {% extends "reports/pdf_reports/workpermit_base.html" %}
-
-{% block inline_css %}
-<style>
-.logos{
-    width: 5.8rem;
-    height: 3.8rem;
-}
-#subtitle{
-    background-color: #01579b;
-    color:white;
-    padding-left: 80px;
-    padding-right: 80px;
-    padding-top: 6px;
-    padding-bottom: 6px;
-    border-radius: 25px;
-}
-</style>
-{% endblock inline_css %}
-
-{% block header_start %}
-<img src="{{ client_logo }}" alt="" class="logos">
-{% endblock header_start %}
-
-
-{% block header_end %}
-<div>
-    <img src="{{ static('assets/media/images/reportlogo.png') }}" alt="SPS" class="companylogo">
-</div>
-{% endblock header_end %}
-
-
-{% block header_center %}
-<div id="title">
-    <div>
-        <p id="main_title">{{ main_title }}</p>
-        <p id="subtitle">{{ report_subtitle }}</p>
-    </div>
-</div>
-{% endblock header_center %}
-
-
-{% block wp_info %}
-    <div class="mr ">
-        <span>Work Permit Type:</span>{{ "&nbsp;"*5 }} <span
-            class="dashed-text bold-label" >{{ report_subtitle }}</span>
-    </div>
-    {% if wp_info  %}
-        {% for info in wp_info['questions'] %}
-            {% if info['question__quesname'] != 'Name Of People Working' %}
-            <div class="mr">
-                <span>{{ info['question__quesname'] }}:</span>{{ "&nbsp;"*5 }} <span
-                    class="subtle-black dashed-text" style="width: 100%;">{{ info['answer'] }}</span>
-            </div>
-            {% else %}
-                {% set peoples = info['answer'].split(',') %}
-                <table id="peoples">
-                    <tr>
-                        <td width="30%" class="subtle-black">Name of People Working:</td>
-                        <td class="subtle-black dashed-text">1. &nbsp;{{peoples[0] }}</td>
-                    </tr>
-                    {% for i in range(1, peoples|count) %}
-                    <tr>
-                        <td></td>
-                        <td class="subtle-black dashed-text">{{ loop.index + 1 }}. &nbsp;{{ peoples[i].strip() }}</td>
-                    </tr>
-                    {% endfor %}
-                </table>
-            {% endif %}
-
-        {% endfor %}
-    {% endif %}
-{% endblock wp_info %}
-
-
-{% block wp_sections %}
-<table id="wp_sections">
-    {% for section in wp_sections %}
-        {% if section['section'] != 'EMAIL' %}
-        <thead>
-            <tr>
-                <th>{{ section['section'] }}</th>
-                <th>OPTIONS</th>
-                <th>ANSWERED</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for question in section['questions'] %}
-            <tr>
-                <td>{{ question['question__quesname'] }}</td>
-                {% set current_options = question['options'].replace(',', ' / ') %}
-                <td>{{ current_options }}</td>
-                <td>{{ question['answer'] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-        {% endif %}
-    {% endfor %}
-</table>
-{% endblock wp_sections %}
-
-
-
-{% block rwp_section %}
-<p style="font-weight: 500;">{{ rwp_info['section'] }}</p>
-{% for question in rwp_info['questions'] %}
-<div class="mr">
-    <span style="color: rgb(47, 47, 47); font-weight:500">{{ question['question__quesname'] }}&nbsp;:</span>{{" "*5}}<span
-        class="w-100">{{ question['answer'] }}</span>
-</div>
-{% endfor %}
-{% endblock rwp_section %} #}
-
-
-
-
 {% extends "reports/pdf_reports/workpermit_base.html" %}
 
 {% block inline_css %}
 <style>
 .logos{
-    width: 5.8rem;
-    height: 3.8rem;
+    width: 9rem;
+    height: 4rem;
 }
 #subtitle{
     background-color: #01579b;
@@ -136,6 +20,7 @@
     display:flex;
     justify-content: center;
 }
+
 .spaced-row-after td {
             position: relative;
         }
@@ -241,30 +126,59 @@ li {
     {% endif %}
 {% endblock wp_info %}
 
-
 {% block wp_sections %}
-<br>
-<table id="wp_sections">
-    {% for section in wp_sections %}
-        <thead>
-            <tr>
-                <th>{{ section['section'] }}</th>
-                <th>OPTIONS</th>
-                <th>ANSWERED</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for question in section['questions'] %}
-            <tr>
-                <td>{{ question['question__quesname'] }}</td>
-                {% set current_options = question['options'].replace(',', ' / ') %}
-                <td>{{ current_options }}</td>
-                <td>{{ question['answer'] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
+    <br>
+    <table id="wp_sections">
+        {% for section in wp_sections %}
+            <thead>
+                <tr>
+                    <th>{{ section['section'] }}</th>
+                    <th>OPTIONS</th>
+                    <th>ANSWER</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for question in section['questions'] %}
+                <tr>
+                    <td>{{ question['question__quesname'] }}</td>
+                    {% set current_options = question['options'].replace(',', ' / ') %}
+                    <td>{{ current_options }}</td>
+                    <td>{{ question['answer'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+    </table>
     {% endfor %}
-</table>
+    {% endblock wp_sections %}
+    <br>
+
+
+    {% block rwp_section %}
+    <br>
+        {% if verifiers_status=='APPROVED' and approvers_status=='APPROVED' %}
+        <table border="1">
+            {% for section in rwp_info %}
+                <thead>
+                    <tr>
+                        <th>{{ section['section'] }}</th>
+                        <th>Answer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for question in rwp_info[0]['questions'] %}
+                        <tr>
+                            <td >{{ question['question__quesname'] }}</td>
+                            <td >{{ question['answer'] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                    {% endfor %}
+                </table>
+            {% endif %}
+        </table>
+    {% endblock rwp_section %}
+    
+{% block static_content %}
 
 <div class="new-page border-class">
     <br>
@@ -347,20 +261,8 @@ li {
         <h5>Verified by: </h5> {{ verifiers }}
         <h5>Approved by: </h5>{{ approvers }}
     </div>
-    
-    
-    
-    
-    <h4>Return Permit Details :</h4>
-    <table border="1">
-        {% for question in rwp_info['questions'] %}
-        <tr>
-            <td >{{ question['question__quesname'] }}</td>
-            <td >{{ question['answer'] }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+
 </div>
 
+{% endblock static_content %}
 
-{% endblock wp_sections %}

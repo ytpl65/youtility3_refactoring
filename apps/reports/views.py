@@ -356,6 +356,8 @@ class ConfigSiteReportTemplate(LoginRequiredMixin, View):
     @staticmethod
     def handle_valid_form(form, request, data):
         try:
+            print("Request", request.POST)
+            print("Data", data)
             with transaction.atomic(using=utils.get_current_db_name()):
                 template = form.save()
                 template.parent_id = data.get('parent_id', 1)
@@ -952,43 +954,53 @@ def getAllUAN(company, customer_code, site_code, periods):
     uan_data= get_frappe_data(company, 'Employee', filters, fields) or []
     return [uan_detail['uan_number'].strip() if uan_detail['uan_number'] else None for uan_detail in uan_data], [uan_detail['esi_number'].strip() if uan_detail['esi_number'] else None for uan_detail in uan_data]
 
+def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):
+    import fitz  # PyMuPDF library
 
-def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):        
     # Open the PDF
     document = fitz.open(input_pdf_path)
     pages_to_keep = []
+    orange_color = (1, 0.647, 0)  # RGB values for orange
 
-    # Check and highlight text on the first page
-    if document.page_count > 0:
-        first_page = document[0]
-        first_page_has_highlight = False
+    # Function to handle text splitting
+    def find_and_highlight_text(page, text):
+        """Search for text and highlight it even if it's split across lines or cells."""
+        words = page.get_text("words")  # Extract words as bounding boxes
+        for i, word in enumerate(words):
+            if text.startswith(word[4]):
+                combined_text = word[4]
+                bbox = [word[:4]]  # Collect bounding boxes
+                j = i + 1
 
-        for text in texts_to_highlight:
-            if text:
-                text_instances = first_page.search_for(text)
-                if text_instances:
-                    first_page_has_highlight = True
-                    for inst in text_instances:
-                        highlight = first_page.add_highlight_annot(inst)
+                # Try to combine subsequent words
+                while j < len(words) and not combined_text == text:
+                    combined_text += words[j][4]
+                    bbox.append(words[j][:4])
+                    j += 1
+
+                if combined_text == text:
+                    # Highlight the combined bounding boxes
+                    for box in bbox:
+                        highlight = page.add_highlight_annot(fitz.Rect(box))
+                        highlight.set_colors(stroke=orange_color)  # Set highlight color
                         highlight.update()
-        
-        # Always keep the first page
-        pages_to_keep.append(0)
+                    return True
+        return False
 
-    # Check and highlight text on subsequent pages
-    for page_num in range(1, document.page_count):  # Start from page 1
+    # Check and highlight text on each page
+    for page_num in range(document.page_count):
         page = document[page_num]
         page_has_highlight = False
         for text in texts_to_highlight:
-            if text:
-                text_instances = page.search_for(text)
-                if text_instances:
-                    page_has_highlight = True
-                    for inst in text_instances:
-                        highlight = page.add_highlight_annot(inst)
-                        highlight.update()
-        if page_has_highlight:
+            if text and find_and_highlight_text(page, text):
+                page_has_highlight = True
+
+        if page_has_highlight or page_num == 0:  # Always keep the first page
             pages_to_keep.append(page_num)
+
+    # Ensure the last page is included
+    if document.page_count - 1 not in pages_to_keep:
+        pages_to_keep.append(document.page_count - 1)
 
     # Create a new document with all pages to be kept
     new_document = fitz.open()
@@ -999,6 +1011,55 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):
     new_document.save(output_pdf_path)
     new_document.close()
     document.close()
+
+# def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):        
+#     # Open the PDF
+#     document = fitz.open(input_pdf_path)
+#     pages_to_keep = []
+#     orange_color = (1, 0.647, 0)  # RGB values for orange
+#     # Check and highlight text on the first page
+#     if document.page_count > 0:
+#         first_page = document[0]
+#         first_page_has_highlight = False
+
+#         for text in texts_to_highlight:
+#             if text:
+#                 text_instances = first_page.search_for(text)
+#                 if text_instances:
+#                     first_page_has_highlight = True
+#                     for inst in text_instances:
+#                         highlight = first_page.add_highlight_annot(inst)
+#                         highlight.set_colors(stroke=orange_color)  # Set highlight color
+#                         highlight.update()
+        
+#         # Always keep the first page
+#         pages_to_keep.append(0)
+
+#     # Check and highlight text on subsequent pages
+#     for page_num in range(1, document.page_count):  # Start from page 1
+#         page = document[page_num]
+#         page_has_highlight = False
+#         for text in texts_to_highlight:
+#             if text:
+#                 text_instances = page.search_for(text)
+#                 if text_instances:
+#                     page_has_highlight = True
+#                     for inst in text_instances:
+#                         highlight = page.add_highlight_annot(inst)
+#                         highlight.set_colors(stroke=orange_color)  # Set highlight color
+#                         highlight.update()
+#         if page_has_highlight:
+#             pages_to_keep.append(page_num)
+
+#     # Create a new document with all pages to be kept
+#     new_document = fitz.open()
+#     for page_num in pages_to_keep:
+#         new_document.insert_pdf(document, from_page=page_num, to_page=page_num)
+
+#     # Save the updated PDF
+#     new_document.save(output_pdf_path)
+#     new_document.close()
+#     document.close()
 
 # # Example usage
 # input_pdf_path = '/home/vivek/vivek/highlight_pdf/ECR PF_ICICI_APR 2024THTHA0011774000.pdf'

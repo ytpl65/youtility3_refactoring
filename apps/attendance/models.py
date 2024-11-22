@@ -17,8 +17,8 @@ def peventlog_json():
         'distance_in':None,
         'verified_out': False,
         'distance_out':None,
-        'threshold': '0.4',
-        'model':'VGG',
+        'threshold': '0.3',
+        'model':'Facenet512',
         'similarity_metric':'cosine'
     }
 

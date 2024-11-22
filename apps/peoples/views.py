@@ -316,6 +316,7 @@ class PeopleView(LoginRequiredMixin, View):
             people = form.save()
             if request.FILES.get('peopleimg'):
                 people.peopleimg = request.FILES['peopleimg']
+                print(request.FILES.get('peopleimg'))
             if not people.password:
                 people.set_password(form.cleaned_data["peoplecode"])
             if putils.save_jsonform(jsonform, people):
@@ -484,6 +485,7 @@ class SiteGroup(LoginRequiredMixin, View):
                 pgroup=obj).values_list('assignsites', flat=True)
             cxt = {'sitegrpform': self.params['form_class'](request=request, instance=obj),
                    'assignedsites': sites}
+            print("Sites",sites)
             resp = render(request, self.params['template_form'], context=cxt)
             return resp
 

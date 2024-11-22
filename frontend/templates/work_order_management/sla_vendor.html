@@ -21,7 +21,9 @@
     </style>
 </head>
 
-<body>
+<p>
+    <p>Dear Vendor, </p>
+    <p>PFB Vendor Performance Score. </p>
     <table>
         <tr>
             <th>Report Name</th>
@@ -31,8 +33,17 @@
             <th>Site Name</th>
             <td>{{ sitename }}</td>
         </tr>
+        <tr>
+            <th>Service Month</th>
+            <td>{{ service_month }}</td>
+        </tr>
+        <tr>
+            <th>Approved By</th>
+            <td>{{ approvedby }}</td>
+        </tr>
     </table>
     <br>
+    <p>For any discrepancy in score, kindly contact approver directly.</p>
 </body>
 
 </html>

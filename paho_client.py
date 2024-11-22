@@ -9,8 +9,7 @@ from paho.mqtt import client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
 from django.conf import settings
 from background_tasks.tasks import (
-    process_graphql_mutation_async,
-    process_graphql_download_async,
+    process_graphql_mutation_async
 )
 from celery.result import AsyncResult
 import json
@@ -28,15 +27,16 @@ BROKER_PORT = MQTT_CONFIG["BROKER_PORT"]
 GRAPHQL_MUTATION = "graphql/mutation"
 GRAPHQL_ATTACHMENT = "graphql/attachment"
 MUTATION_STATUS = "graphql/mutation/status"
-GRAPHQL_DOWNLOAD = "graphql/download"
+# GRAPHQL_DOWNLOAD = "graphql/download"
 
 
 RESPONSE_TOPIC = "response"
-RESPONSE_DOWNLOAD = "response/download"
+# RESPONSE_DOWNLOAD = "response/download"
 STATUS_TOPIC = "response/status"
 
 TESTMQ = "post"
 TESTPUBMQ = "received"
+
 
 
 def get_task_status(item):
@@ -86,7 +86,7 @@ class MqttClient:
             client.subscribe(GRAPHQL_MUTATION, qos=1)
             client.subscribe(MUTATION_STATUS, qos=1)
             client.subscribe(TESTMQ)
-            client.subscribe(GRAPHQL_DOWNLOAD, qos=1)
+            #client.subscribe(GRAPHQL_DOWNLOAD, qos=1)
             client.subscribe(GRAPHQL_ATTACHMENT, qos=1)
         else:
             fail = f"Failed to connect, return code {rc}"
@@ -102,31 +102,31 @@ class MqttClient:
                 )
             )
             log.info("processing started [+]")
-
-            if msg.topic == GRAPHQL_DOWNLOAD:
-                payload = msg.payload.decode()
-                log.info(f"\n\nReceived message: {payload}")
-                result = process_graphql_download_async(payload)
-                post_data = json.loads(payload)
-                service_name = post_data.get("serviceName")
-                records = result["data"][service_name]["records"]
-                if not records:
-                    double_decoded_records = []
-                else:
-                    decoded_records = json.loads(records)
-                    double_decoded_records = json.loads(decoded_records)
-                log.info(f"Decoded records type: {type(double_decoded_records)}")
-                response = {
-                    "payload": double_decoded_records,
-                    "serviceName": service_name,
-                    "tableName": post_data.get("tableName", ""),
-                    "service": post_data.get("service"),
-                }
-                response = json.dumps(response)
-                log.info(
-                    f"Response published to {RESPONSE_DOWNLOAD} after accepting {service_name}"
-                )
-                client.publish(RESPONSE_DOWNLOAD, response, qos=1)
+            
+            # if msg.topic == GRAPHQL_DOWNLOAD:
+            #     payload = msg.payload.decode()
+            #     log.info(f"\n\nReceived message: {payload}")
+            #     result = process_graphql_download_async(payload)
+            #     post_data = json.loads(payload)
+            #     service_name = post_data.get("serviceName")
+            #     records = result["data"][service_name]["records"]
+            #     if not records:
+            #         double_decoded_records = []
+            #     else:
+            #         decoded_records = json.loads(records)
+            #         double_decoded_records = json.loads(decoded_records)
+            #     log.info(f"Decoded records type: {type(double_decoded_records)}")
+            #     response = {
+            #         "payload": double_decoded_records,
+            #         "serviceName": service_name,
+            #         "tableName": post_data.get("tableName", ""),
+            #         "service": post_data.get("service"),
+            #     }
+            #     response = json.dumps(response)
+            #     log.info(
+            #         f"Response published to {RESPONSE_DOWNLOAD} after accepting {service_name}"
+            #     )
+            #     client.publish(RESPONSE_DOWNLOAD, response, qos=1)
 
             if msg.topic == GRAPHQL_MUTATION:
 
@@ -203,3 +203,4 @@ class MqttClient:
 if __name__ == "__main__":
     client = MqttClient()
     client.loop_forever()
+    

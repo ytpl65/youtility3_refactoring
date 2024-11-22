@@ -19,6 +19,7 @@ from .types import (VerifyClientOutput, DowntimeResponse,
 TypeAssist, SelectOutputType, BasicOutput)
 
 class Query(graphene.ObjectType):
+    questionsetData = None
     tadata = graphene.Field(SelectOutputType, keys = graphene.List(graphene.String, required = True))
     
     get_assetdetails = graphene.Field(SelectOutputType,
@@ -329,7 +330,8 @@ class Query(graphene.ObjectType):
             mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
             data = QuestionSet.objects.get_qset_modified_after(mdtzinput, buid, clientid, peopleid)
             records, count, msg = utils.get_select_output(data)
-            log.info(f'{count} objects returned...')
+            Query.questionsetData = records
+            log.info(f'{count} gset modified objects returned...')
             return SelectOutputType(nrows = count, records = records,msg = msg)
         except Exception as e:
             log.error("something went wrong", exc_info=True)
@@ -339,10 +341,13 @@ class Query(graphene.ObjectType):
     def resolve_get_qsetbelongingmodifiedafter(self, info, mdtz, ctzoffset, buid):
         try:
             log.info(f'\n\nrequest for qsetbelonging-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
+            qset_id = []
+                
+            log.info(f'Question set Ids {qset_id}')
             mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
             data = QuestionSetBelonging.objects.get_modified_after(mdtzinput, buid)
             records, count, msg = utils.get_select_output(data)
-            log.info(f'{count} objects returned...')
+            log.info(f'{count} qsetbelonging objects returned...')
             return SelectOutputType(nrows = count, records = records,msg = msg)
         except Exception as e:
             log.error("something went wrong", exc_info=True)

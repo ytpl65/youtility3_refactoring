@@ -43,10 +43,13 @@ class ApproverManager(models.Manager):
     use_in_migrations = True
     
     def get_approver_list(self, request, fields, related):
+        print("Fields: ",fields)
         R,S  = request.GET, request.session
         qobjs =  self.select_related(*related).filter(
            ( Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) & Q(client_id = S['client_id']))
         ).values(*fields)
+
+        print("Objs: ",qobjs)
         return qobjs or self.none()
 
     
@@ -153,12 +156,14 @@ class WorkOrderManager(models.Manager):
                     'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
             }
             wp_details.append(sq)
+        print("WP Details :  ",wp_details)
         return wp_details or self.none()
         
-    def get_return_wp_details(self, request):
-        S = request.session
+    def get_return_wp_details(self, qset_id):
         QuestionSet = apps.get_model('activity', 'QuestionSet')
-        sections_qset = QuestionSet.objects.filter(~Q(parent_id = 1), parent__type='RETURN_WORK_PERMIT', client_id=S['client_id']).order_by('seqno')
+        sections_qset = QuestionSet.objects.filter(parent_id = qset_id).order_by('seqno')
+        print("Sections Qset",sections_qset)
+
         rwp_details = []
         for section in sections_qset:
             sq={
@@ -169,13 +174,14 @@ class WorkOrderManager(models.Manager):
                     'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
             }
             rwp_details.append(sq)
-        return rwp_details or self.none()
+        return rwp_details.pop(-1) or self.none()
             
         
  
-
+# Testing
     def get_wp_answers(self, womid):
         childwoms = self.filter(parent_id = womid).order_by('seqno')
+        print("Len of Childwoms ",childwoms)
         logger.info(f"{childwoms = }")
         wp_details = []
         for childwom in childwoms:
@@ -187,10 +193,11 @@ class WorkOrderManager(models.Manager):
                     'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
             }
             wp_details.append(sq)
+        print("WP Details in get answer",wp_details)
         return wp_details or self.none()
 
 
-    
+
 
 
     def get_approver_list(self, womid):
@@ -345,6 +352,8 @@ class WorkOrderManager(models.Manager):
         }
 
     def wp_data_for_report(self, id):
+
+        print("Id",id)
         site = self.filter(id=id).first().bu
         wp_answers = self.get_wp_answers(id)
         wp_info = wp_answers[0]
@@ -352,7 +361,6 @@ class WorkOrderManager(models.Manager):
         rwp_section = wp_answers.pop(-1)
         if rwp_section['section'] == 'EMAIL':
             rwp_section = self.get_empty_rwp_section()
-        print(rwp_section)
         wp_sections = wp_answers
         return wp_info, wp_sections, rwp_section, site.buname
     
@@ -406,7 +414,7 @@ class WorkOrderManager(models.Manager):
             print('all_questions',all_questions)
             print()
             if sum(ans)== 0 or len(ans)== 0:
-                pass
+                average_score = 0
             else:
                 average_score = sum(ans)/len(ans)
             all_average_score.append(round(average_score,1))
