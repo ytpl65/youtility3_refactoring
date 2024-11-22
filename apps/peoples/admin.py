@@ -5,7 +5,8 @@ from apps.peoples import models as pm
 from import_export import widgets as wg
 from apps.core.widgets import(BVForeignKeyWidget, TypeAssistDepartmentFKW, TypeAssistDesignationFKW, 
                               TypeAssistEmployeeTypeFKW, TypeAssistWorkTypeFKW, TypeAssistDepartmentFKWUpdate,
-                              TypeAssistDesignationFKWUpdate, TypeAssistEmployeeTypeFKWUpdate, TypeAssistWorkTypeFKWUpdate)
+                              TypeAssistDesignationFKWUpdate, TypeAssistEmployeeTypeFKWUpdate, TypeAssistWorkTypeFKWUpdate, 
+                              EnabledTypeAssistWidget)
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
 from django.db.models import Q
@@ -14,7 +15,7 @@ from django.core.exceptions import ValidationError
 from apps.service.validators import clean_string, clean_point_field, clean_array_string
 from django.contrib import admin
 import logging
-import re
+import re, math
 
 log = logging.getLogger('__main__')
 
@@ -170,7 +171,7 @@ class PeopleResource(resources.ModelResource):
         
         # code validation
         regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
-        if " " in value: raise ValidationError("Please enter text without any spaces")
+        if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
         if  not re.match(regex, value):
             raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
@@ -463,7 +464,7 @@ class GroupResourceUpdate(resources.ModelResource):
     Identifier = fields.Field(
         attribute = 'identifier',
         column_name = 'Type',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = EnabledTypeAssistWidget(om.TypeAssist, 'tacode'),
     )
 
     ID = fields.Field(attribute='id', column_name='ID*')
@@ -486,20 +487,13 @@ class GroupResourceUpdate(resources.ModelResource):
         if 'Name' in row:
             row['Name'] = clean_string(row.get('Name'))
         # check required fields
-        if row.get('ID*') in ['', None]: raise ValidationError(
-            {'ID*':'This field is required'}
-        )
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and math.isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         if 'Name' in row:
-            if row.get('Name') in ['', None]: raise ValidationError(
-                {'Name': "This field is required"})
+            if row.get('Name') in ['', None]: raise ValidationError({'Name': "This field is required"})
         if 'Type' in row:
-            if row.get('Type') in ['', None]: raise ValidationError(
-                {'Type':'This field is required'}
-            )
+            if row.get('Type') in ['', None]: raise ValidationError({'Type':'This field is required'})
             if row['Type'] not in ['PEOPLEGROUP', 'SITEGROUP']:
-                raise ValidationError({
-                    'Type':"The value must be from ['PEOPLEGROUP', 'SITEGROUP']"
-                })
+                raise ValidationError({'Type':"The value must be from ['PEOPLEGROUP', 'SITEGROUP']"})
 
         # unique record check
         if not Pgroup.objects.filter(id=row['ID*']).exists():
@@ -561,14 +555,14 @@ class GroupBelongingResourceUpdate(resources.ModelResource):
         self.request = kwargs.pop('request', None)
     
     def before_import_row(self, row, row_number, **kwargs):
-        if row.get('ID*') in ['', 'NONE', None]: raise ValidationError({'ID*':"This field is required"})
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and math.isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         if 'Group Name' in row:
             if row.get('Group Name') in ['', 'NONE', None]: raise ValidationError({'Group Name':"This field is required"})
         if 'Of Site' in row and 'Of People' in row:
             if row.get('Of Site') in ['', 'NONE', None] and row.get('Of People') in ['', 'NONE', None]:
                 raise ValidationError("Either Site or People should be set, both cannot be None")
         
-        # unique record check
+        # check record exists
         if not pm.Pgbelonging.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         super().before_import_row(row, **kwargs)
@@ -669,9 +663,9 @@ class PeopleResourceUpdate(resources.ModelResource):
         import_id_fields = ['ID']
         fields = [
             'ID', 'Code', 'Name', 'LoginId', 'Designation', 'Department', 'MobNo', 'Email', 'deviceid',
-            'Site', 'DateOfJoin', 'date_of_release', 'DateOfBirth', 'Gender', 'PeopleType','WorkType', 'Enable',
-            'Client', 'isemergencycontact', 'alertmails', 'mobilecaps', 'reportcaps', 'webcaps',
-            'portletcaps', 'blacklist', 'currentaddr', 'Reportto', 'userfor']
+            'Site', 'DateOfJoin', 'date_of_release', 'DateOfBirth', 'Gender', 'PeopleType','WorkType', 
+            'Enable', 'Client', 'isemergencycontact', 'alertmails', 'mobilecaps', 'reportcaps', 
+            'webcaps', 'portletcaps', 'blacklist', 'currentaddr', 'Reportto', 'userfor']
 
     def __init__(self, *args, **kwargs):
         super(PeopleResourceUpdate, self).__init__(*args, **kwargs)
@@ -731,20 +725,26 @@ class PeopleResourceUpdate(resources.ModelResource):
         if 'Name' in row:
             row['Name'] = clean_string(row.get('Name', "NONE"))
         # check required fields
-        if row['ID*'] in ['', None]: raise ValidationError("ID* is required field")
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and math.isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         if 'Code' in row:
             if row['Code'] in ['', None]: raise ValidationError("Code is required field")
         if 'Employee Type' in row:
-            if row['Employee Type'] in ['', None]: raise ValidationError("Employee Type is required field")
+            if row['Employee Type'] in ['', None, 'NONE']: raise ValidationError("Employee Type is required field & should not be NONE")
         if 'Name' in row:
             if row['Name'] in ['', None]: raise ValidationError("Name is required field")
         if 'User For' in row:
             if row['User For'] in ['', None]: raise ValidationError("User For is required field")
+        if 'Work Type' in row:
+            if row['Work Type'] in ['', None, 'NONE']: raise ValidationError("Work Type is required field & should not be NONE")
+        if 'Designation' in row:
+            if row['Designation'] in ['', None, 'NONE']: raise ValidationError("Designation is required field & should not be NONE")
+        if 'Department' in row:
+            if row['Department'] in ['', None, 'NONE']: raise ValidationError("Department is required field & should not be NONE")
         
         # code validation
         if 'Code' in row:
             regex, value = "^[a-zA-Z0-9\-_]*$", row['Code']
-            if " " in value: raise ValidationError("Please enter text without any spaces")
+            if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
             if not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
@@ -756,6 +756,6 @@ class PeopleResourceUpdate(resources.ModelResource):
                 mob_no = str(row['Mob No'])
                 row['Mob No'] = mob_no if '+' in mob_no else f'+{mob_no}'
         
-        # unique record check
+        # check record exists
         if not pm.People.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")

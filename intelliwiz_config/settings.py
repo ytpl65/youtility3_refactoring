@@ -323,8 +323,6 @@ STATIC_ROOT =  env("STATIC_ROOT")
 
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'frontend/static')]
 
-print(STATICFILES_DIRS)
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/# default-auto-field
 
@@ -495,10 +493,6 @@ GRAPH_MODELS = {
   'all_applications': True,
   'group_models': True,
 }
-
-
-
-
 
 
 # For Django Email Backend

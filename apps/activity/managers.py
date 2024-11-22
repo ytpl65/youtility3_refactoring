@@ -1664,7 +1664,7 @@ class JobManager(models.Manager):
             'breaktime', 'distance', 'starttime', 'expirytime',
             'qsetid', 'jobid', 'assetid', 'seqno', 'jobdesc',
             'bu__buname', 'buid', 'bu__gpslocation', 'endtime', 'duration',
-            'qsetname', 'solid']
+            'qsetname', 'solid', 'people__peoplename']
         qset = self.annotate(
             qsetid = F('qset_id'), assetid = F('asset_id'),
             jobid = F('id'), bu__gpslocation = AsGeoJSON('bu__gpslocation'),

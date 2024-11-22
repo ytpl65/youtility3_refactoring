@@ -14,7 +14,7 @@ from dateutil import parser
 import django.shortcuts as scts
 from django.contrib import messages as msg
 from django.contrib.gis.measure import Distance
-from django.db.models import Q, F, Case, When, Value, Func, Prefetch
+from django.db.models import Q, F, Case, When, Value, Func
 from django.http import JsonResponse
 from django.http import response as rp
 from django.template.loader import render_to_string
@@ -34,8 +34,8 @@ from django.db import transaction
 from django.db.models import RestrictedError
 from apps.work_order_management.models import Approver
 from django.db import models
-from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
-from django.db.models.functions import Cast, Concat, Substr, StrIndex, Coalesce
+from django.contrib.gis.db.models.functions import AsGeoJSON
+from django.db.models.functions import Cast, Concat, Substr, StrIndex, TruncSecond
 
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -1055,7 +1055,7 @@ def save_common_stuff(request, instance, is_superuser=False, ctzoffset=-1):
         instance.ctzoffset = ctzoffset
     else:
         instance.cuser_id = instance.muser_id = userid
-    #instance.ctzoffset = int(request.session['ctzoffset'])
+    instance.ctzoffset = int(request.session['ctzoffset'])
     return instance
 
 
@@ -1657,6 +1657,7 @@ class Instructions(object):
         self.tablename = tablename
         self.model_source_map = MODEL_RESOURCE_MAP
         self.header_mapping = HEADER_MAPPING
+        self.header_mapping_update = HEADER_MAPPING_UPDATE
 
     #Helper function for get_valid_choices_if_any() which returns the valid choices for the given choice field 
     def field_choices_map(self, choice_field):
@@ -1694,6 +1695,61 @@ class Instructions(object):
             return {
                 'general_instructions':bulk_import_image_instructions
             }
+        
+    def get_insructions_update_info(self):
+        if self.tablename != 'BULKIMPORTIMAGE':
+            general_instructions = self.get_instruction_update()
+            return  {
+                'general_instructions': general_instructions,
+            }
+
+    def get_instruction_update(self):
+        return [
+        "Download the Import Update Sheet:",
+        [
+            "On clicking the \"Bulk Import Update\" section of the application, navigate to the field titled - \"Select Type of Data.\"",
+            "Download the Excel sheet for the specific table you want to update after the appropriate selection (e.g., \"People\", \"Business Unit\", etc.), by clicking on the Download button.",
+            "This sheet will contain all records from the selected table.",
+            "The first column, titled \"ID*\", contains the primary key for each record. Do not modify this column as it is used to match records in the database."
+        ],
+        "Identify Records that Need Updates:",
+        [
+            "Review the downloaded sheet and determine which records require updates (e.g., adding missing data, altering incorrect information or changed value for the same data, or deleting existing data in specific fields (cells)).",
+            "Only focus on the records that require changes. If a record does not require any updates, you must remove it from the sheet (see Step 5)."
+        ],
+        "Make the Required Changes to Records (For the records that require updates, make the following changes as needed):",
+        [
+            "Add Missing Data: Locate the fields (cells) that are currently blank or incomplete and fill them with the necessary information.",
+            "Alter Existing Data: If any field (cell) contains incorrect or outdated information, modify the data by replacing it with the correct information.",
+            "Delete Existing Data: If you want to delete data from a particular field (cell), simply leave the cell empty. Leaving a cell blank signals the system to delete the existing data in that field for the specific record. This is only for multi select type value fields(cells) such as mobile capability in \"People\". Or else use the disable function present in the adjacent cell for tables that download a disable column. Eg. Group Belongings"
+        ],
+        "Important Notes:",
+        [
+            "Do not make any changes to fields (cells) that do not require an update.",
+            "This ensures that only the required fields (cells) are altered while leaving the existing data intact.",
+            "Do not modify the \"ID*\" field (first column), as it is critical for identifying the correct record for updating."
+        ],
+        "Remove Records that Do Not Need Updates:",
+        [
+            "If a record does not require any updates, delete the entire row from the Excel sheet.",
+            "For example, if your downloaded sheet contains 100 records and you only want to update 10 of them, remove the other 90 records.",
+            "This helps avoid unnecessary processing of unchanged records during the update process."
+        ],
+        "Final Review Before Uploading:",
+        [
+            "Ensure that only the records requiring updates remain in the sheet.",
+            "Double-check that all changes made are accurate and that fields (cells) not requiring updates remain unaltered."
+        ],
+        "Save the Updated Sheet:",
+        [
+            "After making the necessary changes, save the Excel sheet in a compatible format (.xlsx)."
+        ],
+        "Upload the Sheet:",
+        [
+            "Go back to the application and upload the modified sheet to complete the import update process.",
+            "The system will process the updates and reflect the changes in the database for the affected records only."
+        ]
+    ]
         
     def get_bulk_import_image_instructions(self):
         """
@@ -1733,6 +1789,9 @@ class Instructions(object):
     #list returning column names for the given tablename
     def get_column_names(self):
         return self.header_mapping.get(self.tablename)
+    
+    def get_column_names_update(self):
+        return self.header_mapping_update.get(self.tablename)
         
     #list returning valid choices for the given tablename
     def get_valid_choices_if_any(self):
@@ -1871,9 +1930,9 @@ Example_data = {
                     ('LOC003','Location C','FIRSTFLOOR','RUNNING','TRUE','NONE','SITE_C','CLIENT_A','19.05,73.53','TRUE')],
         'ASSET' : [('ASSET01','Asset A','STANDBY','ASSET','TRUE','CLIENT_A','SITE_A','0.01','NONE','ELECTRICAL','19.05,73.51','NONE','NONE','BRAND_A','NONE','CLINET_A','TRUE',
                     'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE'),
-                    ('ASSET02','Asset B','RUNNING','ASSET','FALSE','CLIENT_B','SITE_B','0.02','NONE','MECHANICAL','19.05,73.52','NONE','NONE','BRAND_B','NONE','CLINET_A','TRUE',
+                    ('ASSET02','Asset B','WORKING','ASSET','FALSE','CLIENT_B','SITE_B','0.02','NONE','MECHANICAL','19.05,73.52','NONE','NONE','BRAND_B','NONE','CLINET_A','TRUE',
                     'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE'),
-                    ('ASSET03','Asset C','RUNNING','CHECKPOINT','TRUE','CLIENT_C','SITE_C','0','NONE','ELECTRICAL','19.05,73.53','NONE','NONE','BRAND_C','NONE','CLINET_A','TRUE',
+                    ('ASSET03','Asset C','MAINTENANCE','CHECKPOINT','TRUE','CLIENT_C','SITE_C','0','NONE','ELECTRICAL','19.05,73.53','NONE','NONE','BRAND_C','NONE','CLINET_A','TRUE',
                     'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE')],
         'VENDOR': [('VENDOR_A','Vendor A','ELECTRICAL','123 main street, xyz city','XYZ@gmail.com','TRUE','911234567891','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
                    ('VENDOR_B','Vendor B','MECHANICAL','124 main street, xyz city','XYZ@gmail.com','FALSE','911478529630','SITE_B','CLIENT_B','19.05,73.51','FALSE'),
@@ -1949,24 +2008,24 @@ def excel_file_creation(R):
 
 HEADER_MAPPING_UPDATE = {
     'TYPEASSIST': [
-        'ID*', 'Name', 'Code', 'Type', 'Client'],
-    
+        'ID*', 'Name', 'Code', 'Type', 'Client'
+    ],
     'PEOPLE': [
         'ID*','Code', 'Name', 'User For', 'Employee Type', 'Login ID', 'Gender',
         'Mob No', 'Email', 'Date of Birth', 'Date of Join', 'Client', 
         'Site', 'Designation', 'Department', 'Work Type', 'Report To',
         'Date of Release', 'Device Id', 'Is Emergency Contact',
         'Mobile Capability', 'Report Capability', 'Web Capability', 'Portlet Capability',
-        'Current Address', 'Blacklist',  'Alert Mails'],
-    
+        'Current Address', 'Blacklist',  'Alert Mails'
+    ],
     'BU': [
         'ID*','Code', 'Name', 'Belongs To', 'Type', 'Site Type', \
-        'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'City', 'State', 'Country'],
-    
+        'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'City', 'State', 'Country'
+    ],
     'QUESTION':[
         'ID*','Question Name','Answer Type', 'Min', 'Max','Alert Above', 'Alert Below', 'Is WorkFlow',
-        'Options', 'Alert On', 'Enable', 'Is AVPT' , 'AVPT Type', 'Client', 'Unit', 'Category'],
-    
+        'Options', 'Alert On', 'Enable', 'Is AVPT' , 'AVPT Type', 'Client', 'Unit', 'Category'
+    ],
     'ASSET':[
         'ID*','Code', 'Name', 'Running Status', 'Identifier','Is Critical',
         'Client', 'Site', 'Capacity', 'BelongsTo', 'Type',  'GPS Location',
@@ -1982,7 +2041,6 @@ HEADER_MAPPING_UPDATE = {
     'GROUPBELONGING':[
       'ID*', 'Group Name', 'Of People', "Of Site", 'Client', 'Site'  
     ],
-
     'VENDOR':[
         'ID*','Code', 'Name', 'Type', 'Address', 'Email', 'Applicable to All Sites',
         'Mob No', 'Site', 'Client', 'GPS Location', 'Enable'
@@ -2002,16 +2060,16 @@ HEADER_MAPPING_UPDATE = {
         'Alert On', 'Is Mandatory', 'AVPT Type',
     ],
     'SCHEDULEDTASKS':[
-        'Name*', 'Description*', 'Scheduler*', 'Asset*', 'Question Set/Checklist*', 'People*', 'Group Name*',
-        'Plan Duration*', 'Gracetime Before*', 'Gracetime After*', 'Notify Category*',
-        'From Date*', 'Upto Date*', 'Scan Type*', 'Client*', 'Site*',
-        'Priority*','Seq No', 'Start Time', 'End Time', 'Belongs To*'
+        'ID*','Name', 'Description', 'Scheduler', 'Asset', 'Question Set/Checklist', 
+        'People', 'Group Name', 'Plan Duration', 'Gracetime Before', 'Gracetime After', 
+        'Notify Category', 'From Date', 'Upto Date', 'Scan Type', 'Client', 'Site',
+        'Priority','Seq No', 'Start Time', 'End Time', 'Belongs To'
     ],
     'SCHEDULEDTOURS':[
-        'Name*', 'Description*', 'Scheduler*', 'Asset*', 'Question Set/Checklist*', 'People*', 'Group Name*',
-        'Plan Duration*', 'Gracetime*', 'Expiry Time*', 'Notify Category*',
-        'From Date*', 'Upto Date*', 'Scan Type*', 'Client*', 'Site*',
-        'Priority*','Seq No*', 'Start Time', 'End Time', 'Belongs To*'
+        'ID*','Name', 'Description', 'Scheduler', 'Asset', 'Question Set/Checklist', 
+        'People', 'Group Name', 'Plan Duration', 'Gracetime', 'Expiry Time', 
+        'Notify Category', 'From Date', 'Upto Date', 'Scan Type', 'Client', 'Site',
+        'Priority','Seq No', 'Start Time', 'End Time', 'Belongs To'
     ]
 }
 
@@ -2024,23 +2082,23 @@ Example_data_update = {
                    ('497','MUM003','Site C','NONE','SITE','SUPERMARKET','Ming Yang','789','TRUE','19.05,73.51','125 main street, xyz city','Manarola','California','USA')],
       'LOCATION': [('47','LOC001','Location A','GROUNDFLOOR','WORKING','TRUE','NONE','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
                     ('48','LOC002','Location B','MAINENTRANCE','SCRAPPED','FALSE','MUM001','SITE_B','CLIENT_A','19.05,73.52','FALSE'),
-                    ('49','LOC003','Location C','FIRSTFLOOR','RUNNING','TRUE','NONE','SITE_C','CLIENT_A','19.05,73.53','TRUE')],
+                    ('49','LOC003','Location C','FIRSTFLOOR','MAINTENANCE','TRUE','NONE','SITE_C','CLIENT_A','19.05,73.53','TRUE')],
         'ASSET' : [('1127','ASSET01','Asset A','STANDBY','ASSET','TRUE','CLIENT_A','SITE_A','0.01','NONE','ELECTRICAL','19.05,73.51','NONE','NONE','BRAND_A','NONE','CLINET_A','TRUE',
                     'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE'),
-                    ('1128','ASSET02','Asset B','RUNNING','ASSET','FALSE','CLIENT_B','SITE_B','0.02','NONE','MECHANICAL','19.05,73.52','NONE','NONE','BRAND_B','NONE','CLINET_A','TRUE',
+                    ('1128','ASSET02','Asset B','MAINTENANCE','ASSET','FALSE','CLIENT_B','SITE_B','0.02','NONE','MECHANICAL','19.05,73.52','NONE','NONE','BRAND_B','NONE','CLINET_A','TRUE',
                     'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE'),
-                    ('1129','ASSET03','Asset C','RUNNING','CHECKPOINT','TRUE','CLIENT_C','SITE_C','0','NONE','ELECTRICAL','19.05,73.53','NONE','NONE','BRAND_C','NONE','CLINET_A','TRUE',
+                    ('1129','ASSET03','Asset C','WORKING','CHECKPOINT','TRUE','CLIENT_C','SITE_C','0','NONE','ELECTRICAL','19.05,73.53','NONE','NONE','BRAND_C','NONE','CLINET_A','TRUE',
                     'FALSE','TRUE','NONE','NONE','NONE','NONE','2024-04-13','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE','NONE')],
         'VENDOR': [('527','VENDOR_A','Vendor A','ELECTRICAL','123 main street, xyz city','XYZ@gmail.com','TRUE','911234567891','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
                    ('528','VENDOR_B','Vendor B','MECHANICAL','124 main street, xyz city','XYZ@gmail.com','FALSE','911478529630','SITE_B','CLIENT_B','19.05,73.51','FALSE'),
                    ('529','VENDOR_C','Vendor C','ELECTRICAL','125 main street, xyz city','XYZ@gmail.com','TRUE','913698521470','SITE_C','CLIENT_C','19.05,73.51','TRUE')],
         'PEOPLE':[('2422','PERSON_A','Person A','Web','STAFF','A123','M','911234567891','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_A','SITE_A',
-                    'MANAGER','HR','NONE','NONE','yyyy-mm-dd','513bb5f9c78c9117','TRUE',"SELFATTENDANCE, TICKET,INCIDENTREPORT,SOS,SITECRISIS,TOUR",'NONE',	
+                    'MANAGER','HR','CPO','NONE','yyyy-mm-dd','513bb5f9c78c9117','TRUE',"SELFATTENDANCE, TICKET,INCIDENTREPORT,SOS,SITECRISIS,TOUR",'NONE',	
                     'TR_SS_SITEVISIT,DASHBOARD,TR_SS_SITEVISIT,TR_SS_CONVEYANCE,TR_GEOFENCETRACKING','NONE','123 main street, xyz city','FALSE','TRUE'),
                    ('2423','PERSON_B','Person B','Mobile','SECURITY','B456','F','913698521477','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_B','SITE_B',	
-                    'SUPERVISOR','TRAINING','NONE','NONE','yyyy-mm-dd','513bb5f9c78c9118','FALSE','NONE','NONE','NONE','NONE','124 main street, xyz city','FALSE','FALSE'),
-                   ('2424','PERSON_C','Person C','NONE','NONE','C8910','O','912587891463','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_C','SITE_C','NONE',
-                    'NONE','NONE','NONE','yyyy-mm-dd','513bb5f9c78c9119','TRUE','NONE','NONE','NONE','NONE','125 main street, xyz city', 'FALSE','TRUE')],
+                    'SUPERVISOR','TRAINING','EXEC','NONE','yyyy-mm-dd','513bb5f9c78c9118','FALSE','NONE','NONE','NONE','NONE','124 main street, xyz city','FALSE','FALSE'),
+                   ('2424','PERSON_C','Person C','NONE','ADMIN','C8910','O','912587891463','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_C','SITE_C','RPO','ACCOUNTS',
+                    'ASM','NONE','yyyy-mm-dd','513bb5f9c78c9119','TRUE','NONE','NONE','NONE','NONE','125 main street, xyz city', 'FALSE','TRUE')],
        'QUESTION': [('995','Are s/staff found with correct accessories / pressed uniform?','MULTILINE','NONE','NONE','NONE','NONE','TRUE','','','TRUE','TRUE','NONE','CLIENT_A','NONE','NONE'),
                     ('996','Electic Meter box is ok?','DROPDOWN','NONE','NONE','NONE','NONE','FALSE','No, Yes, N/A','','TRUE','TRUE','NONE','CLIENT_B','NONE','NONE'),
                     ('997','All lights working','DROPDOWN','NONE','NONE','NONE','NONE','TRUE','No, Yes, N/A','','TRUE','TRUE','NONE','CLIENT_C', 'NONE','NONE')],
@@ -2057,20 +2115,18 @@ Example_data_update = {
     'GROUPBELONGING':[('2764','Group A','Person A','NONE','CLIENT_A','Yout_logged_in_site'),
                       ('2765','Group B','Person B','NONE','CLIENT_B','SITE_A'),
                       ('2766','Group C','Person C','NONE','CLIENT_C','SITE_B')],
-    'SCHEDULEDTASKS':[('Task A','Task A Inspection','0 20 * * *','ASSETA','Questionset A','PERSON_A','GROUP_A','15','5','5','RAISETICKETNOTIFY','YYYY-MM-DD HH:MM:SS',
-                        'YYYY-MM-DD HH:MM:SS','NFC','CLIENT_A','SITE_A','HIGH','1','NONE','NONE','NONE'),
-                        ('Task B','Task B Daily Reading','1 20 * * *','ASSETB','Checklist B','PERSON_B','GROUP_B','18','5','5','AUTOCLOSEDNOTIFY','2023-06-07 12:00:00',	
-                        '2023-06-07 16:00:00','QR','CLIENT_B','SITE_B','LOW','6','NONE','NONE','Task A Inspection'),
-                        ('Task C','Task C Inspection','2 20 * * *','ASSETC','Questionset C','PERSON_C','GROUP_C','20','5','5','NONE','2024-02-04 23:00:00',
-                        '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')],
-    'SCHEDULEDTOURS':[('TOUR A','Inspection Tour A','55 11,16 * * *','ASSET_A','Questionset A','PERSON_A','GROUP_A','15','5','5',
+    'SCHEDULEDTASKS':[('2824','Task A','Task A Inspection','0 20 * * *','ASSETA','Questionset A','PERSON_A','GROUP_A','15','5','5','RAISETICKETNOTIFY','YYYY-MM-DD HH:MM:SS',
+                       'YYYY-MM-DD HH:MM:SS','NFC','CLIENT_A','SITE_A','HIGH','1','NONE','NONE','NONE'),
+                      ('2825','Task B','Task B Daily Reading','1 20 * * *','ASSETB','Checklist B','PERSON_B','GROUP_B','18','5','5','AUTOCLOSEDNOTIFY','2023-06-07 12:00:00',	
+                       '2023-06-07 16:00:00','QR','CLIENT_B','SITE_B','LOW','6','NONE','NONE','Task A Inspection'),
+                      ('2826','Task C','Task C Inspection','2 20 * * *','ASSETC','Questionset C','PERSON_C','GROUP_C','20','5','5','AUTOCLOSED','2024-02-04 23:00:00',
+                       '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')],
+    'SCHEDULEDTOURS':[('2824','TOUR A','Inspection Tour A','55 11,16 * * *','ASSET_A','Questionset A','PERSON_A','GROUP_A','15','5','5',
                        'RAISETICKETNOTIFY','YYYY-MM-DD HH:MM:SS','YYYY-MM-DD HH:MM:SS','NFC','CLIENT_A','SITE_A','HIGH','1','NONE','NONE','NONE'),
-                       ('TOUR B','Inspection Tour B','56 11,16 * * *','ASSET_B','Checklist B','PERSON_B','GROUP_B','18','5','5',
+                      ('2825','TOUR B','Inspection Tour B','56 11,16 * * *','ASSET_B','Checklist B','PERSON_B','GROUP_B','18','5','5',
                         'AUTOCLOSEDNOTIFY','2023-06-07 12:00:00','2023-06-07 16:00:00','QR','CLIENT_B','SITE_B','LOW','6','NONE','NONE','Task A Inspection'),
-                        ('TOUR C','Inspection Tour C','57 11,16 * * *','ASSET_C','Questionset C','PERSON_C','GROUP_C','20','5','5','NONE','2024-02-04 23:00:00',
-                         '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')]}
-
-
+                      ('2826','TOUR C','Inspection Tour C','57 11,16 * * *','ASSET_C','Questionset C','PERSON_C','GROUP_C','20','5','5','AUTOCLOSED','2024-02-04 23:00:00',
+                        '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','NONE','NONE','Task A Inspection')]}
 
 def excel_file_creation_update(R, S):
     import pandas as pd
@@ -2097,7 +2153,7 @@ def excel_file_creation_update(R, S):
                     'bg_color': '#E2F4FF','border':1
                 })
         Text_for_sample_data = "[ Refernce Data ] Take the Reference of the below data to fill data in correct format :-"
-        Text_for_actual_data = "[ Actual Data ] Start filling data below the following headers :-"
+        Text_for_actual_data = "[ Actual Data ] Please update the data only for the columns in the database table that need to be changed :-"
         worksheet.merge_range("A2:D2",Text_for_sample_data, merge_format)
         worksheet.merge_range("A9:D9",Text_for_actual_data, merge_format)
 
@@ -2105,19 +2161,11 @@ def excel_file_creation_update(R, S):
     return buffer
 
 def get_type_data(type_name, S):
-    type_dict = {
-        'TYPEASSIST': ob.TypeAssist,
-        'BU': ob.Bt,
-        'LOCATION': am.Location,
-        'ASSET': am.Asset,
-        'VENDOR': Vendor,
-        'PEOPLE': pm.People,
-        'QUESTION': am.Question,
-        'QUESTIONSET': am.QuestionSet,
-        'QUESTIONSETBELONGING': am.QuestionSetBelonging,
-        'GROUP': pm.Pgroup,
-        'GROUPBELONGING': pm.Pgbelonging,
-    }
+    site_ids = S.get('assignedsites', [])
+    if not isinstance(site_ids, (list, tuple)):
+        site_ids = [site_ids]
+    if isinstance(site_ids, (int, str)):
+        site_ids = [site_ids]
     if type_name == 'TYPEASSIST':
         objs = ob.TypeAssist.objects.select_related('parent','tatype', 'cuser', 'muser').filter(
                 ~Q(tacode='NONE'), ~Q(tatype__tacode='NONE'), Q(client_id=S['client_id']) | Q(cuser_id=1), enable=True,
@@ -2132,12 +2180,12 @@ def get_type_data(type_name, S):
                    country=F('bupreferences__address2__country'),
                    city=F('bupreferences__address2__city'),
                    latlng=F('bupreferences__address2__latlng'),
-                   siteincharge_name=Case(
-                        When(siteincharge__enable=True, then=F('siteincharge__peoplename')),
+                   siteincharge_peoplecode=Case(
+                        When(siteincharge__enable=True, then=F('siteincharge__peoplecode')),
                         default=Value(None),
                         output_field=models.CharField()
                     )
-        ).values_list('id', 'bucode', 'buname', 'parent__buname', 'identifier__taname', 'butype__taname', 'siteincharge_name', 
+        ).values_list('id', 'bucode', 'buname', 'parent__bucode', 'identifier__tacode', 'butype__tacode', 'siteincharge_peoplecode', 
                  'solid', 'enable', 'latlng', 'address', 'city', 'state', 'country',)
         return list(objs)
     if type_name == 'LOCATION':
@@ -2146,7 +2194,7 @@ def get_type_data(type_name, S):
             template = "%(function)s(%(expressions)s from '\\[(.+)\\]')"
         objs = am.Location.objects.select_related('parent', 'type', 'bu').filter(
             ~Q(loccode='NONE'),
-            bu_id = S['bu_id'],
+            bu_id__in = site_ids,
             client_id = S['client_id']
         ).annotate(
             gps_json=AsGeoJSON('gpslocation'),
@@ -2168,7 +2216,7 @@ def get_type_data(type_name, S):
             template = "%(function)s(%(expressions)s from '\\[(.+)\\]')"
         objs = am.Asset.objects.select_related('parent', 'type', 'bu', 'category', 'subcategory', 'brand', 'unit', 'servprov').filter(
             ~Q(assetcode='NONE'),
-            bu_id = S['bu_id'],
+            bu_id__in = site_ids,
             client_id = S['client_id'],
             identifier='ASSET'
         ).annotate(
@@ -2213,7 +2261,7 @@ def get_type_data(type_name, S):
             template = "%(function)s(%(expressions)s from '\\[(.+)\\]')"
         objs = wom.Vendor.objects.select_related('parent', 'type', 'bu').filter(
             ~Q(code='NONE'),
-            bu_id = S['bu_id'],
+            bu_id__in = site_ids,
             client_id = S['client_id']
         ).annotate(
             gps_json=AsGeoJSON('gpslocation'),
@@ -2236,6 +2284,7 @@ def get_type_data(type_name, S):
                 template = "(%(function)s(%(function)s(%(function)s(%(function)s(CAST(%(expressions)s AS VARCHAR), '[', ''), ']', ''), '''', ''), '\"', ''))"
             objs = pm.People.objects.filter(
                 ~Q(peoplecode='NONE'), 
+                bu_id__in = site_ids,
                 client_id = S['client_id']
                 ).select_related('peopletype', 'bu', 'client', 'designation', 'department', 'worktype', 'reportto'
                 ).annotate(user_for=F('people_extras__userfor'),
@@ -2304,7 +2353,7 @@ def get_type_data(type_name, S):
         objs = am.QuestionSet.objects.filter(
             Q(type='RPCHECKLIST') & Q(bu_id__in=S['assignedsites']) |
             (Q(parent_id=1) & ~Q(qsetname='NONE') & 
-            Q(bu_id=S['bu_id']) & Q(client_id=S['client_id']))
+            Q(bu_id__in = site_ids) & Q(client_id=S['client_id']))
         ).select_related('parent').values(
             'id', 'seqno', 'qsetname', 'parent__qsetname', 'type',
             'assetincludes', 'buincludes', 'bu__bucode',
@@ -2391,6 +2440,7 @@ def get_type_data(type_name, S):
         return output
     if type_name == 'QUESTIONSETBELONGING':
         objs = am.QuestionSetBelonging.objects.select_related('qset', 'question', 'client', 'bu').filter(
+                bu_id__in = site_ids,
                 client_id = S['client_id'],
             ).annotate(
             alert_above=Case(
@@ -2417,11 +2467,57 @@ def get_type_data(type_name, S):
         return list(objs)
     if type_name == 'GROUP':
         objs = pm.Pgroup.objects.select_related('client', 'identifier', 'bu').filter(
-            ~Q(id=-1), bu_id = S['bu_id'], identifier__tacode='PEOPLEGROUP', client_id = S['client_id']
+            ~Q(id=-1), bu_id__in = site_ids, identifier__tacode='PEOPLEGROUP', client_id = S['client_id']
         ).values_list('id', 'groupname', 'identifier__tacode', 'client__bucode', 'bu__bucode', 'enable')
         return list(objs)
     if type_name == 'GROUPBELONGING':
         objs = pm.Pgbelonging.objects.select_related('pgroup','people').filter(
+                bu_id__in = site_ids,
                 client_id = S['client_id'],
             ).values_list('id', 'pgroup__groupname', 'people__peoplecode', 'assignsites__bucode', 'client__bucode', 'bu__bucode')
+        return list(objs)
+    if type_name == 'SCHEDULEDTASKS':
+        objs = am.Job.objects.annotate(
+            assignedto = Case(
+                When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), Value(' [PEOPLE]'))),
+                When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), Value(' [GROUP]'))),
+            ),
+            formatted_fromdate=Cast(TruncSecond('fromdate'), output_field=models.CharField()),
+            formatted_uptodate=Cast(TruncSecond('uptodate'), output_field=models.CharField()),
+            formatted_starttime=Cast(TruncSecond('starttime'), output_field=models.CharField()),
+            formatted_endtime=Cast(TruncSecond('endtime'), output_field=models.CharField()),
+            ).filter(~Q(jobname='NONE') | ~Q(id=1),
+            Q(parent__jobname = 'NONE') | Q(parent_id = 1),
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            identifier = 'TASK',
+        ).select_related('pgroup', 'people', 'asset', 'bu', 'qset', 'ticketcategory'
+        ).values_list('id','jobname', 'jobdesc', 'cron', 'asset__assetcode', 'qset__qsetname',
+                 'people__peoplecode', 'pgroup__groupname', 'planduration', 'gracetime',
+                 'expirytime', 'ticketcategory__tacode', 'formatted_fromdate', 'formatted_uptodate', 
+                 'scantype', 'client__bucode', 'bu__bucode', 'priority', 'seqno', 'formatted_starttime', 
+                 'formatted_endtime', 'parent__jobname')
+        return list(objs)
+    if type_name == 'SCHEDULEDTOURS':
+        objs = am.Job.objects.select_related('pgroup', 'people', 'asset', 'bu', 'qset', 'ticketcategory').annotate(
+                assignedto = Case(
+                When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), Value(' [PEOPLE]'))),
+                When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), Value(' [GROUP]'))),
+                ),
+                formatted_fromdate=Cast(TruncSecond('fromdate'), output_field=models.CharField()),
+                formatted_uptodate=Cast(TruncSecond('uptodate'), output_field=models.CharField()),
+                formatted_starttime=Cast(TruncSecond('starttime'), output_field=models.CharField()),
+                formatted_endtime=Cast(TruncSecond('endtime'), output_field=models.CharField()),
+        ).filter(
+                Q(parent__jobname = 'NONE') | Q(parent_id = 1),
+                ~Q(jobname='NONE') | ~Q(id=1),
+                bu_id__in = S['assignedsites'],
+                client_id = S['client_id'],
+                identifier__exact='INTERNALTOUR',
+                enable=True
+        ).values_list('id', 'jobname', 'jobdesc', 'cron', 'asset__assetcode','qset__qsetname',
+                 'people__peoplecode', 'pgroup__groupname', 'planduration', 'gracetime', 
+                 'expirytime', 'ticketcategory__tacode','formatted_fromdate', 
+                 'formatted_uptodate', 'scantype', 'client__bucode', 'bu__bucode',
+                 'priority', 'seqno', 'formatted_starttime', 'formatted_endtime', 'parent__jobname')
         return list(objs)

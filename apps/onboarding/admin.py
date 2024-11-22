@@ -12,6 +12,7 @@ from apps.core import utils
 from django.core.exceptions import ValidationError
 import re
 from math import isnan
+from apps.core.widgets import EnabledTypeAssistWidget
 
 class BaseResource(resources.ModelResource):
     CLIENT = fields.Field(
@@ -114,7 +115,7 @@ class TaResource(resources.ModelResource):
         ''' Validates the format of the Code* field using a regular expression.
          It ensures no spaces and only allows alphanumeric characters, underscores, and hyphens.'''
         regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
-        if " " in value: raise ValidationError("Please enter text without any spaces")
+        if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
         if  not re.match(regex, value):
             raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
 
@@ -226,11 +227,11 @@ class BtResource(resources.ModelResource):
         if row['Code*'] in ['', None]: raise ValidationError("Code* is required field")
         if row['Type*'] in ['', None]: raise ValidationError("Type* is required field")
         if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
-        if row['Belongs To*'] in ['', None]: raise ValidationError("Name* is required field")
+        if row['Belongs To*'] in ['', None]: raise ValidationError("Belongs To* is required field")
         
         # code validation
         regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
-        if " " in value: raise ValidationError("Please enter text without any spaces")
+        if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
         if  not re.match(regex, value):
             raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
@@ -319,6 +320,9 @@ class ShiftAdmin(ImportExportModelAdmin):
     list_display_links = ('shiftname',)
 
 
+
+
+        
 class TaResourceUpdate(resources.ModelResource):
     CLIENT = fields.Field(
         column_name = 'Client',
@@ -331,7 +335,7 @@ class TaResourceUpdate(resources.ModelResource):
         column_name = 'Type',
         attribute = 'tatype',
         default = om.TypeAssist, 
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = EnabledTypeAssistWidget(om.TypeAssist, 'tacode'),
         saves_null_values = True
     )
 
@@ -352,13 +356,12 @@ class TaResourceUpdate(resources.ModelResource):
         self.request = kwargs.pop('request', None)
     
     def before_import_row(self, row, row_number, **kwargs):
-
         '''cleaning in sence Handles empty string,Removes extra spaces, 
         Converts to uppercase and replaces spaces with underscores (if code is True)'''
         if 'Code' in row:
-            row['Code'] = clean_string(row.get('Code', 'NONE'), code=True)
+            row['Code'] = clean_string(row.get('Code'), code=True)
         if 'Name' in row:
-            row['Name'] = clean_string(row.get('Name', "NONE"))
+            row['Name'] = clean_string(row.get('Name'))
 
         # Validates that required fields (Code*, Type*, and Name*) are not empty.
         if 'Code' in row:
@@ -367,18 +370,17 @@ class TaResourceUpdate(resources.ModelResource):
             if row['Type'] in ['', None]: raise ValidationError("Type is required field")
         if 'Name' in row:
             if row['Name'] in ['', None]: raise ValidationError("Name is required field")
-        if row['ID*'] in ['', None]: raise ValidationError("ID* is required field", code='required_field_error')
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         
         ''' Validates the format of the Code* field using a regular expression.
          It ensures no spaces and only allows alphanumeric characters, underscores, and hyphens.'''
         if 'Code' in row:
             regex, value = "^[a-zA-Z0-9\-_]*$", row['Code']
-            if " " in value: raise ValidationError("Please enter text without any spaces")
+            if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
             if not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
 
-        '''Checks for uniqueness of the record based on a combination of Code*, Type*, 
-        and CLIENT* fields. It raises an error if a duplicate record is found.'''
+        '''check record exists '''
         if not om.TypeAssist.objects.filter(id=row['ID*']).exists():    
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
 
@@ -403,12 +405,6 @@ class BtResourceUpdate(resources.ModelResource):
         attribute = 'butype',
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
 
-    tenant = fields.Field(
-        column_name = 'Tenant',
-        default = utils.get_or_create_none_tenant,
-        attribute = 'tenant',
-        widget = wg.ForeignKeyWidget(tm.Tenant, 'tenantname'))
-
     Identifier = fields.Field(
         column_name = 'Type',
         attribute = 'identifier',
@@ -425,12 +421,12 @@ class BtResourceUpdate(resources.ModelResource):
     Code    = fields.Field(attribute='bucode', column_name='Code')
     Name    = fields.Field(attribute='buname', column_name='Name')
     GPS     = fields.Field(attribute='gpslocation', column_name='GPS Location', saves_null_values=True)
-    Address = fields.Field(column_name='Address', widget=wg.CharWidget(), saves_null_values=True)
-    State   = fields.Field(column_name='State', widget=wg.CharWidget(), saves_null_values=True)
-    City    = fields.Field(column_name='City', widget=wg.CharWidget(), saves_null_values=True)
-    Country = fields.Field(column_name='Country', widget=wg.CharWidget(), saves_null_values=True)
+    Address = fields.Field(column_name='Address', attribute = 'bupreferences.address', widget=wg.CharWidget(), saves_null_values=True)
+    State   = fields.Field(column_name='State', attribute = 'bupreferences.address2.state', widget=wg.CharWidget(), saves_null_values=True)
+    City    = fields.Field(column_name='City', attribute = 'bupreferences.address2.city', widget=wg.CharWidget(), saves_null_values=True)
+    Country = fields.Field(column_name='Country', attribute = 'bupreferences.address2.country', widget=wg.CharWidget(), saves_null_values=True)
     SOLID   = fields.Field(attribute='solid', column_name='Sol Id', widget=wg.CharWidget())
-    Enable  = fields.Field(attribute='enable', column_name='Enable', default=True)
+    Enable  = fields.Field(attribute='enable', column_name='Enable', widget=wg.BooleanWidget(), default=True)
 
     class Meta:
         model = om.Bt
@@ -438,10 +434,8 @@ class BtResourceUpdate(resources.ModelResource):
         import_id_fields = ['ID']
         report_skipped = True
         fields = (
-            'ID','Name', 'Code', 'BuType', 'SOLID', 
-            'Enable', 'GPS', 'ID','Address', 'State',
-            'City', 'Country',
-            'Identifier', 'BelongsTo', 'tenant')
+            'ID', 'Name', 'Code', 'BuType', 'SOLID', 'Enable', 'GPS', 'Address', 
+            'State', 'City', 'Country', 'Identifier', 'BelongsTo')
 
     def __init__(self, *args, **kwargs):
         super(BtResourceUpdate, self).__init__(*args, **kwargs)
@@ -450,19 +444,26 @@ class BtResourceUpdate(resources.ModelResource):
         
     def before_import_row(self, row, **kwargs):
         if 'Code' in row:
-            row['Code'] = clean_string(row.get('Code', 'NONE'), code=True)
+            row['Code'] = clean_string(row.get('Code'), code=True)
         if 'Name' in row:
-            row['Name'] = clean_string(row.get('Name', "NONE"))
-        self._gpslocation = clean_point_field(row['GPS Location'])
-        self._solid = row['Sol Id']
-        self._address = row['Address']
-        self._state = row['State']
-        self._city = row['City']
-        self._country = row['Country']
-        self._latlng = row['GPS Location']
+            row['Name'] = clean_string(row.get('Name'))
+        if 'GPS Location' in row:
+            self._gpslocation = clean_point_field(row['GPS Location'])
+        if 'Sol Id' in row:
+            self._solid = row['Sol Id']
+        required_fields = ['Address', 'State', 'City', 'Country', 'GPS Location']
+        present_fields = [field for field in required_fields if field in row]
+        if len(present_fields) == len(required_fields):
+            self._address = row['Address']
+            self._state = row['State']
+            self._city = row['City']
+            self._country = row['Country']
+            self._latlng = row['GPS Location']
+        elif len(present_fields) > 0:
+            raise ValidationError("To create a complete address, you need to provide the Address, State, City, Country, and GPS Location.")
         
         # check required fields
-        if row['ID*'] in ['', None]: raise ValidationError("ID* is required field")
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         if 'Code' in row:
             if row['Code'] in ['', None]: raise ValidationError("Code is required field")
         if 'Type' in row:
@@ -475,28 +476,31 @@ class BtResourceUpdate(resources.ModelResource):
         # code validation
         if 'Code' in row:
             regex, value = "^[a-zA-Z0-9\-_]*$", row['Code']
-            if " " in value: raise ValidationError("Please enter text without any spaces")
+            if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
             if  not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
+        # check record exists
         if not om.Bt.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         
         super().before_import_row(row, **kwargs)
 
     def before_save_instance(self, instance, using_transactions, dry_run):
-        instance.gpslocation = self._gpslocation
-        instance.bupreferences['address'] = self._address
+        if hasattr(self, '_gpslocation') and self._gpslocation is not None:
+            instance.gpslocation = self._gpslocation
+        if hasattr(self, '_address') and self._gpslocation is not None:
+            instance.bupreferences['address'] = self._address
         instance.bupreferences['address2'] = {
-            'city':self._city, 'country':self._country,
-            'state':self._state, 'formattedAddress':self._address,
-            'latlng':self._latlng}
+            'city': self._city if hasattr(self, '_city') and self._city is not None else None,
+            'country': self._country if hasattr(self, '_country') and self._country is not None else None,
+            'state': self._state if hasattr(self, '_state') and self._state is not None else None,
+            'formattedAddress': self._address if hasattr(self, '_address') and self._address is not None else None,
+            'latlng': self._latlng if hasattr(self, '_latlng') and self._latlng is not None else None,
+            }
         if self._solid and not (isinstance(self._solid, float) and isnan(self._solid)):
             instance.solid = int(self._solid)
         else:
             instance.solid = None
             
         utils.save_common_stuff(self.request, instance)
-    
-    def get_queryset(self):
-        return om.Bt.objects.select_related().all()

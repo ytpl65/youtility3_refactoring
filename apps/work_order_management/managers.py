@@ -366,9 +366,6 @@ class WorkOrderManager(models.Manager):
     
     def get_sla_answers(self,slaid):
         child_slarecords = self.filter(parent_id = slaid).order_by('seqno')
-        print()
-        print('child_slarecords',child_slarecords)
-        print()
         # work_permit_no = childwoms[0].other_data['wp_seqno']
         sla_details = []
         overall_score = []
@@ -377,42 +374,18 @@ class WorkOrderManager(models.Manager):
         all_average_score = []
         remarks = []
         for child_sla in child_slarecords:
-            print()
-            print('child_sla',child_sla)
-            print()
             section_weight = child_sla.other_data['section_weightage']
-            print()
-            print('section_weight',section_weight)
-            print()
             ans = []
             answers = child_sla.womdetails_set.values('answer')
-            print()
-            print('answers',answers)
-            print()
             for answer in answers:
-                print()
-                print('answer',answer)
-                print()
                 if answer['answer'].isdigit():
                     all_answers.append(int(answer['answer']))
                     ans.append(int(answer['answer']))
                 else:
                     remarks.append(answer['answer'])
-            print()
-            print('ans',ans)
-            print()
             questions = child_sla.womdetails_set.values('question__quesname')
-            print()
-            print('questions',questions)
-            print()
             for que in questions:
-                print()
-                print('que',que)
-                print()
                 all_questions.append(que['question__quesname'])
-            print()
-            print('all_questions',all_questions)
-            print()
             if sum(ans)== 0 or len(ans)== 0:
                 average_score = 0
             else:
@@ -425,8 +398,7 @@ class WorkOrderManager(models.Manager):
                 "sectionID":child_sla.seqno,
                 "section_weightage":child_sla.other_data['section_weightage']
             }
-            print('rtthfujkjukvli')
-            print('s1111111111111111',sq)
+
             sla_details.append(sq)
         overall_score = sum(overall_score)
         question_ans = dict(zip(all_questions,all_answers))
@@ -626,6 +598,21 @@ class WorkOrderManager(models.Manager):
             data['name_of_requester'] = name_of_requester
 
         return data
+    
+    def get_workpermit_count(self, request):
+        R, S = request.GET, request.session
+        pd1 = R.get('from', datetime.now().date())
+        pd2 = R.get('upto', datetime.now().date())
+        qobjs = self.select_related('cuser', 'bu', 'qset','vendor').filter(
+        ~Q(workpermit__in =  ['NOT_REQUIRED', 'NOTREQUIRED']),
+            ~Q(identifier = 'SLA'),
+            parent_id = 1,
+            client_id = S['client_id'],
+            bu_id = S['bu_id'],
+            cdtz__date__gte = pd1,
+            cdtz__date__lte = pd2,
+        ).count()
+        return qobjs or 0    
 
 
 class WOMDetailsManager(models.Manager):

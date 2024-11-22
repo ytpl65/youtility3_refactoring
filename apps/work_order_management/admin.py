@@ -6,7 +6,8 @@ from django.db.models import Q
 from import_export import fields, resources, widgets as wg
 from apps.work_order_management import models as wom
 from apps.onboarding import models as om
-import re
+import re, math
+from apps.core.widgets import EnabledTypeAssistWidget
 
 # Register your models here
 def default_ta():
@@ -86,7 +87,7 @@ class VendorResource(resources.ModelResource):
         
         # code validation
         regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
-        if " " in value: raise ValidationError("Please enter text without any spaces")
+        if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
         if  not re.match(regex, value):
             raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
@@ -132,7 +133,7 @@ class VendorResourceUpdate(resources.ModelResource):
     Type = fields.Field(
         column_name = 'Type',
         attribute = 'type',
-        widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'),
+        widget = EnabledTypeAssistWidget(om.TypeAssist, 'tacode'),
         default = default_ta
     )
     
@@ -173,12 +174,12 @@ class VendorResourceUpdate(resources.ModelResource):
             row['Mob No'] = str(row['Mob No'])
         
         #check required fields
-        if row.get('ID*') in ['', None]:raise ValidationError("ID* is required field")
+        if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and math.isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         
         # code validation
         if 'Code' in row:
             regex, value = "^[a-zA-Z0-9\-_]*$", row['Code']
-            if " " in value: raise ValidationError("Please enter text without any spaces")
+            if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
             if not re.match(regex, value):
                 raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
         
@@ -193,7 +194,7 @@ class VendorResourceUpdate(resources.ModelResource):
                 mob_no = str(row['Mob No'])
                 row['Mob No'] = mob_no if '+' in mob_no else f'+{mob_no}'
         
-        # unique record check
+        # check record exists
         if not wom.Vendor.objects.filter(id=row['ID*']).exists():
             raise ValidationError(f"Record with these values not exist: ID - {row['ID*']}")
         super().before_import_row(row, row_number, **kwargs)

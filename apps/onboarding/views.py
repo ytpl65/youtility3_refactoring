@@ -509,14 +509,15 @@ MODEL_RESOURCE_MAP_UPDATE = {
     'VENDOR'              : VendorResourceUpdate,
     'QUESTIONSET'         : av_admin.QuestionSetResourceUpdate,
     'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResourceUpdate,
-    'SCHEDULEDTASKS'      : sc_admin.TaskResource,
-    'SCHEDULEDTOURS'      : sc_admin.TourResource,
+    'SCHEDULEDTASKS'      : sc_admin.TaskResourceUpdate,
+    'SCHEDULEDTOURS'      : sc_admin.TourResourceUpdate,
 }
 
 class ParameterMixin:
     mode_resource_map = MODEL_RESOURCE_MAP
     mode_resource_map_update = MODEL_RESOURCE_MAP_UPDATE
     form = obforms.ImportForm
+    form_update = obforms.ImportFormUpdate
     template = 'onboarding/import.html'
     template_import_update = 'onboarding/import_update.html'
     #header_mapping = HEADER_MAPPING
@@ -850,7 +851,8 @@ class DashboardView(LoginRequiredMixin, View):
     P = {
         "RP": "dashboard/RP_d/rp_dashboard.html",
         "pel_model": atm.PeopleEventlog,
-        "jn_model": am.Jobneed
+        "jn_model": am.Jobneed,
+        "wp_model": Wom
     }
 
     def get(self, request, *args, **kwargs):
@@ -912,7 +914,8 @@ class DashboardView(LoginRequiredMixin, View):
             'route_count': P['jn_model'].objects.get_schdroutes_count_forcard(request),
             'diversion_count': P['pel_model'].objects.get_diversion_countorlist(request, count=True),
             'sitecrisis_count': P['pel_model'].objects.get_sitecrisis_count_forcard(request),
-            'dynamic_tour_count':P['jn_model'].objects.get_dynamic_tour_count(request)
+            'dynamic_tour_count':P['jn_model'].objects.get_dynamic_tour_count(request),
+            'workpermit_count':P['wp_model'].objects.get_workpermit_count(request)
         }
     
     def other_chart_data(self, request):
@@ -967,24 +970,22 @@ class LicenseSubscriptionView(LoginRequiredMixin, View):
 class BulkImportUpdate(LoginRequiredMixin,ParameterMixin, View):
     def get(self, request, *args, **kwargs):
         R, S = request.GET, request.session
-
         if (R.get('action') == 'form'):
-
             #removes the temp file created in the last import
             self.remove_temp_file(request)
             inst = utils.Instructions(tablename='TYPEASSIST')
             '''getting the instructions from the instance and here json.dumps 
             is used to convert the python dictionary to json.'''
-            get_instructions = inst.get_insructions()
-            get_instructions['general_instructions'][2] = "Columns marked with an asterisk (*) are required. Please delete any columns from the downloaded Excel sheet that you do not wish to update."
-            instructions = json.dumps(get_instructions)
-            cxt = {'importform': self.form(initial={'table': "TYPEASSIST"}), 'instructions':instructions}
+            get_instructions = inst.get_insructions_update_info()
+            cxt = {'importform': self.form_update(initial={'table': "TYPEASSIST"}), 'instructions':get_instructions}
             return render(request, self.template_import_update, cxt)
         
         if R.get('action') == 'getInstructions':
             inst = utils.Instructions(tablename=R.get('tablename'))
-            instructions = inst.get_insructions()
-            instructions['general_instructions'][2] = "Columns marked with an asterisk (*) are required. Please delete any columns from the downloaded Excel sheet that you do not wish to update."
+            instructions = inst.get_insructions_update_info()
+            # get_column = inst.get_column_names_update()
+            # instructions['general_instructions'][2] = "Columns marked with an asterisk (*) are required. Please delete any columns from the downloaded Excel sheet that you do not wish to update other then the ID* column."
+            # instructions['column_names'] = "Columns: ${}&".format(', '.join(get_column))
             return rp.JsonResponse({'instructions':instructions}, status=200)
 
         if (request.GET.get('action') == 'downloadTemplate') and request.GET.get('template'):
