@@ -979,7 +979,7 @@ class ApproverView(LoginRequiredMixin, View):
             if form.is_valid():
                 resp = self.handle_valid_form(form,  request, create)
             else:
-                ic(form.cleaned_data, form.data, form.errors)
+                print(form.cleaned_data, form.data, form.errors)
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
@@ -1006,8 +1006,6 @@ class SLA_View(LoginRequiredMixin, View):
         'template_list': 'work_order_management/sla_list.html',
         'model'        : Wom,
         'form'         : SlaForm,
-        'template_form': 'work_order_management/sla_form.html',
-        'template_list': 'work_order_management/sla_list.html',
     }
 
     def get(self, request, *args, **kwargs):
