@@ -1,5 +1,11 @@
 {% extends "globals/layout.html" %}
 
+<!----FOR BASE_LEVEL ---->
+{% block base_head %}
+<title>GeoFence Form</title>
+{% endblock base_head %}
+<!----END FOR BASE_LEVEL ---->
+
 {% block extra_css %}
 <link  href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css"/>
 <link  href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet" type="text/css"/>

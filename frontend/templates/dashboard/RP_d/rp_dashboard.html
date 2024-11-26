@@ -1,5 +1,9 @@
 {% extends "globals/layout.html" %}
 
+{%- block base_head -%}
+  <title>Dashboard</title>
+{% endblock base_head %}
+
 {% block extra_css %}
 <link href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css" />
 <link href="{{ static('assets/plugins/custom/Editor-2.0.8/css/editor.dataTables.min.css') }}" rel="stylesheet"

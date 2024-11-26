@@ -1,5 +1,11 @@
 {% extends "globals/base_form.html" %}
 
+<!---- BEGIN PAGE TITLE ------>
+{% block page_title %}
+Bulk Import Update
+{% endblock page_title %}
+<!----- END PAGE TITLE -------->
+
 {% block extra_css %}
 <link href="{{ static('assets/plugins/custom/DataTables/datatables.min.css') }}" rel="stylesheet" type="text/css" />
 {{ importform.media.css }}
