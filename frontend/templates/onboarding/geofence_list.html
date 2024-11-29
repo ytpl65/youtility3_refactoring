@@ -27,7 +27,7 @@ GeoFence List
     <!------------------ END TABLE --------------------->
 
 {% endblock table %}
-<!------------------ --------------------------END BU TABLE ------------------------------------------------->
+<!------------------ --------------------------END BU TABLE -------------------------------------------------->
 
 
 {% block extra_scripts %}
@@ -48,7 +48,7 @@ $(document).ready(function(){
                 { data: "gfname", title: 'Name' },
                 { data: "alerttogroup__groupname", title: 'Group' },
                 { data: "alerttopeople__peoplename", title: 'People' },
-                {data: "geofence", title: 'GeoFence'}
+                { data: "geofence_address", title: 'GeoFence' }
             ],
 			deferRender: true,
 			{# scrollY: 300,
@@ -66,7 +66,7 @@ $(document).ready(function(){
 				},
 				{
 					targets:5,
-					data: 'geofence',
+					data: 'geofence_address',
 					defaultContent: ""
 				}
 			],

@@ -1691,22 +1691,41 @@ class JobManager(models.Manager):
     def handle_geofencepostdata(self, request):
         """handle post data submitted from geofence add people form"""
         R, S = request.GET, request.session
-        fromdate = datetime.strptime(R['fromdate'], '%d-%b-%Y').date()
-        uptodate = datetime.strptime(R['uptodate'], '%d-%b-%Y').date()
-        starttime = datetime.strptime(R['starttime'], '%H:%M').time()
-        endtime = datetime.strptime(R['endtime'], '%H:%M').time()
-        cdtz = datetime.now(tz = timezone.utc)
-        mdtz = datetime.now(tz = timezone.utc)
+        if R['action'] == 'create' or R['action'] == 'edit':
+            fromdate = datetime.strptime(R['fromdate'], '%d-%b-%Y').date()
+            uptodate = datetime.strptime(R['uptodate'], '%d-%b-%Y').date()
+            starttime = datetime.strptime(R['starttime'], '%H:%M').time()
+            endtime = datetime.strptime(R['endtime'], '%H:%M').time()
+            cdtz = datetime.now(tz = timezone.utc)
+            mdtz = datetime.now(tz = timezone.utc)
 
-        PostData = {
-            'jobname':f"{R['gfcode']}-{R['people__peoplename']}", 'identifier':'GEOFENCE',
-            'jobdesc':f"{R['gfcode']}-{R['gfname']}-{R['people__peoplename']}",
-            'fromdate':fromdate, 'uptodate':uptodate, 'starttime':starttime,
-            'endtime':endtime, 'cdtz':cdtz, 'mdtz':mdtz, 'enable':True, 'bu_id':R['bu_id'],
-            'client_id':S['client_id'], 'people_id':R['people_id'], 'geofence_id':R['geofence_id'],
-            'seqno':-1, 'parent_id':1, 'pgroup_id':1, 'sgroup_id':1, 'asset_id':1, 'qset_id':1,
-            'planduration':0, 'gracetime':0, 'expirytime':0, 'cuser':request.user, 'muser':request.user
-        }
+            PostData = {
+                'jobname':f"{R['gfcode']}-{R['people__peoplename']}", 'identifier':'GEOFENCE',
+                'jobdesc':f"{R['gfcode']}-{R['gfname']}-{R['people__peoplename']}",
+                'fromdate':fromdate, 'uptodate':uptodate, 'starttime':starttime,
+                'endtime':endtime, 'cdtz':cdtz, 'mdtz':mdtz, 'enable':True, 'bu_id':R['bu_id'],
+                'client_id':S['client_id'], 'people_id':R['people_id'], 'geofence_id':R['geofence_id'],
+                'seqno':-1, 'parent_id':1, 'pgroup_id':1, 'sgroup_id':1, 'asset_id':1, 'qset_id':1,
+                'planduration':0, 'gracetime':0, 'expirytime':0, 'cuser':request.user, 'muser':request.user
+            }
+        else:
+            pk = R['pk']
+            fromdate = datetime.strptime(R[f'data[{pk}][fromdate]'], '%Y-%m-%dT%H:%M:%SZ').date()
+            uptodate = datetime.strptime(R[f'data[{pk}][uptodate]'], '%Y-%m-%dT%H:%M:%SZ').date()
+            starttime = datetime.strptime(R[f'data[{pk}][starttime]'], '%H:%M:%S').time()
+            endtime = datetime.strptime(R[f'data[{pk}][endtime]'], '%H:%M:%S').time()
+            cdtz = datetime.now(tz = timezone.utc)
+            mdtz = datetime.now(tz = timezone.utc)
+
+            PostData = {
+                'jobname':f"{R['gfcode']}-{R[f'data[{pk}][people__peoplename]']}", 'identifier':'GEOFENCE',
+                'jobdesc':f"{R['gfcode']}-{R['gfname']}-{R[f'data[{pk}][people__peoplename]']}",
+                'fromdate':fromdate, 'uptodate':uptodate, 'starttime':starttime,
+                'endtime':endtime, 'cdtz':cdtz, 'mdtz':mdtz, 'enable':True, 'bu_id':R['bu_id'],
+                'client_id':S['client_id'], 'people_id':R['people_id'], 'geofence_id':R['geofence_id'],
+                'seqno':-1, 'parent_id':1, 'pgroup_id':1, 'sgroup_id':1, 'asset_id':1, 'qset_id':1,
+                'planduration':0, 'gracetime':0, 'expirytime':0, 'cuser':request.user, 'muser':request.user
+            }
         if R['action'] == 'create':
             if self.filter(
                 jobname = PostData['jobname'], asset_id = PostData['asset_id'],

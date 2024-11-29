@@ -30,8 +30,8 @@
   }
   #map{
     position: fixed !important; 
-    height: 75% !important;
-    width: 45% !important;
+    height: 70% !important;
+    width: 42% !important;
   }
 
   .pac-card {
@@ -110,102 +110,7 @@ GeoFence
 <!-------------------------- END PAGE BREADCUMB ------------------------->
 
 {% block pagebody_container %}
-<!---Start Drawer --->
-{# <div id="geofence_form_drawer"
-  data-kt-drawer="true"
-  data-kt-drawer-activate="true" 
-  data-kt-drawer-toggle="#togglemapform" 
-  data-kt-drawer-close="#closeform"
-  data-kt-drawer-direction="start"
-  data-kt-drawer-width="100%">
-  <div class="card w-100 rounded-0">
-    <div class="card-header">
-      <div class="card-title">
-        <div class="d-flex justify-content-center flex-column me-3">
-          <p class="fs-4 fw-bolder text-gray-900 text-hover-primary me-1 lh-1">Geofence Form</p>
-        </div>
-      </div>
-      <div class="card-toolbar">
-        <button class="btn btn-icon btn-active-color-primary" id="closeForm"><i class="fas text-white fa-times"></i></button>
-      </div>
-    </div>
-
-    <form  action="{{ url('onboarding:geofence') }}" method="post" id="geofence_form" class="card-body">
-      <input type="text" name="pk" id="pk" style="display:none;">
-      <input type="hidden" name="{{ geofenceform.ctzoffset.name }}" id = "{{ geofenceform.ctzoffset.auto_id }}" value="-1">
-      <div class="input-group mb-3">
-          <div class="col-md-3">
-              {{ geofenceform.gfcode.label_tag() }}
-          </div>
-          <div class="col-md-9">
-              {{ geofenceform.gfcode }}
-          </div>
-      </div>
-      <div class="input-group mb-3">
-          <div class="col-md-3">
-              {{ geofenceform.gfname.label_tag() }}
-          </div>
-          <div class="col-md-9">
-              {{ geofenceform.gfname }}
-          </div>
-      </div>
-      <div class="input-group mb-3">
-          <div class="col-md-3">
-              {{ geofenceform.bu.label_tag() }}
-          </div>
-          <div class="col-md-9">
-              {{ geofenceform.bu }}
-          </div>
-      </div>
-      <div class="input-group mb-3">
-          <div class="col-md-3">
-              {{ geofenceform.alerttopeople.label_tag() }}
-          </div>
-          <div class="col-md-9">
-              {{ geofenceform.alerttopeople }}
-          </div>
-      </div>
-      <div class="input-group mb-3">
-          <div class="col-md-3">
-              {{ geofenceform.alerttogroup.label_tag() }}
-          </div>
-          <div class="col-md-9">
-              {{ geofenceform.alerttogroup }}
-          </div>
-      </div>
-      <div class="input-group mb-3">
-          <div class="col-md-3">
-              {{ geofenceform.alerttext.label_tag() }}
-          </div>
-          <div class="col-md-9">
-              {{ geofenceform.alerttext }}
-          </div>
-      </div>
-      <div class="input-group mb-3">
-          <div class="booleans d-flex justify-content-sm-between mt-5
-              form-check form-switch form-check-custom form-check-solid">
-              <label for="{{ geofenceform.enable.id_for_label }}"
-                  class="form-check-label bool col-form-label me-5 text-sm-right">
-                  {{ geofenceform.enable.label }}: &nbsp; {{ geofenceform.enable }}
-              </label>
-          </div>
-      </div>
-      <br><br>
-      <div class="formcontrols mb-5">
-        {% if geofenceform.instance.gfcode %}
-          <button type="submit" id="submit" form="geofence_form" class="btn btn-sm btn-primary2 btn-hover-scale">Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
-          <button type="button" onclick="deleteTa(this)" data-id="{{ geofenceform.instance.id }}" id="deleteCap" class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas text-white fa-trash-alt"></i></button>
-        {% else %}
-          <button type="submit" form="geofence_form" class="btn btn-sm btn-primary2 btn-hover-scale">Submit&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
-        {% endif %}
-      </div>
-      
-      <table id="assignedpeople" class=""></table>
-    </form><br><hr><br>
-  </div>
-  
-</div> #}
-
+<!---Start Drawer ---->
 <div class="row">
   <div class="col-md-6 map-div">
     <!---Start Google Maps -->
@@ -284,9 +189,8 @@ GeoFence
           <div class="formcontrols mb-5">
             {% if geofenceform.instance.gfcode %}
               <button type="submit" id="submit" form="geofence_form" class="btn btn-sm btn-primary2 btn-hover-scale">Update&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
-              <button type="button" onclick="deleteTa(this)" data-id="{{ geofenceform.instance.id }}" id="deleteCap" class="btn btn-sm btn-hover-scale btn-danger">Delete&nbsp;<i class="fas text-white fa-trash-alt"></i></button>
             {% else %}
-              <button type="submit" form="geofence_form" class="btn btn-sm btn-primary2 btn-hover-scale">Submit&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
+              <button type="submit" id="submit" form="geofence_form" class="btn btn-sm btn-primary2 btn-hover-scale">Submit&nbsp;<i class="fas text-white fa-cloud-upload-alt"></i></button>
             {% endif %}
           </div>
         </form>
@@ -301,7 +205,7 @@ GeoFence
 
 
 
-<!-- End Drawer --->
+<!-- End Drawer -->
 {% endblock pagebody_container %}
 
 
@@ -313,9 +217,7 @@ GeoFence
 <script src="{{ static('assets/plugins/custom/Editor-2.0.8/js/editor.select2.js') }}" type="text/javascript"></script>
 
 <script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places&v=weekly&loading=async"
-      defer
-    ></script>
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3PUZCB7u2PiV8whHeAshweOPIK_d690o&libraries=places" defer></script>
 <script>
 var service;
 var map, table;
@@ -719,7 +621,9 @@ $(document).ready(() => {
           let currentrow = getCurrentEditingRow(editor, table)
             d.csrfmiddlewaretoken = '{{ csrf_token }}'
             d.pk                  = currentrow !== 'None' ? currentrow['pk'] : currentrow
-            d.people__peoplename  = getSelectedValue("#DTE_Field_people__peoplename")
+            if (d.action !== "remove"){
+              d.people__peoplename  = getSelectedValue("#DTE_Field_people__peoplename")
+            }
             d.people_id           = $("#DTE_Field_people__peoplename").val()
             d.gfcode              = $("#id_gfcode").val()
             d.gfname              = $("#id_gfname").val()
@@ -758,8 +662,22 @@ $(document).ready(() => {
         },
         {data:'people__peoplecode', title:"Code", visible:false},
         {data:'people_id', visible:false, defaultContent:null},
-        {data:'fromdate', title:"Valid From"},
-        {data:'uptodate', title:"Valid to"},
+        {data:'fromdate', title:"Valid From",
+          render: function(data, type, row) {
+            if (type === 'display') {
+                return moment(data).format('DD/MM/YYYY');
+            }
+            return data;
+          }
+        },
+        {data:'uptodate', title:"Valid To",
+          render: function(data, type, row) {
+            if (type === 'display') {
+                return moment(data).format('DD/MM/YYYY');
+            }
+            return data;
+          }
+        },
         {data:'starttime', title:"Start Time"},
         {data:'endtime', title:"End Time"},
       ],
@@ -770,7 +688,13 @@ $(document).ready(() => {
         { extend: "edit",   editor: editor },
         { extend: "remove", editor: editor }
       ],
+      select:{
+        style: 'single',
+      },
       select:true,
+    })
+      $('.refreshBtn').click(() => {
+        table.ajax.reload();
     })
 
     editor.on('open', function(e, mode, action){
@@ -789,7 +713,6 @@ $(document).ready(() => {
       }
       if(action == 'edit'){
         data = getCurrentEditingRow(editor, table)
-        console.log("$$$$$$$$$$$", data)
         var newOption = new Option(data.people__peoplename, data.people_id, true, true);
         $('#DTE_Field_people__peoplename').append(newOption);
       }
@@ -820,8 +743,6 @@ $(document).ready(() => {
     if("{{ geofenceform.instance.id }}" !== 'None'){
       $(".tableview").removeClass('d-none')
     }
-
 })
-
 </script>
 {% endblock extra_scripts %}

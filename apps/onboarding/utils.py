@@ -539,3 +539,33 @@ def handle_shift_data_edit(request,self):
     shift.shift_data['designation_details'] = designation_details
     shift.save()
     return rp.JsonResponse({'status': 'success'}, status=200)
+
+
+from django.contrib.gis.geos import GEOSGeometry
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut
+def polygon_to_address(polygon):
+    """
+    Convert a polygon object to a human-readable address.
+    Args:
+        polygon: Django GEOS Polygon object
+    Returns:
+        str: Human readable address
+    """
+    try:
+        # Get the centroid of the polygon
+        centroid = polygon.centroid
+        # Extract latitude and longitude
+        lat = centroid.y
+        lon = centroid.x
+        # Initialize the geocoder
+        geolocator = Nominatim(user_agent="my_geofence_app")
+        # Perform reverse geocoding
+        location = geolocator.reverse((lat, lon), language='en')
+        if location:
+            return location.address
+        return "Address not found"
+    except GeocoderTimedOut:
+        return "Geocoding service timed out"
+    except Exception as e:
+        return f"Error getting address: {str(e)}"

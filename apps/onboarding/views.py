@@ -35,7 +35,7 @@ import json
 import requests
 from tablib import Dataset
 
-from apps.onboarding.utils import is_bulk_image_data_correct,save_image_and_image_path,extract_file_id,get_file_metadata
+from apps.onboarding.utils import is_bulk_image_data_correct,save_image_and_image_path,extract_file_id,get_file_metadata, polygon_to_address
 
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 logger = logging.getLogger('django')
@@ -358,8 +358,8 @@ class GeoFence(LoginRequiredMixin, View):
         'form_class': obforms.GeoFenceForm,
         'template_list': 'onboarding/geofence_list.html',
         'template_form': 'onboarding/geofence_form.html',
-        'fields': ['id', 'gfcode',
-                   'gfname', 'alerttogroup__groupname', 'alerttopeople__peoplename'],
+        'fields': ['id', 'gfcode', 'geofence','gfname', 
+                   'alerttogroup__groupname', 'alerttopeople__peoplename'],
         'related': ['alerttogroup', 'alerttopeople'],
         'model': GeofenceMaster
     }
@@ -371,11 +371,16 @@ class GeoFence(LoginRequiredMixin, View):
         if R.get('template'):
             return render(request, self.params['template_list'])
 
-        # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
             objs = self.params['model'].objects.get_geofence_list(
                 params['fields'], params['related'], request.session)
-            return rp.JsonResponse(data={'data': list(objs)})
+            # Convert QuerySet to list and process each object
+            data_list = list(objs)
+            for item in data_list:
+                if 'geofence' in item and item['geofence']:
+                    item['geofence_address'] = polygon_to_address(item['geofence'])
+                    del item['geofence']
+            return rp.JsonResponse(data={'data': data_list})
 
         if request.GET.get('perform') == 'editAssignedpeople':
             resp = am.Job.objects.handle_geofencepostdata(request)
@@ -411,10 +416,11 @@ class GeoFence(LoginRequiredMixin, View):
         try:
             data = QueryDict(request.POST.get('formData'))
             geofence = request.POST.get('geofence')
-            if pk := request.POST.get('pk', None):
+            print("------->",data['pk'], geofence, request.POST.get('pk', None))
+            if data['pk']:
                 msg = "geofence_view"
                 form = utils.get_instance_for_update(
-                    data, self.params, msg, int(pk), kwargs={'request': request})
+                    data, self.params, msg, int(data['pk']), kwargs={'request': request})
             else:
                 form = self.params['form_class'](data, request=request)
             if form.is_valid():
