@@ -45,11 +45,23 @@ li {
 .color-red {
         color: red;
         font-weight: bolder;
-    }
+}
+
+.permit-version{
+    height: 100%;
+    width: 100%;
+    position: fixed;
+	bottom: 10%;
+    left: 20%;
+    margin: 0;
+}
+
+
 </style>
 {% endblock inline_css %}
 
 {% block header_start %}
+
 <img src="{{ client_logo }}" alt="" class="logos">
 {% endblock header_start %}
 
@@ -147,12 +159,10 @@ li {
                 </tr>
                 {% endfor %}
             </tbody>
-    </table>
-    {% endfor %}
-    {% endblock wp_sections %}
-    <br>
-
-
+</table>
+{% endfor %}
+{% endblock wp_sections %}
+<br>
     {% block rwp_section %}
     <br>
         {% if verifiers_status=='APPROVED' and approvers_status=='APPROVED' %}
@@ -176,6 +186,47 @@ li {
                 </table>
             {% endif %}
         </table>
+
+        <br>
+        <br>
+        {% if approvers and verifiers %}
+        <div style="display: flex; justify-content: space-between; gap: 20px;">
+            <div id="approved-by-table" style="flex: 1;">
+                <table  style="width: 100%; border-collapse: collapse;text-align: center;">
+                    <thead>
+                        <tr>
+                            <th>Approved By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for approver in approvers %}
+                            <tr>
+                                <td>{{ approver }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        
+            <div id="verified-by-table" style="flex: 1;">
+                <table  style="width: 100%; border-collapse: collapse;text-align: center;">
+                    <thead>
+                        <tr>
+                            <th>Verified By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for verifier in verifiers %}
+                            <tr>
+                                <td>{{ verifier }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+        
     {% endblock rwp_section %}
     
 {% block static_content %}
@@ -256,13 +307,10 @@ li {
         <li>Damaged equipment etc.</li>
         <li>Any spills or leak observed.</li>
     </ol>
-    <div>
-        <h4>Approver and Verifier who accepted the Work Permit</h4>
-        <h5>Verified by: </h5> {{ verifiers }}
-        <h5>Approved by: </h5>{{ approvers }}
-    </div>
-
+    
 </div>
 
 {% endblock static_content %}
+
+
 

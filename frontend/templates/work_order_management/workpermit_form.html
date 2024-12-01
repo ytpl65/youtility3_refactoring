@@ -106,7 +106,7 @@ Work Permit Form
     <input type="hidden" name="{{ wpform.performedby.name }}" id="{{ wpform.performedby.auto_id }}" value="{{ request.user.id }}">
     <input type="hidden" name="{{ wpform.parent.name }}" id="{{ wpform.parent.auto_id }}" value="1">
     <input type="hidden" name="pk" id="pk" value="{{ wpform.instance.id }}">
-    
+    <input type="hidden" name="{{ wpform.identifier.name }}" id="{{ wpform.identifier.auto_id }}" value="WP">
     <div class="mb-3 row g-3 gx-6">
         <div class="col-md-6">
             <div class="input-group-sm input-group mb-3">

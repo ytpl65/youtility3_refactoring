@@ -2,9 +2,12 @@
 
 {% block inline_css %}
 <style>
-.logos{
-    width: 5.8rem;
-    height: 3.8rem;
+.logos {
+    max-width: 5.8rem;
+    max-height: 1.8rem;
+    width: auto;
+    height: auto;
+    object-fit: contain;
 }
 #subtitle{
     background-color: #01579b;
@@ -149,7 +152,75 @@ li {
         </tbody>
     {% endfor %}
 </table>
+{% endblock wp_sections %}
+<br>
 
+{% block rwp_section %}
+<br>
+    {% if verifiers_status=='APPROVED' and approvers_status=='APPROVED' %}
+    <table border="1">
+        {% for section in rwp_info %}
+            <thead>
+                <tr>
+                    <th>{{ section['section'] }}</th>
+                    <th>Answer</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for question in rwp_info[0]['questions'] %}
+                    <tr>
+                        <td >{{ question['question__quesname'] }}</td>
+                        <td >{{ question['answer'] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+                {% endfor %}
+            </table>
+        {% endif %}
+    </table>
+    <br>
+    <br>
+    {% if approvers and verifiers %}
+        <div style="display: flex; justify-content: space-between; gap: 20px;">
+            <div id="approved-by-table" style="flex: 1;">
+                <table  style="width: 100%; border-collapse: collapse;text-align: center;">
+                    <thead>
+                        <tr>
+                            <th>Approved By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for approver in approvers %}
+                            <tr>
+                                <td>{{ approver }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        
+            <div id="verified-by-table" style="flex: 1;">
+                <table  style="width: 100%; border-collapse: collapse;text-align: center;">
+                    <thead>
+                        <tr>
+                            <th>Verified By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for verifier in verifiers %}
+                            <tr>
+                                <td>{{ verifier }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+        
+{% endblock rwp_section %}
+
+{% block static_content %}
 <div class="new-page border-class">
     <br>
     <br>
@@ -213,23 +284,7 @@ li {
         <li>Any spills or leak observed.</li>
     </ol>
 
-    <div>
-        <h4>Approver and Verifier who accepted the Work Permit</h4>
-        <h5>Verified by: </h5> {{ verifiers }}
-        <h5>Approved by: </h5>{{ approvers }}
-    </div>
-    
-
-    <h4>Return Permit Details :</h4>
-    <table border="1">
-        {% for question in rwp_info['questions'] %}
-        <tr>
-            <td >{{ question['question__quesname'] }}</td>
-            <td >{{ question['answer'] }}</td>
-        </tr>
-        {% endfor %}
-    </table>
 </div>
+{% endblock static_content %}
 
 
-{% endblock wp_sections %}

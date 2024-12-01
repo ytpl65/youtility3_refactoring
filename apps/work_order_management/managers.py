@@ -43,7 +43,6 @@ class ApproverManager(models.Manager):
     use_in_migrations = True
     
     def get_approver_list(self, request, fields, related):
-        print("Fields: ",fields)
         R,S  = request.GET, request.session
         qobjs =  self.select_related(*related).filter(
            ( Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) & Q(client_id = S['client_id']))
@@ -54,21 +53,36 @@ class ApproverManager(models.Manager):
 
     
     
+    # def get_approver_options_wp(self, request):
+    #     S = request.session
+    #     qset = self.annotate(
+    #         text = F('people__peoplename'),
+    #     ).filter(approverfor__contains = ['WORKPERMIT'], bu_id = S['bu_id'],identifier='APPROVER',sites__icontains = [S['bu_id']]).values('id', 'text')
+    #     return qset or self.none()
+    
+    # def get_verifier_options_wp(self,request):
+    #     S = request.session
+    #     print("BU Id",S['bu_id'])
+    #     qset = self.annotate(
+    #         text = F('people__peoplename'),
+    #     ).filter(approverfor__contains = ['WORKPERMIT'], bu_id = S['bu_id'],identifier='VERIFIER',sites__contains = [S['bu_id']]).values('id', 'text')
+    #     print("Verifier: ",qset)
+    #     return qset or self.none()
+    
     def get_approver_options_wp(self, request):
         S = request.session
         qset = self.annotate(
             text = F('people__peoplename'),
-        ).filter(approverfor__contains = ['WORKPERMIT'], bu_id = S['bu_id'],identifier='APPROVER').values('id', 'text')
+        ).filter( (Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) & Q(client_id = S['client_id'])),approverfor__contains = ['WORKPERMIT']).values('id', 'text')
         return qset or self.none()
     
     def get_verifier_options_wp(self,request):
         S = request.session
         qset = self.annotate(
             text = F('people__peoplename'),
-        ).filter(approverfor__contains = ['WORKPERMIT'], bu_id = S['bu_id'],identifier='VERIFIER').values('id', 'text')
+        ).filter( (Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) & Q(client_id = S['client_id'])),approverfor__contains = ['WORKPERMIT']).values('id', 'text')
         print("Verifier: ",qset)
         return qset or self.none()
-
     
     def get_approver_options_sla(self,request):
         S = request.session
@@ -156,13 +170,11 @@ class WorkOrderManager(models.Manager):
                     'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
             }
             wp_details.append(sq)
-        print("WP Details :  ",wp_details)
         return wp_details or self.none()
         
     def get_return_wp_details(self, qset_id):
         QuestionSet = apps.get_model('activity', 'QuestionSet')
         sections_qset = QuestionSet.objects.filter(parent_id = qset_id).order_by('seqno')
-        print("Sections Qset",sections_qset)
 
         rwp_details = []
         for section in sections_qset:
@@ -181,7 +193,6 @@ class WorkOrderManager(models.Manager):
 # Testing
     def get_wp_answers(self, womid):
         childwoms = self.filter(parent_id = womid).order_by('seqno')
-        print("Len of Childwoms ",childwoms)
         logger.info(f"{childwoms = }")
         wp_details = []
         for childwom in childwoms:
@@ -193,7 +204,6 @@ class WorkOrderManager(models.Manager):
                     'min', 'max', 'options', 'id', 'ismandatory').order_by('seqno')
             }
             wp_details.append(sq)
-        print("WP Details in get answer",wp_details)
         return wp_details or self.none()
 
 
@@ -352,7 +362,7 @@ class WorkOrderManager(models.Manager):
         }
 
     def wp_data_for_report(self, id):
-
+        
         print("Id",id)
         site = self.filter(id=id).first().bu
         wp_answers = self.get_wp_answers(id)

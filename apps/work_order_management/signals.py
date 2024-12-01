@@ -6,21 +6,24 @@ from django.db.models import Q
 @receiver(pre_save, sender=Wom)
 def set_serial_no(sender, instance, **kwargs):
     if instance.id is None:  # Ensure the object is new and doesn't already exist in the database
+        print("Instance: ",instance, instance.identifier)
+        if instance.description == 'THIS SECTION TO BE COMPLETED ON RETURN OF PERMIT':
+            return
         if instance.identifier == 'SLA':
             # Query for SLA condition
             latest_record = sender.objects.filter(
-                ~Q(workpermit=Wom.WorkPermitStatus.NOTNEED),
                 client=instance.client,
                 bu=instance.bu,
                 parent_id=1,
                 identifier='SLA'
             ).order_by('-other_data__wp_seqno').first()
-        elif instance.identifier is None:
+        elif instance.identifier == 'WP':
             # Query for the null identifier condition
             latest_record = sender.objects.filter(
                 client=instance.client,
                 bu=instance.bu,
-                parent_id=1  # Example: Adjust this if needed
+                parent_id=1,  # Example: Adjust this if needed
+                identifier='WP'
             ).order_by('-other_data__wp_seqno').first()
         else:
             latest_record = None  # Fallback for unexpected cases (optional)
