@@ -27,7 +27,7 @@ from apps.service.utils import get_model_or_form
 import logging
 import mimetypes
 import io
-
+from apps.onboarding.utils import polygon_to_address, is_point_in_geofence
 from datetime import datetime, timedelta
 import pytz
 logger = logging.getLogger('__main__')
@@ -666,10 +666,26 @@ class PreviewImage(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         R = request.GET
+        S = request.session
         
         if R.get('action') == 'getFRStatus'  and R.get('uuid'):
             resp = self.P['model'].objects.get_fr_status(R['uuid'])
-            log.info(resp)
+            get_people = am.Job.objects.filter(people_id = resp['eventlog_in_out'][0]['people_id'], identifier = 'GEOFENCE').values()
+            base_address = ""
+            if get_people:
+                get_geofence_data = obm.GeofenceMaster.objects.filter(id = get_people[0]['geofence_id'], enable=True).exclude(id=1).values()
+                base_address = polygon_to_address(get_geofence_data[0]['geofence'])
+            start_address = av_utils.get_address_from_coordinates(json.loads(resp['eventlog_in_out'][0]['startgps'])['coordinates'][1],json.loads(resp['eventlog_in_out'][0]['startgps'])['coordinates'][0])['full_address'] if resp['eventlog_in_out'][0]['startgps'] else None
+            end_address = av_utils.get_address_from_coordinates(json.loads(resp['eventlog_in_out'][0]['endgps'])['coordinates'][1],json.loads(resp['eventlog_in_out'][0]['endgps'])['coordinates'][0])['full_address'] if resp['eventlog_in_out'][0]['endgps'] else None
+            if start_address and get_people:
+                resp['eventlog_in_out'][0]['in_address'] = start_address if not is_point_in_geofence(json.loads(resp['eventlog_in_out'][0]['startgps'])['coordinates'][1],json.loads(resp['eventlog_in_out'][0]['startgps'])['coordinates'][0],get_geofence_data[0]['geofence']) else start_address + "(In Location not in Geofence)"
+            else:
+                resp['eventlog_in_out'][0]['in_address'] = start_address
+            if end_address and get_people:
+                resp['eventlog_in_out'][0]['out_address'] = end_address if not is_point_in_geofence(json.loads(resp['eventlog_in_out'][0]['endgps'])['coordinates'][1],json.loads(resp['eventlog_in_out'][0]['endgps'])['coordinates'][0],get_geofence_data[0]['geofence']) else end_address + "(Out Location not in Geofence)"
+            else:
+                resp['eventlog_in_out'][0]['out_address'] = end_address
+            resp['eventlog_in_out'][0]['base_address'] = base_address
             return rp.JsonResponse(resp, status=200)
     
 class GetAllSites(LoginRequiredMixin, View):

@@ -266,17 +266,27 @@ def childlist_viewdata(request, hostname):
 
 
 def ticketevents_query(ticketno,columnsort,columnname):
-    sqlquery =  """select  e.id as eid, d.devicename, d.ipaddress, ta.taname as type, e.source, e.cdtz, COUNT(att.id) AS attachment__count
+    valid_columns = {
+        'e.id', 'd.devicename', 'd.ipaddress', 'ta.taname',
+        'e.source', 'e.cdtz', 'attachment__count'
+    }
+    if columnname not in valid_columns:
+        columnname = 'e.id'  # Default to safe column if invalid
+    
+    if columnsort.lower() not in ('asc', 'desc'):
+        columnsort = 'asc'  # Default to safe direction if invalid
+
+    sqlquery = """select  e.id as eid, d.devicename, d.ipaddress, ta.taname as type, e.source, e.cdtz, COUNT(att.id) AS attachment__count
                 from 
-                ( select id, bu_id, ticketno, events, unnest(string_to_array(events, ',')::bigint[])as eventid  from ticket where ticketno='%s' ) ticket 
+                ( select id, bu_id, ticketno, events, unnest(string_to_array(events, ',')::bigint[])as eventid  from ticket where ticketno=%s ) ticket 
                 inner join event e on ticket.eventid = e.id	
                 inner join typeassist ta on e.eventtype_id = ta.id 
                 inner join device d on e.device_id = d.id 
                 inner join attachment att on e.id = att.event_id
                 inner join bt b on ticket.bu_id = b.id
-                GROUP BY e.id, d.devicename, d.ipaddress, ta.taname ORDER BY %s %s  """ %(ticketno ,columnname, columnsort, )
+                GROUP BY e.id, d.devicename, d.ipaddress, ta.taname ORDER BY {} {}  """.format(columnname, columnsort)
     print("sqlqqqqqqqqqqqq", sqlquery)
-    return sqlquery
+    return sqlquery, (ticketno,)
 
 def list_viewdata(request, model, fields, kwargs):
     column = request.GET.get('order[0][column]')
@@ -359,3 +369,41 @@ def generate_qr_code_images(data, size=1):
 
         qr_code_images = [generate_qr_code_image(data)]
         return qr_code_images
+
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+import time
+
+def get_address_from_coordinates(latitude: float, longitude: float, max_retries: int = 3) -> dict:
+    # Initialize the geocoder with a custom user agent
+    geolocator = Nominatim(user_agent="my_geocoder_app")
+    
+    for attempt in range(max_retries):
+        try:
+            # Get location data from coordinates
+            location = geolocator.reverse((latitude, longitude), language='en')
+            
+            if location and location.raw.get('address'):
+                address = location.raw['address']
+                
+                # Create a structured response
+                result = {
+                    'full_address': location.address,
+                    'street': address.get('road', ''),
+                    'city': address.get('city', address.get('town', address.get('village', ''))),
+                    'state': address.get('state', ''),
+                    'country': address.get('country', ''),
+                    'postal_code': address.get('postcode', '')
+                }
+                
+                return result
+                
+        except (GeocoderTimedOut, GeocoderServiceError) as e:
+            if attempt == max_retries - 1:
+                print(f"Error: Failed to get address after {max_retries} attempts: {str(e)}")
+                return None
+            
+            # Wait before retrying
+            time.sleep(1)
+            
+    return None

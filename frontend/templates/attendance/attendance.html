@@ -61,6 +61,7 @@ tr{
                     <li class="list-group-item"id="fr_metric"></li>
                     <li class="list-group-item"id="fr_ppl"></li>
                     <li class="list-group-item"id="fr_date"></li>
+                    <li class="list-group-item"id="in_address"></li>
                 </ul>
             </div>
             <div class="card" style="width: 18rem;">
@@ -70,6 +71,7 @@ tr{
                     <li class="list-group-item"id='taken_on'></li>
                     <li class="list-group-item"id="cuser"></li>
                     <li class="list-group-item pe-0"id="modified_on"></li>
+                    <li class="list-group-item"id="base_address"></li>
                     <li class="list-group-item"id="muser"></li>
                 </ul>
             </div>
@@ -80,6 +82,7 @@ tr{
                     <li class="list-group-item"id="fr_metric2"></li>
                     <li class="list-group-item"id="fr_ppl2"></li>
                     <li class="list-group-item"id="fr_date2"></li>
+                    <li class="list-group-item"id="out_address"></li>
                 </ul>
             </div>
         </div>
@@ -98,7 +101,7 @@ tr{
 
 {% endblock popup_alerts %}
 
-<!--------- BEGIN EXTRA SCRIPTS ----------------------------->
+<!--------- BEGIN EXTRA SCRIPTS ------------------------------>
 {% block extra_scripts %}
 <script>
     var table = null;
@@ -119,6 +122,12 @@ tr{
             $("#fr_date, #fr_date2").html(`Captured Date: ${ondate}`)
             let createdby = details['createdby'] ? details['createdby'] : 'N/A'
             $("#fr_ppl, #fr_ppl2").html(`Performed By: ${createdby}`)
+            let inAddress = details['in_address'] ? details['in_address'] : 'N/A'
+            $("#in_address").html(`In Location: ${inAddress}`)
+            let outAddress = details['out_address'] ? details['out_address'] : 'N/A'
+            $("#out_address").html(`Out Location: ${outAddress}`)
+            let baseAddress = details['base_address'] ? details['base_address'] : 'N/A (This people not added in GeoFence)'
+            $("#base_address").html(`Base Location: ${baseAddress}`)
         }
         return null
     }

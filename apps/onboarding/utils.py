@@ -13,6 +13,9 @@ from apps.peoples.models import People
 from apps.core import utils
 import json 
 from django.http import response as rp
+from django.contrib.gis.geos import GEOSGeometry
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut
 
 
 logger = logging.getLogger('django')
@@ -540,17 +543,17 @@ def handle_shift_data_edit(request,self):
     shift.save()
     return rp.JsonResponse({'status': 'success'}, status=200)
 
+import googlemaps
+from django.contrib.gis.geos import Polygon
 
-from django.contrib.gis.geos import GEOSGeometry
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
 def polygon_to_address(polygon):
     """
-    Convert a polygon object to a human-readable address.
+    Convert a polygon object to a human-readable address using Google Maps Geocoding API.
+    
     Args:
         polygon: Django GEOS Polygon object
     Returns:
-        str: Human readable address
+        str: Human-readable address
     """
     try:
         # Get the centroid of the polygon
@@ -558,14 +561,61 @@ def polygon_to_address(polygon):
         # Extract latitude and longitude
         lat = centroid.y
         lon = centroid.x
-        # Initialize the geocoder
-        geolocator = Nominatim(user_agent="my_geofence_app")
+        
+        # Your Google Maps API key
+        gmaps = googlemaps.Client(key='AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0')
+        
         # Perform reverse geocoding
-        location = geolocator.reverse((lat, lon), language='en')
-        if location:
-            return location.address
+        reverse_geocode_result = gmaps.reverse_geocode((lat, lon))
+        if reverse_geocode_result:
+            return reverse_geocode_result[0]['formatted_address']
         return "Address not found"
-    except GeocoderTimedOut:
-        return "Geocoding service timed out"
     except Exception as e:
         return f"Error getting address: {str(e)}"
+    
+from math import radians, sin, cos, sqrt, atan2
+from django.contrib.gis.geos import Point, Polygon
+
+def is_point_in_geofence(lat, lon, geofence):
+    """
+    Check if a point is within a geofence, which can either be a Polygon or a Circle (center, radius).
+    
+    Args:
+        lat (float): Latitude of the point to check.
+        lon (float): Longitude of the point to check.
+        geofence (Polygon or tuple): Polygon object representing geofence or a tuple (center_lat, center_lon, radius_km) for a circular geofence.
+        
+    Returns:
+        bool: True if the point is inside the geofence, False otherwise.
+    """
+    
+    # Create a Point object from the lat, lon
+    point = Point(lon, lat)  # Note: Point expects (longitude, latitude)
+
+    # Case 1: Geofence is a polygon (Django GEOS Polygon object)
+    if isinstance(geofence, Polygon):
+        return geofence.contains(point)
+
+    # Case 2: Geofence is circular (tuple with center lat, lon, and radius in km)
+    elif isinstance(geofence, tuple) and len(geofence) == 3:
+        geofence_lat, geofence_lon, radius_km = geofence
+        
+        # Calculate distance using Haversine formula
+        # Convert lat/lon from degrees to radians
+        lat1 = radians(lat)
+        lon1 = radians(lon)
+        lat2 = radians(geofence_lat)
+        lon2 = radians(geofence_lon)
+
+        # Haversine formula
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        distance_km = 6371 * c  # Radius of Earth in kilometers
+
+        # Check if the distance is within the geofence radius
+        return distance_km <= radius_km
+
+    # If geofence is neither a polygon nor a circular geofence, return False
+    return False
