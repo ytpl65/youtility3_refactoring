@@ -7,15 +7,15 @@ import requests
 import pandas as pd
 from tablib import Dataset
 import logging
-from intelliwiz_config.settings import BULK_IMPORT_GOOGLE_DRIVE_API_KEY as api_key,MEDIA_ROOT
+from intelliwiz_config.settings import BULK_IMPORT_GOOGLE_DRIVE_API_KEY as api_key,MEDIA_ROOT, GOOGLE_MAP_SECRET_KEY as google_map_key
 from apps.onboarding.models import Bt, TypeAssist
 from apps.peoples.models import People
 from apps.core import utils
 import json 
 from django.http import response as rp
-from django.contrib.gis.geos import GEOSGeometry
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
+import googlemaps
+from math import radians, sin, cos, sqrt, atan2
+from django.contrib.gis.geos import Point, Polygon
 
 
 logger = logging.getLogger('django')
@@ -543,13 +543,9 @@ def handle_shift_data_edit(request,self):
     shift.save()
     return rp.JsonResponse({'status': 'success'}, status=200)
 
-import googlemaps
-from django.contrib.gis.geos import Polygon
-
 def polygon_to_address(polygon):
     """
     Convert a polygon object to a human-readable address using Google Maps Geocoding API.
-    
     Args:
         polygon: Django GEOS Polygon object
     Returns:
@@ -563,7 +559,7 @@ def polygon_to_address(polygon):
         lon = centroid.x
         
         # Your Google Maps API key
-        gmaps = googlemaps.Client(key='AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0')
+        gmaps = googlemaps.Client(key=google_map_key)
         
         # Perform reverse geocoding
         reverse_geocode_result = gmaps.reverse_geocode((lat, lon))
@@ -572,23 +568,17 @@ def polygon_to_address(polygon):
         return "Address not found"
     except Exception as e:
         return f"Error getting address: {str(e)}"
-    
-from math import radians, sin, cos, sqrt, atan2
-from django.contrib.gis.geos import Point, Polygon
 
 def is_point_in_geofence(lat, lon, geofence):
     """
     Check if a point is within a geofence, which can either be a Polygon or a Circle (center, radius).
-    
     Args:
         lat (float): Latitude of the point to check.
         lon (float): Longitude of the point to check.
         geofence (Polygon or tuple): Polygon object representing geofence or a tuple (center_lat, center_lon, radius_km) for a circular geofence.
-        
     Returns:
         bool: True if the point is inside the geofence, False otherwise.
     """
-    
     # Create a Point object from the lat, lon
     point = Point(lon, lat)  # Note: Point expects (longitude, latitude)
 

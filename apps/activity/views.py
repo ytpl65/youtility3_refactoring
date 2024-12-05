@@ -662,12 +662,9 @@ class PreviewImage(LoginRequiredMixin, View):
     P = {
         'model':am.Attachment
     }
-    
-    
     def get(self, request, *args, **kwargs):
         R = request.GET
         S = request.session
-        
         if R.get('action') == 'getFRStatus'  and R.get('uuid'):
             resp = self.P['model'].objects.get_fr_status(R['uuid'])
             get_people = am.Job.objects.filter(people_id = resp['eventlog_in_out'][0]['people_id'], identifier = 'GEOFENCE').values()
@@ -678,11 +675,11 @@ class PreviewImage(LoginRequiredMixin, View):
             start_address = av_utils.get_address_from_coordinates(json.loads(resp['eventlog_in_out'][0]['startgps'])['coordinates'][1],json.loads(resp['eventlog_in_out'][0]['startgps'])['coordinates'][0])['full_address'] if resp['eventlog_in_out'][0]['startgps'] else None
             end_address = av_utils.get_address_from_coordinates(json.loads(resp['eventlog_in_out'][0]['endgps'])['coordinates'][1],json.loads(resp['eventlog_in_out'][0]['endgps'])['coordinates'][0])['full_address'] if resp['eventlog_in_out'][0]['endgps'] else None
             if start_address and get_people:
-                resp['eventlog_in_out'][0]['in_address'] = start_address if not is_point_in_geofence(json.loads(resp['eventlog_in_out'][0]['startgps'])['coordinates'][1],json.loads(resp['eventlog_in_out'][0]['startgps'])['coordinates'][0],get_geofence_data[0]['geofence']) else start_address + "(In Location not in Geofence)"
+                resp['eventlog_in_out'][0]['in_address'] = start_address + " (Inside Geofence)" if is_point_in_geofence(json.loads(resp['eventlog_in_out'][0]['startgps'])['coordinates'][1],json.loads(resp['eventlog_in_out'][0]['startgps'])['coordinates'][0],get_geofence_data[0]['geofence']) else start_address + " (Outside Geofence)"
             else:
                 resp['eventlog_in_out'][0]['in_address'] = start_address
             if end_address and get_people:
-                resp['eventlog_in_out'][0]['out_address'] = end_address if not is_point_in_geofence(json.loads(resp['eventlog_in_out'][0]['endgps'])['coordinates'][1],json.loads(resp['eventlog_in_out'][0]['endgps'])['coordinates'][0],get_geofence_data[0]['geofence']) else end_address + "(Out Location not in Geofence)"
+                resp['eventlog_in_out'][0]['out_address'] = end_address + " (Inside Geofence)" if is_point_in_geofence(json.loads(resp['eventlog_in_out'][0]['endgps'])['coordinates'][1],json.loads(resp['eventlog_in_out'][0]['endgps'])['coordinates'][0],get_geofence_data[0]['geofence']) else end_address + " (Outside Geofence)"
             else:
                 resp['eventlog_in_out'][0]['out_address'] = end_address
             resp['eventlog_in_out'][0]['base_address'] = base_address
