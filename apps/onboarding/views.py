@@ -269,8 +269,11 @@ class ShiftView(LoginRequiredMixin, View):
             if R.get('shift_id') != 'None':   
                 obj = utils.get_model_obj(int(R['shift_id']), request, self.params)
                 data = obutils.get_shift_data(obj)
+                for record in data:
+                    if 'overtime' not in record:
+                        record['overtime'] = 0
             else:
-                data = [{'count': '', 'designation': '', 'people_code': []}]
+                data = [{'count': '', 'designation': '', 'people_code': [],'overtime':0,'gracetime': 0}]
             return rp.JsonResponse({'data':data}, status=200, safe=False)
             
         elif R.get('id', None):
@@ -557,24 +560,49 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
     def post(self, request, *args, **kwargs):
         R = request.POST
         form = self.form(R, request.FILES)
-        print("R: ",R)
-        print("Here I am : ")
+        # print("R: ",R)
+        # print("Here I am : ")
+        # if R['table'] == 'BULKIMPORTIMAGE':
+        #     if 'action' in R and R['action'] == 'confirmImport':
+        #         print("Inserting", R['google_drive_link'])
+        #         drive_link = R['google_drive_link']
+        #         total_image =  save_image_and_image_path(drive_link)
+        #         return rp.JsonResponse({'totalrows': total_image}, status=200)
+        #     else:
+        #         boolean_var, image_data = self.upload_bulk_image_format(R)
+        #         print(image_data)
+        #         print(boolean_var)
+        #         context = {
+        #             'boolean_var':boolean_var,
+        #             'image_data':image_data,
+        #             'google_drive_link':R['google_drive_link']
+        #         }
+        #         return render(request,'onboarding/import_image_data.html',context=context)
         if R['table'] == 'BULKIMPORTIMAGE':
             if 'action' in R and R['action'] == 'confirmImport':
-                print("Inserting", R['google_drive_link'])
-                drive_link = R['google_drive_link']
-                total_image =  save_image_and_image_path(drive_link)
-                return rp.JsonResponse({'totalrows': total_image}, status=200)
+                try:
+                    total_images, results = save_image_and_image_path(
+                        R['google_drive_link'],
+                        settings.MEDIA_ROOT
+                    )
+                    return rp.JsonResponse({
+                        'totalrows': total_images,
+                        'results': results
+                    }, status=200)
+                except Exception as e:
+                    logger.error(f"Error in bulk import: {str(e)}")
+                    return rp.JsonResponse({
+                        'error': str(e)
+                    }, status=500)
             else:
+                # Rest of your existing code for validation
                 boolean_var, image_data = self.upload_bulk_image_format(R)
-                print(image_data)
-                print(boolean_var)
                 context = {
-                    'boolean_var':boolean_var,
-                    'image_data':image_data,
-                    'google_drive_link':R['google_drive_link']
+                    'boolean_var': boolean_var,
+                    'image_data': image_data,
+                    'google_drive_link': R['google_drive_link']
                 }
-                return render(request,'onboarding/import_image_data.html',context=context)
+                return render(request, 'onboarding/import_image_data.html', context=context)
         else:
             if not form.is_valid() and R['action'] != 'confirmImport':
                 return rp.JsonResponse({'errors': form.errors}, status=404)

@@ -122,7 +122,7 @@ class WorkPermitForm(forms.ModelForm):
     verifiers = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label="Verifiers")
     class Meta:
         model = Wom
-        fields = ['qset', 'seqno', 'ctzoffset', 'workpermit', 'performedby', 'parent', 'approvers', 'vendor','verifiers']
+        fields = ['qset', 'seqno', 'ctzoffset', 'workpermit', 'performedby', 'parent', 'approvers', 'vendor','verifiers','identifier']
         labels={
             'qset':'Permit to work',
             'seqno':'Seq No',
@@ -133,8 +133,6 @@ class WorkPermitForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         S = self.request.session
-        print("S",S['bu_id'],S['client_id'])
-        print("Permit to Work", am.QuestionSet.objects.filter(type='WORKPERMIT',client_id=S['client_id'],enable=True,parent_id=1).filter(Q(bu_id=S['bu_id']) | Q(buincludes__contains=[str(S['bu_id'])]) | Q(show_to_all_sites=True)))
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         self.fields['approvers'].choices = Approver.objects.get_approver_options_wp(self.request).values_list('people__peoplecode', 'people__peoplename')

@@ -359,52 +359,116 @@ def download_image_from_drive(file_id, destination_path):
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while downloading the image: {e}")
 
-def save_image_and_image_path(drive_link):
-    from apps.peoples.models import People,upload_peopleimg
-    import os
-    file_id = extract_file_id(drive_link)
-    images_data = get_file_metadata(file_id)['files']
-    print(images_data)
-    counter = 0
-    for images in images_data:
-        peoplecode = images['name'].split('.')[0]
-        people = People.objects.get(peoplecode=peoplecode)
-        image_name = images['name']
-        image_path = upload_peopleimg(people,image_name)
-        final_image_path = os.path.join(MEDIA_ROOT,image_path)
-        print("Image Path: ",final_image_path)
-        # Save the image path in the database
-        image_id = images['id']
-        download_image_from_drive(image_id, final_image_path)
-        people.peopleimg = image_path
-        people.save()
-        counter+=1
-    return counter
+import concurrent.futures
+from functools import partial
+import os
+import requests
+from typing import List, Dict, Tuple
+import logging
 
+logger = logging.getLogger(__name__)
 
-
-
+class BulkImageUploader:
+    def __init__(self, max_workers: int = 10):
+        self.max_workers = max_workers
     
+    def download_single_image(self, image_data: Dict, destination_path: str) -> Tuple[bool, str]:
+        """Download a single image from Google Drive"""
+        try:
+            URL = f"https://drive.google.com/uc?export=download&id={image_data['id']}"
+            response = requests.get(URL, stream=True)
+            response.raise_for_status()
+
+            os.makedirs(os.path.dirname(destination_path), exist_ok=True)
+            with open(destination_path, 'wb') as image_file:
+                for chunk in response.iter_content(chunk_size=8192):
+                    image_file.write(chunk)
+            return True, destination_path
+        except Exception as e:
+            logger.error(f"Error downloading image {image_data['name']}: {str(e)}")
+            return False, str(e)
+
+    def save_image_to_db(self, people_obj, image_path: str) -> bool:
+        """Save image path to database"""
+        try:
+            people_obj.peopleimg = image_path
+            people_obj.save(update_fields=['peopleimg'])
+            return True
+        except Exception as e:
+            logger.error(f"Error saving to database for {people_obj.peoplecode}: {str(e)}")
+            return False
+
+    def process_single_image(self, image_data: Dict, base_path: str, people_obj) -> Dict:
+        """Process a single image including download and database update"""
+        result = {
+            'peoplecode': people_obj.peoplecode,
+            'success': False,
+            'error': None
+        }
+        
+        try:
+            image_path = os.path.join(base_path, f"people/{people_obj.peoplecode}/{image_data['name']}")
+            download_success, download_result = self.download_single_image(image_data, image_path)
+            
+            if download_success:
+                relative_path = os.path.relpath(image_path, base_path)
+                db_success = self.save_image_to_db(people_obj, relative_path)
+                result['success'] = db_success
+                if not db_success:
+                    result['error'] = "Database update failed"
+            else:
+                result['error'] = download_result
+                
+        except Exception as e:
+            result['error'] = str(e)
+            
+        return result
+
+def save_image_and_image_path(drive_link: str, media_root: str) -> Tuple[int, List[Dict]]:
+    """
+    Optimized version of save_image_and_image_path using concurrent operations
+    """
+    from apps.peoples.models import People
+    
+    try:
+        file_id = extract_file_id(drive_link)
+        images_data = get_file_metadata(file_id)['files']
+        
+        # Prepare people objects dictionary for faster lookup
+        peoplecodes = [img['name'].split('.')[0] for img in images_data]
+        people_objects = {
+            p.peoplecode: p for p in People.objects.filter(peoplecode__in=peoplecodes)
+        }
+        
+        uploader = BulkImageUploader()
+        results = []
+        
+        # Process images in parallel
+        with concurrent.futures.ThreadPoolExecutor(max_workers=uploader.max_workers) as executor:
+            future_to_image = {
+                executor.submit(
+                    uploader.process_single_image,
+                    image_data,
+                    media_root,
+                    people_objects[image_data['name'].split('.')[0]]
+                ): image_data
+                for image_data in images_data
+                if image_data['name'].split('.')[0] in people_objects
+            }
+            
+            for future in concurrent.futures.as_completed(future_to_image):
+                result = future.result()
+                results.append(result)
+        
+        successful_uploads = sum(1 for r in results if r['success'])
+        return successful_uploads, results
+    
+    except Exception as e:
+        logger.error(f"Error in bulk image upload: {str(e)}")
+        raise
 
 
-
-
-
-
-
-
-
-
-
-# End
-
-
-
-
-
-
-
-
+# End of New Code
 
 
 def save_correct_image(correct_image_data):
@@ -490,6 +554,11 @@ def get_shift_data(obj):
     data = obj.shift_data.get('designation_details')
     if not data:
         return []
+    for record in data:
+        if 'overtime' not in record:
+            record['overtime'] = 0
+        if 'gracetime' not in record:
+            record['gracetime'] = 0
     return data
 
 def handle_shift_data_edit(request,self):  
@@ -519,6 +588,8 @@ def handle_shift_data_edit(request,self):
             "id": len(designation_details) + 1,
             "designation":data.get('designation'),
             "count":data.get('count'),
+            "overtime": data.get('overtime', '0'),
+            "gracetime": data.get('gracetime', '0'),
             "people_code":[]
         }
         designation_details.append(new_data)
@@ -529,7 +600,9 @@ def handle_shift_data_edit(request,self):
             if item['id'] == int(edit_id):
                 item.update({
                     "designation": data.get('designation'),
-                    "count": data.get('count')
+                    "count": data.get('count'),
+                    "overtime": data.get('overtime', item.get('overtime', '0')),
+                    "gracetime": data.get('gracetime', item.get('gracetime', '0'))
                 })
                 break
 

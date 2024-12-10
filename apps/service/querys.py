@@ -7,7 +7,7 @@ from apps.onboarding.models import GeofenceMaster, DownTimeHistory
 from apps.peoples.models import Pgbelonging, Pgroup, People
 from apps.attendance.models import PeopleEventlog
 from django.db import connections
-from apps.work_order_management.utils import check_all_approved, reject_workpermit
+from apps.work_order_management.utils import check_all_approved, reject_workpermit,check_all_verified
 from collections import namedtuple
 from logging import getLogger
 from contextlib import closing
@@ -146,10 +146,12 @@ class Query(graphene.ObjectType):
     approve_workpermit = graphene.Field(SelectOutputType,
                                 wom_uuid = graphene.String(required=True),
                                 peopleid = graphene.Int(required=True),
+                                identifier= graphene.String(required=True)
                                         )
     reject_workpermit = graphene.Field(SelectOutputType,
                                 wom_uuid = graphene.String(required=True),
                                 peopleid = graphene.Int(required=True),
+                                identifier= graphene.String(required=True)
                                         )
     
     send_email_verification_link = graphene.Field(BasicOutput,
@@ -190,14 +192,46 @@ class Query(graphene.ObjectType):
         return SelectOutputType(nrows = count, ncols = len(keys), records = records,msg = msg)
     
     @staticmethod
-    def resolve_approve_workpermit(self, info, wom_uuid, peopleid):
+    def resolve_approve_workpermit(self, info, wom_uuid, peopleid,identifier):
+        from background_tasks.tasks import send_email_notification_for_workpermit_approval
+        from apps.work_order_management.models import Wom
+        from apps.work_order_management.views import WorkPermit
+        from apps.onboarding.models import Bt
+        from apps.work_order_management.utils import save_pdf_to_tmp_location
         log.info("request for change wom status")
-        log.info(f"inputs are {wom_uuid = } {peopleid = }")
+        log.info(f"inputs are {wom_uuid = } {peopleid = } {identifier = }")
         try:
-            p = People.objects.filter(id = peopleid).first()
-            if is_all_approved := check_all_approved(wom_uuid, p.peoplecode):
-                    updated = Wom.objects.filter(uuid=wom_uuid).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
-            rc, msg = 0, "success"
+            if identifier == 'APPROVER':
+                p = People.objects.filter(id = peopleid).first()
+                if is_all_approved := check_all_approved(wom_uuid, p.peoplecode):
+                        log.info(f'Is all approved in side of if: {is_all_approved}')
+                        updated = Wom.objects.filter(uuid=wom_uuid).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
+                log.info(f'Is all approved outside if: {is_all_approved}')
+                if is_all_approved:
+                    # Sending Email to Vendor and Security pending 
+                    pass
+                rc, msg = 0, "success"
+            else:
+                p = People.objects.filter(id = peopleid).first()
+                if is_all_verified := check_all_verified(wom_uuid, p.peoplecode):
+                        updated = Wom.objects.filter(uuid=wom_uuid).update(verifiers_status=Wom.WorkPermitStatus.APPROVED.value)
+                if is_all_verified:
+                    wom = Wom.objects.get(uuid=wom_uuid)
+                    permit_name = QuestionSet.objects.get(id=wom.qset.id).qsetname
+                    report_object = WorkPermit.get_report_object(wom,permit_name)
+                    report = report_object(filename=permit_name,client_id=wom.client_id,returnfile=True,formdata = {'id':wom.id},request=None)
+                    vendor_name = Vendor.objects.get(id=wom.vendor.id).name
+                    client_id = wom.client.id
+                    report_pdf_object = report.execute()
+                    pdf_path = save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=wom.other_data['wp_seqno'])
+                    sitename = Bt.objects.get(id=wom.bu_id).buname
+                    workpermit_status = wom.workstatus
+                    wp_approvers = wom.other_data['wp_approvers']
+                    approvers = [approver['name'] for approver in wp_approvers]
+                    approvers_code = [approver['peoplecode'] for approver in wp_approvers]
+                    send_email_notification_for_workpermit_approval.delay(wom.id,approvers,approvers_code,sitename,workpermit_status,permit_name,pdf_path,vendor_name,client_id)
+                    #Sending Email to Approver
+                rc, msg = 0, "success"
         except Exception as e:
             log.critical("something went wrong!", exc_info=True)
             rc, msg = 1, "failed"

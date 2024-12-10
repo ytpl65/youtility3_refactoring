@@ -233,14 +233,17 @@ class ShiftForm(forms.ModelForm):
         'invalid_code2': "[Invalid code] Only ('-', '_') special characters are allowed",
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
         'max_hrs_exceed': "Maximum hours in a shift cannot be greater than 12hrs",
-        "min_hrs_required": "Minimum hours of a shift should be atleast 5hrs"
+        "min_hrs_required": "Minimum hours of a shift should be atleast 5hrs",
+        "invalid_overtime": "Overtime hours cannot exceed regular shift duration"
     }
     shiftduration = forms.CharField(widget = forms.TextInput(attrs={'readonly':True}), label="Duration", required = False)
+    overtime = forms.IntegerField(required=False, min_value=0, label="Overtime (hours)", 
+                                widget=forms.NumberInput(attrs={'placeholder': "Enter overtime hours"}))
 
     class Meta:
         model = obm.Shift
         fields = ['shiftname', 'starttime', 'endtime', 'ctzoffset',
-        'nightshiftappicable', 'shiftduration', 'designation', 'captchafreq', 'peoplecount','shift_data' ]
+        'nightshiftappicable', 'shiftduration', 'designation', 'captchafreq', 'peoplecount','shift_data','overtime' ]
         labels={
             'shiftname'  : 'Shift Name',
             'starttime'  : 'Start Time',
@@ -249,12 +252,23 @@ class ShiftForm(forms.ModelForm):
             'designation': "Designation",
             'peoplecount': "People Count",
             'shift_data' : "Shift Data",
+            'overtime':"Overtime Hours"
         }
         widgets ={
             'shiftname':forms.TextInput(attrs={'placeholder': "Enter shift name"}),
             'nightshiftappicable':forms.CheckboxInput(attrs={'onclick': "return false"}),
-            'designation': s2forms.Select2Widget
+            'designation': s2forms.Select2Widget,
+            'overtime': forms.NumberInput(attrs={'class': 'form-control'})
         }
+
+    def clean_overtime(self):
+        overtime = self.cleaned_data.get('overtime')
+        shiftduration = self.cleaned_data.get('shiftduration')
+        
+        if overtime and shiftduration:
+            if overtime > (shiftduration / 60):  # Convert minutes to hours
+                raise forms.ValidationError(self.error_msg['invalid_overtime'])
+        return overtime
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""
@@ -262,8 +276,7 @@ class ShiftForm(forms.ModelForm):
         S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['nightshiftappicable'].initial = False
-        
-        self.fields['designation'].queryset = obm.TypeAssist.objects.filter(tatype__tacode='DESIGNATION',bu_id__in = [S['bu_id'],1], client_id__in = [S['client_id'], 1])
+        self.fields['designation'].queryset = obm.TypeAssist.objects.filter(Q(bu_id__in=[S['bu_id'], 1]) | Q(bu_id__in=S['assignedsites']), client_id__in = [S['client_id'], 1],tatype__tacode='DESIGNATION')
         utils.initailize_form_fields(self)
 
     def clean_shiftname(self):

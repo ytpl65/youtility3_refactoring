@@ -279,6 +279,7 @@ class SiteGroupForm(PgroupForm):
         S = self.request.session
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
+        self.fields['peoples'].required=False
         self.fields['identifier'].initial = om.TypeAssist.objects.get(tacode='SITEGROUP')
         self.fields['grouplead'].queryset = pm.People.objects.filter(bu_id__in = S['assignedsites'], enable=True)
 

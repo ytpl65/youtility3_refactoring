@@ -69,6 +69,15 @@ li {
 {% endblock header_center %}
 
 {% block wp_info %}
+    <div style="margin-left: 100px;">
+        <b>
+            <p style="display: flex; justify-content: space-evenly; width: 100%;">
+                <span></span>
+                <span>Vendor Name: {{ vendor_name }}</span>
+                <span style="margin-left: auto;">NO: {{ workpermit_no }}</span>
+            </p>
+        </b>
+    </div>
     <div class="mr ">
     <br>
     <br>
@@ -126,6 +135,7 @@ li {
 {% endblock wp_info %}
 
 
+
 {% block wp_sections %}
 <br>
 <table id="wp_sections">
@@ -150,9 +160,81 @@ li {
     {% endfor %}
 </table>
 
-<div class="new-page border-class">
-    <br>
-    <br>
+
+
+
+
+{% endblock wp_sections %}
+
+<br>
+
+{% block rwp_section %}
+<br>
+{% if verifiers_status=='APPROVED' and approvers_status=='APPROVED' %}
+<table border="1">
+    {% for section in rwp_info %}
+    <thead>
+        <tr>
+            <th>{{ section['section'] }}</th>
+            <th>Answer</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for question in rwp_info[0]['questions'] %}
+        <tr>
+            <td>{{ question['question__quesname'] }}</td>
+            <td>{{ question['answer'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    {% endfor %}
+</table>
+{% endif %}
+</table>
+
+<br>
+<br>
+    {% if approvers and verifiers %}
+        <div style="display: flex; justify-content: space-between; gap: 20px;">
+            <div id="approved-by-table" style="flex: 1;">
+                <table  style="width: 100%; border-collapse: collapse;text-align: center;">
+                    <thead>
+                        <tr>
+                            <th>Approved By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for approver in approvers %}
+                            <tr>
+                                <td>{{ approver }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        
+            <div id="verified-by-table" style="flex: 1;">
+                <table  style="width: 100%; border-collapse: collapse;text-align: center;">
+                    <thead>
+                        <tr>
+                            <th>Verified By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for verifier in verifiers %}
+                            <tr>
+                                <td>{{ verifier }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+<br>
+<br>
+<div class="border-class">
     <table>
         <thead>
             <tr>
@@ -165,22 +247,30 @@ li {
         <li>This work permit is intended primarily to safeguard people and property of the company.</li>
         <li>The work permit is required to work in all areas of the company.</li>
         <li>Risk assessment should be carried out at site by initiator and executor before starting the work</li>
-        <li>In case of emergency the executor to stop the job and intimate the initiator and wait for further instruction.</li>
+        <li>In case of emergency the executor to stop the job and intimate the initiator and wait for further
+            instruction.</li>
         <li>Work at height /work alone activities are not permitted during night shifts.</li>
-        <li>This permit is valid up to the time mentioned and any extension of the work permit should be duly authorized by responsible person only.</li>
+        <li>This permit is valid up to the time mentioned and any extension of the work permit should be duly authorized
+            by responsible person only.</li>
         <li>Executor of this permit should have awareness of the PPE requirement to carryout assigned work.</li>
         <li>Executor should report all the incidents/ hazards to the initiator.</li>
-        <li>Executor to carry a copy of the work permit during working hours and ensure the proper closing of the work permit.</li>
-        <li>Executor to ensure work area is clear and returned to safe condition, appropriate storage and avoid dumping of wastages in site</li>
-        <li>Ensure all debris are cleared and kept at the designated areas <span style="text-decoration: underline;"></span> on a daily basis.</li>
+        <li>Executor to carry a copy of the work permit during working hours and ensure the proper closing of the work
+            permit.</li>
+        <li>Executor to ensure work area is clear and returned to safe condition, appropriate storage and avoid dumping
+            of wastages in site</li>
+        <li>Ensure all debris are cleared and kept at the designated areas <span
+                style="text-decoration: underline;"></span> on a daily basis.</li>
     </ol>
     <h4>Personal Protection Equipment (PPEs):</h4>
     <ol>
         <li>All personnel deployed for the work should have the appropriate PPE’s as required for the job</li>
-        <li>All Persons should be provided with Safety Shoes, Safety Goggles, gloves and Helmet as a basic minimum. </li>
-        <li>All PPE’s should be as per the IS / EN standards as applicable, as it is required to meet the basic Safety standard to protect the individual in case of any accident</li>
+        <li>All Persons should be provided with Safety Shoes, Safety Goggles, gloves and Helmet as a basic minimum.
+        </li>
+        <li>All PPE’s should be as per the IS / EN standards as applicable, as it is required to meet the basic Safety
+            standard to protect the individual in case of any accident</li>
         <li>Electrical tools should have proper insulation </li>
-        <li>All Electrical PPE’s should be as per the rating required – e.g. Insulated gloves, face shield, aprons etc</li>
+        <li>All Electrical PPE’s should be as per the rating required – e.g. Insulated gloves, face shield, aprons etc
+        </li>
         <li>All tools and tackles should be checked before every use and stored properly in a safe manner</li>
         <li>Where the sound level exposure is high then appropriate ear plug / ear muff to be used</li>
         <li>MEWP/Lifting tools and tackles should be inspected by authorized personnel.</li>
@@ -196,26 +286,8 @@ li {
         <li>Damaged equipment etc.</li>
         <li>Any spills or leak observed.</li>
     </ol>
-
-    <div>
-        <h4>Approver and Verifier who accepted the Work Permit</h4>
-        <h5>Verified by: </h5> {{ verifiers }}
-        <h5>Approved by: </h5>{{ approvers }}
-    </div>
-    
-    {% if approvers %}
-    <p>Hello</p>
-    <h4>Return Permit Details :</h4>
-    <table border="1">
-        {% for question in rwp_info['questions'] %}
-        <tr>
-            <td >{{ question['question__quesname'] }}</td>
-            <td >{{ question['answer'] }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% endif %}
 </div>
+{% endblock rwp_section %}
 
 
-{% endblock wp_sections %}
+

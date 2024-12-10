@@ -563,7 +563,7 @@ def send_email_notification_for_workpermit_approval(self,womid,approvers,approve
     return jsonresp
 
 @shared_task(bind=True, name = "Send Email Notificatio to Verifier")
-def send_email_notification_for_wp_verifier(self,womid,verifiers,sitename,workpermit_status,permit_name,workpermit_attachment,vendor_name,client_id):
+def send_email_notification_for_wp_verifier(self,womid,verifiers,sitename,workpermit_status,permit_name,vendor_name,client_id,workpermit_attachment=None):
     jsonresp = {'story': "", "traceback": ""}
     try:
         from django.apps import apps 
@@ -572,6 +572,7 @@ def send_email_notification_for_wp_verifier(self,womid,verifiers,sitename,workpe
         People = apps.get_model('peoples', 'People')
         wp_details = Wom.objects.get_wp_answers(womid)
         wp_obj = Wom.objects.get(id=womid)
+        permit_no = wp_obj.other_data['wp_seqno']
         jsonresp['story'] += f"\n{wp_details}"
         if wp_details:
             qset = People.objects.filter(peoplecode__in = verifiers)
@@ -609,6 +610,57 @@ def send_email_notification_for_wp_verifier(self,womid,verifiers,sitename,workpe
         jsonresp['traceback'] += tb.format_exc()
     return jsonresp
         
+
+
+@shared_task(bind=True, name="Send Email Notification for WP from mobile to Verifier")
+def send_email_notification_for_wp_from_mobile_for_verifier(self,womid,verifiers,sitename,workpermit_status,permit_name,vendor_name,client_id,workpermit_attachment=None):
+    jsonresp = {'story': "", "traceback": ""}
+    try:
+        from django.apps import apps 
+        from django.template.loader import render_to_string
+        Wom = apps.get_model('work_order_management', 'Wom')
+        People = apps.get_model('peoples', 'People')
+        wp_details = Wom.objects.get_wp_answers(womid)
+        wp_obj = Wom.objects.get(id=womid)
+        jsonresp['story'] += f"\n{wp_details}"
+        log.info(f"Vendor name: {vendor_name} , client_id: {client_id}")
+        if wp_details:
+            qset = People.objects.filter(peoplecode__in = verifiers)
+            for p in qset.values('email','id'):
+                dlog.info(f"Sending Email to {p['email'] = }")
+                msg = EmailMessage()
+                msg.subject = f"{permit_name}-{wp_obj.other_data['wp_seqno']}-{sitename}-Verification Pending"            
+                msg.to = [p['email']]
+                msg.from_email = settings.EMAIL_HOST_USER
+                cxt = {
+                    'peopleid':p['id'],
+                    'HOST':settings.HOST,
+                    'workpermitid':womid,
+                    'sitename':sitename,
+                    'status':workpermit_status,
+                    'permit_no':wp_obj.other_data['wp_seqno'],
+                    'permit_name':permit_name,
+                    'vendor_name':vendor_name,
+                    'client_id':client_id
+                }
+                html = render_to_string(
+                    'work_order_management/workpermit_verifier_action.html',context=cxt
+                )
+                msg.body = html
+                msg.content_subtype = 'html'
+                msg.attach_file(workpermit_attachment, mimetype='application/pdf')
+                msg.send()
+                dlog.info(f"Email sent to {p['email'] = }")
+                jsonresp['story']+=f"Email sent to {p['email'] = }"
+        jsonresp['story'] += f"A {permit_name} email sent of pk: {womid}: "
+    except Exception as e:
+        dlog.critical(
+            "Something went wrong while running send_email_notification_for_wp_verifier",exc_info=True
+            )
+        jsonresp['traceback'] += tb.format_exc()
+    return jsonresp
+
+
 @shared_task(bind=True, name="Create Workpermit email notification")
 def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu_id,sitename,workpermit_status,vendor_name):
     jsonresp = {'story': "", "traceback": ""}
@@ -662,8 +714,14 @@ def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workper
     jsonresp = {'story':"", 'traceback':""}
     try:
         from apps.work_order_management.models import Wom,WomDetails
+        from apps.onboarding.models import Bt
         from django.template.loader import render_to_string
         wom = Wom.objects.filter(parent_id=wom_id)
+        client_id = wom[0].client_id
+        sitename = Bt.objects.get(id=client_id).buname
+
+        log.info(f'THe Site Name for vendor and security is {sitename}')
+        # sitename = Bt.objects.get((Wom.objects.get(id=wom_id).client.id)).buname
         sections = [x for x in wom]
         if submit_work_permit:
             wom_detail = sections[-2].id
@@ -672,8 +730,7 @@ def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workper
         dlog.info(f"sections: {sections}")
         dlog.info(f"wom_detail: {wom_detail}")
         wom_detail_email_section = WomDetails.objects.filter(wom_id=wom_detail)
-        #wp_details = Wom.objects.get_wp_answers(wom_id)
-        #dlog.info(f"WP Details: ",wp_details)
+    
         for email in wom_detail_email_section:
             dlog.info(f"email: {email.answer}")
             msg = EmailMessage()

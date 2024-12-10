@@ -245,9 +245,9 @@ class Job(BaseModel, TenantAwareModel):
         HALFYEARLY  = "HALFYEARLY" , _("Half Yearly")
         YEARLY      = "YEARLY"     , _("Yearly")
         FORTNIGHTLY = "FORTNIGHTLY", _("Fort Nightly")
-
+    
     # id          = models.BigIntegerField(_("Job Id"), primary_key = True)
-    jobname         = models.CharField(_("Name"), max_length = 100)
+    jobname         = models.CharField(_("Name"), max_length = 200)
     jobdesc         = models.CharField(_("Description"), max_length = 500)
     fromdate        = models.DateTimeField( _("From date"), auto_now = False, auto_now_add = False)
     uptodate        = models.DateTimeField( _("To date"), auto_now = False, auto_now_add = False)

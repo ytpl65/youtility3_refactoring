@@ -299,7 +299,9 @@ def get_overall_score(id):
 
 def get_pdf_path():
     user_name = getpass.getuser()
+    print("User Name: ",user_name)
     tmp_pdf_location = f'/home/{user_name}/tmp_reports'
+    print(tmp_pdf_location)
     if not os.path.exists(tmp_pdf_location):
         os.makedirs(tmp_pdf_location)
     return tmp_pdf_location
@@ -375,7 +377,6 @@ def get_last_3_months_sla_reports(vendor_id, bu_id):
 
 def get_sla_report_approvers(sla_approvers):
     approver_name = []
-    print(sla_approvers)
     for data in sla_approvers:
         approver_name.append(data['name'])
     return approver_name

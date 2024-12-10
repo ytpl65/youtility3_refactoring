@@ -15,9 +15,9 @@ from apps.core import utils
 from apps.core import exceptions as excp
 from apps.service import serializers as sz
 from apps.y_helpdesk.models import Ticket
-from background_tasks.tasks import alert_sendmail, send_email_notification_for_wp, insert_json_records_async
+from background_tasks.tasks import alert_sendmail, send_email_notification_for_wp_from_mobile_for_verifier, insert_json_records_async
 from intelliwiz_config.celery import app
-from apps.work_order_management.utils import save_approvers_injson
+from apps.work_order_management.utils import save_approvers_injson,save_verifiers_injson
 from apps.schedhuler.utils import create_dynamic_job
 
 from .auth import Messages as AM
@@ -238,13 +238,16 @@ def update_jobneeddetails(jobneeddetails, JndModel):
         raise
 
 
-def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_wp):
+def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_wp,verifers):
     try:
         rc,  traceback= 0,  'NA'
         instance = None
         if jn_parent_serializer.is_valid():
             if not is_return_wp:
                 parent = jn_parent_serializer.save()
+                log.info(f"{verifers},{type(verifers)}")
+                parent.verifiers = [verifers]
+                log.info(f"Here I am because not jn_parent_serializer: {parent}")
             if is_return_wp:
                 wom = Wom.objects.get(id = jn_parent_serializer.validated_data.get('parent_id'))
                 seqno = Wom.objects.filter(parent_id=wom.id).order_by('-seqno').first().seqno + 1
@@ -285,14 +288,41 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
                     log.error(f'child record has some errors:{child_serializer.errors}')
                     traceback, msg, rc = str(child_serializer.errors), M.INSERT_FAILED, 1
             if allsaved == len(child):
+                from apps.onboarding.models import Bt
+                from apps.activity.models import QuestionSet
+                from apps.work_order_management.models import Vendor
+                from apps.work_order_management.views import WorkPermit
+                from apps.work_order_management.utils import save_pdf_to_tmp_location
                 msg= M.INSERT_SUCCESS
                 log.info(f'All {allsaved} child records saved successfully')
-                #log.info(f'{parent.id = } {parent.uuid = } {parent.description}')
                 if not is_return_wp and  hasattr(parent, 'parent_id') and tablename == 'wom' and parent.workpermit != 'NOT_REQUIRED' and parent.parent_id ==1:
-                    #workpermit parent record
                     parent = save_approvers_injson(parent)
+                    parent = save_verifiers_injson(parent)
                     log.info(f'{parent.id = } {parent.uuid = } {parent.description}')
-                    send_email_notification_for_wp.delay(parent.id, parent.qset_id, parent.approvers, parent.client_id, parent.bu_id)
+
+                    wom_id = parent.id
+                    verifers = parent.verifiers
+                    sitename = Bt.objects.get(id=parent.bu_id).buname
+                    worpermit_status = parent.workpermit
+                    permit_name = parent.qset.qsetname
+                    
+                    vendor_name = Vendor.objects.get(id=parent.vendor_id).name
+                    # client_id   = Bt.objects.get(id=parent.client_id).buname
+                    client_id = parent.client_id
+                    latest_records = Wom.objects.filter(client=parent.client_id,bu=parent.bu_id,parent_id=1,identifier='WP').order_by('-other_data__wp_seqno').first()
+                    if latest_records is None:
+                        parent.other_data['wp_seqno'] = 1
+                    elif parent.other_data['wp_seqno'] != latest_records.other_data['wp_seqno']:
+                        parent.other_data['wp_seqno'] = latest_records.other_data['wp_seqno'] + 1
+                    parent.other_data['wp_name'] = permit_name
+                    parent.identifier='WP'
+                    parent.save()
+                    report_object = WorkPermit.get_report_object(parent,permit_name)
+                    report = report_object(filename=permit_name,client_id=parent.client_id,returnfile=True,formdata = {'id':parent.id},request=None)
+                    report_pdf_object = report.execute()
+                    pdf_path = save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=parent.other_data['wp_seqno'])
+                    log.info(f"PDF Path: {pdf_path}")
+                    send_email_notification_for_wp_from_mobile_for_verifier.delay(wom_id,verifers,sitename,worpermit_status,permit_name,vendor_name,client_id,workpermit_attachment=pdf_path)
         else:
             log.error(jn_parent_serializer.errors)
             traceback, msg, rc = str(jn_parent_serializer.errors), M.INSERT_FAILED, 1
@@ -659,6 +689,8 @@ def perform_reportmutation(self, records, db= 'default', bg=False):
                 is_return_workpermit = record.pop('isreturnwp', None)
                 child = record.pop('child', None)
                 parent = record
+                verifers = record.pop('verifier',None)
+                log.info(f"Verifier: ------------> {verifers}")
                 try:
                     switchedSerializer = sz.WomSerializer if tablename == 'wom' else sz.JobneedSerializer
                     with transaction.atomic(using = db):
@@ -666,7 +698,7 @@ def perform_reportmutation(self, records, db= 'default', bg=False):
                             jobneed_parent_post_data = parent
                             jn_parent_serializer = switchedSerializer(data = clean_record(jobneed_parent_post_data))
                             log.info(f'switched serializer is {switchedSerializer}')
-                            rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages, tablename, is_return_workpermit)
+                            rc,  traceback, msg = save_parent_childs(sz, jn_parent_serializer, child, Messages, tablename, is_return_workpermit,verifers)
                             if rc == 0: recordcount += 1
                         else:
                             log.error(Messages.NODETAILS)

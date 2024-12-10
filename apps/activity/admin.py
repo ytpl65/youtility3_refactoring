@@ -592,6 +592,31 @@ class QuestionSetBelongingResource(resources.ModelResource):
             raise ValidationError(
                 f"Record with these values already exists: {row.values()}"
             )
+        
+    def check_answertype_fields(self, row):
+        Authorized_AnswerTypes = [
+            "DATE",
+            "CHECKBOX",
+            "MULTISELECT",
+            "DROPDOWN",
+            "EMAILID",
+            "MULTILINE",
+            "NUMERIC",
+            "SIGNATURE",
+            "SINGLELINE",
+            "TIME",
+            "RATING",
+            "PEOPLELIST",
+            "SITELIST",
+            "METERREADING",
+        ]
+        Answer_type_val = row.get("Answer Type*")
+        if Answer_type_val not in Authorized_AnswerTypes:
+            raise ValidationError(
+                {
+                    Answer_type_val: f"{Answer_type_val} is a not a valid Answertype.Please select a valid AnswerType."
+                }
+            )
 
     def validate_options_values(self, row):
         if row["Answer Type*"] in ["CHECKBOX", "DROPDOWN"]:

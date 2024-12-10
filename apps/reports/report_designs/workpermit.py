@@ -6,8 +6,11 @@ from apps.work_order_management.models import Wom
 from django.conf import settings
 from django.http.response import JsonResponse
 import logging
+import pytz
+from datetime import datetime
 logger = logging.getLogger('__main__')
 log = logger
+
 
 
 class WorkPermit(BaseReportsExport):
@@ -26,7 +29,13 @@ class WorkPermit(BaseReportsExport):
         verifiers = WorkPermit.__get_verifiers_name(id)
         verifiers_status = Wom.objects.get(id=id).verifiers_status
         approver_status  = Wom.objects.get(id=id).workpermit
+        workpermit_no = Wom.objects.get(id=id).other_data['wp_seqno']
+        vendor_name = Wom.objects.get(id=id).vendor.name
         wp_sections_without_email_sections = [section for section in wp_sections if section.get('section')!='EMAIL']
+        utc_now = datetime.now(pytz.utc)
+        ist_timezone = pytz.timezone('Asia/Kolkata')
+        current_time_ist = utc_now.astimezone(ist_timezone)
+        formatted_time = current_time_ist.strftime("%d-%b-%Y %H:%M:%S")
         self.context = {
             'base_path': settings.BASE_DIR,
             'main_title':sitename,
@@ -40,7 +49,10 @@ class WorkPermit(BaseReportsExport):
             'approvers':approvers,
             'verifiers':verifiers,
             'verifiers_status':verifiers_status,
-            'approvers_status':approver_status
+            'approvers_status':approver_status,
+            'current_time': formatted_time,
+            'vendor_name':vendor_name,
+            'workpermit_no':workpermit_no
         }
 
 
@@ -59,18 +71,18 @@ class WorkPermit(BaseReportsExport):
     
     def __get_approvers_name(id):
         obj = Wom.objects.filter(id=id).values('other_data').first()
-        approver = ''
+        approver = []
         for record in obj['other_data']['wp_approvers']:
             if record['status'] == 'APPROVED':
-                approver+= record['name'] + ', '
+                approver.append(record['name']) 
         return approver
 
     def __get_verifiers_name(id):
         obj = Wom.objects.filter(id=id).values('other_data').first()
-        verifier = ''
+        verifier = []
         for record in obj['other_data']['wp_verifiers']:
             if record['status'] == 'APPROVED':
-                verifier+= record['name'] + ', '
+                verifier.append(record['name'])
         return verifier
 
 

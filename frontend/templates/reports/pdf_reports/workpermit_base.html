@@ -15,23 +15,72 @@
             .mr {
                 margin-bottom: 7px;
             }
-
+/* 
             @page {
                 size: A4;
+                margin-bottom: 80px ;
 
                 @bottom-left {
-                    content: ""
+                    content: "Version 3.0 01st Jan 2024\n{{ current_time }}";
+                    font-size: 10px;
+                    color: #333;
+                    margin-left: 20px;
                 }
-
+                
+                @bottom-center {
+                    content: "*** This is a computer-generated Work Permit. Signature not required. ***";
+                    font-size: 10px;
+                    color: #333;
+                    white-space: pre-line;
+                }
+                
                 @bottom-right {
-                    content: ""
+                    content: "Page " counter(page) " of " counter(pages);
+                    font-size: 10px;
+                    color: #333;
+                    margin-right: 20px;
                 }
             }
-
             .new-page{
                 page-break-before:always !important;
                 margin-top: 20px;
-            }
+            } */
+
+            @page {
+                size: A4;
+                margin-bottom: 100px; /* Increased margin to accommodate two-line footer */
+                }
+
+                @page {
+                @bottom-left {
+                    content: 
+                    "Version 3.0 01st Jan 2024"
+                    "\A"
+                    "{{ current_time }}";
+                    font-size: 10px;
+                    color: #333;
+                    white-space: pre;
+                    text-align: center;
+                    line-height: 2.5;
+                    margin-right: 20px;
+                }
+                }
+                @page{
+                    @bottom-center{
+                        content:"\A"
+                        "*** This is a computer-generated Work Permit. Signature not required. ***";
+                        margin-right: 20px;
+                        white-space:pre;
+                        font-size: 10px;
+                        line-height: 2.5;
+                        color: #333;
+                    }
+                }
+
+                .new-page {
+                page-break-before: always !important;
+                margin-top: 20px;
+                }
 
             span,
             th,
@@ -64,6 +113,16 @@
 
             .dashed-text {
                 border-bottom: 1px dashed;
+            }   
+
+            .footer-note {
+                font-size: 12px;
+                color: #555;
+                border-top: 1px solid #ccc;
+                padding: 8px 16px;
+                display: flex;
+                justify-content: space-between;
+                background-color: #f9f9f9;
             }
 
 
@@ -122,8 +181,6 @@
                 {% endblock static_content %}
             </div>
         </main>
-        
-
     </body>
 
 </html>

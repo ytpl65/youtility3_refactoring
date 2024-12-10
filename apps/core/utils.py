@@ -387,6 +387,7 @@ def save_user_session(request, people, ctzoffset=None):
     '''save user info in session'''
     from django.conf import settings
     from django.core.exceptions import ObjectDoesNotExist
+    from apps.onboarding import models as Bt
 
     try:
         logger.info('saving user data into the session ... STARTED')

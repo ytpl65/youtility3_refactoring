@@ -1627,6 +1627,8 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             P['model'].objects.filter(parent_id = job['id']).delete()
             count=0
             for cp in checkpoints:
+                print("CP: ",cp)
+                print("Fields",sutils.job_fields(job,cp,external=True))
                 obj = am.Job.objects.create(
                     **sutils.job_fields(job, cp, external=True))
                 putils.save_userinfo(obj, request.user, request.session, bu=cp['buid'])

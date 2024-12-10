@@ -165,7 +165,7 @@ class PeopleResource(resources.ModelResource):
         row['Name*'] = clean_string(row.get('Name*', "NONE"))
         # check required fields
         if row['Code*'] in ['', None]: raise ValidationError("Code* is required field")
-        if row['Employee Type*'] in ['', None]: raise ValidationError("Employee Type* is required field")
+        # if row['Employee Type*'] in ['', None]: raise ValidationError("Employee Type* is required field")
         if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
         if row['User For*'] in ['', None]: raise ValidationError("User For* is required field")
         
@@ -728,18 +728,18 @@ class PeopleResourceUpdate(resources.ModelResource):
         if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and math.isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})
         if 'Code' in row:
             if row['Code'] in ['', None]: raise ValidationError("Code is required field")
-        if 'Employee Type' in row:
-            if row['Employee Type'] in ['', None, 'NONE']: raise ValidationError("Employee Type is required field & should not be NONE")
+        # if 'Employee Type' in row:
+        #     if row['Employee Type'] in ['', None, 'NONE']: raise ValidationError("Employee Type is required field & should not be NONE")
         if 'Name' in row:
             if row['Name'] in ['', None]: raise ValidationError("Name is required field")
         if 'User For' in row:
             if row['User For'] in ['', None]: raise ValidationError("User For is required field")
-        if 'Work Type' in row:
-            if row['Work Type'] in ['', None, 'NONE']: raise ValidationError("Work Type is required field & should not be NONE")
-        if 'Designation' in row:
-            if row['Designation'] in ['', None, 'NONE']: raise ValidationError("Designation is required field & should not be NONE")
-        if 'Department' in row:
-            if row['Department'] in ['', None, 'NONE']: raise ValidationError("Department is required field & should not be NONE")
+        # if 'Work Type' in row:
+        #     if row['Work Type'] in ['', None, 'NONE']: raise ValidationError("Work Type is required field & should not be NONE")
+        # if 'Designation' in row:
+        #     if row['Designation'] in ['', None, 'NONE']: raise ValidationError("Designation is required field & should not be NONE")
+        # if 'Department' in row:
+        #     if row['Department'] in ['', None, 'NONE']: raise ValidationError("Department is required field & should not be NONE")
         
         # code validation
         if 'Code' in row:

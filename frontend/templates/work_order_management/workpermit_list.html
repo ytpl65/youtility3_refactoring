@@ -170,14 +170,6 @@ $(document).ready(function(){
           responseType: 'blob'
         },
         success: function (response) {
-            //Working code
-            /*
-            var blob = new Blob([response], { type: 'application/pdf' });
-            var objectUrl = URL.createObjectURL(blob);
-            window.open(objectUrl, "_blank");
-            URL.revokeObjectURL(objectUrl);
-            */
-            //New Code added
             var permitname = data['qset__qsetname']
             var seqno    = data['other_data__wp_seqno']
             var filename = permitname + "_" + seqno
