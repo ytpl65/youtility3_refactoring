@@ -72,6 +72,15 @@ li {
 {% endblock header_center %}
 
 {% block wp_info %}
+    <div style="margin-left: 100px;">
+        <b>
+            <p style="display: flex; justify-content: space-evenly; width: 100%;">
+                <span></span>
+                <span>Vendor Name: {{ vendor_name }}</span>
+                <span style="margin-left: auto;">NO: {{ workpermit_no }}</span>
+            </p>
+        </b>
+    </div>
     <div class="mr ">
     <br>
     <br>
@@ -217,74 +226,86 @@ li {
             </div>
         </div>
         {% endif %}
+
         
+        <div class="border-class">
+            <br>
+            <br>
+            <table>
+                <thead>
+                    <tr>
+                        <th>HSEQ Guidelines/ Instructions:</th>
+                    </tr>
+                </thead>
+            </table>
+            <h4>General:</h4>
+            <ol>
+                <li>This work permit is intended primarily to safeguard people and property of the company.</li>
+                <li>The work permit is required to work in all areas of the company.</li>
+                <li>Risk assessment should be carried out at site by initiator and executor before starting the work</li>
+                <li>In case of emergency the executor to stop the job and intimate the initiator and wait for further
+                    instruction.</li>
+                <li>Work at height /work alone activities are not permitted during night shifts.</li>
+                <li>This permit is valid up to the time mentioned and any extension of the work permit should be duly authorized
+                    by responsible person only.</li>
+                <li>Executor of this permit should have awareness of the PPE requirement to carryout assigned work.</li>
+                <li>Executor should report all the incidents/ hazards to the initiator.</li>
+                <li>Executor to carry a copy of the work permit during working hours and ensure the proper closing of the work
+                    permit.</li>
+                <li>Executor to ensure work area is clear and returned to safe condition, appropriate storage and avoid dumping
+                    of wastages in site</li>
+                <li>Ensure all debris are cleared and kept at the designated areas <span
+                        style="text-decoration: underline;"></span> on a daily basis.</li>
+            </ol>
+            <h4>Personal Protection Equipment (PPEs):</h4>
+            <ol>
+                <li>All personnel deployed for the work should have the appropriate PPE’s as required for the job</li>
+                <li>All Persons should be provided with Safety Shoes, Safety Goggles, gloves and Helmet as a basic minimum.
+                </li>
+                <li>All PPE’s should be as per the IS / EN standards as applicable, as it is required to meet the basic Safety
+                    standard to protect the individual in case of any accident</li>
+                <li>Electrical tools should have proper insulation </li>
+                <li>All Electrical PPE’s should be as per the rating required – e.g. Insulated gloves, face shield, aprons etc
+                </li>
+                <li>All tools and tackles should be checked before every use and stored properly in a safe manner</li>
+                <li>Where the sound level exposure is high then appropriate ear plug / ear muff to be used</li>
+                <li>MEWP/Lifting tools and tackles should be inspected by authorized personnel.</li>
+            </ol>
+        
+            <h5>Electrical Work:</h5>
+            <ol>
+                <li>For work inside the substation, ensure to take approval from site Supervisor / Site Lead and Client.</li>
+                <li>All operators should have electrical valid license (as applicable) and verified by approving authority.</li>
+                <li>Appropriate Electrical PPE is to be ensured before carrying out any electrical related work at the premises.
+                </li>
+                <li>LOTO procedure should be ensured before commencing any maintenance work at the site and to be validated by
+                    the Electrical Supervisor / FM only and to be verified before start of activity.</li>
+                <li>Documents like manual, work instructions, Standard operating procedure, operator license, rope strength etc.
+                    to be checked in advance.</li>
+                <li>Check for Service partners /sub-contractor licenses and competency for Electrical high voltage activity.
+                </li>
+                <li>Check for Calibration certificates of electronic equipment and tools inspection.</li>
+                <li>PTW and LOTO details to be cross referenced for ease of identification</li>
+            </ol>
+        
+            <div class="electrical-work">
+                Electrical high voltage (more than 1000 volts) – Ensure all requirements as per the ISS SOP are followed with
+                appropriate PPEs, Competent personnel, legal compliances, all appropriate tools and tackles to be inspected and
+                have emergency response plan.
+            </div>
+        
+            <h4 class="color-red">Please Note:</h4>
+            <p>Kindly report to your Supervisor/Site Lead/HSE Manager:</p>
+            <ol>
+                <li>Any Hazards observed.</li>
+                <li>Incident / Near miss incident happen/ observed.</li>
+                <li>Any unsafe Act / Unsafe conditions observed.</li>
+                <li>In case of any doubt – STOP WORK and assess the risk before continuing with the activity.</li>
+                <li>Damaged equipment etc.</li>
+                <li>Any spills or leak observed.</li>
+            </ol>
+        
+        </div>
 {% endblock rwp_section %}
-
-{% block static_content %}
-<div class="new-page border-class">
-    <br>
-    <br>
-    <table>
-        <thead>
-            <tr>
-                <th>HSEQ Guidelines/ Instructions:</th>
-            </tr>
-        </thead>
-    </table>
-    <h4>General:</h4>
-    <ol>
-        <li>This work permit is intended primarily to safeguard people and property of the company.</li>
-        <li>The work permit is required to work in all areas of the company.</li>
-        <li>Risk assessment should be carried out at site by initiator and executor before starting the work</li>
-        <li>In case of emergency the executor to stop the job and intimate the initiator and wait for further instruction.</li>
-        <li>Work at height /work alone activities are not permitted during night shifts.</li>
-        <li>This permit is valid up to the time mentioned and any extension of the work permit should be duly authorized by responsible person only.</li>
-        <li>Executor of this permit should have awareness of the PPE requirement to carryout assigned work.</li>
-        <li>Executor should report all the incidents/ hazards to the initiator.</li>
-        <li>Executor to carry a copy of the work permit during working hours and ensure the proper closing of the work permit.</li>
-        <li>Executor to ensure work area is clear and returned to safe condition, appropriate storage and avoid dumping of wastages in site</li>
-        <li>Ensure all debris are cleared and kept at the designated areas <span style="text-decoration: underline;"></span> on a daily basis.</li>
-    </ol>
-    <h4>Personal Protection Equipment (PPEs):</h4>
-    <ol>
-        <li>All personnel deployed for the work should have the appropriate PPE’s as required for the job</li>
-        <li>All Persons should be provided with Safety Shoes, Safety Goggles, gloves and Helmet as a basic minimum. </li>
-        <li>All PPE’s should be as per the IS / EN standards as applicable, as it is required to meet the basic Safety standard to protect the individual in case of any accident</li>
-        <li>Electrical tools should have proper insulation </li>
-        <li>All Electrical PPE’s should be as per the rating required – e.g. Insulated gloves, face shield, aprons etc</li>
-        <li>All tools and tackles should be checked before every use and stored properly in a safe manner</li>
-        <li>Where the sound level exposure is high then appropriate ear plug / ear muff to be used</li>
-        <li>MEWP/Lifting tools and tackles should be inspected by authorized personnel.</li>
-    </ol>
-
-    <h5>Electrical Work:</h5>
-    <ol>
-        <li>For work inside the substation, ensure to take approval from site Supervisor / Site Lead and Client.</li>
-        <li>All operators should have electrical valid license (as applicable) and verified by approving authority.</li>
-        <li>Appropriate Electrical PPE is to be ensured before carrying out any electrical related work at the premises.</li>
-        <li>LOTO procedure should be ensured before commencing any maintenance work at the site and to be validated by the Electrical Supervisor / FM only and to be verified before start of activity.</li>
-        <li>Documents like manual, work instructions, Standard operating procedure, operator license, rope strength etc. to be checked in advance.</li>
-        <li>Check for Service partners /sub-contractor licenses and competency for Electrical high voltage activity.</li>
-        <li>Check for Calibration certificates of electronic equipment and tools inspection.</li>
-        <li>PTW and LOTO details to be cross referenced for ease of identification</li>
-    </ol>
-
-    <div class="electrical-work">
-        Electrical high voltage (more than 1000 volts) – Ensure all requirements as per the ISS SOP are followed with appropriate PPEs, Competent personnel, legal compliances, all appropriate tools and tackles to be inspected and have emergency response plan.
-    </div>
-
-    <h4 class="color-red">Please Note:</h4>
-    <p>Kindly report to your Supervisor/Site Lead/HSE Manager:</p>
-    <ol>
-        <li>Any Hazards observed.</li>
-        <li>Incident / Near miss incident happen/ observed.</li>
-        <li>Any unsafe Act / Unsafe conditions observed.</li>
-        <li>In case of any doubt – STOP WORK and assess the risk before continuing with the activity.</li>
-        <li>Damaged equipment etc.</li>
-        <li>Any spills or leak observed.</li>
-    </ol>
-
-</div>
-{% endblock static_content %}
 
 

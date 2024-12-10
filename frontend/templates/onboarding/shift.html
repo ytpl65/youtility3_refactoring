@@ -42,6 +42,20 @@ Shift List
 	
 	$(document).ready(function () {
 
+        function convertToIST(utcTimeStr) {
+            // Convert UTC time string to IST (UTC+5:30)
+            const [hours, minutes] = utcTimeStr.split(':');
+            const utcDate = new Date();
+            utcDate.setUTCHours(parseInt(hours), parseInt(minutes));
+            
+            // Add 5 hours and 30 minutes for IST
+            utcDate.setTime(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
+            
+            const istHours = utcDate.getUTCHours().toString().padStart(2, '0');
+            const istMinutes = utcDate.getUTCMinutes().toString().padStart(2, '0');
+            return `${istHours}:${istMinutes}`;
+        }
+
 		function addField() {
 			const container = document.getElementById('dynamic-fields-container');
 			if (!container) return;
@@ -85,8 +99,22 @@ Shift List
                         return `<a href="${urlname}?id=${row['id']}" class="shift-link" data-id=${row['id']} data-rowid=${meta.row}>${data}</a>`
                     }
                 },
-                { "data": "starttime", 'title': 'Start Time'},
-                { "data": "endtime", 'title': 'End Time' },
+                { "data": "starttime", 'title': 'Start Time',
+                    'render': function(data, type, row, meta) {
+                        if (type === 'display' && data) {
+                            return convertToIST(data);
+                        }
+                        return data;
+                    }
+                },
+                { "data": "endtime", 'title': 'End Time',
+                    'render': function(data, type, row, meta) {
+                        if (type === 'display' && data) {
+                            return convertToIST(data);
+                        }
+                        return data;
+                    }
+                },
                 { "data": "nightshiftappicable", 'title': 'Night Shift',
                     'render': function(data, type, row, meta){
                         return data === true ? "Yes": "No"

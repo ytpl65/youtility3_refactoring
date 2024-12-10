@@ -294,40 +294,137 @@ var d2markersArray = [];
     }*/
 
     // Plots LatLng data into map
+    // function plotLocationsOnMap(tabAssigned_sites) {
+    //     try {
+    //         const assignedSites = tabAssigned_sites.rows().data().toArray();
+    //         const mapBounds = new google.maps.LatLngBounds();
+    //         const infoWindow = new google.maps.InfoWindow();
+            
+    //         // Clear existing markers
+    //         d2ClearMarker();
+    
+    //         // Track valid and invalid markers
+    //         let validMarkersCount = 0;
+    //         let sitesWithoutGPS = [];
+    
+    //         assignedSites.forEach(site => {
+    //             if (!site) return;
+    //             console.log("Site: ",site)
+    //             const latLng = getLatLngFromGPSData(site.gps, site.buname);
+    //             if (latLng) {
+    //                 validMarkersCount++;
+    //                 const marker = new google.maps.Marker({
+    //                     position: latLng,
+    //                     map: d2map,
+    //                     title: site.solid || 'Unnamed Site'
+    //                 });
+                    
+    //                 d2markersArray.push(marker);
+    //                 mapBounds.extend(latLng);
+    
+    //                 google.maps.event.addListener(marker, 'click', function() {
+    //                     infoWindow.setContent("Site Name: " + this.title);
+    //                     infoWindow.open(d2map, this);
+    //                 });
+    //             } else {
+    //                 // Collect sites with missing or invalid GPS data
+    //                 sitesWithoutGPS.push(site.buname || 'Unnamed Site');
+    //             }
+    //         });
+    
+    //         // Show warning for sites without GPS data
+    //         if (sitesWithoutGPS.length > 0) {
+    //             const sitesList = sitesWithoutGPS.join('\n• ');
+    //             Swal.fire({
+    //                 title: 'Missing GPS Data',
+    //                 html: `The following sites have missing or invalid GPS coordinates:<br/><br/>• ${sitesList}`,
+    //                 icon: 'warning',
+    //                 confirmButtonText: 'OK'
+    //             });
+    //         }
+    
+    //         // Only adjust bounds if we have valid markers
+    //         if (validMarkersCount > 0) {
+    //             d2map.fitBounds(mapBounds);
+    //         } else {
+    //             Swal.fire({
+    //                 title: 'No Valid Locations',
+    //                 text: 'None of the selected sites have valid GPS coordinates.',
+    //                 icon: 'error',
+    //                 confirmButtonText: 'OK'
+    //             });
+    //         }
+    //     } catch (error) {
+    //         console.error('Error plotting locations:', error);
+    //         Swal.fire({
+    //             title: 'Error',
+    //             text: 'An error occurred while plotting locations on the map.',
+    //             icon: 'error',
+    //             confirmButtonText: 'OK'
+    //         });
+    //     }
+    // }
+
+
+
+
     function plotLocationsOnMap(tabAssigned_sites) {
         try {
             const assignedSites = tabAssigned_sites.rows().data().toArray();
             const mapBounds = new google.maps.LatLngBounds();
-            const infoWindow = new google.maps.InfoWindow();
             
             // Clear existing markers
             d2ClearMarker();
     
-            // Track valid and invalid markers
             let validMarkersCount = 0;
             let sitesWithoutGPS = [];
     
+            // First, extend bounds for all valid locations
             assignedSites.forEach(site => {
                 if (!site) return;
+                const latLng = getLatLngFromGPSData(site.gps, site.buname);
+                if (latLng) {
+                    // Add extra padding around each point
+                    const padding = 0.01; // Approximately 1km at equator
+                    mapBounds.extend(new google.maps.LatLng(
+                        latLng.lat() + padding,
+                        latLng.lng() + padding
+                    ));
+                    mapBounds.extend(new google.maps.LatLng(
+                        latLng.lat() - padding,
+                        latLng.lng() - padding
+                    ));
+                }
+            });
     
+            // Then create markers
+            assignedSites.forEach(site => {
+                if (!site) return;
+                console.log("Site:", site);
                 const latLng = getLatLngFromGPSData(site.gps, site.buname);
                 if (latLng) {
                     validMarkersCount++;
+                    
+                    // Create marker with offset labels for overlapping markers
                     const marker = new google.maps.Marker({
                         position: latLng,
                         map: d2map,
-                        title: site.buname || 'Unnamed Site'
+                        label: {
+                            text: site.solid || 'Unnamed',
+                            color: '#000000',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            // Offset the label position slightly based on position
+                            // This will help prevent complete overlap of labels
+                            anchor: new google.maps.Point(
+                                (validMarkersCount % 2) * 20 - 10, 
+                                (Math.floor(validMarkersCount / 2) % 2) * 20 - 10
+                            )
+                        }
                     });
                     
                     d2markersArray.push(marker);
-                    mapBounds.extend(latLng);
-    
-                    google.maps.event.addListener(marker, 'click', function() {
-                        infoWindow.setContent("Site Name: " + this.title);
-                        infoWindow.open(d2map, this);
-                    });
                 } else {
-                    // Collect sites with missing or invalid GPS data
                     sitesWithoutGPS.push(site.buname || 'Unnamed Site');
                 }
             });
@@ -345,7 +442,18 @@ var d2markersArray = [];
     
             // Only adjust bounds if we have valid markers
             if (validMarkersCount > 0) {
+                // Fit the map to the extended bounds
                 d2map.fitBounds(mapBounds);
+                
+                // Add a small delay before adjusting the zoom
+                setTimeout(() => {
+                    // Get the current zoom and decrease it slightly to show all markers
+                    const currentZoom = d2map.getZoom();
+                    d2map.setZoom(currentZoom - 1);
+                    
+                    // Center the map on the bounds
+                    d2map.setCenter(mapBounds.getCenter());
+                }, 100);
             } else {
                 Swal.fire({
                     title: 'No Valid Locations',
@@ -364,8 +472,3 @@ var d2markersArray = [];
             });
         }
     }
-
-
-
-
-    

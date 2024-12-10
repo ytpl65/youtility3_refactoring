@@ -69,6 +69,15 @@ li {
 {% endblock header_center %}
 
 {% block wp_info %}
+    <div style="margin-left: 100px;">
+        <b>
+            <p style="display: flex; justify-content: space-evenly; width: 100%;">
+                <span></span>
+                <span>Vendor Name: {{ vendor_name }}</span>
+                <span style="margin-left: auto;">NO: {{ workpermit_no }}</span>
+            </p>
+        </b>
+    </div>
     <div class="mr ">
     <br>
     <br>
@@ -149,22 +158,30 @@ li {
         </tbody>
     {% endfor %}
 </table>
-        {% endblock wp_sections %}
-
-        <br>
+{% endblock wp_sections %}
         {% block rwp_section %}
-        {% if approvers %}
-            <p>Hello</p>
-            <h4>Return Permit Details :</h4>
-            <table border="1">
-                {% for question in rwp_info['questions'] %}
+        <br>
+        {% if verifiers_status=='APPROVED' and approvers_status=='APPROVED' %}
+        <table border="1">
+            {% for section in rwp_info %}
+            <thead>
                 <tr>
-                    <td >{{ question['question__quesname'] }}</td>
-                    <td >{{ question['answer'] }}</td>
+                    <th>{{ section['section'] }}</th>
+                    <th>Answer</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for question in rwp_info[0]['questions'] %}
+                <tr>
+                    <td>{{ question['question__quesname'] }}</td>
+                    <td>{{ question['answer'] }}</td>
                 </tr>
                 {% endfor %}
-            </table>
+            </tbody>
+            {% endfor %}
+        </table>
         {% endif %}
+        </table>
         
         <br>
         <br>

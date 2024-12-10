@@ -99,12 +99,14 @@ class ApproverManager(models.Manager):
             peoplename=F('people__peoplename')).values(
                 'id', 'cdtz', 'mdtz', 'cuser_id', 'muser_id', 'ctzoffset', 'bu_id',
                 'client_id', 'people_id', 'peoplename', 'peoplecode', 'forallsites',
-                'approverfor', 'sites'
+                'approverfor', 'sites','identifier'
             )
         if qset:
             for obj in qset:
                 obj['approverfor'] = ','.join(obj['approverfor'] or "")
                 obj['sites'] = ','.join(obj['sites'] or "")
+        print("Qset: ",qset)
+        log.info(f"Qset : {qset}")
         return qset or self.none()
 
 
@@ -307,13 +309,14 @@ class WorkOrderManager(models.Manager):
         fields = ['cuser_id', 'muser_id', 'cdtz', 'mdtz', 'ctzoffset','description', 'uuid', 'plandatetime',
                   'expirydatetime', 'starttime', 'endtime', 'gpslocation', 'location_id', 'asset_id',
                   'workstatus', 'workpermit', 'priority','parent_id', 'alerts', 'permitno', 'approverstatus', 
-                  'performedby','ismailsent', 'isdenied', 'client_id', 'bu_id', 'approvers', 'id']
+                  'performedby','ismailsent', 'isdenied', 'client_id', 'bu_id', 'approvers', 'id','verifiers','verifierstatus']
         
         qset = self.select_related().annotate(
             permitno = F('other_data__wp_seqno'),
-            approverstatus = F('other_data__wp_approvers')
+            approverstatus = F('other_data__wp_approvers'),
+            verifierstatus = F('other_data__wp_verifiers')
             ).filter(
-            Q(cuser_id = peopleid) | Q(muser_id=peopleid) | Q(approvers__contains = [people.peoplecode]),
+            Q(cuser_id = peopleid) | Q(muser_id=peopleid) | Q(approvers__contains = [people.peoplecode])|Q(verifiers__contains = [people.peoplecode]),
             cdtz__date__gte = fromdate,
             cdtz__date__lte = todate,
             workpermit__in = workpermit_statuses,

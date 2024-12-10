@@ -29,13 +29,13 @@ class WorkPermit(BaseReportsExport):
         verifiers = WorkPermit.__get_verifiers_name(id)
         verifiers_status = Wom.objects.get(id=id).verifiers_status
         approver_status  = Wom.objects.get(id=id).workpermit
+        workpermit_no = Wom.objects.get(id=id).other_data['wp_seqno']
+        vendor_name = Wom.objects.get(id=id).vendor.name
         wp_sections_without_email_sections = [section for section in wp_sections if section.get('section')!='EMAIL']
         utc_now = datetime.now(pytz.utc)
         ist_timezone = pytz.timezone('Asia/Kolkata')
         current_time_ist = utc_now.astimezone(ist_timezone)
         formatted_time = current_time_ist.strftime("%d-%b-%Y %H:%M:%S")
-        print(self.get_client_logo())
-        print("Return Work Permit: ",rwp_section)
         self.context = {
             'base_path': settings.BASE_DIR,
             'main_title':sitename,
@@ -50,7 +50,9 @@ class WorkPermit(BaseReportsExport):
             'verifiers':verifiers,
             'verifiers_status':verifiers_status,
             'approvers_status':approver_status,
-            'current_time': formatted_time
+            'current_time': formatted_time,
+            'vendor_name':vendor_name,
+            'workpermit_no':workpermit_no
         }
 
 

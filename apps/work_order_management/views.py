@@ -599,7 +599,7 @@ class WorkPermit(LoginRequiredMixin, View):
         report_pdf_object = report.execute()
         vendor_name =  Vendor.objects.get(id=workpermit.vendor_id).name
         pdf_path = wom_utils.save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=workpermit.other_data['wp_seqno'])
-        send_email_notification_for_wp_verifier.delay(workpermit.id,workpermit.verifiers,sitename,workpermit_status,permit_name,pdf_path,vendor_name,client_id)
+        send_email_notification_for_wp_verifier.delay(workpermit.id,workpermit.verifiers,sitename,workpermit_status,permit_name,vendor_name,client_id,pdf_path)
         return rp.JsonResponse({'pk':workpermit.id})
 
     def create_child_wom(self, wom, qset_id, rwp_seqno=None):
@@ -742,11 +742,11 @@ class VerifierReplyWorkPermit(View):
                             sitename = Bt.objects.get(id=wom.bu_id).buname
                             permit_name = wom.other_data['wp_name']
                             permit_no =   wom.other_data['wp_seqno']
-                            client_id = R.get('client_id')
+                            client_id = wom.client.id
                             print("Client ID***********: ",client_id)
                             report_obj = wom_utils.get_report_object(permit_name)
                             print("Report OBJ: ",report_obj)
-                            report = report_obj(filename=permit_name,client_id=client_id,returnfile=True,formdata = {'id':wom_id},request=request)
+                            report = report_obj(filename=permit_name,client_id=client_id,returnfile=True,formdata = {'id':wom_id},request=None)
                             report_pdf_object = report.execute()
                             print("Report ",report)
                             print("REport PDF Object: ",report_pdf_object)

@@ -157,6 +157,30 @@ Shift Form
     var editor;
     var table;
 
+    function convertToUTC(timeStr) {
+        // Convert local time string to UTC
+        const now = new Date();
+        const [hours, minutes] = timeStr.split(':');
+        const localDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+        const utcHours = localDate.getUTCHours().toString().padStart(2, '0');
+        const utcMinutes = localDate.getUTCMinutes().toString().padStart(2, '0');
+        return `${utcHours}:${utcMinutes}`;
+    }
+    
+    function convertToIST(utcTimeStr) {
+        // Convert UTC time string to IST (UTC+5:30)
+        const [hours, minutes] = utcTimeStr.split(':');
+        const utcDate = new Date();
+        utcDate.setUTCHours(parseInt(hours), parseInt(minutes));
+        
+        // Add 5 hours and 30 minutes for IST
+        utcDate.setTime(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
+        
+        const istHours = utcDate.getUTCHours().toString().padStart(2, '0');
+        const istMinutes = utcDate.getUTCMinutes().toString().padStart(2, '0');
+        return `${istHours}:${istMinutes}`;
+    }
+
     function getCurrentEditingRow(editor, table) {
         var rowModifier = editor.modifier();
         return rowModifier ? table.row(rowModifier).data() : 'None'
@@ -240,6 +264,18 @@ Shift Form
 
     $(document).ready(function() {
 
+         // Convert times from UTC to IST on form load
+        const startTime = $("#id_starttime").val();
+        const endTime = $("#id_endtime").val();
+        
+        if (startTime) {
+            $("#id_starttime").val(convertToIST(startTime));
+        }
+        if (endTime) {
+            $("#id_endtime").val(convertToIST(endTime));
+        }
+
+
         // Set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset());
 
@@ -312,29 +348,54 @@ Shift Form
             location.href = "{{ url('onboarding:shift') }}?action=form";
         });
 
-        // Form submission
         $("#shiftform").on('submit', function(e) {
             var form = $(this);
             e.preventDefault();
             if (isValidPositiveNumber($('#id_captchafreq').val()) && isValidPositiveNumber($('#id_peoplecount').val())){
                 const params = {url: "{{ url('onboarding:shift') }}", modal: false};
                 const id = "{{ shift_form.instance.pk }}";
-
-                var formData = form.serialize();
-
+        
+                // Get form data as an object instead of serialized string
+                var formData = new FormData(form[0]);
+                var formObject = {};
+                formData.forEach((value, key) => {
+                    formObject[key] = value;
+                });
+        
+                // Convert times to UTC
+                if (formObject['starttime']) {
+                    formObject['starttime'] = convertToUTC(formObject['starttime']);
+                }
+                if (formObject['endtime']) {
+                    formObject['endtime'] = convertToUTC(formObject['endtime']);
+                }
+                
                 var payLoad = {
-                    formData: formData,
+                    formData: $.param(formObject), // Convert back to serialized string
                     csrfmiddlewaretoken: '{{ csrf_token }}'
                 };
-
+        
                 if (id != 'None') {
                     payLoad.pk = id;
                 }
-                fire_ajax_form_post(params, payLoad)
-                .done((data, status, xhr) => {
+        
+                return $.ajax({
+                    url: params.url,
+                    type: 'POST',
+                    data: payLoad,
+                    dataType: 'json'
+                })
+                .done(function(data, status, xhr) {
                     show_successful_save_alert(update = id != 'None' ? true : false);
-                    window.setTimeout(function() {var url = "{{ url('onboarding:shift') }}";
-                    url += "?id=" + data.row.id;window.location.href = url;}, 2000);
+                    window.setTimeout(function() {
+                        var url = "{{ url('onboarding:shift') }}";
+                        url += "?id=" + data.row.id;
+                        window.location.href = url;
+                    }, 2000);
+                })
+                .fail(function(xhr, status, error) {
+                    let errorMessage = xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred while saving the form.';
+                    show_error_alert(errorMessage);
                 });
             }
         });
@@ -352,7 +413,25 @@ Shift Form
                 fields: [
                     {label: "id",name : "id",type: "hidden"},
                     { label: "Designation", name: "designation" , type: "select"},
-                    { label: "People count", name: "count"},
+                    {label: "People count", name: "count", type: "text", attr: {
+                        type: 'number',
+                        min: '1'
+                    }},
+                    {label: "Overtime (hours)", name: "overtime", type: "text", attr: {
+                        type: 'number',
+                        min: '0',
+                        step: '0.5'  // Allows half-hour increments
+                    }},
+                    {
+                        label: "Grace Time (minutes)", 
+                        name: "gracetime", 
+                        type: "text",
+                        attr: {
+                            type: 'number',
+                            min: '0',
+                            max: '60'
+                        }
+                    }
                 ],
                 idSrc : 'id'
             });
@@ -361,8 +440,9 @@ Shift Form
         editor.on('open', function(e, mode, action) {
             console.log('editor opened', action);
         
-            $("#DTE_Field_designation").addClass("form-control form-select")
-            $("#DTE_Field_count").attr("type", "number").addClass("form-control");
+            $("#DTE_Field_designation").addClass("form-control form-select");
+            $("#DTE_Field_count").addClass("form-control");
+            $("#DTE_Field_overtime").addClass("form-control");
 
             if (action == 'create' || action == 'edit') {
             // fectching designation choices from form instance
@@ -383,9 +463,19 @@ Shift Form
 
         editor.on('preSubmit', function(e, data, action) {
             let totalCount = calculateTotalPeopleCount();
+            const rowData = data.data[Object.keys(data.data)[0]];
+            const rowCount = parseInt(rowData.count || 0);
+            const overtime = parseFloat(rowData.overtime || 0);
+            const gracetime = parseInt(rowData.gracetime || 0);
             // Add or subtract the count value from the new/edited row
-            const rowCount = parseInt(data.data[Object.keys(data.data)[0]].count || 0);
+            //const rowCount = parseInt(data.data[Object.keys(data.data)[0]].count || 0);
             if (action === 'create' || action === 'edit') {
+
+                if (!rowCount || rowCount <= 0) {
+                    this.error('count', 'People count must be greater than 0.');
+                    return false;
+                }
+
                 if (action === 'edit') {
                     // If editing, subtract the old value first
                     const currentRowData = getCurrentEditingRow(editor, table);
@@ -402,10 +492,44 @@ Shift Form
                 this.error('count', 'The total people count exceeds the allowed number of people for this shift.');
                 return false;
             }
-            
+
             if (!isValidPositiveNumber(rowCount.toString())) {
                 this.error('count', 'Enter Positive Integer Number Only.');
                 return false;
+            }
+
+            // Validate overtime
+            if (overtime < 0) {
+                this.error('overtime', 'Overtime hours cannot be negative.');
+                return false;
+            }
+
+            // Get shift duration from the form (convert "XHrs, Ymin" to hours)
+            const durationText = $("#id_shiftduration").val();
+            const hours = parseInt(durationText.split('Hrs,')[0]);
+            if (overtime > hours) {
+                this.error('overtime', 'Overtime hours cannot exceed regular shift duration.');
+                return false;}
+
+            // Validate gracetime
+            if (gracetime < 0 || gracetime > 60) {
+                this.error('gracetime', 'Grace time must be between 0 and 60 minutes.');
+                return false;
+            }
+            
+        });
+
+        editor.on('postSubmit', function(e, json, data, action) {
+            if (json.status === 'success') {
+                // Refresh the table data
+                table.ajax.reload();
+                
+                // Show success message based on action
+                if (action === 'create') {
+                    show_successful_save_alert(false);
+                } else if (action === 'edit') {
+                    show_successful_save_alert(true);
+                }
             }
         });
 
@@ -427,6 +551,17 @@ Shift Form
             columns:[
                 {data:'designation',title:'Designation'},
                 {data:'count',title:'People Count'},
+                {data:'overtime', title:'Overtime (hours)', render: function(data) {
+                    return data === null ? '0' : data;
+                }},
+                {
+                    data: 'gracetime', 
+                    title: 'Grace Time (min)',
+                    defaultContent: '0',
+                    render: function(data) {
+                        return data === null || data === undefined ? '0' : data;
+                    }
+                }
             ],  
             deferRender:true,
 			responsive:true,

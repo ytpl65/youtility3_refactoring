@@ -335,6 +335,37 @@ Work Permit Form
         attachmentDetails.ajax.reload()
     }
 
+
+    function makeWorkPermitDetailsReadonly() {
+        // Target the container
+        const container = document.querySelector('.workpermit-details-section');
+        
+        if (container) {
+            // Make all input fields readonly
+            container.querySelectorAll('input').forEach(input => {
+                input.setAttribute('readonly', true);
+                
+                // Special handling for flatpickr date inputs
+                if (input.classList.contains('datetimes') && input._flatpickr) {
+                    input._flatpickr.set('clickOpens', false);  // Prevent calendar from opening
+                }
+            });
+    
+            // Make all textarea fields readonly
+            container.querySelectorAll('textarea').forEach(textarea => {
+                textarea.setAttribute('readonly', true);
+            });
+    
+            // Make all select fields disabled
+            container.querySelectorAll('select').forEach(select => {
+                select.setAttribute('disabled', true);
+                // Optionally add a class to maintain the normal appearance
+                select.classList.add('form-select-readonly');
+            });
+        }
+    }
+    
+
     $(document).ready(function () {
         console.log("workpermit_remarks:",workpermit_remarks,typeof workpermit_remarks);
         console.log(workpermit_remarks === 'None')
@@ -351,10 +382,27 @@ Work Permit Form
 
 
         if("{{ wpform.instance.id }}" !== "None"){
-           makeReadonlyFields()
+            console.log('this function of datetime is called    ')
+           //makeReadonlyFields()
+           makeWorkPermitDetailsReadonly();
+           $('.workpermit-details-section .datetimes').each(function() {
+            // Destroy the existing flatpickr instance
+            if (this._flatpickr) {
+                this._flatpickr.destroy();
+            }
+            
+            // Remove flatpickr-related classes
+            $(this).removeClass('flatpickr-input');
+            
+            // Make the input truly readonly
+            $(this).attr('readonly', true);
+            
+            // Optional: Add pointer-events none to prevent any click interactions
+            $(this).css('pointer-events', 'none');
+        });
         }
 
-        $('.returnworkpermit-details-section').prop('readonly', false)
+        //$('.returnworkpermit-details-section').prop('readonly', false)
         
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
@@ -419,7 +467,7 @@ Work Permit Form
             ...baseConfig,
             minDate: startOfDay,
             maxDate: endOfDay,
-            defaultDate: endOfDay
+            defaultDate: startOfDay
         };
 
         // Configuration for rwp_section (PERMIT RETURNED AT)
@@ -427,14 +475,14 @@ Work Permit Form
             ...baseConfig,
             minDate: new Date(startOfDay.getTime() - (2 * 24 * 60 * 60 * 1000)),
             maxDate: new Date(startOfDay.getTime() + (24 * 60 * 60 * 1000)),
-            defaultDate: new Date(startOfDay.getTime() - (2 * 24 * 60 * 60 * 1000))
+            defaultDate: startOfDay
         };
 
         let rwpConfigWork = {
             ...baseConfig,
             minDate: new Date(startOfDay.getTime() - (2 * 24 * 60 * 60 * 1000)),
             maxDate: new Date(startOfDay.getTime() + (24 * 60 * 60 * 1000)),
-            defaultDate: new Date(startOfDay.getTime() + (24 * 60 * 60 * 1000))
+            defaultDate: startOfDay
         };
 
         // Initialize date pickers
@@ -456,9 +504,11 @@ Work Permit Form
                 const input = group.querySelector('input.datetimes');
                 const label = group.querySelector('.input-group-text');
                 if (input && label && !input.classList.contains('flatpickr-input')) {
-                    if (label.textContent.includes("Permit valid from")) {
+                    if (label.textContent.includes("The Permit valid from")) {
                         flatpickr(input, wpConfig);
+
                     } else if (label.textContent.includes("Permit valid upto")){
+                        console.log('input data in the 1',wpConfig)
                         flatpickr(input, wpConfig);
                     } else if (label.textContent.includes("PERMIT RETURNED AT")) {
                         flatpickr(input, rwpConfigPermit);
@@ -502,6 +552,15 @@ Work Permit Form
         if($("#id_qset").val().length > 0){
             $("#load_questions").addClass('d-none')
         }
+
+        if ($("#id_qset").val().length > 0) {
+            $("#id_qset").attr('readonly', true);
+            $("#id_approvers").attr('readonly', true);
+            $("#id_seqno").attr('readonly', true);
+            $("#id_vendor").attr('readonly', true);
+            $("#id_verifiers").attr('readonly',true);
+        }
+
         //set seqno once loaded
         
         $("#id_seqno").val("{{ wpform.instance.other_data['wp_seqno'] }}")
