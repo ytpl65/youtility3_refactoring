@@ -372,10 +372,7 @@ Work Permit Form
     }
     
 
-    $(document).ready(function () {
-        console.log("workpermit_remarks:",workpermit_remarks,typeof workpermit_remarks);
-        console.log(workpermit_remarks === 'None')
-        console.log("{{ request.user.id }}")
+    $(document).ready(function(){
         if (workpermit_remarks === 'None'){
             $('.returnworkpermit-details-section').css('display', 'block')
             $('#btn_cancel').css('display', 'block')
@@ -385,61 +382,50 @@ Work Permit Form
             $('#btn_cancel').css('display', 'none')   
         }
 
+        const button = document.getElementById('submit_rwp');
+        if (button) {
+                setTimeout(initializedatetimes_for_return_wp,100)
+            } 
 
+        if ("{{ wpform.instance.id}}" == "None"){
+            console.log('this function is called when the instance id is none')
+            setTimeout(initializeMissedDatePickers,100);
+        }
+        
 
         if("{{ wpform.instance.id }}" !== "None"){
             console.log('this function of datetime is called    ')
            //makeReadonlyFields()
            makeWorkPermitDetailsReadonly();
+           //setTimeout(initializeMissedDatePickers, 100);
+           
            $('.workpermit-details-section .datetimes').each(function() {
-            // Destroy the existing flatpickr instance
-            if (this._flatpickr) {
-                this._flatpickr.destroy();
-            }
-            
-            // Remove flatpickr-related classes
-            $(this).removeClass('flatpickr-input');
-            
-            // Make the input truly readonly
-            $(this).attr('readonly', true);
-            
-            // Optional: Add pointer-events none to prevent any click interactions
-            $(this).css('pointer-events', 'none');
-        });
+                // Destroy the existing flatpickr instance
+                if (this._flatpickr) {
+                    this._flatpickr.destroy();
+                }
+                
+                // Remove flatpickr-related classes
+                $(this).removeClass('flatpickr-input');
+                
+                // Make the input truly readonly
+                $(this).attr('readonly', true);
+                
+                // Optional: Add pointer-events none to prevent any click interactions
+                $(this).css('pointer-events', 'none');
+            });
         }
 
         //$('.returnworkpermit-details-section').prop('readonly', false)
         
         //set ctzoffset
-        $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
-        
-        //url of workpermit
-        
+        $("#id_ctzoffset").val(-new Date().getTimezoneOffset())        
         
         //on click clear button
         $("#btn_clear").click((e) => {
             location.href = `${urlname}?action=form`
         })
-        /*
-        let now = new Date();
-        
-        // Set start of day (00:00)
-        //let startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-        let startOfDay = new Date();
-        // Set end of day (23:59)
-        let endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
-        //initilize datetimes
-        $(".datetimes").flatpickr({
-            enableTime: true,
-            time_24hr: true,
-            dateFormat: 'd-M-Y H:i',
-            minDate:startOfDay,
-            maxDate:endOfDay
-        })
-
-        //$(".datetimes").removeAttr('readonly', true)
-        */
         // Function to initialize date pickers with specific configurations
         function initializeDatePicker(config, labelText) {
             document.querySelectorAll('.input-group').forEach(group => {
@@ -460,14 +446,14 @@ Work Permit Form
         const baseConfig = {
             enableTime: true,
             time_24hr: true,
-            dateFormat: 'd-M-Y H:i'
+            dateFormat: 'Y-m-d H:i'
         };
 
         let wpConfigValidFrom = {
             ...baseConfig,
             minDate: startOfDay,
             maxDate: endOfDay,
-            defaultDate: startOfDay
+            defaultDate: startOfDay,
         };
         let wpConfigValidTo = {
             ...baseConfig,
@@ -492,8 +478,8 @@ Work Permit Form
         };
 
         // Initialize date pickers
-        // Initialize date pickers
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('entered into dom eventlistener')
             initializeDatePicker(wpConfig, "Permit valid from");
             initializeDatePicker(wpConfig, "Permit valid upto");
             initializeDatePicker(rwpConfigPermit, "PERMIT RETURNED AT");
@@ -503,34 +489,49 @@ Work Permit Form
         });
 
 
-        // Function to initialize any missed date pickers
-        // Function to initialize any missed date pickers
+       // Function to initialize any missed date pickers
         function initializeMissedDatePickers() {
+            console.log('entered into intitalisee eventlistenerrrrrr')
             document.querySelectorAll('.input-group').forEach(group => {
                 const input = group.querySelector('input.datetimes');
                 const label = group.querySelector('.input-group-text');
                 if (input && label && !input.classList.contains('flatpickr-input')) {
-                    if (label.textContent.includes("The Permit valid from")) {
-                        flatpickr(input, wpConfig);
-
-                    } else if (label.textContent.includes("Permit valid upto")){
-                        console.log('input data in the 1',wpConfig)
-                        flatpickr(input, wpConfig);
-                    } else if (label.textContent.includes("PERMIT RETURNED AT")) {
-                        flatpickr(input, rwpConfigPermit);
-                    } else if (label.textContent.includes("WORK CHECKED AT")){
-                        flatpickr(input, rwpConfigWork);
-                    }  else if (label.textContent.includes("This Permit Is Valid From")){
-                        flatpickr(input, wpConfigValidFrom);
-                    } else if (label.textContent.includes("This Permit Is Valid To")){
-                        flatpickr(input, wpConfigValidTo);
-                    }
+                    console.log('input value',input.value)
+                    // Check if the input value is empty before initializing flatpickr
+                        if (label.textContent.includes("The Permit valid from")) {
+                            flatpickr(input, wpConfig);
+                        } else if (label.textContent.includes("Permit valid upto")) {
+                            flatpickr(input, wpConfig);
+                        } else if (label.textContent.includes("This Permit Is Valid From")) {
+                            flatpickr(input, wpConfigValidFrom);
+                        } else if (label.textContent.includes("This Permit Is Valid To")) {
+                            flatpickr(input, wpConfigValidTo);
+                        }
                 }
             });
         }
 
+        function initializedatetimes_for_return_wp() {
+            console.log('intitalize r_wp excuted')
+            document.querySelectorAll('.input-group').forEach(group => {
+                const input = group.querySelector('input.datetimes');
+                const label = group.querySelector('.input-group-text');
+                if (input && label && !input.classList.contains('flatpickr-input')) {
+                    console.log('input value',input.value)
+                    // Check if the input value is empty before initializing flatpickr
+                        if (label.textContent.includes("PERMIT RETURNED AT")) {
+                            flatpickr(input, rwpConfigPermit);
+                        } else if (label.textContent.includes("WORK CHECKED AT")) {
+                            flatpickr(input, rwpConfigWork);
+                        }
+                }
+            });
+
+        }
+        
+        
         // Call this function after a short delay to catch any elements that might have been missed
-        setTimeout(initializeMissedDatePickers, 100);
+        
 
         
         //load the questionaire of selected template
@@ -548,6 +549,14 @@ Work Permit Form
 
             if(approvers.length == 0){
                 display_field_error('approvers', 'At least one approver needed!')
+                return
+            }
+            if(verifiers.length == 0){
+                display_field_error('verifiers','At least one verifier needed!')
+                return
+            }
+            if(vendor.length == 0){
+                display_field_error('vendor','At least one verifier needed!')
                 return
             }
             location.href = `${urlname}?qsetid=${qsetid}&approvers=${approvers}&vendor=${vendor}&verifiers=${verifiers}`
@@ -582,7 +591,6 @@ Work Permit Form
                 return false;
             }
 
-            console.log("this is also submitted")
             const params = {
                 url: $("#wpform").attr("action"),
                 modal: false
@@ -713,11 +721,16 @@ Work Permit Form
         //submit rwp_details
         $("#rwp_details_form").submit( (e) => {
             e.preventDefault();
+            const submitButton = $('#submit_rwp');
+
             if(confirm("Are you sure, you want to submit?")){
+
+                submitButton.prop('disabled', true);
+                submitButton.addClass('btn-disabled');
+
                 const params = {
                     url:urlname,
                     modal:false, 
-                    
                 }
                 const payLoad = {
                     wom_id:'{{ wpform.instance.id }}',
@@ -732,6 +745,14 @@ Work Permit Form
                         window.location.href = `${urlname}?id=${payLoad.wom_id}`;
                     }, 2000);
                 })
+                    .fail((xhr, status, error) => {
+                // Re-enable the button if submission fails
+                submitButton.prop('disabled', false);
+                submitButton.removeClass('btn-disabled');
+                
+                // Optionally show an error message
+                alert("Submission failed. Please try again.");
+                });
             }
         })
 
