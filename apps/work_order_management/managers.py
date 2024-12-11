@@ -73,22 +73,24 @@ class ApproverManager(models.Manager):
         S = request.session
         qset = self.annotate(
             text = F('people__peoplename'),
-        ).filter( (Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) & Q(client_id = S['client_id'])),approverfor__contains = ['WORKPERMIT']).values('id', 'text')
+        ).filter( (Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) & 
+        Q(client_id = S['client_id'])),approverfor__contains = ['WORKPERMIT'],identifier = 'APPROVER').values('id', 'text')
         return qset or self.none()
     
     def get_verifier_options_wp(self,request):
         S = request.session
         qset = self.annotate(
             text = F('people__peoplename'),
-        ).filter( (Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) & Q(client_id = S['client_id'])),approverfor__contains = ['WORKPERMIT']).values('id', 'text')
-        print("Verifier: ",qset)
+        ).filter( (Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) &
+         Q(client_id = S['client_id'])),approverfor__contains = ['WORKPERMIT'],identifier = 'VERIFIER').values('id', 'text')
         return qset or self.none()
     
     def get_approver_options_sla(self,request):
         S = request.session
         qset = self.annotate(
             text = F('people__peoplename'),
-        ).filter( (Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) & Q(client_id = S['client_id'])),approverfor__contains = ['SLA_TEMPLATE']).values('id', 'text')
+        ).filter( (Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) & 
+        Q(client_id = S['client_id'])),approverfor__contains = ['SLA_TEMPLATE'],identifier = 'APPROVER').values('id', 'text')
         return qset or self.none()
     
     def get_approver_list_for_mobile(self, buid, clientid):
@@ -105,7 +107,6 @@ class ApproverManager(models.Manager):
             for obj in qset:
                 obj['approverfor'] = ','.join(obj['approverfor'] or "")
                 obj['sites'] = ','.join(obj['sites'] or "")
-        print("Qset: ",qset)
         log.info(f"Qset : {qset}")
         return qset or self.none()
 
