@@ -716,6 +716,7 @@ def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workper
         from apps.work_order_management.models import Wom,WomDetails
         from apps.onboarding.models import Bt
         from django.template.loader import render_to_string
+        from apps.work_order_management.models import Vendor
         wom = Wom.objects.filter(parent_id=wom_id)
         client_id = wom[0].client_id
         sitename = Bt.objects.get(id=client_id).buname
@@ -729,8 +730,11 @@ def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workper
             wom_detail = sections[-1].id 
         dlog.info(f"sections: {sections}")
         dlog.info(f"wom_detail: {wom_detail}")
+        vendor_email = Vendor.objects.get(id=wom[0].vendor.id).email
         wom_detail_email_section = WomDetails.objects.filter(wom_id=wom_detail)
-    
+        log.info(f'WOM Detail Answer Section: {wom_detail_email_section}')
+        log.info(f'Vendor Email: {vendor_email}')
+        log.info(f'WOM Detail Email Section: {wom_detail_email_section}')
         for email in wom_detail_email_section:
             dlog.info(f"email: {email.answer}")
             msg = EmailMessage()

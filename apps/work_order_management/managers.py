@@ -309,7 +309,7 @@ class WorkOrderManager(models.Manager):
         fields = ['cuser_id', 'muser_id', 'cdtz', 'mdtz', 'ctzoffset','description', 'uuid', 'plandatetime',
                   'expirydatetime', 'starttime', 'endtime', 'gpslocation', 'location_id', 'asset_id',
                   'workstatus', 'workpermit', 'priority','parent_id', 'alerts', 'permitno', 'approverstatus', 
-                  'performedby','ismailsent', 'isdenied', 'client_id', 'bu_id', 'approvers', 'id','verifiers','verifierstatus']
+                  'performedby','ismailsent', 'isdenied', 'client_id', 'bu_id', 'approvers', 'id','verifiers','verifierstatus','vendor_id']
         
         qset = self.select_related().annotate(
             permitno = F('other_data__wp_seqno'),

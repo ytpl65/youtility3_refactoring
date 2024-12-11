@@ -522,7 +522,7 @@ class WorkPermit(LoginRequiredMixin, View):
                 wom.save()
                 permit_name = wom.other_data['wp_name']
                 permit_no   = wom.other_data['wp_seqno']
-                workpermit_status = 'APPROVED'
+                workpermit_status = 'COMPLETED'
                 client_id = request.session.get('client_id')
                 report_obj = wom_utils.get_report_object(permit_name)
                 report = report_obj(filename=permit_name,client_id=client_id,returnfile=True,formdata={'id':R['wom_id']},request=request)

@@ -256,3 +256,9 @@ class UploadAttType(graphene.InputObjectType):
     record = graphene.JSONString(required = True)
     tablname = graphene.String(required = True)
     file = Upload() 
+
+
+
+class GetPdfUrl(graphene.ObjectType):
+    url = graphene.String()
+    

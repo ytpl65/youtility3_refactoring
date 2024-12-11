@@ -46,6 +46,18 @@
             color: red;
             font-weight: bolder;
         }
+        .vendor-info {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin: 15px 0;
+}
+
+.permit-number {
+    position: absolute;
+    right: 0;
+}
 </style>
 
 {% endblock  %}
@@ -232,7 +244,8 @@
 {% block static_content %}
 
 <div class="border-class">
-    
+    <br>
+    <br>
     <table>
         <thead>
             <tr>
@@ -259,6 +272,16 @@
             a daily basis.</li>
     </ol>
 
+    <h4 class="color-red">Please Note:</h4>
+    <p>Kindly report to your Supervisor/Site Lead/HSE Manager:</p>
+    <ol>
+        <li>Any Hazards observed.</li>
+        <li>Incident / Near miss incident happen/ observed.</li>
+        <li>Any unsafe Act / Unsafe conditions observed.</li>
+        <li>In case of any doubt – STOP WORK and assess the risk before continuing with the activity.</li>
+        <li>Damaged equipment etc.</li>
+        <li>Any spills or leak observed.</li>
+    </ol>
 </div>
 
 {% endblock static_content %}
