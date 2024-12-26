@@ -24,6 +24,7 @@ from apps.reports.report_designs.service_level_agreement import ServiceLevelAgre
 from apps.onboarding.models import TypeAssist,Bt
 import json
 from apps.work_order_management.utils import save_pdf_to_tmp_location
+from dateutil.relativedelta import relativedelta
 
 logger = logging.getLogger('__main__')
 log = logger
@@ -370,7 +371,6 @@ class WorkPermit(LoginRequiredMixin, View):
             wp = Wom.objects.filter(id = R['womid']).first()
             if wom.workpermit == Wom.Workstatus.CANCELLED:
                 return rp.JsonResponse(data={'data': 'Work Permit is already cancelled'}, status=200)
-            #p = People.objects.filter(id = R['peopleid']).first()
             S = request.session
             if is_all_verified := check_all_verified(wp.uuid, request.user.peoplecode):
                 if Wom.WorkPermitVerifierStatus.APPROVED != Wom.objects.get(id=R['womid']).workpermit:
@@ -395,8 +395,6 @@ class WorkPermit(LoginRequiredMixin, View):
                         send_email_notification_for_workpermit_approval.delay(wom_id,approvers_name,approvers_code,sitename,workpermit_status,permit_name,pdf_path,vendor_name,client_id)
             return rp.JsonResponse(data={'data': 'Verified'}, status=200)
 
-
-
         if action == 'approve_wp' and R.get('womid'):
             S = request.session
             wom = P['model'].objects.get(id=R['womid'])
@@ -416,7 +414,6 @@ class WorkPermit(LoginRequiredMixin, View):
                 if is_all_approved:
                     workpermit_status = 'APPROVED'
                     Wom.objects.filter(id=R['womid']).update(workstatus=Wom.Workstatus.INPROGRESS.value)
-
                     send_email_notification_for_vendor_and_security.delay(R['womid'],sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no)
             return rp.JsonResponse(data={'status': 'Approved'}, status=200)
 
@@ -986,6 +983,21 @@ class SLA_View(LoginRequiredMixin, View):
         'form'         : SlaForm,
     }
 
+    MONTH_CHOICES = {
+        '1':'January',
+        '2':'February',
+        '3':'March',
+        '4':'April',
+        '5':'May',
+        '6':'June',
+        '7':'July',
+        '8':'August',
+        '9':'September',
+        '10':'October',
+        '11':'November',
+        '12':'December'
+    }
+
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
         action = R.get('action')
@@ -994,6 +1006,7 @@ class SLA_View(LoginRequiredMixin, View):
         
         if action == 'list':
             objs = self.params['model'].objects.get_slalist(request)
+            print("OBJS",objs)
             return rp.JsonResponse(data = {'data':list(objs)},safe = False)
 
         if action == 'approver_list':
@@ -1029,29 +1042,53 @@ class SLA_View(LoginRequiredMixin, View):
         
         if action == 'form':
             import uuid
+            import datetime
+            month_name=(datetime.datetime.now()-relativedelta(months=1)).strftime('%B')
             cxt = {
                 'slaform': P['form'](request = request),
                 'msg': "create sla requested",
+                'month_name':month_name,
                 'ownerid':uuid.uuid4()
-            }
+                }
             return render(request, P['template_form'], cxt)
         
         if 'id' in R:
+            import datetime
             obj = utils.get_model_obj(int(R['id']), request, P)
             sla_answer = Wom.objects.get_wp_answers(obj.id)
             wom_utils.get_overall_score(obj.id)
-            cxt = {'slaform':P['form'](request=request, instance=obj), 'ownerid':obj.uuid,'sla_details':sla_answer}
+            wom = Wom.objects.get(id=R['id'])
+            month_name = wom.other_data.get('month',None)
+            if not month_name:
+                month_number = wom.cdtz.month - 1 
+                month_name = self.MONTH_CHOICES.get(f'{month_number}')
+            
+            cxt = {'slaform':P['form'](request=request, instance=obj), 'ownerid':obj.uuid,'sla_details':sla_answer,'month_name':month_name}
             return render(request, P['template_form'], cxt)
         
         if R.get('qsetid'):
             import uuid
+            import datetime
             wp_details = Wom.objects.get_workpermit_details(request, R['qsetid'])
             approver_codes = R['approvers'].split(',')
             approvers = wom_utils.get_approvers(approver_codes)
-            form = P['form'](request=request, initial={'qset': R['qsetid'], 'approvers': R['approvers'].split(','),'vendor':R['vendor']})
-            context = {"sla_details": wp_details, 'slaform': form, 'ownerid': uuid.uuid4(),'approvers':approvers}
+            form = P['form'](request=request, initial={'qset': R['qsetid'], 'approvers': R['approvers'].split(','),'vendor':R['vendor'],'month_name':R['month']})
+            context = {"sla_details": wp_details, 'slaform': form, 'ownerid': uuid.uuid4(),'approvers':approvers,'month_name':datetime.datetime.now().strftime('%B')}
             return render(request, P['template_form'], context=context)
-        
+
+    def get_month_name(self,month):
+        print("Month: ----> ",month)
+        if month == -1:
+            return ''
+        return self.MONTH_CHOICES.get(month)
+    
+    def get_month_number(self,month_name):
+        print(month_name)
+        for number, name in self.MONTH_CHOICES.items():
+            if name.lower() == month_name.lower():
+                return int(number)
+        return None 
+    
     def send_report(self, R, request):
         from apps.reports.report_designs import service_level_agreement as sla
         report = sla.ServiceLevelAgreement(filename=R['qset__qsetname'], client_id=request.session['client_id'], formdata=R, request=request)
@@ -1059,9 +1096,9 @@ class SLA_View(LoginRequiredMixin, View):
 
     def post(self,request,*args,**kwargs):
         R, P = request.POST, self.params
-
         try:
             if pk := R.get('pk', None):
+                print("Data: ",R)
                 data = QueryDict(R['formData']).copy()
                 wp = utils.get_model_obj(pk, request, P)
                 form = self.params['form'](
@@ -1069,6 +1106,8 @@ class SLA_View(LoginRequiredMixin, View):
                 create = False
             else:
                 data = QueryDict(R['formData']).copy()
+                data['month'] = wom_utils.get_month_number(self.MONTH_CHOICES,request.POST.get('month_name'))
+                print("Data: ",data)
                 form = self.params['form'](data, request = request)
                 create=True
             if form.is_valid():
@@ -1079,4 +1118,3 @@ class SLA_View(LoginRequiredMixin, View):
         except Exception as e:
             resp = utils.handle_Exception(request)
         return resp
-

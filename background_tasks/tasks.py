@@ -710,7 +710,7 @@ def send_email_notification_for_wp(self, womid, qsetid, approvers, client_id, bu
 
 
 @shared_task(bind=True, name="Create Workpermit email notification for vendor and security")
-def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no,submit_work_permit=False):
+def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no,submit_work_permit=False,submit_work_permit_from_mobile=False):
     jsonresp = {'story':"", 'traceback':""}
     try:
         from apps.work_order_management.models import Wom,WomDetails
@@ -724,10 +724,14 @@ def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workper
         log.info(f'THe Site Name for vendor and security is {sitename}')
         # sitename = Bt.objects.get((Wom.objects.get(id=wom_id).client.id)).buname
         sections = [x for x in wom]
-        if submit_work_permit:
-            wom_detail = sections[-2].id
+        if not submit_work_permit_from_mobile:
+            if submit_work_permit:
+                wom_detail = sections[-2].id
+            else:
+                wom_detail = sections[-1].id 
         else:
-            wom_detail = sections[-1].id 
+            if submit_work_permit:
+                wom_detail = sections[-2].id 
         dlog.info(f"sections: {sections}")
         dlog.info(f"wom_detail: {wom_detail}")
         vendor_email = Vendor.objects.get(id=wom[0].vendor.id).email
@@ -735,27 +739,28 @@ def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workper
         log.info(f'WOM Detail Answer Section: {wom_detail_email_section}')
         log.info(f'Vendor Email: {vendor_email}')
         log.info(f'WOM Detail Email Section: {wom_detail_email_section}')
-        for email in wom_detail_email_section:
-            dlog.info(f"email: {email.answer}")
-            msg = EmailMessage()
-            msg.subject = f"{permit_name}-{permit_no}-{sitename}-{workpermit_status}"
-            msg.to = [email.answer]
-            msg.from_email = settings.EMAIL_HOST_USER
-            cxt = {
-                'permit_name':permit_name,
-                'sitename':sitename,
-                'status':workpermit_status,
-                'vendor_name':vendor_name,
-                'permit_no':permit_no,
-            }
-            
-            html = render_to_string(
-                'work_order_management/workpermit_vendor.html', context=cxt)
-            msg.body = html
-            msg.content_subtype = 'html'
-            msg.attach_file(pdf_path, mimetype='application/pdf')
-            msg.send()
-            dlog.info(f"email sent to {email.answer}")
+        for emailsection in wom_detail_email_section:
+            dlog.info(f"email: {emailsection.answer}")
+            emails = emailsection.answer.split(',')
+            for email in emails:
+                msg = EmailMessage()
+                msg.subject = f"{permit_name}-{permit_no}-{sitename}-{workpermit_status}"
+                msg.to = [email]
+                msg.from_email = settings.EMAIL_HOST_USER
+                cxt = {
+                    'permit_name':permit_name,
+                    'sitename':sitename,
+                    'status':workpermit_status,
+                    'vendor_name':vendor_name,
+                    'permit_no':permit_no,
+                }
+                html = render_to_string(
+                    'work_order_management/workpermit_vendor.html', context=cxt)
+                msg.body = html
+                msg.content_subtype = 'html'
+                msg.attach_file(pdf_path, mimetype='application/pdf')
+                msg.send()
+                dlog.info(f"email sent to {email}")
     except Exception as e:
         dlog.critical("something went wrong while sending email to vendor and security", exc_info=True)
         jsonresp['traceback'] += tb.format_exc()
@@ -770,18 +775,32 @@ def send_email_notification_for_sla_vendor(self,wom_id,report_attachment,sitenam
         from django.template.loader import render_to_string
         from dateutil.relativedelta import relativedelta
         from apps.work_order_management.utils import approvers_email_and_name,get_peoplecode
-        wom = Wom.objects.filter(uuid=wom_id)
-        month = (datetime.now() - relativedelta(months=1)).strftime('%B')
-        current_year = datetime.now().year
-        vendor_details = Vendor.objects.filter(id=wom[0].vendor_id).values('name','email')
+        from apps.work_order_management.views import SLA_View
+        monthly_choices = SLA_View.MONTH_CHOICES
+        wom = Wom.objects.get(uuid=wom_id)
+        is_month_present = wom.other_data.get('month',None)
+        if not is_month_present:
+            month_no = wom.cdtz.month -1
+            if month_no == 0:
+                month_no = 12
+                year = wom.cdtz.year -1
+            else:
+                year = wom.cdtz.year
+            month_name = monthly_choices.get(f'{month_no}')
+        else:
+            month_name = is_month_present
+            year = wom.cdtz.year
+            if month_name == 'December':
+                year = wom.cdtz.year - 1
+        vendor_details = Vendor.objects.filter(id=wom.vendor_id).values('name','email')
         vendor_name = vendor_details[0].get('name')
         vendor_email = vendor_details[0].get('email')
-        wp_approvers = wom[0].other_data['wp_approvers']
+        wp_approvers = wom.other_data['wp_approvers']
         people_codes = get_peoplecode(wp_approvers)
         approver_emails,approver_name = approvers_email_and_name(people_codes)
         msg = EmailMessage()
-        sla_seqno = wom[0].other_data['wp_seqno']
-        msg.subject = f" {sitename}: Vendor Performance of {vendor_name} of {month}-{current_year}"
+        sla_seqno = wom.other_data['wp_seqno']
+        msg.subject = f" {sitename}: Vendor Performance of {vendor_name} of {month_name}-{year}"
         msg.to = [vendor_email]
         msg.cc = approver_emails
         msg.from_email = settings.EMAIL_HOST_USER
@@ -794,7 +813,7 @@ def send_email_notification_for_sla_vendor(self,wom_id,report_attachment,sitenam
             "sitename": sitename,
             "report_name": "Vendor Performance Report",
             "approvedby": approvedby,
-            "service_month":(datetime.now() - relativedelta(months=1)).strftime('%B %Y')
+            "service_month":f'{month_name} {year}'
         }
         html = render_to_string(
             'work_order_management/sla_vendor.html', context=cxt)
@@ -1044,6 +1063,8 @@ def send_email_notification_for_sla_report(self,slaid,sitename):
         from dateutil.relativedelta import relativedelta
         from datetime import datetime
         from apps.work_order_management.utils import save_pdf_to_tmp_location
+        from apps.work_order_management.views import SLA_View
+        monthly_choices = SLA_View.MONTH_CHOICES
         Wom = apps.get_model('work_order_management', 'Wom')
         People = apps.get_model('peoples', 'People')
         sla_details,rounded_overall_score,question_ans,all_average_score,remarks = Wom.objects.get_sla_answers(slaid)
@@ -1054,8 +1075,21 @@ def send_email_notification_for_sla_report(self,slaid,sitename):
         jsonresp['story'] += f"\n{sla_details}"
         report_no = sla_record.other_data['wp_seqno']
         uuid = sla_record.uuid
-        month = (datetime.now() - relativedelta(months=1)).strftime('%B')
-        current_year = datetime.now().year
+        wom = Wom.objects.get(id=slaid)
+        is_month_present = wom.other_data.get('month',None)
+        if not is_month_present:
+            month_no = wom.cdtz.month -1
+            if month_no == 0:
+                month_no = 12
+                year = wom.cdtz.year -1
+            else:
+                year = wom.cdtz.year
+            month_name = monthly_choices.get(f'{month_no}')
+        else:
+            month_name = is_month_present
+            year = wom.cdtz.year
+            if month_name == 'December':
+                year = wom.cdtz.year - 1
         sla_report_obj = ServiceLevelAgreement(returnfile=True,filename='Service Level Agreement', formdata={'id':slaid,'bu__buname':sitename,'submit_button_flow':'true','filename':'Service Level Agreement','workpermit':sla_record.workpermit})
         attachment = sla_report_obj.execute()
         attachment_path = save_pdf_to_tmp_location(attachment,'Vendor performance report',permit_no)
@@ -1068,7 +1102,7 @@ def send_email_notification_for_sla_report(self,slaid,sitename):
                 dlog.info(f"sending email to {p['email'] = }")
                 jsonresp['story'] += f"sending email to {p['email'] = }"
                 msg = EmailMessage()
-                msg.subject = f"{sitename} Vendor Performance {vendor_name} of {month}-{current_year}: Approval Pending"
+                msg.subject = f"{sitename} Vendor Performance {vendor_name} of {month_name}-{year}: Approval Pending"
                 msg.to = [p['email']]
                 msg.from_email = settings.EMAIL_HOST_USER
                 cxt = {'sections': sla_details, 'peopleid':p['id'],

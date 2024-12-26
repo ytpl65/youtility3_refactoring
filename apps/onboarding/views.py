@@ -257,9 +257,9 @@ class ShiftView(LoginRequiredMixin, View):
             resp = rp.JsonResponse(data={'data': list(objs)}, status=200, safe=False)
 
         elif R.get('action', None) == 'form':
-            designation_choices = obutils.get_designation_choices(request,P)
+            # designation_choices = obutils.get_designation_choices(request,P)
             cxt = {'shift_form': self.params['form_class'](request=request),
-                   'msg': "create shift requested",'designation_choices':designation_choices}
+                   'msg': "create shift requested"}
             resp = render(request, P['shift_form'], cxt)
 
         elif R.get('action', None) == "delete" and R.get('id', None):
@@ -268,12 +268,14 @@ class ShiftView(LoginRequiredMixin, View):
         elif R.get('action') == "get_shift_data" and R.get('shift_id'):
             if R.get('shift_id') != 'None':   
                 obj = utils.get_model_obj(int(R['shift_id']), request, self.params)
-                data = obutils.get_shift_data(obj)
-                for record in data:
-                    if 'overtime' not in record:
-                        record['overtime'] = 0
+                raw_data = obutils.get_shift_data(obj)
+                designation_codes = list(raw_data.keys())
+                designation_names = TypeAssist.objects.filter(tacode__in=designation_codes).values('tacode', 'taname')
+                designation_lookup = {item['tacode']: item['taname'] for item in designation_names}
+                data = [{'designation': designation_lookup.get(designation, 'Unknown'),**details }for designation, details in raw_data.items()]
             else:
-                data = [{'count': '', 'designation': '', 'people_code': [],'overtime':0,'gracetime': 0}]
+                data = [{'designation': 'Unknown', 'count':'', 'overtime': 0, 'gracetime': 0}]
+            print('final returning data from server',data)
             return rp.JsonResponse({'data':data}, status=200, safe=False)
             
         elif R.get('id', None):
@@ -281,13 +283,13 @@ class ShiftView(LoginRequiredMixin, View):
             cxt = {'shift_form':P['form_class'](instance=obj, request=request),
                    'msg': "update shift requested"}
             resp = render(request, P['shift_form'], context = cxt)
-
         return resp
 
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         try:    
             if request.POST.get('actiond') == 'edit_shift_data':
+                print('request',request)
                 return obutils.handle_shift_data_edit(request,self)
             data = QueryDict(request.POST['formData'])
             pk = request.POST.get('pk', None)
@@ -302,6 +304,7 @@ class ShiftView(LoginRequiredMixin, View):
                 resp = self.handle_valid_form(form, request, create)
             else:
                 cxt = {'errors': form.errors}
+                print('context',cxt)
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
             logger.error("SHIFT saving error!", exc_info=True)

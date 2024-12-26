@@ -38,6 +38,9 @@ TESTMQ = "post"
 TESTPUBMQ = "received"
 
 
+SG_TO_NOC_TOPIC = "sg_to_noc"
+
+
 
 def get_task_status(item):
     """
@@ -128,6 +131,14 @@ class MqttClient:
             #     )
             #     client.publish(RESPONSE_DOWNLOAD, response, qos=1)
 
+
+            if msg.topic == TESTMQ:
+                response = json.dumps({'name':'Satya'})
+                log.info(
+                    f"Response published to {RESPONSE_TOPIC} after accepting"
+                )
+                client.publish(TESTPUBMQ, response, qos=2)
+
             if msg.topic == GRAPHQL_MUTATION:
 
                 # Process the received message
@@ -183,10 +194,10 @@ class MqttClient:
                     }
                 )
                 client.publish(RESPONSE_TOPIC, response, qos=2)
-            if msg.topic == TESTMQ:
-                log.info(f"Received test message: {payload}")
-                client.publish(TESTPUBMQ, f"Server Published a Response")
-            log.info("processing completed [-]")
+            # if msg.topic == TESTMQ:
+            #     log.info(f"Received test message: {payload}")
+            #     client.publish(TESTPUBMQ, f"Server Published a Response")
+            # log.info("processing completed [-]")
         except Exception as e:
             log.error(f"Error processing message: {e}", exc_info=True)
             raise e

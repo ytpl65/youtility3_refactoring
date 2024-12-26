@@ -52,6 +52,7 @@ p {
   display: flex;
   justify-content: space-around;
   font-weight: bold;
+  margin-bottom: 5px;
 }
 
 .info{
@@ -122,7 +123,7 @@ p {
   }
 
   .footer-table-approver  caption {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: bold;
     padding: 10px 0;
     text-align: center;
@@ -130,13 +131,13 @@ p {
 
   .footer-table-approver  thead td {
     background-color: #f5f5f5;
-    padding: 8px 15px;
+    padding: 6px 12px;
     font-weight: bold;
     text-align: center;
   }
-
+  footer-table-approver
   .footer-table-approver tbody td {
-    padding: 8px 15px;
+    padding: 6px 12px;
     text-align: center;
   }
 
@@ -153,12 +154,15 @@ p {
       <div class="head" style="margin-bottom:10px;">
         <div class="info">Vendor Partner Performance for - {{month_year}}</span></div>
         <div class="summary"><span>Site - {{ sitename }}</span></div>
-        <div><img src="{{ static('assets/media/logos/capgemini_logo.svg') }}" height="30px" alt="Capgemini Logo"/></div>
+        <div>
+          <img src="{{ static('assets/media/images/reportlogo.png') }}" alt="SPS" class="companylogo">
+        </div>
       </div>
       <div></div>
       <div class="header">
         <span>Vendor Name: {{ vendor_name }}</span>
         <span>Service Description: {{ vendor_description }}</span>
+        
       </div>
       <table>
         <thead>
@@ -292,21 +296,37 @@ p {
                 <td>{{ average_score[7] }}</td>
             </tr>
             <tr>
-              <td colspan="8">
-                
-              </td>
+              <td colspan="8"></td>
             </tr>
             <tr>
-                <th>OVERALL SCORE</th>
-                <th>{{ overall_score }}%</th>
+                <th colspan="2">Overall Score</th>
+                <th colspan="6">{{ overall_score }}</th>
+            </tr>
+            <tr>
+              <td colspan="8"></td>
+            </tr>
+            <tr>
+              <th colspan="8">SERVICE PERFORMANCE METRICS</th>
+            </tr>
+            <tr>
+              <td colspan="2">Response Time</td>
+              <td colspan="6">{{ response_time }}</td>
+            </tr>
+            <tr>
+              <td colspan="2">Resolution Time</td>
+              <td colspan="6">{{ resolution_time }}</td>
+            </tr>
+            <tr>
+                <th colspan="2">Uptime %</th>
+                <th colspan="6">{{ uptime_score }}%</th>
             </tr>
         </tbody>
     </table>
 
   <div class="footer-notes-table">
       <div class="footer-notes">
-          <h6 style="font-weight:bold; margin-bottom:-5px;">Key for reappointment</h6>
-            <ul style="font-size: 10px;">
+          <h5 style="font-weight:bold; margin-bottom:-5px;">Key for reappointment</h5>
+            <ul style="font-size: 12px;">
               <li>Less than 50% score - Vendor needs to be replaced</li>
               <li>Between 50% to 60%  - Vendor Business needs to be reduced</li>
               <li>Between 60% to 80%  - Vendor has to be continued with option of alternate vendor</li>
@@ -329,18 +349,20 @@ p {
       {% endif %}
       <div class="footer-table">
         <table>
-          <caption>Last 3 Month Performance</caption>
+          <caption>Last 12 Month Performance</caption>
           <thead>
             <tr>
                 <td>Month</td>
-                <td>Score</td>
+                <td>Overall Score</td>
+                <td>Uptime Percentage</td>
             </tr>
           </thead>
         <tbody>
             {% for month, score in sla_last_three_month_report.items() %}
             <tr>
                 <td>{{ month }}</td>
-                <td>{{ score }}</td>
+                <td>{{ score[0] }}</td>
+                <td>{{ score[1] }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -349,8 +371,8 @@ p {
     </div>
     <br>
   </div>
-  <div style="font-size: 10px;">
-    <b>Score is low because of </b> - {{ remarks[0]}}
+  <div style="font-size: 12px;">
+    <b>Score is low because of </b> - {{ remarks}}
   </div>
   
 </div>

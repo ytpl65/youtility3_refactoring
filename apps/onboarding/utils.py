@@ -542,24 +542,37 @@ def get_designation_choices(request,P):
     form_instance = P['form_class'](request=request)
     designation_choices = {}
 
-    for key,value in form_instance.fields['designation'].choices:
-        designation_choices[str(key)] = value
-
+    for type_assist in form_instance.fields['designation'].queryset:
+        designation_choices[type_assist.tacode] = type_assist.taname
     designation_choices = json.dumps(designation_choices)
-    
+
     return designation_choices
 
 
 def get_shift_data(obj):
-    data = obj.shift_data.get('designation_details')
-    if not data:
-        return []
-    for record in data:
-        if 'overtime' not in record:
-            record['overtime'] = 0
-        if 'gracetime' not in record:
-            record['gracetime'] = 0
-    return data
+    data_test = obj.shift_data
+    for designation, details in data_test.items():
+        if 'overtime' not in details:
+            details['overtime'] = '0' 
+        if 'gracetime' not in details:
+            details['gracetime'] = '0' 
+    return data_test
+
+def reassign_ids(shift):
+    new_shift_data = {}
+    for new_id, (key, value) in enumerate(shift.shift_data.items(), start=1):
+        value['id'] = new_id
+        new_shift_data[key] = value
+    shift.shift_data = new_shift_data
+    shift.save()
+
+def get_unique_id(shift):
+    # Extract all used IDs from shift.shift_data
+    used_ids = {item['id'] for item in shift.shift_data.values()}
+    # Return the next available unique ID
+    return max(used_ids, default=0) + 1
+
+
 
 def handle_shift_data_edit(request,self):  
     shift_id = request.POST.get('shift_id')
@@ -576,43 +589,37 @@ def handle_shift_data_edit(request,self):
         else:
             data[key] = value
     
-    if not shift.shift_data:
-        shift.shift_data = {'designation_details': []}
-    elif 'designation_details' not in shift.shift_data:
-        shift.shift_data['designation_details'] = []
-    
-    designation_details = shift.shift_data['designation_details']
+    designation = str(data['designation'])
 
     if action == 'create':
-        new_data = {
-            "id": len(designation_details) + 1,
-            "designation":data.get('designation'),
-            "count":data.get('count'),
-            "overtime": data.get('overtime', '0'),
-            "gracetime": data.get('gracetime', '0'),
-            "people_code":[]
-        }
-        designation_details.append(new_data)
+        shift.shift_data[designation] = {}
+        designation_details = shift.shift_data[designation]
+        designation_details['id'] = len(shift.shift_data)
+        designation_details['count'] = data.get('count')
+        designation_details['overtime'] = data.get('overtime','0')
+        designation_details['gracetime'] = data.get('gracetime','0')
 
     elif action == 'edit':
         edit_id = data.get('id')
-        for item in designation_details:
-            if item['id'] == int(edit_id):
-                item.update({
-                    "designation": data.get('designation'),
-                    "count": data.get('count'),
-                    "overtime": data.get('overtime', item.get('overtime', '0')),
-                    "gracetime": data.get('gracetime', item.get('gracetime', '0'))
-                })
+        for key,value in shift.shift_data.items():
+            val = value.get('id')
+            if val == int(edit_id):
+                designation_details = shift.shift_data[designation]
+                designation_details['id'] = edit_id
+                designation_details['count'] = data.get('count')
+                designation_details['overtime'] = data.get('overtime','0')
+                designation_details['gracetime'] = data.get('gracetime','0')
                 break
 
     elif action == 'remove':
-        remove_id =int(data.get('id'))
-        designation_details = [item for item in designation_details if item['id'] != remove_id]
-        for i, item in enumerate(designation_details, 1):
-            item['id'] = i
+        remove_id = int(data.get('id'))
+        for key, value in shift.shift_data.items():
+            val = value.get('id')
+            if val == remove_id:
+                del shift.shift_data[key]
+                break
+        reassign_ids(shift)
 
-    shift.shift_data['designation_details'] = designation_details
     shift.save()
     return rp.JsonResponse({'status': 'success'}, status=200)
 

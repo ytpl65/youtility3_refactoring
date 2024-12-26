@@ -92,12 +92,11 @@ class Query(graphene.ObjectType):
     get_gfs_for_siteids = graphene.Field(SelectOutputType,
                                  siteids = graphene.List(graphene.Int))
     
-
-    get_pdf_url         = graphene.Field(GetPdfUrl,
-                                        wom_uuid = graphene.String(required=True),
-                                        peopleid = graphene.Int(required = True),
-                                        )
-
+    get_pdf_url = graphene.Field(
+            GetPdfUrl,
+            wom_uuid=graphene.String(required=True),
+            peopleid=graphene.Int(required=True),
+        )
 
 
     
@@ -177,24 +176,22 @@ class Query(graphene.ObjectType):
                                  ctzoffset = graphene.Int(required=True))
     
 
-    @staticmethod
-    def resolve_get_pdf_url(self,info,wom_uuid,people_id):
+    def resolve_get_pdf_url(self, info, wom_uuid, peopleid):
         import os 
         from intelliwiz_config import settings
         from urllib.parse import urljoin
-        from apps.work_order_management.utils import save_pdf_to_tmp_location,get_report_object
-        wom = Wom.objects.get(uuid = wom_uuid)
-        permit_name = wom.other_data['wp_name']
-        permit_no   = wom.other_data['wp_seqno']
-        client_id   = wom.client.id
-        report_obj  = get_report_object(permit_name)
-        report = report_obj(filename=permit_name,client_id=client_id,returnfile=True,formdata={'id':wom.id},request=None)
+        
+        from apps.work_order_management.utils import save_pdf_to_tmp_location, get_report_object
+        wom = Wom.objects.get(uuid=wom_uuid)
+        permit_name = QuestionSet.objects.get(id=wom.qset.id).qsetname
+        permit_no = wom.other_data['wp_seqno']
+        client_id = wom.client.id
+        report_obj = get_report_object(permit_name)
+        report = report_obj(filename=permit_name, client_id=client_id, returnfile=True, formdata={'id': wom.id}, request=None)
         report_pdf_object = report.execute()
-        pdf_path = save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=permit_no)
-        file_path = os.path.join(settings.MEDIA_ROOT, pdf_path)
-        print(f'File Path: {file_path}')
-        file_url = urljoin(settings.MEDIA_URL, file_path)
-        full_url = urljoin(settings.HOST, file_url)
+        pdf_path = save_pdf_to_tmp_location(report_pdf_object, report_name=permit_name, report_number=permit_no)
+        file_url = urljoin(settings.MEDIA_URL, pdf_path.split('/')[-1])
+        full_url = os.path.join(settings.MEDIA_ROOT, file_url)
         return GetPdfUrl(url=full_url)
     
     @staticmethod
@@ -252,6 +249,13 @@ class Query(graphene.ObjectType):
                 log.info(f'Is all approved outside if: {is_all_approved}')
                 if is_all_approved:
                     # Sending Email to Vendor and Security pending
+                    workpermit_status = 'APPROVED'
+                    Wom.objects.filter(id=wom.id).update(workstatus=Wom.Workstatus.INPROGRESS.value)
+                    permit_name = QuestionSet.objects.get(id=wom.qset.id).qsetname
+                    report_object = WorkPermit.get_report_object(wom,permit_name)
+                    report = report_object(filename=permit_name,client_id=wom.client_id,returnfile=True,formdata = {'id':wom.id},request=None)
+                    report_pdf_object = report.execute()
+                    pdf_path = save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=wom.other_data['wp_seqno'])
                     send_email_notification_for_vendor_and_security.delay(wom.id,sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no)
                     pass
                 rc, msg = 0, "success"

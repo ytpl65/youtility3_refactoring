@@ -1,7 +1,7 @@
 from django.db import models
 from datetime import datetime, timezone, timedelta
 import json
-from django.db.models import Q, When, Case, F, CharField, Value as V
+from django.db.models import Q, When, Case, F, CharField,Count,IntegerField, Value as V
 from django.db.models.functions import Cast
 from apps.onboarding.models import TypeAssist
 from apps.peoples.models import Pgbelonging
@@ -88,14 +88,24 @@ class TicketManager(models.Manager):
         )
         user_generated = qset.filter(ticketsource = 'USERDEFINED')
         sys_generated = qset.filter(ticketsource = 'SYSTEMGENERATED')
-        new       = user_generated.filter(status = 'NEW').count()
-        open      = user_generated.filter(status = 'OPEN').count()
-        cancelled = user_generated.filter(status = 'CANCELLED').count()
-        resolved  = user_generated.filter(status = 'RESOLVED').count()
-        closed  = user_generated.filter(status = 'CLOSED').count()
-        onhold  = user_generated.filter(status = 'ONHOLD').count()
+        aggregate_user_generated_data = user_generated.aggregate(
+            new = Count(Case(When(status='NEW',then=1),output_field=IntegerField())),
+            open = Count(Case(When(status='OPEN',then=1),output_field=IntegerField())),
+            cancelled = Count(Case(When(status='CANCELLED',then=1),output_field=IntegerField())),
+            resolved = Count(Case(When(status='RESOLVED',then=1),output_field=IntegerField())),
+            closed = Count(Case(When(status='CLOSED',then=1),output_field=IntegerField())),
+            onhold = Count(Case(When(status='ONHOLD',then=1),output_field=IntegerField()))
+        )
         autoclosed = sys_generated.count()
-        stats = [new, resolved, open, cancelled, closed, onhold, autoclosed]
+        stats = [
+            aggregate_user_generated_data['new'],
+            aggregate_user_generated_data['resolved'],
+            aggregate_user_generated_data['open'],
+            aggregate_user_generated_data['cancelled'],
+            aggregate_user_generated_data['closed'],
+            aggregate_user_generated_data['onhold'],
+            autoclosed
+        ]
         return stats, sum(stats)
     
     def get_events_for_calendar(self, request):

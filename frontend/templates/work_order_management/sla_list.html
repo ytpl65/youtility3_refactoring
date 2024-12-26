@@ -75,6 +75,7 @@ $(document).ready(function(){
             {title:'Vendor Name', data:'vendor__name'},
             {title:'Approval', data:'workpermit'},
             {title:'Site', data:'bu__buname'},
+            {title:'Uptime',data:'other_data__uptime_score'},
             {title:'Overall Score',data:'other_data__overall_score'},
              {title:'Remarks',data:'other_data__remarks',visible:false},
             {title:'Action', data:null, defaultContent:'<a href="#" class="edit-link">Report&nbsp;<i class="bi text-danger fs-5 bi-file-earmark-pdf-fill"></i></a>'},
@@ -105,6 +106,12 @@ $(document).ready(function(){
         },
         {
             targets:7,render:function(data,type,row,meta){
+                console.log(data)
+                return `<span>${data}%</span>`
+            }
+        },
+        {
+            targets:8,render:function(data,type,row,meta){
                 return `<span>${data}%</span>`
             }
         }     
