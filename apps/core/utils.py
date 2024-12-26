@@ -1916,7 +1916,9 @@ HEADER_MAPPING  = {
         'Plan Duration*', 'Gracetime*', 'Expiry Time*', 'Notify Category*',
         'From Date*', 'Upto Date*', 'Scan Type*', 'Client*', 'Site*',
         'Priority*','Seq No*', 'Start Time', 'End Time', 'Belongs To*'
-    ]
+    ],
+    'GEOFENCE': ['Code*', 'Name*', 'Site*', 'Client*','Alert to People*', 'Alert to Group*', 'Alert Text*', 'Enable', 'Radius*'],
+    'GEOFENCE_PEOPLE': ['Code*', 'People Code*','Site*', 'Client*', 'Valid From*', 'Valid To*', 'Start Time*', 'End Time*'],
 }
 
 Example_data = {
@@ -1972,7 +1974,16 @@ Example_data = {
                        ('TOUR B','Inspection Tour B','56 11,16 * * *','ASSET_B','Checklist B','PERSON_B','GROUP_B','18','5','5',
                         'AUTOCLOSENOTIFY','2023-06-07 12:00:00','2023-06-07 16:00:00','QR','CLIENT_B','SITE_B','LOW','6','00:00:00','00:00:00','Task A Inspection'),
                         ('TOUR C','Inspection Tour C','57 11,16 * * *','ASSET_C','Questionset C','PERSON_C','GROUP_C','20','5','5','NONE','2024-02-04 23:00:00',
-                         '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','00:00:00','00:00:00','Task A Inspection')]}
+                         '2024-02-04 23:55:00','SKIP','CLIENT_C','SITE_C','MEDIUM','3','00:00:00','00:00:00','Task A Inspection')],
+    'GEOFENCE': [('GEO001','TESTA','SITE_A','CLIENT_A','P012345','NONE','Test','TRUE','100'),
+                  ('GEO002','TESTB','SITE_B','CLIENT_B','P012345','NONE','Test','FALSE','200'),
+                  ('GEO003','TESTC','SITE_C','CLIENT_C','NONE','Group A','Test','TRUE','300'),
+                 ],
+    'GEOFENCE_PEOPLE': [
+                        ('GEO001','P023456','SITE_A','CLIENT_A','17-12-2024','20-12-2024','10:00:00','06:00:00'),
+                        ('GEO002','P023457','SITE_B','CLIENT_B','18-12-2024','21-12-2024','10:00:00','06:00:00'),
+                        ('GEO003','P023458','SITE_C','CLIENT_C','19-12-2024','22-12-2024','10:00:00','06:00:00')
+                 ]}
 
 def excel_file_creation(R):
     import pandas as pd

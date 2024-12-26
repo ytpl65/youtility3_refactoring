@@ -689,3 +689,40 @@ def is_point_in_geofence(lat, lon, geofence):
 
     # If geofence is neither a polygon nor a circular geofence, return False
     return False
+
+# create a geofence from the gpslocation and radius
+def bulk_create_geofence(gpslocation, radius):
+    from django.contrib.gis.geos import GEOSGeometry
+    from django.core.exceptions import ValidationError
+
+    # Fetch the WKB geometry from the database
+    wkb_data = gpslocation
+
+    try:
+        # Ensure the WKB is in bytes (decode if it's a hex string)
+        if isinstance(wkb_data, str):
+            wkb_data = bytes.fromhex(wkb_data)
+
+        # Create a GEOSGeometry object from the WKB data
+        geofence_geo = GEOSGeometry(wkb_data)
+
+        # Validate the geometry
+        if not geofence_geo.valid:
+            raise ValidationError("Invalid geometry: WKB contains invalid data.")
+        
+        # Transform to SRID 3857 (Web Mercator) for accurate buffer operation in meters
+        geofence_geo_3857 = geofence_geo.transform(3857, clone=True)
+        # Apply a buffer of 200 meters
+        buffer_distance = radius  # in meters
+        buffered_geofence = geofence_geo_3857.buffer(buffer_distance)
+
+        # Transform back to SRID 4326 (Latitude/Longitude)
+        final_geofence = buffered_geofence.transform(4326, clone=True)
+
+        # Save the buffered geometry to your model's PolygonField
+        return final_geofence  # Replace `_geofence` with your model's field
+
+    except ValidationError as ve:
+        print("Validation Error:", ve)
+    except Exception as e:
+        print("Error processing geometry:", e)
