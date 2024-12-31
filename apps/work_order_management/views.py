@@ -997,7 +997,7 @@ class SLA_View(LoginRequiredMixin, View):
         '11':'November',
         '12':'December'
     }
-
+    
     def get(self, request, *args, **kwargs):
         R, P = request.GET, self.params
         action = R.get('action')

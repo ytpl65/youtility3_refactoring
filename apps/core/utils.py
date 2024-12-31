@@ -807,7 +807,7 @@ def get_or_create_none_ticket():
 
 
 
-def create_none_entries():
+def create_none_entries(self):
     '''
     Creates None entries in self relationship models.
     '''
@@ -1049,15 +1049,23 @@ def clean_record(record):
 
 def save_common_stuff(request, instance, is_superuser=False, ctzoffset=-1):
     from django.utils import timezone
-    userid = 1 if is_superuser else request.user.id
+
+    userid = 1 if is_superuser else request.user.id if request else 1  # Default user if request is None
     if instance.cuser is not None:
         instance.muser_id = userid
         instance.mdtz = timezone.now().replace(microsecond=0)
         instance.ctzoffset = ctzoffset
     else:
         instance.cuser_id = instance.muser_id = userid
-    instance.ctzoffset = int(request.session['ctzoffset'])
+    
+    # Check if the request object exists and has a session
+    if request and hasattr(request, 'session'):
+        instance.ctzoffset = int(request.session.get('ctzoffset', 330))
+    else:
+        instance.ctzoffset = 330  # Use default offset if request or session is not available
+
     return instance
+
 
 
 def create_tenant_with_alias(db):

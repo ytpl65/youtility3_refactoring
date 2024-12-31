@@ -206,7 +206,7 @@ class SlaForm(forms.ModelForm):
     required_css_class = "required"
     seqno = forms.IntegerField(label="Seq. Number", required=False, widget=forms.TextInput(attrs={'readonly':True}))
     approvers = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label="Approvers")
-    month = forms.ChoiceField(choices=MONTH_CHOICES,label="Select Month",required=True)
+    month = forms.ChoiceField(choices=MONTH_CHOICES, label="Select Month", required=True, widget=forms.Select(attrs={'readonly': True}))
     
     class Meta:
         model = Wom
