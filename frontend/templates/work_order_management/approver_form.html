@@ -161,8 +161,7 @@
         })
 
         $("select[multiple]").select2({
-            closeOnSelect:false 
-        })
+            closeOnSelect:false })
 
         // Define checkbox and select element
         var checkbox = $('#id_forallsites');
@@ -192,6 +191,31 @@
                 })
             }
         });
+
+        /*$('#id_identifier').on('change',function(){
+            console.log('this identifer is excuted')
+            selected_value = $(this).val()
+            people = $('#id_people')
+            console.log('selected_value',selected_value)
+            console.log('people log',people)
+
+            $.ajax({
+                url : "{{ url('work_order_management:approver') }}",
+                method : 'GET',
+                data: {
+                    'action': 'verifier_approver',  
+                    'identifier': selected_value
+                },
+                success: function(response) {
+                console.log('Response:', response);
+                // Handle the success response here
+            },
+            error: function(xhr, status, error) {
+                console.log('Error:', error);
+                // Handle the error response here
+            }
+                })
+            })*/
     })
 
 
