@@ -503,6 +503,8 @@ MODEL_RESOURCE_MAP = {
     'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResource,
     'SCHEDULEDTASKS'      : sc_admin.TaskResource,
     'SCHEDULEDTOURS'      : sc_admin.TourResource,
+    'GEOFENCE'            : ob_admin.GeofenceResource,
+    'GEOFENCE_PEOPLE'     : ob_admin.GeofencePeopleResource,
 }
 
 MODEL_RESOURCE_MAP_UPDATE = {
@@ -536,7 +538,6 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
         R = request.GET
 
         if (R.get('action') == 'form'):
-            print("Here I am : ")
             #removes the temp file created in the last import
             self.remove_temp_file(request)
             inst = utils.Instructions(tablename='TYPEASSIST')
