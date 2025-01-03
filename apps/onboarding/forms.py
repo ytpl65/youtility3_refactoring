@@ -463,6 +463,7 @@ class ImportForm(forms.Form):
         ('SCHEDULEDTOURS', 'Scheduled Tours'),
         ('GEOFENCE', 'Geofence'),
         ('GEOFENCE_PEOPLE', 'Geofence People'),
+        ('SHIFT', 'Shift'),
         ('BULKIMPORTIMAGE','Bulk Import Image')
     ]
     importfile = forms.FileField(required = True, label='Import File', max_length = 50, allow_empty_file = False)

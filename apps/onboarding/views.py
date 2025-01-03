@@ -505,6 +505,7 @@ MODEL_RESOURCE_MAP = {
     'SCHEDULEDTOURS'      : sc_admin.TourResource,
     'GEOFENCE'            : ob_admin.GeofenceResource,
     'GEOFENCE_PEOPLE'     : ob_admin.GeofencePeopleResource,
+    'SHIFT'               : ob_admin.ShiftResource,
 }
 
 MODEL_RESOURCE_MAP_UPDATE = {

@@ -719,3 +719,121 @@ class GeofencePeopleResource(resources.ModelResource):
         instance.jobdesc = self._geofencecode + "-" + self._geofencename + "-" + self._peoplename + " ("+ self._peoplecode +")"
         print("instance",instance)
         utils.save_common_stuff(self.request, instance)
+
+class ShiftResource(resources.ModelResource):
+    Client = fields.Field(
+        column_name="Client*",
+        attribute="client",
+        widget=wg.ForeignKeyWidget(om.Bt, "bucode"),
+        default=utils.get_or_create_none_bv,
+    )
+    BV = fields.Field(
+        column_name="Site*",
+        attribute="bu",
+        widget=wg.ForeignKeyWidget(om.Bt, "bucode"),
+        saves_null_values=True,
+        default=utils.get_or_create_none_bv,
+    )
+    
+    ID                = fields.Field(attribute='id', column_name="ID")
+    Name              = fields.Field(attribute='shiftname', column_name='Name*')
+    StartTime         = fields.Field(attribute='starttime', column_name='Start Time*')
+    EndTime           = fields.Field(attribute='endtime', column_name='End Time*')
+    PeopleCount       = fields.Field(attribute='peoplecount', column_name='People Count*')
+    Enable            = fields.Field(attribute='enable', column_name='Enable*', default=True)
+    NightShift        = fields.Field(attribute='nightshiftappicable', column_name='Night Shift*', default=False)
+    ShiftData         = fields.Field(attribute="shift_data", column_name="Shift Data*", widget=wg.JSONWidget(), default=dict)
+
+    class Meta:
+        model = om.Shift
+        skip_unchanged = True
+        import_id_fields = ['ID']
+        report_skipped = True
+        fields = ('Name', 'StartTime', 'EndTime', 'PeopleCount', 'Enable', 'NightShift', 'ShiftData','Site', 'BV')
+
+    def __init__(self, *args, **kwargs):
+        super(ShiftResource, self).__init__(*args, **kwargs)
+        self.is_superuser = kwargs.pop('is_superuser', None)
+        self.request = kwargs.pop('request', None)
+
+    
+    def convert_ist_to_utc(self, time_input):
+        import pytz
+        from datetime import datetime
+        ist = pytz.timezone('Asia/Kolkata')
+        if isinstance(time_input, str):
+            time_obj = datetime.strptime(time_input, '%H:%M:%S').time()
+        else:
+            time_obj = time_input
+        today = datetime.now(ist).date()
+        dt = datetime.combine(today, time_obj)
+        ist_dt = ist.localize(dt)
+        utc_dt = ist_dt.astimezone(pytz.UTC)
+        return utc_dt.time()
+
+    def calculate_duration(self, start_time, end_time):
+        from datetime import datetime, timedelta
+        today = datetime.now().date()
+        start_dt = datetime.combine(today, start_time)
+        end_dt = datetime.combine(today, end_time)
+        if end_dt < start_dt:
+            end_dt += timedelta(days=1)
+        duration = (end_dt - start_dt).total_seconds() / 60
+        return int(duration)
+        
+    
+    def before_import_row(self, row, **kwargs):
+        if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
+        if row['Start Time*'] in ['', None]: raise ValidationError("Start Time* is required field")
+        if row['End Time*'] in ['', None]: raise ValidationError("End Time* is required field")
+        if row['People Count*'] in ['', None]: raise ValidationError("People Count* is required field")
+        if row['Enable*'] in ['', None]: raise ValidationError("Enable* is required field")
+        if row['Night Shift*'] in ['', None]: raise ValidationError("Night Shift* is required field")
+        if row['Shift Data*'] in ['', None]: raise ValidationError("Shift Data* is required field")
+        
+        row['Name*'] = clean_string(row.get('Name*', "NONE"))
+        self._shiftname = row['Name*']
+        self._starttime = self.convert_ist_to_utc(row['Start Time*'])
+        self._endtime = self.convert_ist_to_utc(row['End Time*'])
+        self._peoplecount = int(row['People Count*'])
+        self._enable = row['Enable*']
+        self._nightshiftappicable = row['Night Shift*']
+        self._shift_data = row['Shift Data*']
+        self._client = row['Client*']
+        self._site = row['Site*']
+
+        if self._peoplecount < 1:
+            raise ValidationError("People Count* must be greater than or equal to 1")
+
+        import json
+        try:
+            shift_data = json.loads(self._shift_data)  # Parse shift_data
+        except json.JSONDecodeError:
+            raise ValidationError("Shift Data* is not a valid JSON")
+        
+        gracetime = shift_data.get("gracetime", "0")
+        if gracetime == "" or not gracetime.isdigit() or not (0 < int(gracetime) <= 60):
+            raise ValidationError("gracetime in Shift Data* must be a number greater than 0 and less than or equal to 60")
+
+        total_count = 0
+        for detail in shift_data.get("designation_details", []):
+            count = int(detail.get('count', 0))
+            if count < 1:
+                raise ValidationError("Each count in designation_details must be greater than or equal to 1")
+            total_count += count
+
+        if not (self._peoplecount >= total_count):
+            raise ValidationError(
+                f"Total available count in Shift Data* ({total_count}) exceeds the People Count* ({self._peoplecount})"
+            )
+
+        if om.Shift.objects.filter(shiftname=row['Name*'], client__bucode=row['Client*']).exists():
+            raise ValidationError(f"Record with these values already exist {row.values()}")
+        
+        super().before_import_row(row, **kwargs)
+
+    def before_save_instance(self, instance, using_transactions, dry_run):
+        instance.starttime = self._starttime
+        instance.endtime = self._endtime
+        instance.shiftduration = self.calculate_duration(self._starttime, self._endtime)
+        utils.save_common_stuff(self.request, instance)
