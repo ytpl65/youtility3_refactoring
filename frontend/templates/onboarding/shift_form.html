@@ -400,8 +400,8 @@ Shift Form
                     }, 2000);
                 })
                 .fail(function(xhr, status, error) {
-                    let errorMessage = xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred while saving the form.';
-                    show_error_alert(errorMessage);
+                    let errorMessage = xhr.responseJSON ? xhr.responseJSON.errors.shiftduration[0] : 'An error occurred while saving the form.';
+                    show_error_alert(errorMessage,title= "  ");
                 });
             }
         });

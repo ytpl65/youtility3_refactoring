@@ -419,7 +419,6 @@ class GeoFence(LoginRequiredMixin, View):
         try:
             data = QueryDict(request.POST.get('formData'))
             geofence = request.POST.get('geofence')
-            print("------->",data['pk'], geofence, request.POST.get('pk', None))
             if data['pk']:
                 msg = "geofence_view"
                 form = utils.get_instance_for_update(

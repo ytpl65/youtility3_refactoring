@@ -1,4 +1,5 @@
 {% extends "globals/base_form.html" %}
+{% from "onboarding/partials/partial_ta_form.html" import typeassist_form with context %}
 
 <!---- BEGIN PAGE TITLE ------>
 {% block page_title %}
@@ -21,7 +22,6 @@ Asset Form
 <li class="breadcrumb-item pe-3"><a href="{{ url('activity:asset') }}?template=true" class="pe-3">Assets</a></li>
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Asset Form</a></li>
 {% endblock pagebreadcumb %}
-
 
 {% block nonfield_errors %}
 <div class="alert alert-danger" id="nonfield_errors" role="alert" style="display:none">
@@ -62,10 +62,6 @@ Asset Form
                     {{ assetform.runningstatus }}
                 </div>
             </div>
-
-
-
-
             <div class="input-group mb-3">
                 <div class="col-md-4">
                     {{ assetform.location.label_tag() }}
@@ -95,7 +91,6 @@ Asset Form
                     {{ assetform.type }}
                 </div>
             </div>
-
             <div class="input-group mb-3">
                 <div class="col-md-4">
                     <label for="id_gpslocation" class="col-form-label text-sm-right">GPS:
@@ -110,7 +105,6 @@ Asset Form
                     </div>
                 </div>
             </div>
-            
             <div class="input-group mb-3">
                 <div class="col-md-4">
                     {{ assetform.parent.label_tag() }}
@@ -144,27 +138,42 @@ Asset Form
         <h4 class="ch4 mb-4">Asset Details</h4>
         <div class="col-md-6">
             <div class="input-group mb-3">
-                <div class="col-md-4">
+                <div for="id_category" class="col-md-4">
                     {{ assetform.category.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-8 d-flex align-items-center">
                     {{ assetform.category }}
+                    <a href="" type="button" data-bs-toggle="modal" data-bs-target="#category_popup"><span
+                        style="font-size: 24px;" data-bs-toggle="tooltip" data-bs-placement="left"
+                        title="If you haven't found an option in selection menu, then create one from here"
+                        class="material-icons-outlined mt-3 ps-2 primary-col opacity-50">add_circle
+                    </span></a>
                 </div>
             </div>
             <div class="input-group mb-3">
-                <div class="col-md-4">
+                <div for="id_subcategory" class="col-md-4">
                     {{ assetform.subcategory.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-8 d-flex align-items-center">
                     {{ assetform.subcategory }}
+                    <a href="" type="button" data-bs-toggle="modal" data-bs-target="#subcategory_popup"><span
+                        style="font-size: 24px;" data-bs-toggle="tooltip" data-bs-placement="left"
+                        title="If you haven't found an option in selection menu, then create one from here"
+                        class="material-icons-outlined mt-3 ps-2 primary-col opacity-50">add_circle
+                    </span></a>
                 </div>
             </div>
             <div class="input-group mb-3">
-                <div class="col-md-4">
+                <div for="id_brand" class="col-md-4">
                     {{ assetform.brand.label_tag() }}
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-8 d-flex align-items-center">
                     {{ assetform.brand }}
+                    <a href="" type="button" data-bs-toggle="modal" data-bs-target="#brand_popup"><span
+                        style="font-size: 24px;" data-bs-toggle="tooltip" data-bs-placement="left"
+                        title="If you haven't found an option in selection menu, then create one from here"
+                        class="material-icons-outlined mt-3 ps-2 primary-col opacity-50">add_circle
+                    </span></a>
                 </div>
             </div>
             <div class="input-group mb-3">
@@ -315,7 +324,6 @@ Asset Form
             </div>
         </div>
     </div>
-
 </form>
 {% endblock form %}
 
@@ -337,8 +345,55 @@ Asset Form
     </div>
 </div>
 {% endcall %}
-{% endblock popup_alerts %}
 
+<!------------- typeassist popup for Category onclick + icon ---------------------->
+{% call general_popup(title='Create TypeAssist', popup_id = "category_popup") %}
+<form action="" method="post" id="pop_category_form">
+    <div class="modal-body">
+        <input type="hidden" name="form_name" , value="ta_form">
+        {% if ta_form is defined %}
+        {{ typeassist_form() }}
+        {% endif %}
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-sm  btn-secondary rounded-1" data-bs-dismiss="modal">Close</button>
+        <input type="submit" class="btn btn-sm  btn-primary2 rounded-1" value="Submit" form="pop_category_form" />
+    </div>
+</form>
+{% endcall %}
+
+<!------------- typeassist popup for Sub Category onclick + icon ---------------------->
+{% call general_popup(title='Create TypeAssist', popup_id = "subcategory_popup") %}
+<form action="" method="post" id="pop_subcategory_form">
+    <div class="modal-body">
+        <input type="hidden" name="form_name" , value="ta_form">
+        {% if ta_form is defined %}
+        {{ typeassist_form() }}
+        {% endif %}
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-sm  btn-secondary rounded-1" data-bs-dismiss="modal">Close</button>
+        <input type="submit" class="btn btn-sm  btn-primary2 rounded-1" value="Submit" form="pop_subcategory_form" />
+    </div>
+</form>
+{% endcall %}
+
+<!------------- typeassist popup for Brand onclick + icon ---------------------->
+{% call general_popup(title='Create TypeAssist', popup_id = "brand_popup") %}
+<form action="" method="post" id="pop_brand_form">
+    <div class="modal-body">
+        <input type="hidden" name="form_name" , value="ta_form">
+        {% if ta_form is defined %}
+        {{ typeassist_form() }}
+        {% endif %}
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-sm  btn-secondary rounded-1" data-bs-dismiss="modal">Close</button>
+        <input type="submit" class="btn btn-sm  btn-primary2 rounded-1" value="Submit" form="pop_brand_form" />
+    </div>
+</form>
+{% endcall %}
+{% endblock popup_alerts %}
 
 {% block ajax_page_actions %}
 <div class="form-actions">
@@ -507,7 +562,45 @@ Asset Form
             
         })
 
+        // submit the popup-category-taform for validation and saving in db.
+        $('#pop_category_form').on('submit', sumit_popup_form({
+            'url': "{{ url('onboarding:ta_popup') }}",
+            'form': "#pop_category_form",
+            'field': "#id_category",
+            'modal': "#category_popup"
+        }))
 
+        // submit the popup-sb=globals/updated_sidebarmenus.htmlcategory-taform for validation and saving in db.
+        $('#pop_subcategory_form').on('submit', sumit_popup_form({
+            'url': "{{ url('onboarding:ta_popup') }}",
+            'form': "#pop_subcategory_form",
+            'field': "#id_subcategory",
+            'modal': "#subcategory_popup"
+        }))
+
+        // submit the popup-brand-taform for validation and saving in db.
+        $('#pop_brand_form').on('submit', sumit_popup_form({
+            'url': "{{ url('onboarding:ta_popup') }}",
+            'form': "#pop_brand_form",
+            'field': "#id_brand",
+            'modal': "#brand_popup"
+        }))
+
+        $("#category_popup").find("select[name = tatype]").select2({
+            dropdownParent: $('#category_popup')
+        })
+        
+        $("#subcategory_popup").find("select[name = tatype]").select2({
+            dropdownParent: $('#subcategory_popup')
+        })
+
+        $("#brand_popup").find("select[name = tatype]").select2({
+            dropdownParent: $('#brand_popup')
+        })
+
+        $("#category_popup select[name='tatype']").val($("#category_popup select option:contains('Asset Category')").val()).change().prop({"disabled": "true"})
+        $("#subcategory_popup select[name='tatype']").val($("#subcategory_popup select option:contains('Asset SubCategory')").val()).change().prop({"disabled": "true"})
+        $("#brand_popup select[name='tatype']").val($("#brand_popup select option:contains('Brand')").val()).change().prop({"disabled": "true"})
 
     })
 </script>

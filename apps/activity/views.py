@@ -765,6 +765,7 @@ class Asset(LoginRequiredMixin,View):
         if R.get('action', None) == 'form':
             cxt = {'assetform': P['form'](request=request),
                    'assetextrasform': P['jsonform'](request=request),
+                   'ta_form': obf.TypeAssistForm(auto_id=False, request=request),
                    'msg': "create asset requested"}
             resp = render(request, P['template_form'], cxt)
         
@@ -781,6 +782,7 @@ class Asset(LoginRequiredMixin,View):
             asset = utils.get_model_obj(R['id'], request, P)
             cxt = {'assetform': P['form'](instance = asset, request=request),
                    'assetextrasform': get_asset_jsonform(asset, request),
+                   'ta_form': obf.TypeAssistForm(auto_id=False, request=request),
                    'msg': "Asset Update Requested"}
             resp = render(request, P['template_form'], context = cxt)
         return resp

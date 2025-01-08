@@ -388,13 +388,14 @@ class GeofenceManager(models.Manager):
         return self.none()
 
     def getPeoplesGeofence(self, request):
-        
         searchterm = request.GET.get('search')
+        from django.db.models import Q
         qset = pm.People.objects.filter(
-            client_id = request.session['client_id'],
-            enable=True, isverified=True,
+            Q(client_id=request.session['client_id']) & 
+            Q(bu_id=request.session['bu_id']) & 
+            Q(enable=True) & 
+            Q(isverified=True)
         )
-        
         qset = qset.filter(peoplename__icontains = searchterm) if searchterm else qset
         qset = qset.annotate(
             text = Concat('peoplename', V(' ('), 'peoplecode', V(')'))
