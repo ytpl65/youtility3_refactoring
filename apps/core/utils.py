@@ -36,6 +36,7 @@ from apps.work_order_management.models import Approver
 from django.db import models
 from django.contrib.gis.db.models.functions import AsGeoJSON
 from django.db.models.functions import Cast, Concat, Substr, StrIndex, TruncSecond
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -1850,6 +1851,18 @@ def download_qrcode(code, name, report_name, session, request):
                               formdata={'print_single_qr':code, 'qrsize':200, 'name':name}, request=request, returnfile=False)
     return report.execute()
 
+def validate_date_format(date_value, field_name):
+    from datetime import datetime
+    if date_value:
+        # Convert Timestamp to string, if necessary
+        if isinstance(date_value, datetime):
+            date_value = date_value.strftime('%Y-%m-%d')
+        try:
+            datetime.strptime(date_value, '%Y-%m-%d')  # Validate date format
+        except ValueError:
+            raise ValidationError(f"{field_name} must be a valid date in the format YYYY-MM-DD")
+
+
 # Header Mapping
 HEADER_MAPPING  = {
     'TYPEASSIST': [
@@ -1864,7 +1877,7 @@ HEADER_MAPPING  = {
         'Current Address', 'Blacklist',  'Alert Mails'],
     
     'BU': [
-        'Code*', 'Name*', 'Belongs To*', 'Type*', 'Site Type', \
+        'Code*', 'Name*', 'Belongs To*', 'Type*', 'Site Type', 'Control Room', 'Permissible Distance',
         'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'State', 'Country', 'City'],
     
     'QUESTION':[
@@ -1926,9 +1939,9 @@ Example_data = {
     'TYPEASSIST': [('Reception Area','RECEPTION' , 'LOCATIONTYPE', 'CLIENT_A'),
                    ('Bank','BANK','SITETYPE','CLIENT_B'),
                    ('Manager','MANAGER','DESIGNATIONTYPE','CLIENT_C')],
-            'BU': [('MUM001','Site A','NONE','BRANCH','BANK','John Doe','123','TRUE','19.05,73.51','123 main street, xyz city','California','USA','Valparaíso'),
-                   ('MUM002','Site B','MUM001','ZONE','OFFICE','Jane Smith','456','FALSE','19.05,73.51','124 main street, xyz city','New York','Canada','Hobart'),
-                   ('MUM003','Site C','NONE','SITE','SUPERMARKET','Ming Yang','789','TRUE','19.05,73.51','125 main street, xyz city','california','USA','Manarola')],
+            'BU': [('MUM001','Site A','NONE','BRANCH','BANK',['CRAND','CRGCH'],'12','John Doe','123','TRUE','19.05,73.51','123 main street, xyz city','California','USA','Valparaíso'),
+                   ('MUM002','Site B','MUM001','ZONE','OFFICE',['CRAND','CRGCH'],'8','Jane Smith','456','FALSE','19.05,73.51','124 main street, xyz city','New York','Canada','Hobart'),
+                   ('MUM003','Site C','NONE','SITE','SUPERMARKET',['CRAND','CRGCH'],'0','Ming Yang','789','TRUE','19.05,73.51','125 main street, xyz city','california','USA','Manarola')],
       'LOCATION': [('LOC001','Location A','GROUNDFLOOR','WORKING','TRUE','NONE','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
                     ('LOC002','Location B','MAINENTRANCE','SCRAPPED','FALSE','MUM001','SITE_B','CLIENT_A','19.05,73.52','FALSE'),
                     ('LOC003','Location C','FIRSTFLOOR','RUNNING','TRUE','NONE','SITE_C','CLIENT_A','19.05,73.53','TRUE')],

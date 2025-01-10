@@ -168,12 +168,6 @@ class BtResource(resources.ModelResource):
         attribute='butype',
         widget = wg.ForeignKeyWidget(om.TypeAssist, 'tacode'))
 
-    tenant = fields.Field(
-        column_name='Tenant',
-        default=utils.get_or_create_none_tenant,
-        attribute='tenant',
-        widget = wg.ForeignKeyWidget(tm.Tenant, 'tenantname'))
-
     Identifier = fields.Field(
         column_name='Type*',
         attribute='identifier',
@@ -205,8 +199,7 @@ class BtResource(resources.ModelResource):
         fields = (
             'Name', 'Code', 'BuType', 'SOLID', 
             'Enable', 'GPS', 'ID','Address', 'State',
-            'City', 'Country',
-            'Identifier', 'BelongsTo', 'tenant',)
+            'City', 'Country','Identifier', 'BelongsTo')
 
     def __init__(self, *args, **kwargs):
         super(BtResource, self).__init__(*args, **kwargs)
@@ -224,12 +217,24 @@ class BtResource(resources.ModelResource):
         self._city = row['City']
         self._country = row['Country']
         self._latlng = row['GPS Location']
+        control_room_list = row['Control Room'].strip("[]").replace("'", "").split(", ")
+        from django.db.models import Q
+        control_id_list = list(
+        pm.People.objects.filter(
+                Q(Q(designation__tacode__in=['CR']) | Q(worktype__tacode__in=['CR'])),
+                enable=True,
+                peoplecode__in=control_room_list
+            ).values_list('id', flat=True)
+        )
+        control_id_list = [str(id) for id in control_id_list]
+        self._controlroom = control_id_list
+        self._permissibledistance = row['Permissible Distance']
         # check required fields
         if row['Code*'] in ['', None]: raise ValidationError("Code* is required field")
         if row['Type*'] in ['', None]: raise ValidationError("Type* is required field")
         if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
         if row['Belongs To*'] in ['', None]: raise ValidationError("Belongs To* is required field")
-        
+        if not row['Permissible Distance'] >= 0: raise ValidationError("Permissible Distance is greater than or equal to zero")
         # code validation
         regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
         if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
@@ -248,6 +253,8 @@ class BtResource(resources.ModelResource):
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.gpslocation = self._gpslocation
         instance.bupreferences['address'] = self._address
+        instance.bupreferences['controlroom'] = self._controlroom
+        instance.bupreferences['permissibledistance'] = self._permissibledistance
         instance.bupreferences['address2'] = {
             'city':self._city, 'country':self._country,
             'state':self._state, 'formattedAddress':self._address,

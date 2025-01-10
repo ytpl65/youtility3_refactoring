@@ -142,7 +142,7 @@ class PeopleResource(resources.ModelResource):
         self._currentaddr        = row.get('Current Address', "")
         self._permanentaddr      = row.get('Permanent Address', "")
         self._isemergencycontact = row.get('Emergency Contact') or False
-        self._userfor            = row.get('User For*') or 'Mobile'
+        self._userfor            = (row.get('User For*').capitalize() if row.get('User For*') else 'Mobile')
         row['Mob No*'] = str(row['Mob No*'])
 
     def before_save_instance(self, instance, using_transactions, dry_run):
@@ -168,15 +168,14 @@ class PeopleResource(resources.ModelResource):
         # if row['Employee Type*'] in ['', None]: raise ValidationError("Employee Type* is required field")
         if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
         if row['User For*'] in ['', None]: raise ValidationError("User For* is required field")
+        utils.validate_date_format(row.get('Date of Join*'), 'Date of Join*')
+        utils.validate_date_format(row.get('Date of Birth*'), 'Date of Birth*')
         
-        # code validation
-        regex, value = "^[a-zA-Z0-9\-_]*$", row['Code*']
-        if re.search(r'\s|__', value): raise ValidationError("Please enter text without any spaces")
-        if  not re.match(regex, value):
-            raise ValidationError("Please enter valid text avoid any special characters except [_, -]")
+        if value := row.get('Name*'):
+            regex = "^[a-zA-Z0-9\-_@#.\(\|\)&\s]*$"
+            if not re.match(regex, value):
+                raise ValidationError("Only these special characters [-, _, @, #, ., &] are allowed in name field")
         
-
-
         # mob no validation
         if not utils.verify_mobno(str(row.get('Mob No*', -1))):
             raise ValidationError("Mob No* is not valid")
@@ -189,9 +188,6 @@ class PeopleResource(resources.ModelResource):
             loginid=row['Login ID*'], peoplecode=row['Code*'],
             bu__bucode = row['Site*']).exists():
             raise ValidationError(f"Record with the se values already exist {row.values()}")
-    
-
-
 @admin.register(People)
 class PeopleAdmin(ImportExportModelAdmin):
     resource_class = PeopleResource
