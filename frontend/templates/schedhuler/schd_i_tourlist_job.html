@@ -1,4 +1,4 @@
-    {% extends "globals/base_list.html" %}
+{% extends "globals/base_list.html" %}
 
 <!---- BEGIN CARD TITLE ------>
 {% block card_title %}
@@ -81,11 +81,17 @@ Scheduled Tours
                 {data: 'id', title:"ID", defaultContent:null},
                 {data: 'jobname', title: "Name"},
                 {data: 'assignedto', title:"People/Group", defaultContent:null, render:function(data, type, row, meta){
-                    if(data.includes('[GROUP]')){
-                        return `<a href="javascript:void(0)"  onClick='showListOfPeoples(${row['id']}, "Job")'>${data}</a>`
-                    }else{
+                    if(data){
+                        if(data.includes('[GROUP]')){
+                            return `<a href="javascript:void(0)"  onClick='showListOfPeoples(${row['id']}, "Job")'>${data}</a>`
+                        }else{
+                            return data
+                        }
+                    }
+                    else{
                         return data
                     }
+                    
                 }},
                 {title: 'From', data: 'fromdate'},
                 {title: 'To', data: 'uptodate'},
