@@ -71,9 +71,6 @@
                                             {% endfor%}
                                             {% if row.non_field_specific_errors %}
                                                 <li>
-                                                    <span class="validation-error-field-label">
-                                                        Non field specific
-                                                    </span>
                                                     <ul>
                                                         {% for error in row.non_field_specific_errors %}
                                                         <li>{{ error }}</li>

@@ -21,7 +21,8 @@ def default_ta():
 class PeopleFKW(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
         return pm.People.objects.select_related().filter(
-            client__bucode = row['Client*']
+            (Q(client__bucode = row['Client*']) & Q(enable=True)) | 
+            Q(peoplecode='NONE')
         )
 
 class PgroupFKW(wg.ForeignKeyWidget):
@@ -38,7 +39,7 @@ class QsetFKW(wg.ForeignKeyWidget):
 class AssetFKW(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
         return am.Asset.objects.select_related().filter(
-            Q(assetname='NONE') | (Q(client__bucode = row['Client*']) & Q(enable=True))
+            Q(assetcode='NONE') | (Q(client__bucode = row['Client*']) & Q(enable=True))
         )
 class TktCategoryFKW(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
@@ -119,13 +120,27 @@ class TaskResource(BaseJobResource):
         valid_scantypes = ['QR','NFC','SKIP','ENTERED']
         scan_type = row.get('Scan Type*')
         if scan_type not in valid_scantypes:
-            raise ValidationError({'Scan Type*': f"Invalid Scan Type {scan_type}, select a valid one from {valid_scantypes}"})
+            raise ValidationError(
+                {
+                    'Scan Type*': "%(type)s is not a valid Scan Type. Please select a valid Scan Type from %(valid)s" % {
+                        "type": scan_type,
+                        "valid": valid_scantypes
+                    }
+                }
+            )
         
     def check_valid_priority(self,row):
         valid_priorities = ['LOW','MEDIUM','HIGH']
         priority = row.get('Priority*')
         if priority not in valid_priorities:
-            raise ValidationError({'Priority*': f"Invalid Priority {priority}, select a valid one from {valid_priorities}"})
+            raise ValidationError(
+                {
+                    'Priority*': "%(priority)s is not a valid Priority. Please select a valid Priority from %(valid)s" % {
+                        "priority": priority,
+                        "valid": valid_priorities
+                    }
+                }
+            )
         
     def check_required_fields(self, row):
         required_fields = [
@@ -256,7 +271,7 @@ class TourResource(resources.ModelResource):
     
     def unique_record_check(self, row):
         if Job.objects.filter(
-            jobname = row['Name*'], asset__assetcode = row['Asset*'], qset__qsetname = row['Question Set/Checklist*'],
+            jobname = row['Name*'], bu__bucode=row["Site*"],
             identifier = 'INTERNALTOUR', client__bucode = row['Client*']
         ).exists():
             raise ValidationError('Record Already with these values are already exist')
@@ -321,14 +336,28 @@ class TaskResourceUpdate(resources.ModelResource):
             valid_scantypes = ['QR','NFC','SKIP','ENTERED']
             scan_type = row.get('Scan Type')
             if scan_type not in valid_scantypes:
-                raise ValidationError({'Scan Type': f"Invalid Scan Type {scan_type}, select a valid one from {valid_scantypes}"})
-        
+                raise ValidationError(
+                    {
+                        'Scan Type': "%(type)s is not a valid Scan Type. Please select a valid Scan Type from %(valid)s" % {
+                            "type": scan_type,
+                            "valid": valid_scantypes
+                        }
+                    }
+                )
+    
     def check_valid_priority(self,row):
         if 'Priority' in row:
             valid_priorities = ['LOW','MEDIUM','HIGH']
             priority = row.get('Priority')
             if priority not in valid_priorities:
-                raise ValidationError({'Priority': f"Invalid Priority {priority}, select a valid one from {valid_priorities}"})
+                raise ValidationError(
+                    {
+                        'Priority': "%(priority)s is not a valid Priority. Please select a valid Priority from %(valid)s" % {
+                            "priority": priority,
+                            "valid": valid_priorities
+                        }
+                    }
+                )
         
     def check_required_fields(self, row):
         if row.get('ID*') in ['', 'NONE', None] or (isinstance(row.get('ID*'), float) and math.isnan(row.get('ID*'))): raise ValidationError({'ID*':"This field is required"})

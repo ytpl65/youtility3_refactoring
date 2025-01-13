@@ -419,7 +419,6 @@ class GeoFence(LoginRequiredMixin, View):
         try:
             data = QueryDict(request.POST.get('formData'))
             geofence = request.POST.get('geofence')
-            print("------->",data['pk'], geofence, request.POST.get('pk', None))
             if data['pk']:
                 msg = "geofence_view"
                 form = utils.get_instance_for_update(
@@ -505,6 +504,7 @@ MODEL_RESOURCE_MAP = {
     'SCHEDULEDTOURS'      : sc_admin.TourResource,
     'GEOFENCE'            : ob_admin.GeofenceResource,
     'GEOFENCE_PEOPLE'     : ob_admin.GeofencePeopleResource,
+    'SHIFT'               : ob_admin.ShiftResource,
 }
 
 MODEL_RESOURCE_MAP_UPDATE = {

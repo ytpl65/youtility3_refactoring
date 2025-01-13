@@ -987,19 +987,25 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):
         return False
 
     # Check and highlight text on each page
+    last_page_index = document.page_count - 1
+    last_page_has_highlight = False  # To track highlights on the last page
+
     for page_num in range(document.page_count):
         page = document[page_num]
         page_has_highlight = False
         for text in texts_to_highlight:
             if text and find_and_highlight_text(page, text):
                 page_has_highlight = True
+                if page_num == last_page_index:
+                    last_page_has_highlight = True
 
-        if page_has_highlight or page_num == 0:  # Always keep the first page
+        # Always keep the first page or pages with highlights
+        if page_has_highlight or page_num == 0:
             pages_to_keep.append(page_num)
 
-    # Ensure the last page is included
-    if document.page_count - 1 not in pages_to_keep:
-        pages_to_keep.append(document.page_count - 1)
+    # If the last page has no highlights, ensure it is not kept
+    if last_page_index in pages_to_keep and not last_page_has_highlight:
+        pages_to_keep.remove(last_page_index)
 
     # Create a new document with all pages to be kept
     new_document = fitz.open()
@@ -1010,6 +1016,7 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):
     new_document.save(output_pdf_path)
     new_document.close()
     document.close()
+
 
 # def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):        
 #     # Open the PDF
