@@ -270,7 +270,7 @@ Shift Form
 
     $(document).ready(function() {
 
-         // Convert times from UTC to IST on form load
+        // Convert times from UTC to IST on form load
         const startTime = $("#id_starttime").val();
         const endTime = $("#id_endtime").val();
         
@@ -375,7 +375,10 @@ Shift Form
                 if (formObject['endtime']) {
                     formObject['endtime'] = convertToUTC(formObject['endtime']);
                 }
-                
+                if (formObject['designation']){
+                    formObject['designation'] = ""
+                }
+
                 var payLoad = {
                     formData: $.param(formObject), // Convert back to serialized string
                     csrfmiddlewaretoken: '{{ csrf_token }}'
@@ -426,7 +429,7 @@ Shift Form
                     {label: "Overtime (hours)", name: "overtime", type: "text", attr: {
                         type: 'number',
                         min: '0',
-                        step: '0.5'  // Allows half-hour increments
+                        step: '0.5'  
                     }},
                     {
                         label: "Grace Time (minutes)", 
@@ -442,32 +445,56 @@ Shift Form
                 idSrc : 'id'
             });
 
-
         editor.on('open', function(e, mode, action) {
-            console.log('editor opened', action);
-        
+            
             $("#DTE_Field_designation").addClass("form-control form-select");
             $("#DTE_Field_count").addClass("form-control");
             $("#DTE_Field_overtime").addClass("form-control");
 
-            if (action == 'create' || action == 'edit') {
+            //if (action == 'create' || action == 'edit') {
             // fectching designation choices from form instance
-            var designation_choices = [];
+            var designation_choices =[{ label: "-------", value: "" }];
             $("#id_designation option").each(function() {
-                var value = $(this).text();
+                var value = $(this).val();
                 var label = $(this).text();
-                if (value) { 
+                console.log('value',value)
+                console.log('label',label)
+                if (value) {
+
                     designation_choices.push({label: label, value: value});
                 }
             });
-            console.log('designation choices :- ',designation_choices);
+            console.log('designation choices',designation_choices)
+
             // showing the drop down data from list of dictionary value 
             editor.field('designation').update(designation_choices);
+            
+            if (action === 'edit') {
+                // Get the current row data
+                var currentRow = table.row({ selected: true }).data();
+                console.log('currentroe',currentRow.designation)
+                if (currentRow) {
+                    // Set the value after a brief delay to ensure options are loaded
+                    setTimeout(() => {
+                        editor.field('designation').val(currentRow.designation);
+                    }, 100);
+                }             
+            }
+            else if (action === 'create') {
+                editor.field('designation').val("");
+            
             }
 
         });
 
         editor.on('preSubmit', function(e, data, action) {
+
+            const designation = data.data[Object.keys(data.data)[0]].designation;
+            if (!designation) {
+                this.error('designation', 'Please select a valid designation.');
+                return false;
+            }
+
             let totalCount = calculateTotalPeopleCount();
             const rowData = data.data[Object.keys(data.data)[0]];
             const rowCount = parseInt(rowData.count || 0);

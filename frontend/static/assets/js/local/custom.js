@@ -174,6 +174,35 @@ function makeReadonlyFields() {
   $("select.django-select2").select2({ disabled: "readonly" });
 }
 
+function makeWorkPermitDetailsReadonly() {
+  // Target the container
+  const container = document.querySelector('.workpermit-details-section');
+  
+  if (container) {
+      // Make all input fields readonly
+      container.querySelectorAll('input').forEach(input => {
+          input.setAttribute('readonly', true);
+          
+          // Special handling for flatpickr date inputs
+          if (input.classList.contains('datetimes') && input._flatpickr) {
+              input._flatpickr.set('clickOpens', false);  // Prevent calendar from opening
+          }
+      });
+
+      // Make all textarea fields readonly
+      container.querySelectorAll('textarea').forEach(textarea => {
+          textarea.setAttribute('readonly', true);
+      });
+
+      // Make all select fields disabled
+      container.querySelectorAll('select').forEach(select => {
+          select.setAttribute('disabled', true);
+          // Optionally add a class to maintain the normal appearance
+          select.classList.add('form-select-readonly');
+      });
+  }
+}
+
 function makeReadonlyFieldsUnderClass(className) {
 
   console.log("Class Name: ",className)

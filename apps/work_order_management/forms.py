@@ -194,27 +194,51 @@ class ApproverForm(forms.ModelForm):
 
 
 class SlaForm(forms.ModelForm):
+    MONTH_CHOICES = [
+        ('-','---------'),
+        ('1','January'),
+        ('2','February'),
+        ('3','March'),
+        ('4','April'),
+        ('5','May'),
+        ('6','June'),
+        ('7','July'),
+        ('8','August'),
+        ('9','September'),
+        ('10','October'),
+        ('11','November'),
+        ('12','December')
+    ]
+
     required_css_class = "required"
     seqno = forms.IntegerField(label="Seq. Number", required=False, widget=forms.TextInput(attrs={'readonly':True}))
     approvers = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label="Approvers")
+    month = forms.ChoiceField(choices=MONTH_CHOICES, label="Select Month", required=True, widget=forms.Select(attrs={'readonly': True}))
+    
     class Meta:
         model = Wom
         fields = ['qset', 'seqno', 'ctzoffset', 'workpermit', 'performedby', 'parent', 'approvers', 'vendor','identifier']
         labels={
             'qset':'Template',
             'seqno':'Seq No',
+            'month':'Select the Month'
         }
         widgets = {
             'wptype':s2forms.Select2Widget
             
         }
-    
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         S = self.request.session
         super().__init__(*args, **kwargs)
+        month_value = self.request.POST.get('month_name')
+        print("Month Value in form: ",month_value)
+        if month_value:
+            self.fields['month'].initial = month_value        
         utils.initailize_form_fields(self)
         self.fields['approvers'].choices = Approver.objects.get_approver_options_sla(self.request).values_list('people__peoplecode', 'people__peoplename')
         self.fields['qset'].queryset = am.QuestionSet.objects.filter(type='SLA_TEMPLATE',client_id=S['client_id'],enable=True,parent_id=1).filter(Q(bu_id=S['bu_id']) | Q(buincludes__contains=[str(S['bu_id'])]) | Q(show_to_all_sites=True))
         self.fields['vendor'].queryset = Vendor.objects.filter(Q(enable=True) & (Q(bu_id = S['bu_id']) | Q(Q(show_to_all_sites = True) & Q(client_id=S['client_id']))))
+
 

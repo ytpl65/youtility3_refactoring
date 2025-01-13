@@ -486,6 +486,22 @@ tr{
         }return '--'
     }
 
+    function convertToIST(time) {
+        // Create a Date object in UTC by appending the date
+        const utcDate = new Date(`1970-01-01T${time}Z`);  // 'Z' indicates UTC time
+      
+        // Convert to IST by adding 5 hours and 30 minutes
+        const istOffset = 5 * 60 + 30;  // IST is UTC + 5:30
+        const istDate = new Date(utcDate.getTime() + istOffset * 60000);  // Convert minutes to milliseconds
+      
+        // Format the IST time in HH:MM:SS format
+        const hours = String(istDate.getUTCHours()).padStart(2, '0');
+        const minutes = String(istDate.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(istDate.getUTCSeconds()).padStart(2, '0');
+      
+        return `${hours}:${minutes}:${seconds}`;
+        }
+
     $(document).ready(function () {
         
         new ClipboardJS('btn-copy')
@@ -552,10 +568,10 @@ tr{
                 { data:'people__peoplecode',  title:"Code"},//2
                 {data:'people__peoplename', title:'People'},//3
                 {data:'facerecognitionin', title:'FR IN', width:"3%"},//4
-                {data:'sL', title:'Att IN'},//5
+                {data:'sL', title:'Att IN',visible:false},//5
                 {data:'facerecognitionout', title:'FR OUT'},//6
-                {data:'eL', title:'Att OUT'},//7
-                {data:'verifiedby__peoplename', title:'Verified By', width:"5%"},//8
+                {data:'eL', title:'Att OUT',visible:false},//7
+                {data:'verifiedby__peoplename', title:'Verified By', width:"5%",visible:false},//8
                 {data:'datefor', title:'Date For'},//9
                 {data:'punchintime', title:'In Time'},//10
                 {data:'punchouttime', title:'Out Time'},//11
@@ -563,6 +579,9 @@ tr{
                 { data:'uuid',  visible:false, searchable:false, className:'noVis'},//13
                 { data:'peventtype__tacode',  visible:false, searchable:false, className:'noVis'},//14
                 { data:'people__location__locname',  title:"Location",visible:false, searchable:false,},//15
+                {data:'shift__shiftname',title:"Shift Name"},
+                {data:'shift__starttime',title:'Shift starttime'},
+                {data:'shift__endtime',title:'Shift endtime'}
                 
             ], 
             columnDefs:[
@@ -605,8 +624,11 @@ tr{
                             let lng = coords['coordinates'][0]
                             return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">${lat},${lng}</a>`
                     }return coords
-                }
-                }
+                },
+                },
+                {targets:[17,18], render:function(data,type,row,meta){
+                    return convertToIST (data)
+                }}
             ],
             buttons: [
                 "searchBuilder",

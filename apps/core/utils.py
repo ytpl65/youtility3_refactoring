@@ -808,7 +808,7 @@ def get_or_create_none_ticket():
 
 
 
-def create_none_entries():
+def create_none_entries(self):
     '''
     Creates None entries in self relationship models.
     '''
@@ -1050,15 +1050,23 @@ def clean_record(record):
 
 def save_common_stuff(request, instance, is_superuser=False, ctzoffset=-1):
     from django.utils import timezone
-    userid = 1 if is_superuser else request.user.id
+
+    userid = 1 if is_superuser else request.user.id if request else 1  # Default user if request is None
     if instance.cuser is not None:
         instance.muser_id = userid
         instance.mdtz = timezone.now().replace(microsecond=0)
         instance.ctzoffset = ctzoffset
     else:
         instance.cuser_id = instance.muser_id = userid
-    instance.ctzoffset = int(request.session['ctzoffset'])
+    
+    # Check if the request object exists and has a session
+    if request and hasattr(request, 'session'):
+        instance.ctzoffset = int(request.session.get('ctzoffset', 330))
+    else:
+        instance.ctzoffset = 330  # Use default offset if request or session is not available
+
     return instance
+
 
 
 def create_tenant_with_alias(db):
@@ -2613,3 +2621,36 @@ def get_type_data(type_name, S):
                  'formatted_uptodate', 'scantype', 'client__bucode', 'bu__bucode',
                  'priority', 'seqno', 'formatted_starttime', 'formatted_endtime', 'parent__jobname')
         return list(objs)
+    
+
+from datetime import datetime, timedelta, timezone
+import re
+
+def find_closest_shift(log_starttime, shifts):
+
+    closest_shift_id = None
+    closest_time_diff = timedelta.max  # Start with the maximum possible timedelta
+    logger.info(f'The closest_time_diff{closest_time_diff}')
+
+    for shift in shifts:
+        # Extract the start time from the shift's string representation using regex
+        match = re.search(r"\((\d{2}:\d{2}:\d{2}) -", str(shift))
+        if not match:
+            raise ValueError(f"Could not parse start time from shift: {shift}")
+
+        shift_start_time = datetime.strptime(match.group(1), "%H:%M:%S").time()
+
+        # Combine the shift's start time with the log's date, and make it offset-aware
+        shift_datetime = datetime.combine(log_starttime.date(), shift_start_time, tzinfo=timezone.utc)
+
+        # Calculate the time difference
+        time_diff = abs(shift_datetime - log_starttime)
+        logger.info(f'the time difference before if condition {time_diff}')
+
+        # Update the closest shift if this one is closer
+        if time_diff < closest_time_diff:
+            closest_time_diff = time_diff
+            logger.info(f'closseset time difference is {closest_time_diff}')
+            closest_shift_id = shift.id
+
+    return closest_shift_id

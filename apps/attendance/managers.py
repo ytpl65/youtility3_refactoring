@@ -3,8 +3,9 @@ from django.utils import timezone
 from django.db import models
 from django.contrib.gis.db.models.functions import AsGeoJSON, AsWKT
 from apps.core import utils
-from apps.activity.models import Attachment, Jobneed
-from apps.peoples.models import Pgbelonging
+from apps.activity.models import Attachment, Jobneed,Job
+from apps.onboarding.models import Shift
+from apps.onboarding.models import GeofenceMaster
 from django.db.models import Case, When, Value as V, CharField, F
 from django.db.models.functions import Cast
 from itertools import chain
@@ -37,13 +38,68 @@ class PELManager(models.Manager):
                 AND peopleeventlog.uuid= %s
             """,params=[pelogid]
         )[0] or self.none()
+    
+    def get_lat_long(self,location):
+        import re
+        match = re.search(r"POINT \(([-\d.]+) ([-\d.]+)\)", str(location))
+        if match:
+            longitude = float(match.group(1))
+            latitude  = float(match.group(2))
+        return [longitude,latitude]
+    
+
+    def is_point_in_geofence(self,lat, lon, geofence):
+        """
+        Check if a point is within a geofence, which can either be a Polygon or a Circle (center, radius).
+        Args:
+            lat (float): Latitude of the point to check.
+            lon (float): Longitude of the point to check.
+            geofence (Polygon or tuple): Polygon object representing geofence or a tuple (center_lat, center_lon, radius_km) for a circular geofence.
+        Returns:
+            bool: True if the point is inside the geofence, False otherwise.
+        """
+        from math import radians, sin, cos, sqrt, atan2
+        from django.contrib.gis.geos import Point, Polygon
+        # Create a Point object from the lat, lon
+        point = Point(lon, lat)  # Note: Point expects (longitude, latitude)
+
+        # Case 1: Geofence is a polygon (Django GEOS Polygon object)
+        if isinstance(geofence, Polygon):
+            return geofence.contains(point)
+
+        # Case 2: Geofence is circular (tuple with center lat, lon, and radius in km)
+        elif isinstance(geofence, tuple) and len(geofence) == 3:
+            geofence_lat, geofence_lon, radius_km = geofence
+            
+            # Calculate distance using Haversine formula
+            # Convert lat/lon from degrees to radians
+            lat1 = radians(lat)
+            lon1 = radians(lon)
+            lat2 = radians(geofence_lat)
+            lon2 = radians(geofence_lon)
+
+            # Haversine formula
+            dlat = lat2 - lat1
+            dlon = lon2 - lon1
+            a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+            c = 2 * atan2(sqrt(a), sqrt(1 - a))
+            distance_km = 6371 * c  # Radius of Earth in kilometers
+
+            # Check if the distance is within the geofence radius
+            return distance_km <= radius_km
+
+        # If geofence is neither a polygon nor a circular geofence, return False
+        return False
 
     def update_fr_results(self, result, uuid, peopleid, db):
+    
         log.info('update_fr_results started results:%s'
                  , result)
+        
         if obj := self.filter(uuid=uuid).using(db):
-            log.info('retrived obj punchintime: %s and punchoutime: %s', obj[0].punchintime, obj[0].punchouttime)
+            log.info('retrived obj punchintime: %s and punchoutime: %s and start location:%s and end location %s and peopleid %s', obj[0].punchintime, obj[0].punchouttime,obj[0].startlocation, obj[0].endlocation, peopleid)
             extras = obj[0].peventlogextras
+            log.info(f'theh extrsa logs {extras}')
             if obj[0].punchintime and extras['distance_in'] is None:
                 extras['verified_in'] = bool(result['verified'])
                 extras['distance_in'] = result['distance']
@@ -52,6 +108,46 @@ class PELManager(models.Manager):
                 extras['verified_out'] = bool(result['verified'])
                 extras['distance_out'] = result['distance']
 
+            #geofenc_marked_in_or_out_updating
+            get_people = Job.objects.filter(people_id = peopleid, identifier = 'GEOFENCE').values()
+            if get_people:
+                get_geofence_data = GeofenceMaster.objects.filter(id = get_people[0]['geofence_id'], enable=True).exclude(id=1).values()
+                geofence_data = get_geofence_data[0]['geofence']
+                if geofence_data :    
+                    start_location = obj[0].startlocation
+                    end_location   = obj[0].endlocation
+
+                    if start_location:
+                        start_location_arr = self.get_lat_long(start_location)
+                        longitude,latitude = start_location_arr[0],start_location_arr[1]
+                        isStartLocationInGeofence = self.is_point_in_geofence(latitude,longitude,geofence_data)
+                        log.info(f'Is Start Location Inside of the geofence: {isStartLocationInGeofence}')
+
+                    if end_location:
+                        end_location_arr = self.get_lat_long(end_location)
+                        longitude,latitude = end_location_arr[0],end_location_arr[1]
+                        isEndLocationInGeofence = self.is_point_in_geofence(latitude,longitude,geofence_data)
+                        log.info(f'Is End Location Inside of the geofence: {isEndLocationInGeofence}')
+                    
+                    if start_location:
+                        obj[0].peventlogextras['isStartLocationInGeofence'] = isStartLocationInGeofence
+
+                    if end_location:
+                        obj[0].peventlogextras['isEndLocationInGeofence'] = isEndLocationInGeofence
+            if obj[0].punchintime and obj[0].shift_id == 1:
+                log.info(f'records punchintime {obj[0].punchintime}')
+                punchintime = obj[0].punchintime
+                # log_starttime = datetime.fromisoformat(punchintime)
+                client_id = obj[0].client_id
+                site_id = obj[0].bu_id
+                all_shifts_under_site = Shift.objects.filter(client_id = client_id,bu_id = site_id)
+                log.info(f'records of shift in the site where person marked attendance {all_shifts_under_site}')
+                updated_shift_id = utils.find_closest_shift(punchintime,all_shifts_under_site)
+                log.info(f'the updated shift_id {updated_shift_id}')
+                # Update the shift_id for obj[0]
+                obj[0].shift_id = updated_shift_id
+                obj[0].save(update_fields=['shift_id'])
+                log.info(f'Successfully updated shift_id to {updated_shift_id} for obj[0]')
             obj[0].peventlogextras = extras
             obj[0].facerecognitionin = extras['verified_in']
             obj[0].facerecognitionout = extras['verified_out']
@@ -142,31 +238,35 @@ class PELManager(models.Manager):
         R, S = request.GET, request.session
         pd1 = R.get('from', datetime.now().date())
         pd2 = R.get('upto', datetime.now().date())
-        return self.filter(
+        data = self.filter(
             bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             peventtype__tacode='SOS',
             datefor__gte = pd1,
             datefor__lte = pd2
-        ).count() or 0
+        ).count()
+        return data
     
     def get_sitecrisis_count_forcard(self, request):
         R, S = request.GET, request.session
         pd1 = R.get('from', datetime.now().date())
         pd2 = R.get('upto', datetime.now().date())
-        return self.fetch_sitecrisis_events(pd1, pd2, S).count() or 0
+
+        data = self.fetch_sitecrisis_events(pd1, pd2, S).count()
+        return data 
 
     def get_frfail_count_forcard(self, request):
         R, S = request.GET, request.session
         pd1 = R.get('from', datetime.now().date())
         pd2 = R.get('upto', datetime.now().date())
-        return self.filter(
+        data =  self.filter(
             bu_id__in = S['assignedsites'],
             client_id = S['client_id'],
             datefor__gte = pd1,
             datefor__lte = pd2,
             peventtype__tacode__in = ['SELF', 'SELFATTENDANCE', 'MARKATTENDANCE', "MARK"]
-        ).exclude(id=1).count() or 0
+        ).exclude(id=1).count()
+        return data
     
     def get_peopleeventlog_history(self, fromdate, todate, people_id, bu_id, client_id, ctzoffset, peventtypeid):
         qset = self.filter(
@@ -258,7 +358,8 @@ class PELManager(models.Manager):
         ).annotate(
         start_gps = AsGeoJSON('startlocation'),
         end_gps = AsGeoJSON('endlocation')).values(*fields)
-        return list(qset) or []
+        data = list(qset) or []
+        return data
 
     def get_sitecrisis_types(self):
         from apps.onboarding.models import TypeAssist

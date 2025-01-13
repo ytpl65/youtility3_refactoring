@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext as _
 from django.db.models.functions import Concat, Cast
-from django.db.models import CharField, Value as V, Subquery, OuterRef, Exists
+from django.db.models import CharField, Value as V, Subquery, OuterRef, Exists,IntegerField
 from django.db.models import Q, F, Count, Case, When, Func
 from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
 from datetime import datetime, timedelta, timezone
@@ -592,19 +592,20 @@ class JobneedManager(models.Manager):
         pd1 = R.get('from', datetime.now().date())
         pd2 = R.get('upto', datetime.now().date())
         return self.select_related('bu', 'parent').filter(
-            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
+            Q(parent_id__in = [1,-1,None]),
             bu_id__in = S['assignedsites'],
             identifier = QuestionSet.Type.INCIDENTREPORTTEMPLATE,
             plandatetime__date__gte = pd1,
             plandatetime__date__lte = pd2,
             client_id = S['client_id'],
-        ).count() or 0
+        ).count()
+    
     
     def get_schdroutes_count_forcard(self, request):
         R, S = request.GET, request.session
         pd1 = R.get('from', datetime.now().date())
         pd2 = R.get('upto', datetime.now().date())
-        return self.select_related('bu', 'parent').filter(
+        data = self.select_related('bu', 'parent').filter(
             Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
             Q(bu_id__in = S['assignedsites']) | Q(sgroup_id__in = S['assignedsitegroups']),
             client_id = S['client_id'],
@@ -612,7 +613,8 @@ class JobneedManager(models.Manager):
             plandatetime__date__lte = pd2,
             identifier='EXTERNALTOUR',
             job__enable=True
-        ).count() or 0
+        ).count()
+        return data
     
     def get_ppm_listview(self, request, fields, related):
         S, R = request.session, request.GET
@@ -638,59 +640,78 @@ class JobneedManager(models.Manager):
     
 
     
-    def get_taskchart_data(self, request):
-        S, R = request.session, request.GET
-        total_schd = self.select_related('bu', 'parent').filter(
-            Q(Q(parent_id__in=[1, -1]) | Q(parent_id__isnull=True)),
-            bu_id__in=S['assignedsites'],
-            identifier='TASK',
-            plandatetime__date__gte=R['from'],
-            plandatetime__date__lte=R['upto'],
-            client_id=S['client_id']
-        ).values()
+    def get_taskchart_data(self,request):
+        S,R = request.session,request.GET 
+        total_sch = self.select_related('bu','parent').filter(
+            Q(parent_id__in=[1,-1,None]),
+            bu_id__in = S['assignedsites'],
+            identifier = 'TASK',
+            plandatetime__date__gte = R['from'],
+            plandatetime__date__lte = R['upto'],
+            client_id = S['client_id']
+        ).aggregate(
+            assigned = Count(Case(When(jobstatus='assigned',then=1),output_field=IntegerField())),
+            completed = Count(Case(When(jobstatus='completed',then=1),output_field=IntegerField())),
+            autoclosed = Count(Case(When(jobstatus='autoclosed',then=1),output_field=IntegerField())),
+            total = Count('id')
+        )
         return [
-            total_schd.filter(jobstatus='ASSIGNED').count(),
-            total_schd.filter(jobstatus='COMPLETED').count(),
-            total_schd.filter(jobstatus='AUTOCLOSED').count(),
-            total_schd.count(),
+            total_sch['assigned'],
+            total_sch['completed'],
+            total_sch['autoclosed'],
+            total_sch['total']
         ]
     
     
-    def get_tourchart_data(self, request):
-        S, R = request.session, request.GET
-        total_schd = self.select_related('parent', 'bu').filter(
-            Q(Q(parent_id__in=[1, -1]) | Q(parent_id__isnull=True)),
-            bu_id__in=S['assignedsites'],
+    def get_tourchart_data(self,request):
+        S,R = request.session,request.GET 
+        total_schd = self.select_related('bu','parent').filter(
+            Q(parent_id__in=[1,-1,None]),
+            bu_id__in = S['assignedsites'],
             identifier='INTERNALTOUR',
-            plandatetime__date__gte=R['from'],
-            plandatetime__date__lte=R['upto'],
-            client_id=S['client_id']
-        ).values()
+            plandatetime__date__gte = R['from'],
+            plandatetime__date__lte = R['upto'],
+            client_id = S['client_id']
+        ).aggregate(
+            completed = Count(Case(When(jobstatus='COMPLETED',then=1),output_field=IntegerField())),
+            autoclosed = Count(Case(When(jobstatus='AUTOCLOSED',then=1),output_field=IntegerField())),
+            partially_completed = Count(Case(When(jobstatus='PARTIALLYCOMPLETED',then=1),output_field=IntegerField())),
+            total = Count('id')
+        )
         return [
-            total_schd.filter(jobstatus='COMPLETED').count(),
-            total_schd.filter(jobstatus='AUTOCLOSED').count(),
-            total_schd.filter(jobstatus='PARTIALLYCOMPLETED').count(),
-            total_schd.count(),
+            total_schd['completed'],
+            total_schd['autoclosed'],
+            total_schd['partially_completed'],
+            total_schd['total']
         ]
     
     def get_alertchart_data(self, request):
         S, R = request.session, request.GET
         qset = self.select_related('bu', 'parent').filter(
-            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
+            Q(parent_id__in = [1, -1,None]),
             bu_id__in = S['assignedsites'],
             plandatetime__date__gte = R['from'],
             plandatetime__date__lte = R['upto'],
             client_id = S['client_id'],
-            alerts=True
+            alerts = True
         )
-        
-        task_alerts = qset.filter( Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)), identifier='TASK').count()
-        tour_alerts = qset.filter(identifier='INTERNALTOUR').count()
-        route_alerts = self.filter(
-            id__in = qset.values_list('parent_id', flat=True)).count()
-        ppm_alerts = qset.filter(identifier='PPM').count()
-        chart_arr =  [task_alerts, ppm_alerts, tour_alerts, route_alerts ]
-        return chart_arr, sum(chart_arr)
+
+        aggreated_data = qset.aggregate(
+            task_alerts = Count('id',filter=Q(Q(parent_id__in=[1,-1,None]),identifier='TASK')),
+            tour_alerts = Count('id',filter=Q(identifier='INTERNALTOUR')),
+            ppm_alerts  = Count('id',filter=Q(identifier='PPM')),
+            routes_alerts = Count('id',filter=Q(parent_id__isnull=False))
+        )
+
+        chart_arr = [
+            aggreated_data['task_alerts'],
+            aggreated_data['tour_alerts'],
+            aggreated_data['ppm_alerts'],
+            aggreated_data['routes_alerts']
+        ]
+
+        data = chart_arr,sum(chart_arr)
+        return data
     
     def get_expired_jobs(self, id=None):
         annotation = { 'assignedto' : Case(
@@ -725,25 +746,26 @@ class JobneedManager(models.Manager):
         )
         return qset or self.none()
     
-    def get_ppmchart_data(self, request):
-        S, R = request.session, request.GET
-        total_schd = self.select_related('bu', 'parent').filter(
-            Q(Q(parent_id__in = [1, -1]) | Q(parent_id__isnull=True)),
+    def get_ppmchart_data(self,request):
+        S,R = request.session, request.GET 
+        total_schd = self.select_related('bu','parent').filter(
+            Q(parent_id__in = [1,-1,None]),
             bu_id__in = S['assignedsites'],
             identifier = 'PPM',
             plandatetime__date__gte = R['from'],
-            plandatetime__date__lte = R['upto'],    
+            plandatetime__date__lte = R['upto'],
             client_id = S['client_id']
-        ).values()
-        # ic(total_schd.filter(jobstatus='ASSIGNED').count(),
-        #     total_schd.filter(jobstatus='COMPLETED').count(),
-        #     total_schd.filter(jobstatus='AUTOCLOSED').count(),
-        #     total_schd.count())
+        ).aggregate(
+            completed = Count(Case(When(jobstatus='COMPLETED'),then=1),output_field=IntegerField()),
+            assigned  = Count(Case(When(jobstatus='ASSIGNED'),then=1),output_field=IntegerField()),
+            autoclosed = Count(Case(When(jobstatus='autoclosed'),then=1),output_field=IntegerField()),
+            total_count = Count('id')
+        )
         return [
-            total_schd.filter(jobstatus='ASSIGNED').count(),
-            total_schd.filter(jobstatus='COMPLETED').count(),
-            total_schd.filter(jobstatus='AUTOCLOSED').count(),
-            total_schd.count(),
+            total_schd['assigned'],
+            total_schd['completed'],
+            total_schd['autoclosed'],
+            total_schd['total_count']
         ]
         
         
@@ -988,10 +1010,11 @@ class JobneedManager(models.Manager):
             other_info__isdynamic=True,
             parent_id__in = [1,-1,None],
             identifier='INTERNALTOUR',
-            client_id = S['client_id'],
+            client_id = S['client_id'], 
             bu_id__in = S['assignedsites']
         ).count()
-        return jobneeds or 0
+        data = jobneeds
+        return data
 
             
 
@@ -1197,91 +1220,47 @@ class AssetManager(models.Manager):
     
     
     def get_assetchart_data(self, request):
-        S = request.session
         from apps.activity.models import Location
+        S = request.session
+        # Common filter for `bu` and `client`
+        common_filter = Q(bu_id=S['bu_id'], client_id=S['client_id'])
+
+        # Query for asset data grouped by `runningstatus` and `identifier`
+        asset_data = (
+            self.filter(common_filter)
+            .values('runningstatus', 'identifier')
+            .annotate(total=Count('assetcode', distinct=True))
+        )
         
-        working = [
-            self.select_related('bu', 'client').filter(
-                runningstatus = 'WORKING', bu_id = S['bu_id'],
-                identifier = 'ASSET', client_id=S['client_id']).values('id').order_by(
-                    'assetcode').distinct('assetcode').count(),
-            
-            self.select_related(
-                'bu', 'client').filter(
-                    runningstatus = 'WORKING', bu_id = S['bu_id'],
-                    identifier = 'CHECKPOINT', client_id=S['client_id']
-                    ).values('id').order_by('assetcode').distinct(
-                        'assetcode').count(),
-            Location.objects.select_related(
-                'bu', 'client').filter(
-                    locstatus = 'WORKING', bu_id = S['bu_id'],
-                    client_id=S['client_id']).values('id').order_by(
-                        'loccode').distinct('loccode').count()
-        ]
-        
-        
-        mnt = [
-            self.select_related(
-                'bu', 'client').filter(
-                    runningstatus = 'MAINTENANCE', bu_id = S['bu_id'],
-                    identifier = 'ASSET', client_id=S['client_id']
-                    ).values('id').order_by('assetcode').distinct(
-                        'assetcode').count(),
-            self.select_related(
-                'bu', 'client').filter(
-                    runningstatus = 'MAINTENANCE', bu_id = S['bu_id'],
-                    identifier = 'CHECKPOINT', client_id=S['client_id']
-                    ).values('id').order_by('assetcode').distinct(
-                        'assetcode').count(),
-            Location.objects.select_related(
-                'bu', 'client').filter(
-                    locstatus = 'MAINTENANCE', bu_id = S['bu_id'],
-                    client_id=S['client_id']).values('id').order_by(
-                        'loccode').distinct('loccode').count()
-        ]
-        stb = [
-            self.select_related(
-                'bu', 'client').filter(
-                    runningstatus = 'STANDBY', bu_id = S['bu_id'],
-                    identifier = 'ASSET', client_id=S['client_id']
-                    ).values('id').order_by('assetcode').distinct(
-                        'assetcode').count(),
-            self.select_related(
-                'bu', 'client').filter(
-                    runningstatus = 'STANDBY', bu_id = S['bu_id'],
-                    identifier = 'CHECKPOINT', client_id=S['client_id']
-                    ).values('id').order_by('assetcode').distinct(
-                        'assetcode').count(),
-            
-            Location.objects.select_related(
-                'bu', 'client').filter(
-                    locstatus = 'STANDBY', bu_id = S['bu_id'],
-                    client_id=S['client_id']).values(
-                        'id').order_by('loccode').distinct('loccode').count()
-        ]
-        scp = [
-            self.select_related(
-                'bu', 'client').filter(
-                    runningstatus = 'SCRAPPED', bu_id = S['bu_id'],
-                    identifier = 'ASSET', client_id=S['client_id']
-                    ).values('id').order_by('assetcode').distinct(
-                        'assetcode').count(),
-            self.select_related(
-                'bu', 'client').filter(
-                    runningstatus = 'SCRAPPED', bu_id = S['bu_id'],
-                    identifier = 'CHECKPOINT', client_id=S['client_id']
-                    ).values('id').order_by('assetcode').distinct('assetcode').count(),
-            0
-        ]
-        
-        series = [
-            {'name':'Working', 'data':working},     
-            {'name':'Maintenance', 'data':mnt},
-            {'name':'Standby', 'data':stb},
-            {'name':'Scrapped', 'data':scp},
-        ]
-        
-        return series, sum(list(map(sum, zip(*[working, mnt, stb, scp]))))
+        # Query for location data grouped by `locstatus`
+        location_data = (
+            Location.objects.filter(common_filter)
+            .values('locstatus')
+            .annotate(total=Count('loccode', distinct=True))
+        )
+
+        # Prepare series data
+        statuses = ['WORKING', 'MAINTENANCE', 'STANDBY', 'SCRAPPED']
+        identifiers = ['ASSET', 'CHECKPOINT']
+
+        series = []
+        for status in statuses:
+            asset_counts = [
+                next(
+                    (entry['total'] for entry in asset_data if entry['runningstatus'] == status and entry['identifier'] == identifier),
+                    0
+                )
+                for identifier in identifiers
+            ]
+            loc_count = next(
+                (entry['total'] for entry in location_data if entry['locstatus'] == status),
+                0
+            )
+            series.append({'name': status.capitalize(), 'data': asset_counts + [loc_count]})
+
+        # Calculate total counts across all status types
+        total_data = sum(sum(entry['data']) for entry in series)
+        return series, total_data
     
     def filter_for_dd_asset_field(self, request, identifiers, choices=False, sitewise=False):
         client_id = request.session.get('client_id')

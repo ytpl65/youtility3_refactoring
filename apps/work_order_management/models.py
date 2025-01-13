@@ -32,6 +32,7 @@ def other_data():
         'section_weightage':0,
         'overall_score':0,
         'remarks':"",
+        "uptime_score":0,
     }
     
 def wo_history_json():

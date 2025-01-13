@@ -87,7 +87,7 @@ class Tracking(models.Model):
         INTERNALTOUR = ('INTERNALTOUR', 'Internal Tour')
         SITEVISIT    = ('SITEVISIT', 'Site Visit')
         TRACKING     = ('TRACKING', 'Tracking')
-
+    
     # id           = models.BigIntegerField(primary_key = True)
     uuid          = models.UUIDField(unique = True, editable = True, blank = True, default = uuid.uuid4)
     deviceid      = models.CharField(max_length = 40)

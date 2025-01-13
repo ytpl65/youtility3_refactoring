@@ -330,18 +330,6 @@ Work Permit Form
         })
     }
 
-    $("input[type=range]").on("change input", function() {
-        $("#range_value").html($(this).val())//assign value..
-    })
-
-    function showAttachmentDetails(id, from){
-        $('#id_attachmentdetails').modal('show')
-        ajaxData.id=id
-        ajaxData.action = 'getAttachments' 
-        attachmentDetails.ajax.reload()
-    }
-
-
     function makeWorkPermitDetailsReadonly() {
         // Target the container
         const container = document.querySelector('.workpermit-details-section');
@@ -370,6 +358,17 @@ Work Permit Form
             });
         }
     }
+
+    $("input[type=range]").on("change input", function() {
+        $("#range_value").html($(this).val())//assign value..
+    })
+
+    function showAttachmentDetails(id, from){
+        $('#id_attachmentdetails').modal('show')
+        ajaxData.id=id
+        ajaxData.action = 'getAttachments' 
+        attachmentDetails.ajax.reload()
+    }
     
 
     $(document).ready(function(){
@@ -395,7 +394,6 @@ Work Permit Form
 
         if("{{ wpform.instance.id }}" !== "None"){
             console.log('this function of datetime is called    ')
-           //makeReadonlyFields()
            makeWorkPermitDetailsReadonly();
            //setTimeout(initializeMissedDatePickers, 100);
            
@@ -415,8 +413,6 @@ Work Permit Form
                 $(this).css('pointer-events', 'none');
             });
         }
-
-        //$('.returnworkpermit-details-section').prop('readonly', false)
         
         //set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())        
@@ -428,10 +424,14 @@ Work Permit Form
 
         // Function to initialize date pickers with specific configurations
         function initializeDatePicker(config, labelText) {
+            console.log('initialized datetime picker')
             document.querySelectorAll('.input-group').forEach(group => {
                 const input = group.querySelector('input.datetimes');
                 const label = group.querySelector('.input-group-text');
+                console.log('input',input)
+                console.log('label',label)
                 if (input && label && !input.classList.contains('flatpickr-input') && label.textContent.includes(labelText)) {
+                    console.log('input label ')
                     flatpickr(input, config);
                 }
             });
@@ -495,6 +495,9 @@ Work Permit Form
             document.querySelectorAll('.input-group').forEach(group => {
                 const input = group.querySelector('input.datetimes');
                 const label = group.querySelector('.input-group-text');
+                console.log('label inside intializeMissedDatePicker',label)
+                console.log('input inside intializeMissedDatePicker', input)
+
                 if (input && label && !input.classList.contains('flatpickr-input')) {
                     console.log('input value',input.value)
                     // Check if the input value is empty before initializing flatpickr

@@ -156,23 +156,28 @@ def extract_data(wp_answers):
                     return question['answer']
                 
 
-
 def handle_valid_form(form, R, request, create):
+    from urllib.parse import parse_qs
     S = request.session
     sla = form.save(commit=False)
-    print("sla:", sla.uuid,sla.id)
+    print("R:  ",R)
+    month = request.POST.get('month_name','')
+    sla.other_data['month'] = month
     sla.uuid = request.POST.get('uuid')
     sla = putils.save_userinfo(
         sla, request.user, request.session, create = create)
     sla = save_approvers_injson(sla)
     formdata = QueryDict(request.POST['sladetails']).copy()
-    print("Form data:" ,formdata )
     overall_score = get_overall_score(sla.id)
-    print("Overall Score",overall_score)
     sla.other_data['overall_score'] = overall_score
     create_sla_details(request.POST, sla, request, formdata)
     sitename = S.get('sitename')
-    
+    print("SLA ID",sla.id)
+    wom_parent = Wom.objects.get(id=sla.id)
+    wom = Wom.objects.filter(parent_id=sla.id).order_by('-id')[1]
+    uptime_score = WomDetails.objects.filter(wom_id=wom.id)[2].answer
+    wom_parent.other_data['uptime_score'] = uptime_score
+    wom_parent.save()
     send_email_notification_for_sla_report.delay(sla.id,sitename)
     print("sla:", sla)
     return rp.JsonResponse({'pk':sla.id})
@@ -188,6 +193,7 @@ def create_sla_details(R,wom,request,formdata):
             'ORGANISATION RESPONSIVENESS':0.05,
             'TECHNOLOGY / DESIGN':0.05,
             'CPI':0.05,
+            'SERVICE PERFORMANCE METRICS':0,
             'REMARKS':0,
         }
         log.info(f'creating sla_details started {R}')
@@ -300,7 +306,7 @@ def get_overall_score(id):
 def get_pdf_path():
     user_name = getpass.getuser()
     print("User Name: ",user_name)
-    tmp_pdf_location = f'/home/{user_name}/tmp_reports'
+    tmp_pdf_location = f'/var/tmp/youtility4_media/'
     print(tmp_pdf_location)
     if not os.path.exists(tmp_pdf_location):
         os.makedirs(tmp_pdf_location)
@@ -331,23 +337,34 @@ def get_report_object(permit_name):
 from django.db.models import Max
 from datetime import datetime, timedelta
 
-def get_last_3_months_sla_reports(vendor_id, bu_id):
-    sla_reports = {}
+def get_month_number(MONTH_CHOICES,month_name):
+        if month_name == 0:
+            return '-'
+        for number, name in MONTH_CHOICES.items():
+            if name.lower() == month_name.lower():
+                return int(number)
+        return '-'
+ 
 
+def get_last_3_months_sla_reports(vendor_id, bu_id,month_number):
+    log.info(f'Month Number: {month_number}')
+    sla_reports = {}
     # Get the last 3 months' approved records, excluding the current month
     current_month = datetime.now().month
     current_year = datetime.now().year
-
+    
     months = ['January', 'February', 'March', 'April', 'May', 'June',
               'July', 'August', 'September', 'October', 'November', 'December']
-
-    for i in range(1, 4):
-        month = current_month - i
+    print(current_month,current_year)
+    current_month_ = months[int(month_number)-1]
+    print("Current Month: ",current_month_)
+    for i in range(1, 13):
+        month = int(month_number) - i
         year = current_year
         if month <= 0:
             month += 12
             year -= 1
-
+        
         month_name = months[month - 1]
         month_year = f"{month_name} {year}"
 
@@ -368,10 +385,10 @@ def get_last_3_months_sla_reports(vendor_id, bu_id):
                 workpermit=Wom.WorkPermitStatus.APPROVED,
                 cdtz=latest_report['max_date']
             ).first()
-            sla_reports[month_year] = report.other_data['overall_score']
+            sla_reports[month_year] = [report.other_data['overall_score'],report.other_data.get('uptime_score','N/A')]
         else:
-            sla_reports[month_year] = '-'
-
+            sla_reports[month_year] = ['N/A','N/A']
+    print("SLA Reports: ",sla_reports)
     return sla_reports
 
 

@@ -15,7 +15,7 @@ from django.utils import timezone
 log = getLogger('mobile_service_log')
 import json
 from pprint import pformat
-from .types import (VerifyClientOutput, DowntimeResponse,
+from .types import (VerifyClientOutput, DowntimeResponse,GetPdfUrl,
 TypeAssist, SelectOutputType, BasicOutput)
 
 class Query(graphene.ObjectType):
@@ -92,6 +92,14 @@ class Query(graphene.ObjectType):
     get_gfs_for_siteids = graphene.Field(SelectOutputType,
                                  siteids = graphene.List(graphene.Int))
     
+    get_pdf_url = graphene.Field(
+            GetPdfUrl,
+            wom_uuid=graphene.String(required=True),
+            peopleid=graphene.Int(required=True),
+        )
+
+
+    
     get_approvers = graphene.Field(
         SelectOutputType,
         buid = graphene.Int(required = True),
@@ -167,6 +175,24 @@ class Query(graphene.ObjectType):
                                  peopleid = graphene.Int(required = True),
                                  ctzoffset = graphene.Int(required=True))
     
+
+    def resolve_get_pdf_url(self, info, wom_uuid, peopleid):
+        import os 
+        from intelliwiz_config import settings
+        from urllib.parse import urljoin
+        
+        from apps.work_order_management.utils import save_pdf_to_tmp_location, get_report_object
+        wom = Wom.objects.get(uuid=wom_uuid)
+        permit_name = QuestionSet.objects.get(id=wom.qset.id).qsetname
+        permit_no = wom.other_data['wp_seqno']
+        client_id = wom.client.id
+        report_obj = get_report_object(permit_name)
+        report = report_obj(filename=permit_name, client_id=client_id, returnfile=True, formdata={'id': wom.id}, request=None)
+        report_pdf_object = report.execute()
+        pdf_path = save_pdf_to_tmp_location(report_pdf_object, report_name=permit_name, report_number=permit_no)
+        file_url = urljoin(settings.MEDIA_URL, pdf_path.split('/')[-1])
+        full_url = os.path.join(settings.MEDIA_ROOT, file_url)
+        return GetPdfUrl(url=full_url)
     
     @staticmethod
     def resolve_send_email_verification_link(self, info, clientcode, loginid):
@@ -193,13 +219,27 @@ class Query(graphene.ObjectType):
     
     @staticmethod
     def resolve_approve_workpermit(self, info, wom_uuid, peopleid,identifier):
-        from background_tasks.tasks import send_email_notification_for_workpermit_approval
+        from background_tasks.tasks import send_email_notification_for_workpermit_approval,send_email_notification_for_vendor_and_security
         from apps.work_order_management.models import Wom
         from apps.work_order_management.views import WorkPermit
         from apps.onboarding.models import Bt
         from apps.work_order_management.utils import save_pdf_to_tmp_location
         log.info("request for change wom status")
         log.info(f"inputs are {wom_uuid = } {peopleid = } {identifier = }")
+        wom = Wom.objects.get(uuid=wom_uuid)
+        sitename = Bt.objects.get(id=wom.bu_id).buname
+        workpermit_status = wom.workstatus
+        wp_approvers = wom.other_data['wp_approvers']
+        approvers = [approver['name'] for approver in wp_approvers]
+        approvers_code = [approver['peoplecode'] for approver in wp_approvers]
+        vendor_name = Vendor.objects.get(id=wom.vendor.id).name
+        client_id = wom.client.id
+        permit_name = QuestionSet.objects.get(id=wom.qset.id).qsetname
+        report_object = WorkPermit.get_report_object(wom,permit_name)
+        report = report_object(filename=permit_name,client_id=wom.client_id,returnfile=True,formdata = {'id':wom.id},request=None)
+        report_pdf_object = report.execute()
+        permit_no = wom.other_data['wp_seqno']
+        pdf_path = save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=wom.other_data['wp_seqno'])
         try:
             if identifier == 'APPROVER':
                 p = People.objects.filter(id = peopleid).first()
@@ -208,7 +248,15 @@ class Query(graphene.ObjectType):
                         updated = Wom.objects.filter(uuid=wom_uuid).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
                 log.info(f'Is all approved outside if: {is_all_approved}')
                 if is_all_approved:
-                    # Sending Email to Vendor and Security pending 
+                    # Sending Email to Vendor and Security pending
+                    workpermit_status = 'APPROVED'
+                    Wom.objects.filter(id=wom.id).update(workstatus=Wom.Workstatus.INPROGRESS.value)
+                    permit_name = QuestionSet.objects.get(id=wom.qset.id).qsetname
+                    report_object = WorkPermit.get_report_object(wom,permit_name)
+                    report = report_object(filename=permit_name,client_id=wom.client_id,returnfile=True,formdata = {'id':wom.id},request=None)
+                    report_pdf_object = report.execute()
+                    pdf_path = save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=wom.other_data['wp_seqno'])
+                    send_email_notification_for_vendor_and_security.delay(wom.id,sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no)
                     pass
                 rc, msg = 0, "success"
             else:
@@ -216,19 +264,6 @@ class Query(graphene.ObjectType):
                 if is_all_verified := check_all_verified(wom_uuid, p.peoplecode):
                         updated = Wom.objects.filter(uuid=wom_uuid).update(verifiers_status=Wom.WorkPermitStatus.APPROVED.value)
                 if is_all_verified:
-                    wom = Wom.objects.get(uuid=wom_uuid)
-                    permit_name = QuestionSet.objects.get(id=wom.qset.id).qsetname
-                    report_object = WorkPermit.get_report_object(wom,permit_name)
-                    report = report_object(filename=permit_name,client_id=wom.client_id,returnfile=True,formdata = {'id':wom.id},request=None)
-                    vendor_name = Vendor.objects.get(id=wom.vendor.id).name
-                    client_id = wom.client.id
-                    report_pdf_object = report.execute()
-                    pdf_path = save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=wom.other_data['wp_seqno'])
-                    sitename = Bt.objects.get(id=wom.bu_id).buname
-                    workpermit_status = wom.workstatus
-                    wp_approvers = wom.other_data['wp_approvers']
-                    approvers = [approver['name'] for approver in wp_approvers]
-                    approvers_code = [approver['peoplecode'] for approver in wp_approvers]
                     send_email_notification_for_workpermit_approval.delay(wom.id,approvers,approvers_code,sitename,workpermit_status,permit_name,pdf_path,vendor_name,client_id)
                     #Sending Email to Approver
                 rc, msg = 0, "success"

@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models.functions import Concat, Cast
 from django.db.models import CharField, Value as V
-from django.db.models import Q, F, Count, Case, When
+from django.db.models import Q, F, Count, Case, When,IntegerField
 from django.contrib.gis.db.models.functions import   AsGeoJSON
 from django.conf import settings
 from datetime import datetime, timedelta
@@ -156,14 +156,14 @@ class WorkOrderManager(models.Manager):
             cdtz__date__gte = P['from'],
             cdtz__date__lte = P['to'],
         ).order_by('-other_data__wp_seqno').values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
-                 'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode','vendor__name','other_data__overall_score','other_data__remarks')
+                 'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode','vendor__name','other_data__overall_score','other_data__uptime_score','other_data__remarks')
         return qobjs or self.none()
 
     def get_workpermit_details(self, request, wp_qset_id):
         S = request.session
         QuestionSet = apps.get_model('activity', 'QuestionSet')
         wp_details = []
-        sections_qset = QuestionSet.objects.filter(parent_id = wp_qset_id).order_by('seqno')
+        sections_qset = QuestionSet.objects.filter(parent_id = wp_qset_id,enable = True).order_by('seqno')
         for section in sections_qset:
             sq = {
                 "section":section.qsetname,
@@ -238,16 +238,27 @@ class WorkOrderManager(models.Manager):
             cdtz__date__lte = R['upto'],
             workpermit = 'NOT_REQUIRED'
         )
-        assigned    = qset.filter(workstatus = 'ASSIGNED').count()
-        re_assigned = qset.filter(workstatus = 'RE_ASSIGNED').count()
-        completed   = qset.filter(workstatus = 'COMPLETED').count()
-        cancelled   = qset.filter(workstatus = 'CANCELLED').count()
-        inprogress  = qset.filter(workstatus = 'INPROGRESS').count()
-        closed      = qset.filter(workstatus = 'CLOSED').count()
-        
-        stats = [assigned, re_assigned, completed, inprogress,closed, cancelled]
-        return stats, sum(stats)
-    
+
+        aggregate_data = qset.aggregate(
+            assigned    = Count(Case(When(workstatus='ASSIGNED',then=1),output_field=IntegerField())),
+            re_assigned = Count(Case(When(workstatus='RE_ASSIGNED',then=1),output_field=IntegerField())),
+            completed   = Count(Case(When(workstatus='COMPLETED',then=1),output_field=IntegerField())),
+            inprogress  = Count(Case(When(workstatus='INPROGRESS',then=1),output_field=IntegerField())),
+            closed      = Count(Case(When(workstatus='CLOSED',then=1),output_field=IntegerField())),
+            cancelled   = Count(Case(When(workstatus='CANCELLED',then=1),output_field=IntegerField()))
+        )
+
+        stats = [
+            aggregate_data['assigned'],
+            aggregate_data['re_assigned'],
+            aggregate_data['completed'],
+            aggregate_data['cancelled'],
+            aggregate_data['inprogress'],
+            aggregate_data['closed']
+        ]
+
+        data = stats,sum(stats)
+        return data
     
     def get_events_for_calendar(self, request):
         from apps.work_order_management.models import Wom
@@ -310,7 +321,7 @@ class WorkOrderManager(models.Manager):
         fields = ['cuser_id', 'muser_id', 'cdtz', 'mdtz', 'ctzoffset','description', 'uuid', 'plandatetime',
                   'expirydatetime', 'starttime', 'endtime', 'gpslocation', 'location_id', 'asset_id',
                   'workstatus', 'workpermit', 'priority','parent_id', 'alerts', 'permitno', 'approverstatus', 
-                  'performedby','ismailsent', 'isdenied', 'client_id', 'bu_id', 'approvers', 'id','verifiers','verifierstatus']
+                  'performedby','ismailsent', 'isdenied', 'client_id', 'bu_id', 'approvers', 'id','verifiers','verifierstatus','vendor_id','qset_id__qsetname']
         
         qset = self.select_related().annotate(
             permitno = F('other_data__wp_seqno'),
@@ -328,23 +339,6 @@ class WorkOrderManager(models.Manager):
         print(str(qset.query))
         return qset or self.none()
     
-    # def wp_data_for_report(self, id,approval_status):
-    #     # site = self.filter(id=id).first().bu
-    #     wp_answers = self.get_wp_answers(id)
-    #     permit_no = wp_answers[0]
-    #     data = self.get_wp_sections_answers(wp_answers[1],id,approval_status)
-    #     logger.info(f"{data = }")
-    #     return data,permit_no
-    
-    # def wp_data_for_report(self, id):
-    #     site = self.filter(id=id).first().bu
-    #     wp_answers = self.get_wp_answers(id)
-    #     wp_info = wp_answers[0]
-    #     wp_answers.pop(0)
-    #     rwp_section = wp_answers.pop(-1)
-    #     wp_sections = wp_answers
-    #     return wp_info, wp_sections, rwp_section, site.buname
-
 
     def get_empty_rwp_section(self):
         return {
@@ -366,8 +360,6 @@ class WorkOrderManager(models.Manager):
         }
 
     def wp_data_for_report(self, id):
-        
-        print("Id",id)
         site = self.filter(id=id).first().bu
         wp_answers = self.get_wp_answers(id)
         wp_info = wp_answers[0]
@@ -377,6 +369,7 @@ class WorkOrderManager(models.Manager):
             rwp_section = self.get_empty_rwp_section()
         wp_sections = wp_answers
         return wp_info, wp_sections, rwp_section, site.buname
+    
     
     def get_sla_answers(self,slaid):
         child_slarecords = self.filter(parent_id = slaid).order_by('seqno')
@@ -393,8 +386,9 @@ class WorkOrderManager(models.Manager):
             answers = child_sla.womdetails_set.values('answer')
             for answer in answers:
                 if answer['answer'].isdigit():
-                    all_answers.append(int(answer['answer']))
-                    ans.append(int(answer['answer']))
+                    if int(answer['answer']) <=10:
+                        all_answers.append(int(answer['answer']))
+                        ans.append(int(answer['answer']))
                 else:
                     remarks.append(answer['answer'])
             questions = child_sla.womdetails_set.values('question__quesname')
@@ -420,13 +414,14 @@ class WorkOrderManager(models.Manager):
         rounded_overall_score = round(final_overall_score,2)
         wom_ele = self.model.objects.get(id=slaid)
         wom_ele.other_data['overall_score'] = rounded_overall_score
-        wom_ele.other_data['remarks'] = len(remarks)>0 and remarks[0] or ''
+        remarks = remarks[-1] if len(remarks) > 0 else ''
+        wom_ele.other_data['remarks'] = remarks
         wom_ele.save()
         return sla_details,rounded_overall_score,question_ans,all_average_score,remarks or self.none()
 
+        
+
     def sla_data_for_report(self,id):
-        from apps.work_order_management.models import Wom
-        # id = Wom.objects.get(uuid=id).id
         sla_answers,overall_score,question_ans,all_average_score,remarks = self.get_sla_answers(id)
         return sla_answers,overall_score,question_ans,all_average_score,remarks
 
@@ -626,7 +621,7 @@ class WorkOrderManager(models.Manager):
             cdtz__date__gte = pd1,
             cdtz__date__lte = pd2,
         ).count()
-        return qobjs or 0    
+        return qobjs
 
 
 class WOMDetailsManager(models.Manager):

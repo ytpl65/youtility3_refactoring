@@ -15,7 +15,7 @@ from apps.core import utils
 from apps.core import exceptions as excp
 from apps.service import serializers as sz
 from apps.y_helpdesk.models import Ticket
-from background_tasks.tasks import alert_sendmail, send_email_notification_for_wp_from_mobile_for_verifier, insert_json_records_async
+from background_tasks.tasks import alert_sendmail, send_email_notification_for_wp_from_mobile_for_verifier, send_email_notification_for_vendor_and_security,insert_json_records_async
 from intelliwiz_config.celery import app
 from apps.work_order_management.utils import save_approvers_injson,save_verifiers_injson
 from apps.schedhuler.utils import create_dynamic_job
@@ -239,6 +239,11 @@ def update_jobneeddetails(jobneeddetails, JndModel):
 
 
 def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_wp,verifers):
+    from apps.onboarding.models import Bt
+    from apps.activity.models import QuestionSet
+    from apps.work_order_management.models import Vendor
+    from apps.work_order_management.views import WorkPermit
+    from apps.work_order_management.utils import save_pdf_to_tmp_location
     try:
         rc,  traceback= 0,  'NA'
         instance = None
@@ -249,12 +254,16 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
                 parent.verifiers = [verifers]
                 log.info(f"Here I am because not jn_parent_serializer: {parent}")
             if is_return_wp:
+                log.info('Return Work Permit')
+                id = jn_parent_serializer.validated_data.get('parent_id')
+                log.info(f'WOM Id: {id}')
                 wom = Wom.objects.get(id = jn_parent_serializer.validated_data.get('parent_id'))
                 seqno = Wom.objects.filter(parent_id=wom.id).order_by('-seqno').first().seqno + 1
                 wom.workstatus = Wom.Workstatus.COMPLETED
                 wom.save()
-                log.info('Return workpermit found parent wrapper ignored and only childs are considered')
-            
+                
+                #log.info(f'Return workpermit found parent wrapper ignored and only childs are considered {jn_parent_serializer.validated_data.get('parent_id')}')
+
             log.info('parent record for report mutation saved')
             allsaved = 0
             log.info(f'Total {len(child)} child records found for report mutation')
@@ -266,7 +275,6 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
                 switchedSerializer = sz.WomSerializer if tablename == 'wom' else sz.JobneedSerializer
                 log.info(f'switched serializer is {switchedSerializer}')
                 child_serializer = switchedSerializer(data = clean_record(ch))
-
                 if child_serializer.is_valid():
                     if is_return_wp:
                         child_serializer.validated_data['seqno'] = seqno
@@ -287,27 +295,22 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
                 else:
                     log.error(f'child record has some errors:{child_serializer.errors}')
                     traceback, msg, rc = str(child_serializer.errors), M.INSERT_FAILED, 1
+                log.info(f'Child : {child}') 
             if allsaved == len(child):
                 from apps.onboarding.models import Bt
                 from apps.activity.models import QuestionSet
-                from apps.work_order_management.models import Vendor
-                from apps.work_order_management.views import WorkPermit
-                from apps.work_order_management.utils import save_pdf_to_tmp_location
                 msg= M.INSERT_SUCCESS
-                log.info(f'All {allsaved} child records saved successfully')
+                log.info(f'All {allsaved} child records saved successfully,{is_return_wp}')
                 if not is_return_wp and  hasattr(parent, 'parent_id') and tablename == 'wom' and parent.workpermit != 'NOT_REQUIRED' and parent.parent_id ==1:
                     parent = save_approvers_injson(parent)
                     parent = save_verifiers_injson(parent)
                     log.info(f'{parent.id = } {parent.uuid = } {parent.description}')
-
                     wom_id = parent.id
                     verifers = parent.verifiers
                     sitename = Bt.objects.get(id=parent.bu_id).buname
                     worpermit_status = parent.workpermit
                     permit_name = parent.qset.qsetname
-                    
                     vendor_name = Vendor.objects.get(id=parent.vendor_id).name
-                    # client_id   = Bt.objects.get(id=parent.client_id).buname
                     client_id = parent.client_id
                     latest_records = Wom.objects.filter(client=parent.client_id,bu=parent.bu_id,parent_id=1,identifier='WP').order_by('-other_data__wp_seqno').first()
                     if latest_records is None:
@@ -322,7 +325,19 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
                     report_pdf_object = report.execute()
                     pdf_path = save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=parent.other_data['wp_seqno'])
                     log.info(f"PDF Path: {pdf_path}")
-                    send_email_notification_for_wp_from_mobile_for_verifier.delay(wom_id,verifers,sitename,worpermit_status,permit_name,vendor_name,client_id,workpermit_attachment=pdf_path)
+                    send_email_notification_for_wp_from_mobile_for_verifier.delay(wom_id,verifers,sitename,worpermit_status,permit_name,vendor_name,client_id,workpermit_attachment=pdf_path)      
+        if is_return_wp:
+            wom = Wom.objects.get(id = jn_parent_serializer.validated_data.get('parent_id'))
+            vendor_name = Vendor.objects.get(id=wom.vendor_id).name
+            permit_name = QuestionSet.objects.get(id=wom.qset.id).qsetname
+            report_object = WorkPermit.get_report_object(wom,permit_name)
+            report = report_object(filename=permit_name,client_id=wom.client_id,returnfile=True,formdata = {'id':wom.id},request=None)
+            report_pdf_object = report.execute()
+            permit_no = wom.other_data['wp_seqno']
+            sitename = Bt.objects.get(id=wom.bu.id).buname
+            pdf_path = save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=wom.other_data['wp_seqno'])
+            send_email_notification_for_vendor_and_security.delay(wom.id,sitename,wom.workstatus,vendor_name,pdf_path,permit_name,permit_no,submit_work_permit=True,submit_work_permit_from_mobile=True)       
+
         else:
             log.error(jn_parent_serializer.errors)
             traceback, msg, rc = str(jn_parent_serializer.errors), M.INSERT_FAILED, 1
@@ -711,6 +726,7 @@ def perform_reportmutation(self, records, db= 'default', bg=False):
             msg = Messages.UPDATE_SUCCESS
             log.info(f'All {recordcount} report records are updated successfully')
             rc=0
+        log.info(f'Data, {data}')
     except excp.NoRecordsFound as e:
         log.warning('No records found for report mutation', exc_info=True)
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
