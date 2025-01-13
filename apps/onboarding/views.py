@@ -263,7 +263,7 @@ class ShiftView(LoginRequiredMixin, View):
             resp = render(request, P['shift_form'], cxt)
 
         elif R.get('action', None) == "delete" and R.get('id', None):
-            resp = utils.render_form_for_delete(request, self.params, False)
+            resp = utils.render_form_for_delete(request, self.params, True)
 
         elif R.get('action') == "get_shift_data" and R.get('shift_id'):
             if R.get('shift_id') != 'None':   

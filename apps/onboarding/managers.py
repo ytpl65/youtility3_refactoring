@@ -410,12 +410,14 @@ class ShiftManager(models.Manager):
         return self.filter(
             ~Q(shiftname='NONE'),
             client_id = S['client_id'],
-            bu_id = S['bu_id'],
+            bu_id = S['bu_id'],enable = True
         ).annotate(
-        dsgn = Concat(F('designation__taname'), V(' ('), F('designation__tacode'), V(')'))    
+        dsgn = Concat(F('designation__taname'), V(' ('), 
+                      F('designation__tacode'), V(')'))    
         ).select_related('designation').values(
             'id', 'shiftname', 'dsgn', 'starttime',
-            'endtime', 'nightshiftappicable','bu__buname','bu__bucode'
+            'endtime', 'nightshiftappicable',
+            'bu__buname','bu__bucode'
         ) or self.none()
     
     def get_designations_data(self,request,id):
