@@ -1,7 +1,9 @@
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save,post_save
 from django.dispatch import receiver
-from apps.work_order_management.models import Wom
+from apps.work_order_management.models import Wom,WomDetails
+from apps.work_order_management.serializers import WomSerializers,WomDetailsSerializers
 from django.db.models import Q
+import json
 
 @receiver(pre_save, sender=Wom)
 def set_serial_no(sender, instance, **kwargs):
@@ -34,3 +36,42 @@ def set_serial_no(sender, instance, **kwargs):
             instance.other_data['wp_seqno'] = 1
         elif instance.other_data['wp_seqno'] != latest_record.other_data['wp_seqno']:
             instance.other_data['wp_seqno'] = latest_record.other_data['wp_seqno'] + 1
+
+@receiver(post_save, sender=Wom)
+def wom_post_save(sender,instance,created,**kwargs):
+    print('I am here in signals')
+    from paho_client import MqttClient,SG_TO_NOC_TOPIC
+    client = MqttClient()
+    client.client.connect('localhost',1883,60)
+
+    operation = 'CREATE' if created else 'UPDATE'
+    serializer = WomSerializers(instance)
+    data = {
+        "operation":operation,
+        "app": 'work_order_management',
+        "models":"Wom",
+        "payload": serializer.data
+    }
+    payload = json.dumps(data)
+    client.publish_message(SG_TO_NOC_TOPIC,payload)
+    client.client.disconnect()
+
+
+@receiver(post_save, sender=WomDetails)
+def wom_details_post_save(sender,instance,created,**kwargs):
+    print('I am here in signals')
+    from paho_client import MqttClient,SG_TO_NOC_TOPIC
+    client = MqttClient()
+    client.client.connect('localhost',1883,60)
+
+    operation = 'CREATE' if created else 'UPDATE'
+    serializer = WomDetailsSerializers(instance)
+    data = {
+        "operation":operation,
+        "app": 'work_order_management',
+        "models":"WomDetails",
+        "payload": serializer.data
+    }
+    payload = json.dumps(data)
+    client.publish_message(SG_TO_NOC_TOPIC,payload)
+    client.client.disconnect()

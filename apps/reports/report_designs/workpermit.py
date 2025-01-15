@@ -32,10 +32,11 @@ class WorkPermit(BaseReportsExport):
         workpermit_no = Wom.objects.get(id=id).other_data['wp_seqno']
         vendor_name = Wom.objects.get(id=id).vendor.name
         wp_sections_without_email_sections = [section for section in wp_sections if section.get('section')!='EMAIL']
-        utc_now = datetime.now(pytz.utc)
+        utc_now = Wom.objects.get(id=id).mdtz
         ist_timezone = pytz.timezone('Asia/Kolkata')
         current_time_ist = utc_now.astimezone(ist_timezone)
         formatted_time = current_time_ist.strftime("%d-%b-%Y %H:%M:%S")
+        log.info(f'Sections: {wp_info}, {wp_sections}, {rwp_section} {sitename}')
         self.context = {
             'base_path': settings.BASE_DIR,
             'main_title':sitename,
@@ -44,7 +45,6 @@ class WorkPermit(BaseReportsExport):
             'wp_sections': wp_sections_without_email_sections,
             'rwp_info':[rwp_section],
             'report_title': self.report_title,
-            'client_logo':self.get_client_logo(),
             'app_logo':self.ytpl_applogo,
             'approvers':approvers,
             'verifiers':verifiers,

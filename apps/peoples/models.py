@@ -24,6 +24,7 @@ def peoplejson():
         "portletcapability"        : [],
         "reportcapability"         : [],
         "webcapability"            : [],
+        "noccapability"            : [],    
         "loacationtracking"        : False,
         "capturemlog"              : False,
         "showalltemplates"         : False,
@@ -235,7 +236,7 @@ class Capability(BaseModel, TenantAwareModel):
         PORTLET = ('PORTLET', 'PORTLET')
         REPORT  = ('REPORT', 'REPORT')
         MOB     = ('MOB', 'MOB')
-
+        NOC     = ('NOC','NOC')
     # id   = models.BigIntegerField(_(" Cap Id"), primary_key = True)
     capscode = models.CharField(_('Code'), max_length = 50)
     capsname = models.CharField(_('Capability'), max_length = 1000, default = None, blank = True, null = True)

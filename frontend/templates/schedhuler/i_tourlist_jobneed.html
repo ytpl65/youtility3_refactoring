@@ -119,6 +119,7 @@ Tour List
                 {data:"missed",title:"Missed"},
                 {data: 'jobtype', title: 'Type'},
                 {title: 'People/Group', defaultContent:null, data:'assignedto', render:function(data, type, row, meta){
+                    console.log("Data: ",data)
                     if(data.includes('[GROUP]')){
                         return `<a href="javascript:void(0)"  onClick='showListOfPeoples(${row['id']}, "Jobneed")'>${data}</a>`
                     }else{

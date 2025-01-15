@@ -93,6 +93,7 @@ class QuestionSet(BaseModel, TenantAwareModel):
         ASSETMAINTENANCE         = "ASSETMAINTENANCE",    _('Asset Maintenance')
         WORKORDER                = "WORK_ORDER",          _('Work Order')
         SLA_TEMPLATE             = "SLA_TEMPLATE",        _('Service Level Agreement')
+        POSTINGORDER             = "POSTING_ORDER",       _('Posting Order')
 
     qsetname           = models.CharField(_("QuestionSet Name"), max_length = 200)
     enable             = models.BooleanField(_("Enable"), default = True)
@@ -402,6 +403,7 @@ class Jobneed(BaseModel, TenantAwareModel):
         ASSETLOG          = ("ASSETLOG",	"Asset Log")
         ASSETAUDIT        = ("ASSETAUDIT",	"Asset Audit")
         ASSETMAINTENANCE = ("ASSETMAINTENANCE",	"Asset Maintenance")
+        POSTING_ORDER    = ("POSTING_ORDER", "Posting Order")
 
     class Scantype(models.TextChoices):
         NONE    = ('NONE', 'None')

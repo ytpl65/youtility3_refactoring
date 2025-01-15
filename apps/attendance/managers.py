@@ -268,21 +268,37 @@ class PELManager(models.Manager):
         ).exclude(id=1).count()
         return data
     
-    def get_peopleeventlog_history(self, fromdate, todate, people_id, bu_id, client_id, ctzoffset, peventtypeid):
+    # def get_peopleeventlog_history(self, fromdate, todate, people_id, bu_id, client_id, ctzoffset, peventtypeid):
+    #     qset = self.filter(
+    #         datefor__gte = fromdate,
+    #         datefor__lte = todate,
+    #         people_id = people_id,
+    #         bu_id = bu_id,
+    #         client_id = client_id,
+    #         peventtype_id__in = [peventtypeid]
+    #     ).select_related('people', 'bu', 'client', 'verifiedby', 'peventtype', 'geofence', 'shift').order_by('-datefor').values(
+    #         'uuid', 'people_id', 'client_id', 'bu_id','shift_id', 'verifiedby_id', 'geofence_id', 'id','peventtype_id',
+    #         'punchintime', 'punchouttime', 'datefor', 'distance',
+    #         'duration', 'expamt', 'accuracy', 'deviceid', 'startlocation', 'endlocation', 'ctzoffset',
+    #         'remarks', 'facerecognitionin', 'facerecognitionout', 'otherlocation', 'reference'
+    #     )
+    #     return qset or self.none()
+
+    def get_peopleeventlog_history(self, mdtz,people_id, bu_id, client_id, ctzoffset, peventtypeid):
         qset = self.filter(
-            datefor__gte = fromdate,
-            datefor__lte = todate,
+            mdtz__gte = mdtz,
             people_id = people_id,
             bu_id = bu_id,
             client_id = client_id,
             peventtype_id__in = [peventtypeid]
         ).select_related('people', 'bu', 'client', 'verifiedby', 'peventtype', 'geofence', 'shift').order_by('-datefor').values(
-            'uuid', 'people_id', 'client_id', 'bu_id','shift_id', 'verifiedby_id', 'geofence_id', 'id',
-            'peventtype_id', 'transportmodes', 'punchintime', 'punchouttime', 'datefor', 'distance',
+            'uuid', 'people_id', 'client_id', 'bu_id','shift_id', 'verifiedby_id', 'geofence_id', 'id','peventtype_id',
+            'punchintime', 'punchouttime', 'datefor', 'distance',
             'duration', 'expamt', 'accuracy', 'deviceid', 'startlocation', 'endlocation', 'ctzoffset',
-            'remarks', 'facerecognitionin', 'facerecognitionout', 'otherlocation', 'reference'
+            'remarks', 'facerecognitionin', 'facerecognitionout', 'otherlocation', 'reference','mdtz'
         )
         return qset or self.none()
+
     
     def fetch_sos_events(self, start_date, end_date, session):
         return self.filter(

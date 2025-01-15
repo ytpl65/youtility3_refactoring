@@ -51,6 +51,7 @@ class TicketManager(models.Manager):
         if P.get('status') and P.get('status') == 'SYSTEMGENERATED':
             qset = qset.filter(ticketsource='SYSTEMGENERATED')
         return qset or self.none()
+    
         
     def get_tickets_for_mob(self, peopleid, buid, clientid, mdtz, ctzoffset):
         from apps.activity.models import Attachment

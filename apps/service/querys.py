@@ -3,7 +3,7 @@ from apps.core import utils
 from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging, Location, Attachment, Jobneed
 from apps.work_order_management.models import Vendor, Approver, Wom
 from apps.y_helpdesk.models import Ticket
-from apps.onboarding.models import GeofenceMaster, DownTimeHistory
+from apps.onboarding.models import GeofenceMaster, DownTimeHistory,Shift
 from apps.peoples.models import Pgbelonging, Pgroup, People
 from apps.attendance.models import PeopleEventlog
 from django.db import connections
@@ -98,7 +98,11 @@ class Query(graphene.ObjectType):
             peopleid=graphene.Int(required=True),
         )
 
-
+    get_shifts = graphene.Field(SelectOutputType,
+        mdtz = graphene.String(required=True),
+        buid = graphene.Int(required = True),
+        clientid = graphene.Int(required = True))
+    
     
     get_approvers = graphene.Field(
         SelectOutputType,
@@ -106,10 +110,20 @@ class Query(graphene.ObjectType):
         clientid = graphene.Int(required = True),
     )
 
+    # get_peopleeventlog_history = graphene.Field(
+    #     SelectOutputType,
+    #     fromdate = graphene.String(required=True),
+    #     todate = graphene.String(required=True),
+    #                                         ctzoffset=graphene.Int(required=True),
+    #                                         peopleid=graphene.Int(required=True),
+    #                                         buid=graphene.Int(required=True),
+    #                                         clientid=graphene.Int(required=True),
+    #                                         peventtypeid=graphene.Int(required=True),
+            
+    #                                         )
     get_peopleeventlog_history = graphene.Field(
         SelectOutputType,
-        fromdate = graphene.String(required=True),
-        todate = graphene.String(required=True),
+        mdtz = graphene.String(required=True),
                                             ctzoffset=graphene.Int(required=True),
                                             peopleid=graphene.Int(required=True),
                                             buid=graphene.Int(required=True),
@@ -466,9 +480,9 @@ class Query(graphene.ObjectType):
         
         
     
-    def resolve_get_peopleeventlog_history(self, info, fromdate, todate, peopleid, buid, clientid, ctzoffset, peventtypeid):
-        log.info(f'\n\nrequest for getgeofence inputs : {fromdate = } {todate=} {peopleid = } {buid = } { clientid = }')
-        data = PeopleEventlog.objects.get_peopleeventlog_history(fromdate, todate, peopleid, buid, clientid, ctzoffset, peventtypeid)
+    def resolve_get_peopleeventlog_history(self, info, mdtz, peopleid, buid, clientid, ctzoffset, peventtypeid):
+        log.info(f'\n\nrequest for getgeofence inputs : {peopleid = } {buid = } { clientid = }')
+        data = PeopleEventlog.objects.get_peopleeventlog_history(mdtz, peopleid, buid, clientid, ctzoffset, peventtypeid)
         records, count, msg = utils.get_select_output(data)
         log.info(f'total {count} objects returned')
         return SelectOutputType(nrows = count, records = records,msg = msg)
@@ -490,6 +504,14 @@ class Query(graphene.ObjectType):
     def resolve_get_approvers(self, info, buid, clientid):
         log.info(f'request get_approvers inputs are : {buid = } {clientid = }')
         data = Approver.objects.get_approver_list_for_mobile(buid, clientid)
+        records, count, msg = utils.get_select_output(data)
+        log.info(f'total {count} objects returned')
+        return SelectOutputType(nrows = count, records = records,msg = msg)
+    
+    def resolve_get_shifts(self,info,buid,clientid,mdtz):
+        log.info(f'request get shifts input are: {buid} {clientid}')
+        data = Shift.objects.get_shift_data(buid,clientid,mdtz)
+        print("Data: ",data,type(data))
         records, count, msg = utils.get_select_output(data)
         log.info(f'total {count} objects returned')
         return SelectOutputType(nrows = count, records = records,msg = msg)

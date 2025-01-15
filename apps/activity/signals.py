@@ -1,7 +1,9 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models import Asset, AssetLog
+from .models import Asset, AssetLog,Attachment
+from .serializers import AttachmentSerializer
 from django.utils import timezone
+import json
 
 @receiver(post_save, sender=Asset)
 def create_asset_log(sender, instance, created, **kwargs):
@@ -29,3 +31,24 @@ def create_asset_log(sender, instance, created, **kwargs):
                 client_id=instance.client_id,
                 ctzoffset=instance.ctzoffset
             )
+
+@receiver(post_save,sender=Attachment)
+def create_attachment_record(sender,instance,created,**kwargs):
+    print('I am here in Attachment Record Creation')
+    from paho_client import MqttClient,SG_TO_NOC_TOPIC
+    client = MqttClient()
+    client.client.connect('localhost',1883,60)
+
+    operation = 'CREATE' if created else 'UPDATE'
+    serializer = AttachmentSerializer(instance)
+
+    data = {
+        'operation':operation,
+        'app':'activity',
+        'models':'Attachment',
+        'payload':serializer.data
+    }
+
+    payload = json.dumps(data)
+    client.publish_message(SG_TO_NOC_TOPIC,payload)
+    client.client.disconnect()

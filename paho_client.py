@@ -106,32 +106,6 @@ class MqttClient:
             )
             log.info("processing started [+]")
             
-            # if msg.topic == GRAPHQL_DOWNLOAD:
-            #     payload = msg.payload.decode()
-            #     log.info(f"\n\nReceived message: {payload}")
-            #     result = process_graphql_download_async(payload)
-            #     post_data = json.loads(payload)
-            #     service_name = post_data.get("serviceName")
-            #     records = result["data"][service_name]["records"]
-            #     if not records:
-            #         double_decoded_records = []
-            #     else:
-            #         decoded_records = json.loads(records)
-            #         double_decoded_records = json.loads(decoded_records)
-            #     log.info(f"Decoded records type: {type(double_decoded_records)}")
-            #     response = {
-            #         "payload": double_decoded_records,
-            #         "serviceName": service_name,
-            #         "tableName": post_data.get("tableName", ""),
-            #         "service": post_data.get("service"),
-            #     }
-            #     response = json.dumps(response)
-            #     log.info(
-            #         f"Response published to {RESPONSE_DOWNLOAD} after accepting {service_name}"
-            #     )
-            #     client.publish(RESPONSE_DOWNLOAD, response, qos=1)
-
-
             if msg.topic == TESTMQ:
                 response = json.dumps({'name':'Satya'})
                 log.info(
@@ -144,7 +118,7 @@ class MqttClient:
                 # Process the received message
                 payload = msg.payload.decode("utf-8")
                 original_message = unzip_string(payload)
-
+                print("Original Message: ",original_message)
                 # process graphql mutations received on this topic GRAPHQL_MUTATION
                 result = process_graphql_mutation_async.delay(original_message)
                 post_data = json.loads(original_message)
@@ -160,6 +134,7 @@ class MqttClient:
                         "payload": payload,
                     }
                 )
+
                 log.info(
                     f"Response published to {RESPONSE_TOPIC} after accepting {service_name}"
                 )
@@ -194,10 +169,6 @@ class MqttClient:
                     }
                 )
                 client.publish(RESPONSE_TOPIC, response, qos=2)
-            # if msg.topic == TESTMQ:
-            #     log.info(f"Received test message: {payload}")
-            #     client.publish(TESTPUBMQ, f"Server Published a Response")
-            # log.info("processing completed [-]")
         except Exception as e:
             log.error(f"Error processing message: {e}", exc_info=True)
             raise e
@@ -209,6 +180,15 @@ class MqttClient:
         # Connect to MQTT broker
         self.client.connect(BROKER_ADDRESS, BROKER_PORT)
         self.client.loop_forever()
+    
+    def publish_message(self,topic,message):
+        result_code, mid = self.client.publish(topic, message,qos=0)
+        print(result_code)
+        print(mid)
+        if result_code == mqtt.MQTT_ERR_SUCCESS:
+            print(f"Message sent to topic `{topic}`: {message}")
+        else:
+            print(f"Failed to send message to topic `{topic}`, result code: {result_code}")
 
 
 if __name__ == "__main__":

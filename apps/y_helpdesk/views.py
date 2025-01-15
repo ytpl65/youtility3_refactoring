@@ -135,5 +135,28 @@ class TicketView(LoginRequiredMixin, View):
         except IntegrityError as e:
             return utils.handle_intergrity_error('Ticket')
         
+
+class PostingOrderView(LoginRequiredMixin, View):
+    from apps.activity.models import Jobneed
+    from apps.activity.models import JobneedDetails
+    params = {
+        'template_list':'y_helpdesk/posting_order_list.html',
+        'model':Jobneed,
+    }
+    def get(self, request, *args, **kwargs):  
+        R, P = request.GET, self.params
+        print("R: ",R)
+        if R.get('template') == 'true':
+            return render(request, P['template_list'])
+        
+        if R.get('action') == 'list':
+            objs = P['model'].objects.get_posting_order_listview(request)
+            print("Objs: ",objs)
+            return rp.JsonResponse({'data':list(objs)}, status=200) 
                 
-                
+class UniformView(LoginRequiredMixin, View):
+    params = {
+        'template_list':'y_helpdesk/uniform_list.html',
+    }
+    def get(self, request, *args, **kwargs):  
+        return render(request, 'y_helpdesk/uniform_form.html')

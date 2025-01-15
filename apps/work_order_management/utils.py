@@ -414,3 +414,23 @@ def approvers_email_and_name(people_codes):
         approvers_email.append(email)
         approvers_name.append(name)
     return approvers_email,approvers_name
+
+def get_approvers_code(approver_data):
+    approvers_code = []
+    for ele in approver_data:
+        approvers_code.append(ele['peoplecode'])
+    return approvers_code
+
+def get_verifiers_code(verifiers_data):
+    verifiers_code = []
+    for ele in verifiers_data:
+        verifiers_code.append(ele['peoplecode'])
+    return verifiers_code
+
+
+def check_if_valid_approver(peoplecode,approvers_code):
+    return peoplecode in approvers_code
+
+
+def check_if_valid_verifier(peoplecode,verifiers_code):
+    return peoplecode in verifiers_code

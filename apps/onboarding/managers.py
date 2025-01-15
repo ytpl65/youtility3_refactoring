@@ -404,13 +404,15 @@ class GeofenceManager(models.Manager):
     
 class ShiftManager(models.Manager):
     use_in_migrations: True
-    
+    from datetime import time
+
     def shift_listview(self, request, related, fields):
         S = request.session
         return self.filter(
             ~Q(shiftname='NONE'),
             client_id = S['client_id'],
             bu_id = S['bu_id'],
+            enable = True
         ).annotate(
         dsgn = Concat(F('designation__taname'), V(' ('), F('designation__tacode'), V(')'))    
         ).select_related('designation').values(
@@ -426,6 +428,16 @@ class ShiftManager(models.Manager):
             id = id
         ).values('designation__taname', 'designation__tacode', 'peoplecount' ) or self.none()
 
+    def get_shift_data(self,buid,clientid,mdtz):
+        data = self.filter(
+            client_id = clientid,
+            bu_id = buid,
+            mdtz__gte = mdtz,
+            enable=True,
+        ).values('id','shiftname','cdtz','mdtz','starttime','endtime','shift_data')  
+        
+        return data
+    
 class DeviceManager(models.Manager):
     use_in_migrations=True
     

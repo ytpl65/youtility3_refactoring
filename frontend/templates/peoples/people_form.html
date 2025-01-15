@@ -615,6 +615,16 @@ style="background-image: url({% if peopleform.instance.peopleimg.name.endswith('
                     <!----- END ERROR FIELD  ------->
                 </div>
 
+                <label for="id_noccapability">Noc Capability:</label>
+                <!--INPUT GROUP-->
+                <div class="col-md-4">
+                    {{ pref_form.noccapability }}
+                    <!--HELP TEXT-->
+                    <!----- BEGIN ERROR FIELD  ------->
+                    {{ pref_form.noccapability.errors }}
+                    <!----- END ERROR FIELD  ------->
+                </div>
+
             </div>
         </section>
     </div>

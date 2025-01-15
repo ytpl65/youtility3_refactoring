@@ -261,6 +261,16 @@ class JobneedManager(models.Manager):
             alerts = True, id = pk
         )
         return qset or self.none()
+    
+    def get_posting_order_listview(self, request):
+        R, S = request.GET, request.session
+        P = json.loads(R['params'])
+        qset = self.filter(
+            bu_id__in = S['assignedsites'],
+            client_id = S['client_id'],
+            identifier = 'POSTING_ORDER'
+        )
+        return qset or self.none()
 
     def get_jobneed_for_report(self,pk):
         qset = self.raw(

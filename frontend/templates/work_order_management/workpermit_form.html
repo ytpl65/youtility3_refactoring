@@ -32,7 +32,7 @@ Work Permit Form
 <div class="form-actions">
     {% if wpform.instance.id %}
     <div class="d-flex">
-        {% if wpform.instance.workpermit != 'APPROVED' and identifier == 'APPROVER'  %}
+        {% if wpform.instance.workpermit != 'APPROVED' and identifier == 'APPROVER' and is_valid_approver %}
             <div class="dropdown me-2 action_btn">
             <button class="btn p-3 btn-primary2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 Action
@@ -42,7 +42,7 @@ Work Permit Form
                 <li><a class="dropdown-item reject-wp" href="#">Reject</a></li>
             </ul>
             </div>
-        {% elif wpform.instance.workpermit != 'APPROVED' and identifier == 'VERIFIER' %}
+        {% elif wpform.instance.workpermit != 'APPROVED' and identifier == 'VERIFIER' and is_valid_verifier %}
         <div class="dropdown me-2 action_btn">
             <button class="btn p-3 btn-primary2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 Action
@@ -630,6 +630,7 @@ Work Permit Form
 
         $(".approve-wp").click((e) => {
             //appprove workpermit
+            console.log('Approve Work Permit')
             submit_form_alert(text=null, title = 'Approve Work Permit?').then((res) => {
                 if(res.isConfirmed){
                     let womid = "{{ wpform.instance.id }}"

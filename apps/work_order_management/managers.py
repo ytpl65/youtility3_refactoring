@@ -177,7 +177,7 @@ class WorkOrderManager(models.Manager):
         
     def get_return_wp_details(self, qset_id):
         QuestionSet = apps.get_model('activity', 'QuestionSet')
-        sections_qset = QuestionSet.objects.filter(parent_id = qset_id).order_by('seqno')
+        sections_qset = QuestionSet.objects.filter(parent_id = qset_id,enable=True).order_by('seqno')
 
         rwp_details = []
         for section in sections_qset:
@@ -196,6 +196,7 @@ class WorkOrderManager(models.Manager):
 # Testing
     def get_wp_answers(self, womid):
         childwoms = self.filter(parent_id = womid).order_by('seqno')
+        print("Child Woms: ",childwoms)
         logger.info(f"{childwoms = }")
         wp_details = []
         for childwom in childwoms:

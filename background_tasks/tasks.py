@@ -718,8 +718,8 @@ def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workper
         from django.template.loader import render_to_string
         from apps.work_order_management.models import Vendor
         wom = Wom.objects.filter(parent_id=wom_id)
-        client_id = wom[0].client_id
-        sitename = Bt.objects.get(id=client_id).buname
+        site_id = wom[0].bu_id
+        sitename = Bt.objects.get(id=site_id).buname
 
         log.info(f'THe Site Name for vendor and security is {sitename}')
         # sitename = Bt.objects.get((Wom.objects.get(id=wom_id).client.id)).buname

@@ -14,7 +14,7 @@ def save_jsonform(peoplepref_form, p):
         logger.info('saving jsonform ...')
         for k in [
             'blacklist', 'assignsitegroup', 'tempincludes', 'currentaddress', 'permanentaddress',
-            'showalltemplates', 'showtemplatebasedonfilter', 'mobilecapability', 'isemergencycontact',
+            'showalltemplates', 'showtemplatebasedonfilter', 'mobilecapability','noccapability','isemergencycontact',
             'portletcapability', 'reportcapability', 'webcapability', 'isworkpermit_approver',
             'alertmails', 'userfor']:
             p.people_extras[k] = peoplepref_form.cleaned_data.get(k)
@@ -45,6 +45,7 @@ def get_people_prefform(people,  request):
                 'portletcapability',
                 'reportcapability',
                 'webcapability',
+                'noccapability',
                 'currentaddress',
                 'permanentaddress',
                 'isemergencycontact',
@@ -164,7 +165,7 @@ def get_caps_from_db():
     mob     = cache.get('mobcaps')
     portlet = cache.get('portletcaps')
     report  = cache.get('reportcaps')
-    
+    noc     = cache.get('noccaps')
     
     if not web:
         web = Capability.objects.get_caps(cfor=Capability.Cfor.WEB)
@@ -196,6 +197,7 @@ def create_caps_choices_for_peopleform(client):
     mob     = cache.get('mobcaps')
     portlet = cache.get('portletcaps')
     report  = cache.get('reportcaps')
+    noc     = cache.get('noccaps')
     
     if client:
         if not web:
@@ -214,8 +216,11 @@ def create_caps_choices_for_peopleform(client):
             report = Capability.objects.filter(
                 capscode__in = client.bupreferences['reportcapability'], cfor=Capability.Cfor.REPORT, enable=True).values_list('capscode', 'capsname')
             cache.set('reportcaps', report, 30)
-    return web, mob, portlet, report
-
+        if not noc:
+            noc = Capability.objects.filter(cfor=Capability.Cfor.NOC, enable=True).values_list('capscode', 'capsname')
+            cache.set('noccaps', report, 30)
+    print("NOC: ",noc)
+    return web, mob, portlet, report, noc
 
 
 def save_caps_inside_session_for_people_client(people, caps, session, client):
@@ -235,6 +240,8 @@ def save_caps_inside_session_for_people_client(people, caps, session, client):
         client.bupreferences['webcapability'], caps)
     session['client_mobcaps'] = make_choices(
         client.bupreferences['mobilecapability'], caps)
+    session['client_noccaps'] = make_choices(
+        client.bupreferences['noccapability'], caps)
     session['client_reportcaps'] = make_choices(
         client.bupreferences['reportcapability'], caps)
     session['client_portletcaps'] = make_choices(
@@ -344,6 +351,9 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
         return Capability.objects.select_related(
             'parent').filter(cfor=cfor, enable=True).values_list('capscode', 'capsname')
     caps = cache.get('caps')
+    if cfor == Capability.Cfor.NOC:
+        return Capability.objects.select_related(
+            'parent').filter(cfor=cfor, enable=True).values_list('capscode', 'capsname')
     if caps:
         logger.debug('got caps from cache...')
     if not caps:

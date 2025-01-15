@@ -370,7 +370,9 @@ class CapabilityForm(forms.ModelForm):
 class PeopleExtrasForm(forms.Form):
 
     labels = {'mob': 'Mobile Capability', 'port': 'Portlet Capability',
-              'report': 'Report Capability', 'web': 'Web Capability'}
+              'report': 'Report Capability', 'web': 'Web Capability',
+              'noc':'NOC Capability'
+              }
 
     USERFOR_CHOICES = [
         ("", "Select User For"),
@@ -385,6 +387,7 @@ class PeopleExtrasForm(forms.Form):
     portletcapability         = forms.MultipleChoiceField(required = False, label = labels['port'], widget = s2forms.Select2MultipleWidget)
     reportcapability          = forms.MultipleChoiceField(required = False, label = labels['report'], widget = s2forms.Select2MultipleWidget)
     webcapability             = forms.MultipleChoiceField(required = False, label = labels['web'], widget = s2forms.Select2MultipleWidget)
+    noccapability             = forms.MultipleChoiceField(required=False,label=labels['noc'],widget=s2forms.Select2MultipleWidget)
     loacationtracking         = forms.BooleanField(initial = False, required = False)
     capturemlog               = forms.BooleanField(initial = False, required = False)
     showalltemplates          = forms.BooleanField(initial = False, required = False, label="Show all Templates ")
@@ -407,12 +410,13 @@ class PeopleExtrasForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['assignsitegroup'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(S['client_id'], self.request)
         self.fields['tempincludes'].choices = am.QuestionSet.objects.filter(type = 'SITEREPORT', bu_id__in = S['assignedsites']).values_list('id', 'qsetname')
-        web, mob, portlet, report = create_caps_choices_for_peopleform(self.request.user.client)
+        web, mob, portlet, report, noc = create_caps_choices_for_peopleform(self.request.user.client)
         if not (S['is_superadmin']):
             self.fields['webcapability'].choices     = S['client_webcaps'] or  web
             self.fields['mobilecapability'].choices  = S['client_mobcaps'] or mob
             self.fields['portletcapability'].choices = S['client_portletcaps'] or portlet
             self.fields['reportcapability'].choices  = S['client_reportcaps'] or report
+            self.fields['noccapability'].choices  = S['client_noccaps'] or noc
         else:
             # if superadmin is logged in
             from .utils import get_caps_choices
@@ -420,6 +424,7 @@ class PeopleExtrasForm(forms.Form):
             self.fields['mobilecapability'].choices  = get_caps_choices(cfor = pm.Capability.Cfor.MOB)
             self.fields['portletcapability'].choices = get_caps_choices(cfor = pm.Capability.Cfor.PORTLET)
             self.fields['reportcapability'].choices  = get_caps_choices(cfor = pm.Capability.Cfor.REPORT)
+            self.fields['noccapability'].choices     = get_caps_choices(cfor=pm.Capability.Cfor.NOC)
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:

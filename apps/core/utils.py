@@ -366,17 +366,18 @@ def save_capsinfo_inside_session(people, request):
     logger.info('save_capsinfo_inside_session... STARTED')
     from apps.core.raw_queries import get_query
     from apps.peoples.models import Capability
-    web, mob, portlet, report = putils.create_caps_choices_for_peopleform(request.user.client)
+    web, mob, portlet, report, noc = putils.create_caps_choices_for_peopleform(request.user.client)
     request.session['client_webcaps'] = list(web)
     request.session['client_mobcaps'] = list(mob)
     request.session['client_portletcaps'] = list(portlet)
     request.session['client_reportcaps'] = list(report)
-    
+    request.session['client_noccaps'] = list(noc)
     caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
     request.session['people_webcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['webcapability'], cfor='WEB').values_list('capscode', 'capsname')) 
     request.session['people_mobcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['mobilecapability'], cfor='MOB').values_list('capscode', 'capsname')) 
     request.session['people_reportcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['reportcapability'], cfor='REPORT').values_list('capscode', 'capsname')) 
-    request.session['people_portletcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['portletcapability'], cfor='PORTLET').values_list('capscode', 'capsname')) 
+    request.session['people_portletcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['portletcapability'], cfor='PORTLET').values_list('capscode', 'capsname'))
+    request.session['people_noccaps'] = list(Capability.objects.filter(capscode__in = people.people_extras.get('noccapability',''), cfor='NOC').values_list('capscode', 'capsname'))  
     logger.info('save_capsinfo_inside_session... DONE')
     
     
@@ -407,6 +408,7 @@ def save_user_session(request, people, ctzoffset=None):
             save_capsinfo_inside_session(people, request)
             logger.info('saving user data into the session ... DONE')
         request.session['assignedsites'] = list(pm.Pgbelonging.objects.get_assigned_sites_to_people(people.id))
+        request.session['people_id'] = request.user.id
         request.session['assignedsitegroups'] = people.people_extras['assignsitegroup']
         request.session['clientcode'] = request.user.client.bucode
         request.session['clientname'] = request.user.client.buname
@@ -1108,7 +1110,7 @@ def get_select_output(objs):
     if not objs:
         return None, 0, "No records"
     records = json.dumps(list(objs), default=str)
-    count = objs.count()
+    count = objs.count() 
     msg = f'Total {count} records fetched successfully!'
     return records, count, msg
 
@@ -1398,7 +1400,7 @@ def store_ticket_history(instance, request=None, user = None):
        
     
     # Get the current time
-    now = timezone.now().replace(microsecond=0, second=0)
+    now = datetime.now(timezone.utc).replace(microsecond=0, second=0)
     peopleid = request.user.id if request else user.id
     peoplename = request.user.peoplename if request else user.peoplename
     

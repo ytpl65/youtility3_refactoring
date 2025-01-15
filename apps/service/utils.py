@@ -413,9 +413,10 @@ def update_adhoc_record(scheduletask, jobneedrecord, details):
 def insert_adhoc_record(jobneedrecord, details):
     rc, recordcount, traceback, msg= 1, 0, 'NA', ""
     jnsz = sz.JobneedSerializer(data = jobneedrecord)
-
+    log.info(f"Jobneed Serializer: ------------> {jnsz}")
     if jnsz.is_valid():
         jn_instance = jnsz.save()
+        log.info(f"Jobneed Instance: ------------> {jn_instance}")
         for dtl in details:
             dtl.update({'jobneed_id':jn_instance.id})
             record = clean_record(dtl)
@@ -576,13 +577,13 @@ def perform_insertrecord(self, records,  db='default', filebased = True, bg=Fals
             for record in data:
                 if record:
                     tablename = record.pop('tablename')
+                    log.info(f'Table Name: {tablename}')
                     log.info("Record %s",record)
                     obj = insert_or_update_record(record, tablename)
                     if record.get('people_id') == None:
                         id = record.get('muser_id')
                     else:
                         id = record.get('people_id')
-                    # user = get_user_instance(record.get('people_id'))
                     user = get_user_instance(id)
                     
                     if tablename == 'ticket' and isinstance(obj, Ticket): utils.store_ticket_history(
@@ -704,10 +705,14 @@ def perform_reportmutation(self, records, db= 'default', bg=False):
                 is_return_workpermit = record.pop('isreturnwp', None)
                 child = record.pop('child', None)
                 parent = record
+
+                log.info(f"Parent: ------------> {parent}")
+                log.info(f"Child: ------------> {child}")
                 verifers = record.pop('verifier',None)
                 log.info(f"Verifier: ------------> {verifers}")
                 try:
                     switchedSerializer = sz.WomSerializer if tablename == 'wom' else sz.JobneedSerializer
+                    log.info(f"Switched Serializer: ------------> {switchedSerializer}")
                     with transaction.atomic(using = db):
                         if child and len(child) > 0 and parent:
                             jobneed_parent_post_data = parent
@@ -797,7 +802,7 @@ def perform_uploadattachment(file,  record, biodata):
     filepath    = home_dir + path
     uploadfile  = f'{filepath}/{filename}'
     db          = utils.get_current_db_name()
-    
+    log.info(f"Upload File: {filepath}, {filename}")
     log.info(f"Length file_buffer: '{len(file_buffer)}' \n'onwername':{onwername}, \nownerid: '{ownerid}' \npeopleid: '{peopleid}' \npath: {path} \nhome_dir: '{home_dir}' \nfilepath: '{filepath}' \nuploadfile: '{uploadfile}'")
     try:
         with transaction.atomic(using = db):
@@ -811,6 +816,7 @@ def perform_uploadattachment(file,  record, biodata):
         rc, traceback, msg = 1, tb.format_exc(), Messages.UPLOAD_FAILED
         log.error('something went wrong', exc_info = True)
     try:
+        log.info(f'Record Attachment: {record}')
         if record.get('localfilepath'): record.pop('localfilepath')
         obj = insert_or_update_record(record, 'attachment')
         log.info(f'Attachment record inserted: {obj.filepath}')
@@ -856,4 +862,5 @@ def execute_graphql_mutations(mutation_query, variables=dict(), download=False):
             resp = {'data': result.data}
         else:
             resp = json.dumps({'data': result.data})
+    log.info(f'Response Data: ,{resp}')
     return resp
