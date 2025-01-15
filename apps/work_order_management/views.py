@@ -6,7 +6,7 @@ from .forms import VendorForm, WorkOrderForm, WorkPermitForm, ApproverForm,SlaFo
 from .models import Vendor, Wom, WomDetails, Approver
 from apps.peoples.models import People
 from apps.activity.models import QuestionSetBelonging, QuestionSet
-from background_tasks.tasks import send_email_notification_for_sla_vendor,send_email_notification_for_vendor_and_security,send_email_notification_for_wp_verifier,send_email_notification_for_workpermit_approval
+from background_tasks.tasks import send_email_notification_for_sla_vendor,send_email_notification_for_vendor_and_security_of_wp_cancellation,send_email_notification_for_vendor_and_security,send_email_notification_for_wp_verifier,send_email_notification_for_workpermit_approval
 from django.http import Http404, QueryDict, response as rp, HttpResponse
 from apps.core  import utils
 from apps.peoples import utils as putils
@@ -544,6 +544,12 @@ class WorkPermit(LoginRequiredMixin, View):
                 wom.remarks.append({'people':logged_in_user,'remarks':remarks})
                 wom.workstatus = Wom.Workstatus.CANCELLED
                 wom.save()
+                site_name  = Bt.objects.get(id=wom.bu_id).buname
+                workpermit_status = wom.workstatus
+                vendor_name = Vendor.objects.get(id=wom.vendor_id).name
+                permit_name = wom.other_data['wp_name']
+                permit_no   = wom.other_data['wp_seqno']
+                send_email_notification_for_vendor_and_security_of_wp_cancellation.delay(R['wom_id'],site_name,workpermit_status,vendor_name,permit_name,permit_no)
                 return rp.JsonResponse({'pk':R['wom_id']})
             
             if pk := R.get('pk', None):

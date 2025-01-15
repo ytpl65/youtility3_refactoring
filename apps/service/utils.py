@@ -15,7 +15,7 @@ from apps.core import utils
 from apps.core import exceptions as excp
 from apps.service import serializers as sz
 from apps.y_helpdesk.models import Ticket
-from background_tasks.tasks import alert_sendmail, send_email_notification_for_wp_from_mobile_for_verifier, send_email_notification_for_vendor_and_security,insert_json_records_async
+from background_tasks.tasks import alert_sendmail,send_email_notification_for_vendor_and_security_of_wp_cancellation,send_email_notification_for_wp_from_mobile_for_verifier, send_email_notification_for_vendor_and_security,insert_json_records_async
 from intelliwiz_config.celery import app
 from apps.work_order_management.utils import save_approvers_injson,save_verifiers_injson
 from apps.schedhuler.utils import create_dynamic_job
