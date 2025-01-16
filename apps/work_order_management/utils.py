@@ -177,7 +177,9 @@ def handle_valid_form(form, R, request, create):
     wom = Wom.objects.filter(parent_id=sla.id).order_by('-id')[1]
     uptime_score = WomDetails.objects.filter(wom_id=wom.id)[2].answer
     wom_parent.other_data['uptime_score'] = uptime_score
+    wom.other_data['section_weightage']=0
     wom_parent.save()
+    print("WOm Record: ",wom.description,wom.other_data)
     send_email_notification_for_sla_report.delay(sla.id,sitename)
     print("sla:", sla)
     return rp.JsonResponse({'pk':sla.id})
@@ -186,14 +188,12 @@ def handle_valid_form(form, R, request, create):
 def create_sla_details(R,wom,request,formdata):
         SECTION_WEIGHTAGE = {
             'WORK SAFETY': 0.2,
-            'SERVICE QUALITY':0.2,
-            'SERVICE DELIVERY':0.15,
+            'SERVICE DELIVERY':0.2,
             'LEGAL COMPLIANCE':0.2,
-            'DOCUMENTATION/RECORD':0.1,
-            'ORGANISATION RESPONSIVENESS':0.05,
-            'TECHNOLOGY / DESIGN':0.05,
-            'CPI':0.05,
-            'SERVICE PERFORMANCE METRICS':0,
+            'DOCUMENTATION/RECORD':0.2,
+            'TECHNOLOGY DESIGN':0.1,
+            'CPI':0.1,
+            'KPI As Per Agreement':0,
             'REMARKS':0,
         }
         log.info(f'creating sla_details started {R}')
@@ -257,18 +257,20 @@ def create_child_wom(wom, qset_id):
         log.info(f'creating wom for qset_id {qset_id}')
         SECTION_WEIGHTAGE = {
             'WORK SAFETY': 0.2,
-            'SERVICE QUALITY':0.2,
-            'SERVICE DELIVERY':0.15,
+            'SERVICE DELIVERY':0.2,
             'LEGAL COMPLIANCE':0.2,
-            'DOCUMENTATION/RECORD':0.1,
-            'ORGANISATION RESPONSIVENESS':0.05,
-            'TECHNOLOGY / DESIGN':0.05,
-            'CPI':0.05,
+            'DOCUMENTATION/RECORD':0.2,
+            'TECHNOLOGY DESIGN':0.1,
+            'KPI As Per Agreement':0,
+            'CPI':0.1,
             'REMARKS':0,
         }
         qs = QuestionSet.objects.get(id=qset_id).qsetname
+        print("QS: ",qs)
         if qs in SECTION_WEIGHTAGE:
+
             section_weightage = SECTION_WEIGHTAGE[qs]
+            print("QS and Section weightage: ",qs,section_weightage)
             wom.other_data['section_weightage'] = section_weightage
             log.info(f"section and question %s %s",section_weightage,qs)
         return Wom.objects.create(
@@ -346,28 +348,41 @@ def get_month_number(MONTH_CHOICES,month_name):
         return '-'
  
 
-def get_last_3_months_sla_reports(vendor_id, bu_id,month_number):
+def get_last_12_months_sla_reports(vendor_id, bu_id,month_number):
     log.info(f'Month Number: {month_number}')
     sla_reports = {}
     # Get the last 3 months' approved records, excluding the current month
     current_month = datetime.now().month
-    current_year = datetime.now().year
     
-    months = ['January', 'February', 'March', 'April', 'May', 'June',
-              'July', 'August', 'September', 'October', 'November', 'December']
-    print(current_month,current_year)
-    current_month_ = months[int(month_number)-1]
-    print("Current Month: ",current_month_)
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    current_date = datetime.now()
+    current_year = current_date.year
+    if current_date.month == 1:
+        previous_month_year = current_date.year - 1
+    else:
+        previous_month_year = current_date.year
+
     for i in range(1, 13):
         month = int(month_number) - i
         year = current_year
-        if month <= 0:
-            month += 12
-            year -= 1
         
+        if current_year == previous_month_year:
+            if month <=0:
+                year-=1
+            else:
+                year = current_year
+        else:
+            if month <= 0:
+                year-=2
+            else:
+                year -= 1
+        print("Month Value: ",month)
         month_name = months[month - 1]
-        month_year = f"{month_name} {year}"
-
+        year_ = str(year)[2:]
+        month_year = f"{month_name}'{year_}"
+        if month<=0:
+            month= month + 12
         latest_report = Wom.objects.filter(
             vendor_id=vendor_id,
             identifier='SLA',
@@ -390,6 +405,8 @@ def get_last_3_months_sla_reports(vendor_id, bu_id,month_number):
             sla_reports[month_year] = ['N/A','N/A']
     print("SLA Reports: ",sla_reports)
     return sla_reports
+
+
 
 
 def get_sla_report_approvers(sla_approvers):

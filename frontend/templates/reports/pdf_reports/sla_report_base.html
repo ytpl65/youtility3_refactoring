@@ -10,6 +10,18 @@
             size: A4 landscape;
             margin: 1cm;
         }
+
+        @page{
+                    @bottom-center{
+                        content:"\A"
+                        "*** This is a computer-generated Report. Signature not required. ***";
+                        margin-right: 20px;
+                        white-space:pre;
+                        font-size: 10px;
+                        line-height: 2.5;
+                        color: #333;
+                    }
+                }
     </style>
     {% block inline_css %}
     {% endblock %}

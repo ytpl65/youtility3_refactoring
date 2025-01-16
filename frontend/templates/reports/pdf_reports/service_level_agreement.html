@@ -7,8 +7,7 @@
   }
 
   table {
-    width: 100%;
-    height: 60%;
+    width: auto;
     border-collapse: collapse;
     border: 1.5px solid black;
   }
@@ -98,7 +97,14 @@
     padding: 10px 0;
     text-align: center;
   }
+  .kpi-table caption {
+    font-size: 12px;
+    font-weight: bold;
+    padding: 10px 0;
+    text-align: center;
+  }
 
+  
   .footer-table thead td {
     background-color: #f5f5f5;
     padding: 8px 15px;
@@ -163,166 +169,184 @@
   <div class="header">
     <span>Vendor Name: {{ vendor_name }}</span>
     <span>Service Description: {{ vendor_description }}</span>
-
+    
   </div>
-  <table>
-    <thead>
-    </thead>
-    <tbody>
-      <tr>
-        <td colspan="8">Scores 1-10 per category</td>
-      </tr>
-      <tr>
-        <th colspan="8">SUPPLIER MONTHLY PERFORMANCE MEASUREMENT</th>
-      </tr>
-      <tr>
-        <th>
-          WORK SAFETY
-        </th>
-        <th>
-          20%
-        </th>
-        <th>
-          SERVICE QUALITY
-        </th>
-        <th>
-          20%
-        </th>
-        <th>
-          SERVICE DELIVERY
-        </th>
-        <th>
-          15%
-        </th>
-        <th>
-          LEGAL COMPLIANCE
-        </th>
-        <th>
-          20%
-        </th>
-      </tr>
-      <tr>
-        <td>Appropriate PPE Usage at site</td>
-        <td>{{ question_answer['Appropriate PPE Usage at site'] }} </td>
-        <td>Workmanship quality</td>
-        <td>{{ question_answer['Workmanship quality'] }}</td>
-        <td>Preventive maintenance Schedule</td>
-        <td>{{ question_answer['Preventive maintenance Schedule']}}</td>
-        <td>WCP/ESI/PF coverage for employees Deployed for attending Site AMC Related work</td>
-        <td>{{ question_answer['WCP/ESI/PF coverage for employees Deployed for attending Site AMC Related work']}}</td>
-      </tr>
-      <tr>
-        <td>Adherence of work Process</td>
-        <td>{{ question_answer['Adherence of work Process']}}</td>
-        <td>Preventive maintenance quality</td>
-        <td>{{ question_answer['Preventive maintenance quality']}}</td>
-        <td>Reduction of Breakdowns</td>
-        <td>{{ question_answer['Reduction of Breakdowns']}}</td>
-        <td>Timely submission of Invoices with required Relevant documents</td>
-        <td>{{ question_answer['Timely submission of Invoices with required Relevant documents']}}</td>
-      </tr>
-      <tr>
-        <td>Grooming and Knowledge</td>
-        <td>{{ question_answer['Grooming and Knowledge']}}</td>
-        <td>Adherence of SLA</td>
-        <td>{{ question_answer['Adherence of SLA']}}</td>
-        <td>Inventory Management</td>
-        <td>{{ question_answer['Inventory Management']}}</td>
-        <td>Environmental ethos</td>
-        <td>{{ question_answer['Environmental ethos']}}</td>
-      </tr>
-      <tr>
-        <td></td>
-        <td></td>
-        <td>Timely submission of RCA</td>
-        <td>{{ question_answer['Timely submission of RCA']}}</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr>
-        <th>Average score</th>
-        <td>{{ average_score[0] }}</td>
-        <th>Average score</th>
-        <td>{{ average_score[1] }}</td>
-        <th>Average score</th>
-        <td>{{ average_score[2] }}</td>
-        <th>Average score</th>
-        <td>{{ average_score[3] }}</td>
-      </tr>
+  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <table class="kpi-table">
+      <caption>KPI As Per Agreement</caption>
+      <tbody style="width: 300px;">
+        <tr>
+          <td>Response Time</td>
+          <td>{{ response_time }}</td>
+        </tr>
+        <tr>
+          <td>Resolution Time</td>
+          <td>{{ resolution_time }}</td>
+        </tr>
+        <tr>
+          <th>Uptime (%)</th>
+          <th>{{ uptime_score }}%</th>
+        </tr>
+      </tbody>
+    </table>
 
-      <tr>
-        <td colspan="8"></td>
-      </tr>
-      <tr>
-        <th>DOCUMENTATION/RECORD</th>
-        <th>10%</th>
-        <th>ORGANISATION RESPONSIVENESS</th>
-        <th>5%</th>
-        <th>TECHNOLOGY DESIGN</th>
-        <th>5%</th>
-        <th>CPI</th>
-        <th>5%</th>
-      </tr>
-      <tr>
-        <td>Timely submission of Service reports</td>
-        <td>{{ question_answer['Timely submission of Service reports']}}</td>
-        <td>Communications</td>
-        <td>{{ question_answer['Communications']}}</td>
-        <td>Innovative new products</td>
-        <td>{{ question_answer['Innovative new products']}}</td>
-        <td>Continuous process improvement</td>
-        <td>{{ question_answer['Continuous process improvement']}}</td>
-      </tr>
-      <tr>
-        <td>Equipment History - Record of alteration, breakdown, addition, Preventive maintenance and modifications</td>
-        <td>{{ question_answer["Equipment History - Record of alteration, breakdown, addition, Preventive maintenance and modifications"]}}</td>
-        <td>Receptiveness to new ideas</td>
-        <td>{{ question_answer["Receptiveness to new ideas"] }}</td>
-        <td>Technology level</td>
-        <td>{{ question_answer["Technology level"] }}</td>
-        <td></td>
-        <td></td>
-
-      </tr>
-      <tr>
-        <th>Average score</th>
-        <td>{{ average_score[4] }}</td>
-        <th>Average score</th>
-        <td>{{ average_score[5] }}</td>
-        <th>Average score</th>
-        <td>{{ average_score[6] }}</td>
-        <th>Average score</th>
-        <td>{{ average_score[7] }}</td>
-      </tr>
-      <tr>
-        <td colspan="8"></td>
-      </tr>
-      <tr>
-        <th colspan="2">Overall Score(%)</th>
-        <th colspan="6">{{ overall_score }}%</th>
-      </tr>
-      <tr>
-        <td colspan="8"></td>
-      </tr>
-      <tr>
-        <th colspan="8">SERVICE PERFORMANCE METRICS</th>
-      </tr>
-      <tr>
-        <td colspan="2">Response Time</td>
-        <td colspan="6">{{ response_time }}</td>
-      </tr>
-      <tr>
-        <td colspan="2">Resolution Time</td>
-        <td colspan="6">{{ resolution_time }}</td>
-      </tr>
-      <tr>
-        <th colspan="2">Uptime (%)</th>
-        <th colspan="6">{{ uptime_score }}%</th>
-      </tr>
-    </tbody>
-  </table>
+    <div class="footer-table">
+      <table>
+        <caption>Last 12 Month Performance</caption>
+        <tbody>
+          <!-- Row for Month names -->
+          <tr>
+            <th>Month</th>
+            {% for month, score in sla_last_three_month_report.items() %}
+            <td>{{ month }}</td>
+            {% endfor %}
+          </tr>
+    
+          <!-- Row for Uptime values -->
+          <tr>
+            <th>Uptime(%)</th>
+            {% for month, score in sla_last_three_month_report.items() %}
+            <!-- Assuming score[1] is the Uptime -->
+            <td>{{ score.1 }}</td>
+            {% endfor %}
+          </tr>
+    
+          <!-- Row for Overall Score values -->
+          <tr>
+            <th>Overall Score(%)</th>
+            {% for month, score in sla_last_three_month_report.items() %}
+            <!-- Assuming score[1] is the Uptime -->
+            <td>{{ score.0 }}</td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    
+    </div>
+  </div>
+    
+    <table>
+      <thead>
+          <tr style="background-color:#f2f2f2">
+            <td colspan="6">Scores 1-10 per category</td>
+          </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th colspan="6">SUPPLIER MONTHLY PERFORMANCE MEASUREMENT</th>
+        </tr>
+        <tr>
+          <th>
+            WORK SAFETY
+          </th>
+          <th>
+            20%
+          </th>
+          <th>
+            SERVICE DELIVERY
+          </th>
+          <th>
+            20%
+          </th>
+          <th>
+            LEGAL COMPLIANCE
+          </th>
+          <th>
+            20%
+          </th>
+        </tr>
+        <tr>
+          <td>Appropriate PPE Usage at site</td>
+          <td>{{ question_answer['Appropriate PPE Usage at site'] }} </td>
+          <td>Preventive maintenance Schedule</td>
+          <td>{{ question_answer['Preventive maintenance Schedule']}}</td>
+          <td>WCP/ESI/PF coverage for employees Deployed for attending Site AMC Related work</td>
+          <td>{{ question_answer['WCP/ESI/PF coverage for employees Deployed for attending Site AMC Related work']}}</td>
+        </tr>
+        <tr>
+          <td>Adherence of work Process</td>
+          <td>{{ question_answer['Adherence of work Process']}}</td>
+          <td>Reduction of Breakdowns</td>
+          <td>{{ question_answer['Reduction of Breakdowns']}}</td>
+          <td>Timely submission of Invoices with required Relevant documents</td>
+          <td>{{ question_answer['Timely submission of Invoices with required Relevant documents']}}</td>
+        </tr>
+        <tr>
+          <td>Grooming and Knowledge</td>
+          <td>{{ question_answer['Grooming and Knowledge']}}</td>
+          <td>Inventory Management</td>
+          <td>{{ question_answer['Inventory Management']}}</td>
+          <td>Environmental ethos</td>
+          <td>{{ question_answer['Environmental ethos']}}</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td>Timely submission of RCA</td>
+          <td>{{ question_answer['Timely submission of RCA']}}</td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <th>Average score</th>
+          <td>{{ average_score[0] }}</td>
+          <th>Average score</th>
+          <td>{{ average_score[1] }}</td>
+          <th>Average score</th>
+          <td>{{ average_score[2] }}</td>
+        </tr>
+        
+        <tr>
+          <td colspan="6"></td>
+        </tr>
+        <tr>
+          <th>DOCUMENTATION/RECORD</th>
+          <th>20%</th>
+          <th>TECHNOLOGY DESIGN</th>
+          <th>10%</th>
+          <th>CPI</th>
+          <th>10%</th>
+        </tr>
+        <tr>
+          <td>Timely submission of Service reports</td>
+          <td>{{ question_answer['Timely submission of Service reports']}}</td>
+          <td>Innovative new products</td>
+          <td>{{ question_answer['Innovative new products']}}</td>
+          <td>Continuous process improvement</td>
+          <td>{{ question_answer['Continuous process improvement']}}</td>
+        </tr>
+        <tr>
+          <td>Equipment History - Record of alteration, breakdown, addition, Preventive maintenance and modifications</td>
+          <td>{{ question_answer["Equipment History - Record of alteration, breakdown, addition, Preventive maintenance and modifications"]}}</td>
+          <td>Technology level</td>
+          <td>{{ question_answer["Technology level"] }}</td>
+          <td></td>
+          <td></td>
+        
+        </tr>
+        <tr>
+          <th>Average score</th>
+          <td>{{ average_score[3] }}</td>
+          <th>Average score</th>
+          <td>{{ average_score[4] }}</td>
+          <th>Average score</th>
+          <td>{{ average_score[5] }}</td>
+        </tr>
+        <tr>
+          <td colspan="6"></td>
+        </tr>
+        <tr>
+          <td colspan="3" style="font-size:12px; font-weight:bold;">
+            Overall Score
+          </td>
+          <td colspan="3" style="font-size:12px; font-weight:bold;">
+            {{ overall_score }}%
+          </td>
+        </tr>
+      </tbody>
+    </table>
+      
+      
 
   <div class="footer-notes-table">
     <div class="footer-notes">
@@ -348,32 +372,12 @@
       </table>
     </div>
     {% endif %}
-    <div class="footer-table">
-      <table>
-        <caption>Last 12 Month Performance</caption>
-        <thead>
-          <tr>
-            <td>Month</td>
-            <td>Overall Score(%)</td>
-            <td>Uptime (%)</td>
-          </tr>
-        </thead>
-        <tbody>
-          {% for month, score in sla_last_three_month_report.items() %}
-          <tr>
-            <td>{{ month }}</td>
-            <td>{{ score[0] }}</td>
-            <td>{{ score[1] }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+
   </div>
   <br>
 </div>
 <div style="font-size: 12px;">
-  <b>Score is low because of </b> - {{ remarks}}
+  <b>Remark </b> : {{ remarks}}
 </div>
 
 </div>

@@ -400,6 +400,7 @@ class WorkOrderManager(models.Manager):
             else:
                 average_score = sum(ans)/len(ans)
             all_average_score.append(round(average_score,1))
+            print("Average Score and Section Weight",average_score,section_weight)
             score = average_score * section_weight
             overall_score.append(score)
             sq = {
