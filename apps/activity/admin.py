@@ -520,7 +520,10 @@ class QuestionSetBelongingResource(resources.ModelResource):
             if avpt_type not in valid_avpt:
                 raise ValidationError(
                     {
-                        avpt_type: f"{avpt_type} is not a valid AVPT Type. Please select a valid AVPT Type from {valid_avpt}"
+                        avpt_type: "%(type)s is not a valid AVPT Type. Please select a valid AVPT Type from %(valid)s" % {
+                            "type": avpt_type,
+                            "valid": valid_avpt
+                        }
                     }
                 )
 
@@ -804,7 +807,10 @@ class AssetResource(resources.ModelResource):
         if asset_identifier not in valid_idetifier_values:
             raise ValidationError(
                 {
-                    asset_identifier: f"{asset_identifier} is not a valid identifier. please select a valid identifier from {valid_idetifier_values}"
+                    asset_identifier: "%(identifier)s is not a valid identifier. please select a valid identifier from %(valid)s" % {
+                        "identifier": asset_identifier,
+                        "valid": valid_idetifier_values
+                    }
                 }
             )
 
@@ -814,7 +820,10 @@ class AssetResource(resources.ModelResource):
         if running_status not in valid_running_status:
             raise ValidationError(
                 {
-                    "running_status": f"{running_status} is not a valid running status. Please select a valid running status from {valid_running_status}."
+                    "running_status": "%(status)s is not a valid running status. Please select a valid running status from %(valid)s." % {
+                        "status": running_status,
+                        "valid": valid_running_status
+                    }
                 }
             )
 
@@ -877,7 +886,7 @@ class AssetResource(resources.ModelResource):
         utils.save_common_stuff(self.request, instance, self.is_superuser)
 
     def validations(self, row):
-        row["Code*"] = clean_string(row.get("Code*"), code=True)
+        row["Code*"] = row.get("Code*")
         row["Name*"] = clean_string(row.get("Name*"))
         row["GPS Location"] = clean_point_field(row.get("GPS Location"))
 
@@ -1019,12 +1028,15 @@ class LocationResource(resources.ModelResource):
         if status not in valid_status:
             raise ValidationError(
                 {
-                    status: f"{status} is not a valid status. Please select a valid status from {valid_status}"
+                    status: "%(current)s is not a valid status. Please select a valid status from %(valid)s" % {
+                        "current": status,
+                        "valid": valid_status
+                    }
                 }
             )
 
     def before_import_row(self, row, row_number=None, **kwargs):
-        row["Code*"] = clean_string(row.get("Code*"), code=True)
+        row["Code*"] = row.get("Code*")
         row["Name*"] = clean_string(row.get("Name*"))
         row["GPS Location"] = clean_point_field(row.get("GPS Location"))
 
@@ -1136,7 +1148,10 @@ class LocationResourceUpdate(resources.ModelResource):
             if status not in valid_status:
                 raise ValidationError(
                     {
-                        status: f"{status} is not a valid status. Please select a valid status from {valid_status}"
+                        status: "%(current)s is not a valid status. Please select a valid status from %(valid)s" % {
+                            "current": status,
+                            "valid": valid_status
+                        }
                     }
                 )
 
@@ -1612,7 +1627,10 @@ class AssetResourceUpdate(resources.ModelResource):
             if asset_identifier not in valid_idetifier_values:
                 raise ValidationError(
                     {
-                        asset_identifier: f"{asset_identifier} is not a valid identifier. please select a valid identifier from {valid_idetifier_values}"
+                        asset_identifier: "%(identifier)s is not a valid identifier. please select a valid identifier from %(valid)s" % {
+                            "identifier": asset_identifier,
+                            "valid": valid_idetifier_values
+                        }
                     }
                 )
 
@@ -1623,7 +1641,10 @@ class AssetResourceUpdate(resources.ModelResource):
             if running_status not in valid_running_status:
                 raise ValidationError(
                     {
-                        "running_status": f"{running_status} is not a valid running status. Please select a valid running status from {valid_running_status}."
+                        "running_status": "%(status)s is not a valid running status. Please select a valid running status from %(valid)s." % {
+                            "status": running_status,
+                            "valid": valid_running_status
+                        }
                     }
                 )
 
@@ -1865,7 +1886,10 @@ class QuestionSetBelongingResourceUpdate(resources.ModelResource):
                 if avpt_type not in valid_avpt:
                     raise ValidationError(
                         {
-                            avpt_type: f"{avpt_type} is not a valid AVPT Type. Please select a valid AVPT Type from {valid_avpt}"
+                            avpt_type: "%(type)s is not a valid AVPT Type. Please select a valid AVPT Type from %(valid)s" % {
+                                "type": avpt_type,
+                                "valid": valid_avpt
+                            }
                         }
                     )
 

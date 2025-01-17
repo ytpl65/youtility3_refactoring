@@ -298,13 +298,22 @@ class GeneratePDFForm(forms.ModelForm):
     required_css_class = "required"
     class Meta:
         model = GeneratePDF
-        fields = ["additional_filter","customer","site","period_from","company","document_type"] #period_to & number_of_period
+        fields = ["additional_filter","customer","site","period_from","company","document_type","is_page_required"] #period_to & number_of_period
 
     # data fields
     customer              = forms.ChoiceField(label='Customer', required=True)
     site                  = forms.ChoiceField(label='Site', required=True) 
     period_from           = forms.MultipleChoiceField(label="Period", widget=s2forms.Select2MultipleWidget, required=True)
     # period_to           = forms.ChoiceField(label='Period To', required=True)
+    is_page_required = forms.BooleanField(
+        label="Include Only Highlighted Page", 
+        required=True, 
+        initial=True, 
+        help_text="Check this box to include only the highlighted page, excluding all unhighlighted pages."
+    )
+    pf_code_no = forms.CharField(label='PF Code No.', required=True)
+    esic_code_no = forms.CharField(label='ESIC Code No.', required=True)
+
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
@@ -315,6 +324,8 @@ class GeneratePDFForm(forms.ModelForm):
             self.fields['site'].required = False
         if not self.fields['period_from'].initial:
             self.fields['period_from'].required = False
+        if not self.fields['is_page_required'].initial:
+            self.fields['is_page_required'].required = False
         # if not self.fields['period_to'].initial:
         #     self.fields['period_to'].required = False
         utils.initailize_form_fields(self)
