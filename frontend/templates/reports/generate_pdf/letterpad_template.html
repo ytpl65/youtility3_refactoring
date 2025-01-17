@@ -4,9 +4,9 @@
         body {
             font-family: 'Calibri', sans-serif;
             font-size: 12px;
-            margin: 40px auto; /* Adjusted margin for equal spacing */
+            margin: 40px auto;
             line-height: 1.6;
-            margin-top: 140px;
+            margin-top: 120px;
         }
         .header {
             display: flex;
@@ -16,6 +16,11 @@
         }
         .header .address {
             text-align: left;
+            line-height: 1.2; /* Adjusted for the overall address section */
+        }
+        .header .address p {
+            margin: 0; /* Optional: Removes additional margin between lines */
+            line-height: 1.6; /* Decrease line height specifically for paragraphs */
         }
         .header .logo {
             text-align: right;
@@ -36,7 +41,7 @@
             margin-top: 20px;
         }
         table, th, td {
-            border: 1px solid #ddd;
+            border: 1px solid black;
         }
         th, td {
             padding: 2px;
@@ -53,6 +58,7 @@
             font-size: 13px;
         }
     </style>
+    
 </head>
 <body>
     <div class="header">

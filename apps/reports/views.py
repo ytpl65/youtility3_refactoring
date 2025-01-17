@@ -959,7 +959,7 @@ def getAllUAN(company, customer_code, site_code, periods):
     
     # Fetch UAN data for the filtered employees
     filters = {'name': ['in', emp_id_list]}
-    fields = ['uan_number', "esi_number", "employee", "bank_ac_no", 'employee_name', 'designation']
+    fields = ['uan_number', "esi_number", "employee", "bank_ac_no", 'employee_name', 'work_type']
     uan_data = get_frappe_data(company, 'Employee', filters, fields) or []
     
     # Prepare a dictionary for easier access to payroll data by emp_id
@@ -987,7 +987,7 @@ def getAllUAN(company, customer_code, site_code, periods):
         employee_list.append(uan_detail.get('employee', '').strip())
         bank_ac_no_list.append(uan_detail.get('bank_ac_no', '').strip())
         name_list.append(uan_detail.get('employee_name', '').strip())
-        designation_list.append(uan_detail.get('designation', '').strip())
+        designation_list.append(uan_detail.get('work_type', '').strip())
         pf_deduction_amount_list.append(int(payroll_data.get('pf_deduction_amount', 0)))
         pf_employee_amount_list.append(int(payroll_data.get('pf_employee_amount', 0)))
         calcesi_list.append(int(payroll_data.get('calcesi', 0)))
