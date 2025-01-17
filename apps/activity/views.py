@@ -665,25 +665,111 @@ class PreviewImage(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         R = request.GET
         S = request.session
-        if R.get('action') == 'getFRStatus'  and R.get('uuid'):
-            resp = self.P['model'].objects.get_fr_status(R['uuid'])
-            get_people = am.Job.objects.filter(people_id = resp['eventlog_in_out'][0]['people_id'], identifier = 'GEOFENCE').values()
-            base_address = ""
-            if get_people:
-                get_geofence_data = obm.GeofenceMaster.objects.filter(id = get_people[0]['geofence_id'], enable=True).exclude(id=1).values()
-                base_address = polygon_to_address(get_geofence_data[0]['geofence'])
-            start_address = av_utils.get_address_from_coordinates(json.loads(resp['eventlog_in_out'][0]['startgps'])['coordinates'][1],json.loads(resp['eventlog_in_out'][0]['startgps'])['coordinates'][0])['full_address'] if resp['eventlog_in_out'][0]['startgps'] else None
-            end_address = av_utils.get_address_from_coordinates(json.loads(resp['eventlog_in_out'][0]['endgps'])['coordinates'][1],json.loads(resp['eventlog_in_out'][0]['endgps'])['coordinates'][0])['full_address'] if resp['eventlog_in_out'][0]['endgps'] else None
-            if start_address and get_people:
-                resp['eventlog_in_out'][0]['in_address'] = start_address + " (Inside Geofence)" if is_point_in_geofence(json.loads(resp['eventlog_in_out'][0]['startgps'])['coordinates'][1],json.loads(resp['eventlog_in_out'][0]['startgps'])['coordinates'][0],get_geofence_data[0]['geofence']) else start_address + " (Outside Geofence)"
-            else:
-                resp['eventlog_in_out'][0]['in_address'] = start_address
-            if end_address and get_people:
-                resp['eventlog_in_out'][0]['out_address'] = end_address + " (Inside Geofence)" if is_point_in_geofence(json.loads(resp['eventlog_in_out'][0]['endgps'])['coordinates'][1],json.loads(resp['eventlog_in_out'][0]['endgps'])['coordinates'][0],get_geofence_data[0]['geofence']) else end_address + " (Outside Geofence)"
-            else:
-                resp['eventlog_in_out'][0]['out_address'] = end_address
-            resp['eventlog_in_out'][0]['base_address'] = base_address
-            return rp.JsonResponse(resp, status=200)
+
+        if R.get('action') == 'getFRStatus' and R.get('uuid'):
+            try:
+                # Fetch data
+                resp = self.P['model'].objects.get_fr_status(R['uuid'])
+
+                # Validate eventlog_in_out
+                if not resp.get('eventlog_in_out') or not resp['eventlog_in_out'][0]:
+                    return rp.JsonResponse({'error': 'Invalid eventlog_in_out data'}, status=400)
+
+                eventlog_entry = resp['eventlog_in_out'][0]
+                get_people = am.Job.objects.filter(
+                    people_id=eventlog_entry['people_id'], identifier='GEOFENCE'
+                ).values()
+                base_address = ""
+
+                if get_people:
+                    get_geofence_data = obm.GeofenceMaster.objects.filter(
+                        id=get_people[0]['geofence_id'], enable=True
+                    ).exclude(id=1).values()
+                    if get_geofence_data:
+                        base_address = polygon_to_address(get_geofence_data[0]['geofence'])
+
+                # Handle startgps
+                start_address = ""
+                startgps = eventlog_entry.get('startgps')
+                if startgps:
+                    try:
+                        start_coordinates = json.loads(startgps).get('coordinates')
+                        if start_coordinates and len(start_coordinates) >= 2:
+                            start_address = get_address(
+                                start_coordinates[1], start_coordinates[0]
+                            )
+                    except (ValueError, KeyError, TypeError) as e:
+                        logger.error(f"Error parsing startgps: {e}, startgps: {startgps}")
+                        start_address = "Error parsing startgps"
+
+                # Handle endgps
+                end_address = ""
+                endgps = eventlog_entry.get('endgps')
+                if endgps:
+                    try:
+                        end_coordinates = json.loads(endgps).get('coordinates')
+                        if end_coordinates and len(end_coordinates) >= 2:
+                            end_address = get_address(
+                                end_coordinates[1], end_coordinates[0]
+                            )
+                    except (ValueError, KeyError, TypeError) as e:
+                        logger.error(f"Error parsing endgps: {e}, endgps: {endgps}")
+                        end_address = "Error parsing endgps"
+
+                # Determine in_address and out_address
+                if start_address and get_people and get_geofence_data:
+                    eventlog_entry['in_address'] = (
+                        f"{start_address} (Inside Geofence)"
+                        if is_point_in_geofence(
+                            start_coordinates[1], start_coordinates[0], get_geofence_data[0]['geofence']
+                        )
+                        else f"{start_address} (Outside Geofence)"
+                    )
+                else:
+                    eventlog_entry['in_address'] = start_address or "Unknown address"
+
+                if end_address and get_people and get_geofence_data:
+                    eventlog_entry['out_address'] = (
+                        f"{end_address} (Inside Geofence)"
+                        if is_point_in_geofence(
+                            end_coordinates[1], end_coordinates[0], get_geofence_data[0]['geofence']
+                        )
+                        else f"{end_address} (Outside Geofence)"
+                    )
+                else:
+                    eventlog_entry['out_address'] = end_address or "Unknown address"
+
+                eventlog_entry['base_address'] = base_address
+                return rp.JsonResponse(resp, status=200)
+
+            except self.P['model'].objects.model.DoesNotExist:
+                logger.error(f"Model not found for uuid: {R.get('uuid')}")
+                return rp.JsonResponse({'error': 'Data not found'}, status=404)
+
+            except Exception as e:
+                logger.error(f"Unexpected error: {e}")
+                return rp.JsonResponse({'error': 'Internal server error'}, status=500)
+
+        return rp.JsonResponse({'error': 'Invalid request'}, status=400)
+
+import time
+from requests.exceptions import RequestException
+
+def get_address(lat, lon):
+    if lat == 0.0 and lon == 0.0:
+        return "Invalid coordinates"
+
+    for attempt in range(3):  # Retry up to 3 times
+        try:
+            response = av_utils.get_address_from_coordinates(lat, lon)
+            if response and response.get('full_address'):
+                return response.get('full_address')
+        except RequestException as e:
+            logger.warning(f"Retrying due to error: {e}")
+            time.sleep(2 ** attempt)  # Exponential backoff
+    logger.error(f"Failed to retrieve address after retries for coordinates: {lat}, {lon}")
+    return "Address lookup failed"
+
     
 class GetAllSites(LoginRequiredMixin, View):
    

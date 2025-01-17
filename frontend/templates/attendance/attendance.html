@@ -534,7 +534,6 @@ tr{
                 {data:'peventtype__taname', title:'Type', width:"4%"},//0
                 {data:'bu__buname', title:'Site Name',
                 render: function (data, type, row, meta) {
-                    console.log("---------------->>>>>>", row)
                     let startCoords = typeof row['sL'] === 'string' && row['sL'].length > 0 ? JSON.parse(row['sL']) : 'NONE';
                     let endCoords = typeof row['eL'] === 'string' && row['eL'].length > 0 ? JSON.parse(row['eL']) : 'NONE';
                     let startLocation = {}
