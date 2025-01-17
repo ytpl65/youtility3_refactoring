@@ -7,6 +7,8 @@ from django.shortcuts import render
 from django.views import View
 import apps.attendance.forms as atf
 import apps.attendance.models as atdm
+import apps.onboarding.models as ob
+from apps.activity import models as am
 from .filters import AttendanceFilter
 import apps.peoples.utils as putils
 from apps.service.utils import save_linestring_and_update_pelrecord
@@ -31,9 +33,9 @@ class Attendance(LoginRequiredMixin, View):
         'model': atdm.PeopleEventlog,
         'filter': AttendanceFilter,
         'form_initials':{},
-        'fields': ['id', 'people__peoplename', 'people__peoplecode', 'verifiedby__peoplename', 'peventtype__taname','peventtype__tacode', 'bu__buname', 'datefor','uuid',
+        'fields': ['id', 'people__peoplename', 'people__peoplecode', 'verifiedby__peoplename', 'peventtype__taname','peventtype__tacode', 'bu__buname', 'datefor','uuid', 'people__id',
                    'punchintime', 'punchouttime', 'facerecognitionin', 'facerecognitionout','shift__shiftname', 'ctzoffset', 'peventlogextras', 'sL', 'eL', 'people__location__locname',
-                   'shift__starttime','shift__endtime']}
+                   'people__mobno', 'bu__siteincharge__peoplename', 'bu__siteincharge__mobno', 'bu__siteincharge__email']}
 
     def get(self, request, *args, **kwargs):
         R, P, resp = request.GET, self.params, None
@@ -62,6 +64,43 @@ class Attendance(LoginRequiredMixin, View):
             self.params.update(d)
             objs = self.params['model'].objects.get_peopleevents_listview(P['related'], P['fields'], request)
             return rp.JsonResponse({'data':list(objs)}, status=200)
+
+        if request.GET.get("action") == "getLocationStatus":
+            people_id = request.GET.get("peopleid")
+            # client_code = request.GET.get("clientcode")
+
+            # Query geofence_id
+            get_geofence_id = am.Job.objects.filter(
+                people_id=people_id, identifier='GEOFENCE'
+            ).values('geofence_id')
+            
+            # Check if geofence_id exists
+            if not get_geofence_id.exists():
+                return rp.JsonResponse({"error": "No geofence_id found for this people_id"}, status=404)
+            
+            geofence_id = get_geofence_id[0]['geofence_id']
+
+            # Query geofence
+            get_geofence = ob.GeofenceMaster.objects.filter(id=geofence_id, enable=True).exclude(id=1).values('geofence')
+            
+            # Check if geofence exists
+            if not get_geofence.exists():
+                return rp.JsonResponse({"error": "Geofence not found or disabled"}, status=404)
+            
+            try:
+                from shapely.wkt import loads
+                # Clean WKT and process polygon
+                geofence_wkt_cleaned = str(get_geofence[0]['geofence']).split(";")[1]
+                polygon = loads(geofence_wkt_cleaned)
+                coordinates_list = list(polygon.exterior.coords)
+                
+                # Return coordinates
+                return rp.JsonResponse({"geofence_coords": coordinates_list}, status=200)
+
+            except Exception as e:
+                print(f"Error: {e}")
+                return rp.JsonResponse({"error": str(e)}, status=500)
+
 
         # return attemdance_form empty
         if R.get('action', None) == 'form': 

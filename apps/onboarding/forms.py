@@ -106,6 +106,7 @@ class BtForm(forms.ModelForm):
         'invalid_latlng'  : "Please enter a correct gps coordinates.",
         'invalid_permissibledistance':"Please enter a correct value for Permissible Distance",
         'invalid_solid': "Please enter a correct value for Sol id",
+        'invalid_name'  : "[Invalid text] Only these special characters [-, _, @, #, . , &] are allowed in name field",                   
     }
     parent = forms.ModelChoiceField(label='Belongs to', required = False, widget = s2forms.Select2Widget, queryset = obm.Bt.objects.all())
     controlroom = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=False, label='Control Room')
@@ -223,6 +224,13 @@ class BtForm(forms.ModelForm):
             if not re.match(regex, str(val)):
                 raise forms.ValidationError(self.error_msg['invalid_solid'])
         return val
+    
+    def clean_buname(self):
+        if value := self.cleaned_data.get('buname'):
+            regex = "^[a-zA-Z0-9\-_@#.\(\|\)& ]*$"
+            if not re.match(regex, value):
+                raise forms.ValidationError(self.error_msg['invalid_name'])
+        return value
 
 
 
@@ -233,7 +241,7 @@ class ShiftForm(forms.ModelForm):
         'invalid_code2': "[Invalid code] Only ('-', '_') special characters are allowed",
         'invalid_code3': "[Invalid code] Code should not endwith '.' ",
         'max_hrs_exceed': "Maximum hours in a shift cannot be greater than 12hrs",
-        "min_hrs_required": "Minimum hours of a shift should be atleast 5hrs",
+        "min_hrs_required": "Minimum hours of a shift should be greater than 4hrs",
         "invalid_overtime": "Overtime hours cannot exceed regular shift duration"
     }
     shiftduration = forms.CharField(widget = forms.TextInput(attrs={'readonly':True}), label="Duration", required = False)
@@ -470,6 +478,7 @@ class ImportForm(forms.Form):
         ('SCHEDULEDTOURS', 'Scheduled Tours'),
         ('GEOFENCE', 'Geofence'),
         ('GEOFENCE_PEOPLE', 'Geofence People'),
+        ('SHIFT', 'Shift'),
         ('BULKIMPORTIMAGE','Bulk Import Image')
     ]
     importfile = forms.FileField(required = True, label='Import File', max_length = 50, allow_empty_file = False)

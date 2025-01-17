@@ -124,6 +124,7 @@ class GeneratePDF(BaseModel):
     class DocumentType(models.TextChoices):
         PF        = ('PF', 'PF')
         ESIC      = ('ESIC', 'ESIC')
+        PAYROLL   = ('PAYROLL', 'PAYROLL')
 
     document_type = models.CharField('Document Type', choices = DocumentType.choices, null=True, max_length = 60)    
     company = models.CharField('Company', choices = Company.choices, null=True, max_length = 60)

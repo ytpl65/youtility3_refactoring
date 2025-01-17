@@ -171,9 +171,16 @@ class ApproverForm(forms.ModelForm):
         ).values_list('tacode', 'taname')
         self.fields['sites'].choices = Pgbelonging.objects.get_assigned_sites_to_people(
             self.request.user.id, makechoice=True)
+        # approvers = Approver.objects.filter(identifier = 'APPROVER',client_id = S['client_id']).values('people_id')
+        # approver_ids = [item['people_id'] for item in approvers]
+        # print('approver ids', approver_ids)
+        # verifiers = Approver.objects.filter(identifier = 'VERIFIER',client_id = S['client_id']).values('people_id')
+        # verifier_ids = [item['people_id'] for item in verifiers]
+        # print('verifeir ids',verifier_ids)
         self.fields['people'].queryset = People.objects.filter(
             client_id = S['client_id'], isverified=True, enable=True
         )
+
         
     def clean(self):
         cd = super().clean()

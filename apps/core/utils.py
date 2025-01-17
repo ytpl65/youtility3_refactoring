@@ -36,6 +36,7 @@ from apps.work_order_management.models import Approver
 from django.db import models
 from django.contrib.gis.db.models.functions import AsGeoJSON
 from django.db.models.functions import Cast, Concat, Substr, StrIndex, TruncSecond
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger('__main__')
 dbg = logging.getLogger('__main__').debug
@@ -1860,6 +1861,18 @@ def download_qrcode(code, name, report_name, session, request):
                               formdata={'print_single_qr':code, 'qrsize':200, 'name':name}, request=request, returnfile=False)
     return report.execute()
 
+def validate_date_format(date_value, field_name):
+    from datetime import datetime
+    if date_value:
+        # Convert Timestamp to string, if necessary
+        if isinstance(date_value, datetime):
+            date_value = date_value.strftime('%Y-%m-%d')
+        try:
+            datetime.strptime(date_value, '%Y-%m-%d')  # Validate date format
+        except ValueError:
+            raise ValidationError(f"{field_name} must be a valid date in the format YYYY-MM-DD")
+
+
 # Header Mapping
 HEADER_MAPPING  = {
     'TYPEASSIST': [
@@ -1874,7 +1887,7 @@ HEADER_MAPPING  = {
         'Current Address', 'Blacklist',  'Alert Mails'],
     
     'BU': [
-        'Code*', 'Name*', 'Belongs To*', 'Type*', 'Site Type', \
+        'Code*', 'Name*', 'Belongs To*', 'Type*', 'Site Type', 'Control Room', 'Permissible Distance',
         'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'State', 'Country', 'City'],
     
     'QUESTION':[
@@ -1929,15 +1942,16 @@ HEADER_MAPPING  = {
     ],
     'GEOFENCE': ['Code*', 'Name*', 'Site*', 'Client*','Alert to People*', 'Alert to Group*', 'Alert Text*', 'Enable', 'Radius*'],
     'GEOFENCE_PEOPLE': ['Code*', 'People Code*','Site*', 'Client*', 'Valid From*', 'Valid To*', 'Start Time*', 'End Time*'],
+    'SHIFT': ['Name*', 'Start Time*', 'End Time*', 'People Count*', 'Night Shift*', 'Site*','Client*', 'Enable*', 'Shift Data*'],
 }
 
 Example_data = {
     'TYPEASSIST': [('Reception Area','RECEPTION' , 'LOCATIONTYPE', 'CLIENT_A'),
                    ('Bank','BANK','SITETYPE','CLIENT_B'),
                    ('Manager','MANAGER','DESIGNATIONTYPE','CLIENT_C')],
-            'BU': [('MUM001','Site A','NONE','BRANCH','BANK','John Doe','123','TRUE','19.05,73.51','123 main street, xyz city','California','USA','Valparaíso'),
-                   ('MUM002','Site B','MUM001','ZONE','OFFICE','Jane Smith','456','FALSE','19.05,73.51','124 main street, xyz city','New York','Canada','Hobart'),
-                   ('MUM003','Site C','NONE','SITE','SUPERMARKET','Ming Yang','789','TRUE','19.05,73.51','125 main street, xyz city','california','USA','Manarola')],
+            'BU': [('MUM001','Site A','NONE','BRANCH','BANK',['CRAND','CRGCH'],'12','John Doe','123','TRUE','19.05,73.51','123 main street, xyz city','California','USA','Valparaíso'),
+                   ('MUM002','Site B','MUM001','ZONE','OFFICE',['CRAND','CRGCH'],'8','Jane Smith','456','FALSE','19.05,73.51','124 main street, xyz city','New York','Canada','Hobart'),
+                   ('MUM003','Site C','NONE','SITE','SUPERMARKET',['CRAND','CRGCH'],'0','Ming Yang','789','TRUE','19.05,73.51','125 main street, xyz city','california','USA','Manarola')],
       'LOCATION': [('LOC001','Location A','GROUNDFLOOR','WORKING','TRUE','NONE','SITE_A','CLIENT_A','19.05,73.51','TRUE'),
                     ('LOC002','Location B','MAINENTRANCE','SCRAPPED','FALSE','MUM001','SITE_B','CLIENT_A','19.05,73.52','FALSE'),
                     ('LOC003','Location C','FIRSTFLOOR','RUNNING','TRUE','NONE','SITE_C','CLIENT_A','19.05,73.53','TRUE')],
@@ -1993,7 +2007,72 @@ Example_data = {
                         ('GEO001','P023456','SITE_A','CLIENT_A','17-12-2024','20-12-2024','10:00:00','06:00:00'),
                         ('GEO002','P023457','SITE_B','CLIENT_B','18-12-2024','21-12-2024','10:00:00','06:00:00'),
                         ('GEO003','P023458','SITE_C','CLIENT_C','19-12-2024','22-12-2024','10:00:00','06:00:00')
-                 ]}
+                 ],
+    'SHIFT': [('General Shift','20:00:00','08:00:00','3','FALSE','SITE_A','CLIENT_A','TRUE',{
+                "gracetime": "",
+                "designation_details": [
+                    {
+                    "id": 1,
+                    "count": "2",
+                    "designation": "Roaming Patrol Officer (RPO)",
+                    "people_code": []
+                    },
+                    {
+                    "id": 2,
+                    "count": "2",
+                    "designation": "Software Developer (SD)",
+                    "people_code": []
+                    },
+                    {
+                    "id": 3,
+                    "count": "6",
+                    "designation": "Chief Accountant (CACCTS)",
+                    "people_code": []
+                    }
+                ]
+                }),
+                ('Night Shift','22:00:00','06:00:00','2','FALSE','SITE_B','CLIENT_B','FALSE',{
+                    "gracetime": "",
+                    "designation_details": [
+                        {
+                        "id": 1,
+                        "count": "2",
+                        "designation": "Roaming Patrol Officer (RPO)",
+                        "people_code": []
+                        },
+                        {
+                        "id": 2,
+                        "count": "2",
+                        "designation": "Software Developer (SD)",
+                        "people_code": []
+                        }
+                    ]
+                    }),
+                ('Test Shift','12:30:00','17:30:00','3','TRUE','SITE_C','CLIENT_C','TRUE',{
+                    "gracetime": "",
+                    "designation_details": [
+                        {
+                        "id": 1,
+                        "count": "2",
+                        "designation": "Roaming Patrol Officer (RPO)",
+                        "people_code": []
+                        },
+                        {
+                        "id": 2,
+                        "count": "2",
+                        "designation": "Software Developer (SD)",
+                        "people_code": []
+                        },
+                        {
+                        "id": 3,
+                        "count": "6",
+                        "designation": "Chief Accountant (CACCTS)",
+                        "people_code": []
+                        }
+                    ]
+                    }),
+             ],
+    }
 
 def excel_file_creation(R):
     import pandas as pd
@@ -2035,13 +2114,13 @@ HEADER_MAPPING_UPDATE = {
     'PEOPLE': [
         'ID*','Code', 'Name', 'User For', 'Employee Type', 'Login ID', 'Gender',
         'Mob No', 'Email', 'Date of Birth', 'Date of Join', 'Client', 
-        'Site', 'Designation', 'Department', 'Work Type', 'Report To',
+        'Site', 'Designation', 'Department', 'Work Type', 'Enable','Report To',
         'Date of Release', 'Device Id', 'Is Emergency Contact',
         'Mobile Capability', 'Report Capability', 'Web Capability', 'Portlet Capability',
         'Current Address', 'Blacklist',  'Alert Mails'
     ],
     'BU': [
-        'ID*','Code', 'Name', 'Belongs To', 'Type', 'Site Type', \
+        'ID*','Code', 'Name', 'Belongs To', 'Type', 'Site Type', 
         'Site Manager', 'Sol Id', 'Enable', 'GPS Location', 'Address', 'City', 'State', 'Country'
     ],
     'QUESTION':[
@@ -2115,12 +2194,12 @@ Example_data_update = {
                    ('528','VENDOR_B','Vendor B','MECHANICAL','124 main street, xyz city','XYZ@gmail.com','FALSE','911478529630','SITE_B','CLIENT_B','19.05,73.51','FALSE'),
                    ('529','VENDOR_C','Vendor C','ELECTRICAL','125 main street, xyz city','XYZ@gmail.com','TRUE','913698521470','SITE_C','CLIENT_C','19.05,73.51','TRUE')],
         'PEOPLE':[('2422','PERSON_A','Person A','Web','STAFF','A123','M','911234567891','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_A','SITE_A',
-                    'MANAGER','HR','CPO','NONE','yyyy-mm-dd','513bb5f9c78c9117','TRUE',"SELFATTENDANCE, TICKET,INCIDENTREPORT,SOS,SITECRISIS,TOUR",'NONE',	
+                    'MANAGER','HR','CPO','TRUE','NONE','yyyy-mm-dd','513bb5f9c78c9117','TRUE',"SELFATTENDANCE, TICKET,INCIDENTREPORT,SOS,SITECRISIS,TOUR",'NONE',	
                     'TR_SS_SITEVISIT,DASHBOARD,TR_SS_SITEVISIT,TR_SS_CONVEYANCE,TR_GEOFENCETRACKING','NONE','123 main street, xyz city','FALSE','TRUE'),
                    ('2423','PERSON_B','Person B','Mobile','SECURITY','B456','F','913698521477','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_B','SITE_B',	
-                    'SUPERVISOR','TRAINING','EXEC','NONE','yyyy-mm-dd','513bb5f9c78c9118','FALSE','NONE','NONE','NONE','NONE','124 main street, xyz city','FALSE','FALSE'),
+                    'SUPERVISOR','TRAINING','EXEC','FALSE','NONE','yyyy-mm-dd','513bb5f9c78c9118','FALSE','NONE','NONE','NONE','NONE','124 main street, xyz city','FALSE','FALSE'),
                    ('2424','PERSON_C','Person C','NONE','ADMIN','C8910','O','912587891463','abc@gmail.com','yyyy-mm-dd','yyyy-mm-dd','CLIENT_C','SITE_C','RPO','ACCOUNTS',
-                    'ASM','NONE','yyyy-mm-dd','513bb5f9c78c9119','TRUE','NONE','NONE','NONE','NONE','125 main street, xyz city', 'FALSE','TRUE')],
+                    'ASM','TRUE','NONE','yyyy-mm-dd','513bb5f9c78c9119','TRUE','NONE','NONE','NONE','NONE','125 main street, xyz city', 'FALSE','TRUE')],
        'QUESTION': [('995','Are s/staff found with correct accessories / pressed uniform?','MULTILINE','NONE','NONE','NONE','NONE','TRUE','','','TRUE','TRUE','NONE','CLIENT_A','NONE','NONE'),
                     ('996','Electic Meter box is ok?','DROPDOWN','NONE','NONE','NONE','NONE','FALSE','No, Yes, N/A','','TRUE','TRUE','NONE','CLIENT_B','NONE','NONE'),
                     ('997','All lights working','DROPDOWN','NONE','NONE','NONE','NONE','TRUE','No, Yes, N/A','','TRUE','TRUE','NONE','CLIENT_C', 'NONE','NONE')],
@@ -2320,7 +2399,7 @@ def get_type_data(type_name, S):
                             blacklist=F('people_extras__blacklist'),
                             alertmails=F('people_extras__alertmails'),
                 ).values_list('id', 'peoplecode', 'peoplename', 'user_for', 'peopletype__tacode', 'loginid', 'gender', 'mobno', 'email', 'dateofbirth', 'dateofjoin',
-                        'client__bucode', 'bu__bucode', 'designation__tacode', 'department__tacode', 'worktype__tacode', 'reportto__peoplename', 'dateofreport',
+                        'client__bucode', 'bu__bucode', 'designation__tacode', 'department__tacode', 'worktype__tacode', 'enable', 'reportto__peoplename', 'dateofreport',
                         'deviceid', 'isemergencycontact', 'mobilecapability', 'reportcapability', 'webcapability', 'portletcapability', 'currentaddress', 
                         'blacklist', 'alertmails')
         else:
@@ -2342,7 +2421,7 @@ def get_type_data(type_name, S):
                        blacklist=F('people_extras__blacklist'),
                        alertmails=F('people_extras__alertmails'),
             ).values_list('id', 'peoplecode', 'peoplename', 'user_for', 'peopletype__tacode', 'loginid', 'gender', 'mobno', 'email', 'dateofbirth', 'dateofjoin',
-                     'client__bucode', 'bu__bucode', 'designation__tacode', 'department__tacode', 'worktype__tacode', 'reportto__peoplename', 'dateofreport',
+                     'client__bucode', 'bu__bucode', 'designation__tacode', 'department__tacode', 'worktype__tacode', 'enable', 'reportto__peoplename', 'dateofreport',
                      'deviceid', 'isemergencycontact', 'mobilecapability', 'reportcapability', 'webcapability', 'portletcapability', 'currentaddress', 
                      'blacklist', 'alertmails')
         return list(objs)

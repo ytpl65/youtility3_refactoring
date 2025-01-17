@@ -351,26 +351,39 @@ function initAutocomplete() {
 
   });
 
-  //create geofence button
-  const createGFBtn = document.createElement('button')
-  createGFBtn.id = 'btnCreateGF'
-  createGFBtn.textContent = "Create Geofence"
-  createGFBtn.className = "btn btn-secondary  ms-2 mb-2"
-  createGFBtn.title = "Click to create the Geofence";
+  // create geofence button
+const createGFBtn = document.createElement('button')
+createGFBtn.id = 'btnCreateGF'
+createGFBtn.textContent = "Create Geofence"
+createGFBtn.className = "btn btn-outline-primary ms-2 mb-2"
+createGFBtn.style.color = "#007bff";  // Professional text color (primary blue)
+createGFBtn.style.backgroundColor = "#ffe4e1";  // Light background color for contrast
+createGFBtn.style.borderColor = "#007bff";  // Matching border color
+createGFBtn.style.border = "1px solid #007bff";
+createGFBtn.title = "Click to create the Geofence";
 
-  //clear geofence button
-  const clearGFBtn = document.createElement('button')
-  clearGFBtn.id = 'btnClearGF'
-  clearGFBtn.textContent = "Clear Geofence"
-  clearGFBtn.className = "btn btn-secondary  ms-2 mb-2"
-  clearGFBtn.title = "Click to clear the Geofence";
+// clear geofence button
+const clearGFBtn = document.createElement('button')
+clearGFBtn.id = 'btnClearGF'
+clearGFBtn.textContent = "Clear Geofence"
+clearGFBtn.className = "btn btn-outline-danger ms-2 mb-2"
+clearGFBtn.style.color = "#dc3545";  // Professional text color (danger red)
+clearGFBtn.style.backgroundColor = "#ffe4e1";  // Light background color for contrast
+clearGFBtn.style.borderColor = "#dc3545";  // Matching border color
+clearGFBtn.style.border = "1px solid #dc3545";
+clearGFBtn.title = "Click to clear the Geofence";
 
-  //create new geofence
-  const createNewBtn =  document.createElement('button')
-  createNewBtn.id = 'btnCreateNew'
-  createNewBtn.textContent = "Create New"
-  createNewBtn.className = "btn btn-secondary  ms-2"
-  createNewBtn.title = "Click to create a new geofence from start";
+// create new geofence
+const createNewBtn =  document.createElement('button')
+createNewBtn.id = 'btnCreateNew'
+createNewBtn.textContent = "Create New"
+createNewBtn.className = "btn btn-outline-success ms-2"
+createNewBtn.style.color = "#28a745";  // Professional text color (success green)
+createNewBtn.style.backgroundColor = "#ffe4e1";  // Light background color for contrast
+createNewBtn.style.borderColor = "#28a745";  // Matching border color
+createNewBtn.style.border = "1px solid #28a745";
+createNewBtn.title = "Click to create a new geofence from start";
+
 
 
   //search-radius-form controls
@@ -451,22 +464,23 @@ function initAutocomplete() {
         return;
       }
 
-      const icon = {
-        url: place.icon,
-        size: new google.maps.Size(71, 71),
-        origin: new google.maps.Point(0, 0),
-        anchor: new google.maps.Point(17, 34),
-        scaledSize: new google.maps.Size(25, 25),
+      const customIcon = {
+        url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+            <circle cx="16" cy="16" r="10" fill="red" stroke="#FFC0CB" stroke-width="2"/>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(32, 32), // Adjust size as needed
       };
       
       let marker = new google.maps.Marker({
-          map,
-          icon,
-          title: place.name,
-          position: place.geometry.location,
-          animation:google.maps.Animation.DROP,
-          draggable: true,
-        })
+        map,
+        icon: customIcon,
+        title: place.name,
+        position: place.geometry.location,
+        animation: google.maps.Animation.DROP,
+        draggable: true,
+      });      
       
       // Create a marker for each place.
       markers.push(

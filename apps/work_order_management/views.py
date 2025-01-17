@@ -932,7 +932,7 @@ class ApproverView(LoginRequiredMixin, View):
     }
 
     def get(self, request, *args, **kwargs):
-        R, resp, P = request.GET, None, self.params
+        R, resp, P ,S= request.GET, None, self.params,request.session
 
         # return cap_list data
         if R.get('template'): return render(request, P['template_list'])
@@ -946,6 +946,13 @@ class ApproverView(LoginRequiredMixin, View):
             cxt = {'approver_form': P['form_class'](request = request),
                    'msg': "create approver requested"}
             resp = utils.render_form(request, P, cxt)
+
+        # elif R.get('action',None) == 'verifier_approver':
+        #     existing_verifier = Approver.objects.filter(identifier = 'VERIFIER',client_id = S['client_id']).values('people_id')
+        #     existing_approver = Approver.objects.filter(identifier = 'APPROVER',client_id = S['client_id']).values('people_id')
+        #     print('approvers',existing_approver)
+        #     print('verifiers',existing_verifier)
+        #     pass 
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):

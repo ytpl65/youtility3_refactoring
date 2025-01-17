@@ -846,17 +846,21 @@ class GeneratePdf(LoginRequiredMixin, View):
         try:
             data = json.loads(request.body)
             file_name = data['file_name']
+            page_required = data['page_required']
             file_path = rutils.find_file(data['file_name'])
             if file_path:
                 if data["document_type"] == 'PF':
                     uan_list= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[0]
-                else:
+                elif data["document_type"] == 'ESIC':
                     uan_list= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[1]
+                else:
+                    people_code= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[2]
+                    people_acc_no= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[3]
+                    uan_list = [people_code, people_acc_no]
                 input_pdf_path = file_path
                 output_pdf_path = rutils.trim_filename_from_path(input_pdf_path) + 'downloaded_file.pdf'
                 if len(uan_list) != 0 :
-                    highlight_text_in_pdf(input_pdf_path, output_pdf_path, uan_list)
-                
+                    highlight_text_in_pdf(input_pdf_path, output_pdf_path, uan_list, page_required)
                     # Generate a response with the PDF file
                     with open(output_pdf_path, 'rb') as pdf:
                         pdf_content = pdf.read()
@@ -904,8 +908,7 @@ def getClient(company):
         client = FrappeClient(server_url, api_key=api_key, api_secret=secerate_key)
     elif company == 'TARGET':
         server_url = 'http://leave.spsindia.com:8002'
-        secerate_key= 'ff6806a3f9bf5a8'
-        api_key= '87bf164dd684d03'
+         
         client = FrappeClient(server_url, api_key=api_key, api_secret=secerate_key)
     else:
         return None
@@ -935,31 +938,89 @@ def getCustomersSites(company, customer_code):
     #     return sites
 
 def getAllUAN(company, customer_code, site_code, periods):
-    filters= None
+    # Set filters based on the presence of site_code
+    filters = None
     if site_code:
-        filters= {'customer_code': customer_code, 'site': site_code, 'period': ['in', periods]}
+        filters = {'customer_code': customer_code, 'site': site_code, 'period': ['in', periods]}
     else:
-        filters= {'customer_code': customer_code, 'period': ['in', periods]}
-    fields= ['emp_id']
-    client= getClient(company)
+        filters = {'customer_code': customer_code, 'period': ['in', periods]}
+    
+    # Define fields to fetch from Processed Payroll and Difference Processed Payroll
+    fields = ['emp_id', 'pf_deduction_amount', 'pf_employee_amount', 'calcesi', 'esi_employee']
+    client = getClient(company)
+    
+    # Fetch data from Processed Payroll and Difference Processed Payroll
     processed_payroll_emp_list = get_frappe_data(company, 'Processed Payroll', filters, fields) or []
     difference_processed_payroll_emp_list = get_frappe_data(company, 'Difference Processed Payroll', filters, fields) or []
-    emp_id_list= []
-    if processed_payroll_emp_list or difference_processed_payroll_emp_list:
-        for row in processed_payroll_emp_list + difference_processed_payroll_emp_list:
-            emp_id_list.append(row["emp_id"])
-    filters= {'name': ['in', emp_id_list]}
-    fields= ['uan_number', "esi_number"]
-    uan_data= get_frappe_data(company, 'Employee', filters, fields) or []
-    return [uan_detail['uan_number'].strip() if uan_detail['uan_number'] else None for uan_detail in uan_data], [uan_detail['esi_number'].strip() if uan_detail['esi_number'] else None for uan_detail in uan_data]
+    
+    # Combine the two lists
+    combined_payroll_data = processed_payroll_emp_list + difference_processed_payroll_emp_list
+    emp_id_list = [row["emp_id"] for row in combined_payroll_data]
+    
+    # Fetch UAN data for the filtered employees
+    filters = {'name': ['in', emp_id_list]}
+    fields = ['uan_number', "esi_number", "employee", "bank_ac_no", 'employee_name', 'designation']
+    uan_data = get_frappe_data(company, 'Employee', filters, fields) or []
+    
+    # Prepare a dictionary for easier access to payroll data by emp_id
+    payroll_data_map = {row["emp_id"]: row for row in combined_payroll_data}
+    
+    # Separate fields into lists
+    uan_list = []
+    esic_list = []
+    employee_list = []
+    bank_ac_no_list = []
+    name_list = []
+    designation_list = []
+    pf_deduction_amount_list = []
+    pf_employee_amount_list = []
+    calcesi_list = []
+    esi_employee_list = []
+    
+    for uan_detail in uan_data:
+        emp_id = uan_detail.get('employee')
+        payroll_data = payroll_data_map.get(emp_id, {})
+        
+        # Append data to respective lists
+        uan_list.append(uan_detail.get('uan_number', '').strip())
+        esic_list.append(uan_detail.get('esi_number', '').strip())
+        employee_list.append(uan_detail.get('employee', '').strip())
+        bank_ac_no_list.append(uan_detail.get('bank_ac_no', '').strip())
+        name_list.append(uan_detail.get('employee_name', '').strip())
+        designation_list.append(uan_detail.get('designation', '').strip())
+        pf_deduction_amount_list.append(int(payroll_data.get('pf_deduction_amount', 0)))
+        pf_employee_amount_list.append(int(payroll_data.get('pf_employee_amount', 0)))
+        calcesi_list.append(int(payroll_data.get('calcesi', 0)))
+        esi_employee_list.append(int(payroll_data.get('esi_employee', 0)))
+    
+    return (
+        uan_list,
+        esic_list,
+        employee_list,
+        bank_ac_no_list,
+        name_list,
+        designation_list,
+        pf_deduction_amount_list,
+        pf_employee_amount_list,
+        calcesi_list,
+        esi_employee_list,
+    )
 
-def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):
+
+
+def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight, page_required):
     import fitz  # PyMuPDF library
 
     # Open the PDF
     document = fitz.open(input_pdf_path)
     pages_to_keep = []
     orange_color = (1, 0.647, 0)  # RGB values for orange
+
+    # Normalize the texts_to_highlight to a flat list
+    if any(isinstance(item, list) for item in texts_to_highlight):
+        normalized_texts_to_highlight = [text for sublist in texts_to_highlight for text in sublist]
+    else:
+        normalized_texts_to_highlight = texts_to_highlight
 
     # Function to handle text splitting
     def find_and_highlight_text(page, text):
@@ -990,16 +1051,13 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):
     for page_num in range(document.page_count):
         page = document[page_num]
         page_has_highlight = False
-        for text in texts_to_highlight:
+        for text in normalized_texts_to_highlight:
             if text and find_and_highlight_text(page, text):
                 page_has_highlight = True
 
-        if page_has_highlight or page_num == 0:  # Always keep the first page
+        # Logic to determine whether to keep the page
+        if not page_required or page_has_highlight or page_num == 0:
             pages_to_keep.append(page_num)
-
-    # Ensure the last page is included
-    if document.page_count - 1 not in pages_to_keep:
-        pages_to_keep.append(document.page_count - 1)
 
     # Create a new document with all pages to be kept
     new_document = fitz.open()
@@ -1010,6 +1068,7 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):
     new_document.save(output_pdf_path)
     new_document.close()
     document.close()
+
 
 # def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):        
 #     # Open the PDF
@@ -1104,3 +1163,55 @@ def upload_pdf(request):
     # return True, filename, fullpath
     response = {"filename": filename, "fullpath": fullpath}
     return HttpResponse(response, status=200)
+
+class GenerateLetter(LoginRequiredMixin, View):
+    PARAMS = {
+        'template_form':"reports/generate_pdf/generate_letter.html",
+        'form':rp_forms.GeneratePDFForm,
+    }
+    def get(self, request, *args, **kwargs):
+        import uuid
+        P = self.PARAMS
+        form = P['form'](request=request)
+        cxt = {
+            'form':form,
+            'ownerid' : uuid.uuid4()
+        }
+        return render(request, P['template_form'], context=cxt)
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            person_data = {}
+            person_data["uan_list"]= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[0]
+            person_data['esic_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[1]
+            person_data['employee_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[2]
+            person_data['name_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[4]
+            person_data['designation_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[5]
+            person_data['pf_deduction_amount_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[6]
+            person_data['pf_employee_amount_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[7]
+            person_data['calcesi_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[8]
+            person_data['esi_employee_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[9]
+            from django.http import HttpResponse
+            from weasyprint import HTML
+            from django.template.loader import render_to_string
+            if len(person_data) != 0 :
+                html_string = render_to_string("/reports/generate_pdf/letterpad_template.html", {
+                "Customer": data['customerName'],
+                "Site": data['siteName'],
+                "YearMonth": data['period_from'][0],
+                "PFCodeNo": data['pf_code_no'],
+                "ESICCodeNo": data['esic_code_no'],
+                "table_data": person_data
+            })
+            
+            # Convert HTML to PDF
+            pdf = HTML(string=html_string).write_pdf()
+            
+            # Send the PDF as a downloadable response
+            response = HttpResponse(pdf, content_type="application/pdf")
+            response["Content-Disposition"] = "attachment; filename=letterpad.pdf"
+            return response
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)

@@ -388,13 +388,14 @@ class GeofenceManager(models.Manager):
         return self.none()
 
     def getPeoplesGeofence(self, request):
-        
         searchterm = request.GET.get('search')
+        from django.db.models import Q
         qset = pm.People.objects.filter(
-            client_id = request.session['client_id'],
-            enable=True, isverified=True,
+            Q(client_id=request.session['client_id']) & 
+            Q(bu_id=request.session['bu_id']) & 
+            Q(enable=True) & 
+            Q(isverified=True)
         )
-        
         qset = qset.filter(peoplename__icontains = searchterm) if searchterm else qset
         qset = qset.annotate(
             text = Concat('peoplename', V(' ('), 'peoplecode', V(')'))
@@ -411,13 +412,14 @@ class ShiftManager(models.Manager):
         return self.filter(
             ~Q(shiftname='NONE'),
             client_id = S['client_id'],
-            bu_id = S['bu_id'],
-            enable = True
+            bu_id = S['bu_id'],enable = True
         ).annotate(
-        dsgn = Concat(F('designation__taname'), V(' ('), F('designation__tacode'), V(')'))    
+        dsgn = Concat(F('designation__taname'), V(' ('), 
+                      F('designation__tacode'), V(')'))    
         ).select_related('designation').values(
             'id', 'shiftname', 'dsgn', 'starttime',
-            'endtime', 'nightshiftappicable','bu__buname','bu__bucode'
+            'endtime', 'nightshiftappicable',
+            'bu__buname','bu__bucode'
         ) or self.none()
     
     def get_designations_data(self,request,id):

@@ -531,7 +531,7 @@
       {# BEGIN BRAND #}
       <div class="aside-logo flex-column-auto" id="kt_aside_logo">
         {# BEGIN LOGO #}
-        <a href="{{ url('onboarding:rp_dashboard') }}">
+        <a href="{% if request.session.sitecode not in ["SPSESIC", "SPSPAYROLL"] %}{{ url('onboarding:rp_dashboard') }}{% else %}{{ url('reports:generatepdf') }}{% endif %}">
           <img alt="Logo" src="{{static('assets/media/logos/youtilitylogo1.png')}}"
             class="h-150px ml-3 mt-3 logo w-180px" style="border-radius: 3px;">
         </a>

@@ -87,7 +87,7 @@ class PeopleForm(forms.ModelForm):
         'invalid_code'  : "Spaces are not allowed in [Code]",
         'invalid_code2' : "[Invalid text] Only ('-', '_') special characters are allowed",
         'invalid_code3' : "[Invalid text] Code should not endwith '.' ",                   
-        'invalid_name'  : "[Invalid text] Only these special characters [-, _, @, #] are allowed in name field",                   
+        'invalid_name'  : "[Invalid text] Only these special characters [-, _, @, #, ., &] are allowed in name field",                   
     }
 
     # defines field rendering order

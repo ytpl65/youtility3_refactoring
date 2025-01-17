@@ -1,7 +1,7 @@
 <div class="menu menu-column menu-title-gray-800 menu-state-title-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow text-white mb-1-gray-500"
     id="kt_aside_menu" data-kt-menu="true">
-    {% if request.session.sitecode not in ["SPSESIC"] %}
-    <!---DASHBOARD--->
+    {% if request.session.sitecode not in ["SPSESIC", "SPSPAYROLL"] %}
+    <!----DASHBOARD---->
     <div class="menu-item" id="DASHBOARD" style="display:none;">
         <a class="menu-link" href="{{ url('onboarding:rp_dashboard') }}">
             <span class="menu-icon">
@@ -207,6 +207,14 @@
                             <span class="menu-title">People</span>
                         </a>
                     </div>
+                    <div class="menu-item" id="OB_GEOFENCE">
+                        <a class="menu-link" href="{{ url('onboarding:geofence') }}?template=true">
+                          <span class="menu-bullet">
+                            <span class="bullet bullet-dot"></span>
+                          </span>
+                          <span class="menu-title">Geofence</span>
+                        </a>
+                    </div>
                     <div class="menu-item" id="OB_CS_SITEGROUP">
                         <a class="menu-link" href="{{ url('peoples:sitegroup') }}?template=true">
                             <span class="menu-bullet">
@@ -252,14 +260,6 @@
                     <span class="menu-title">Location</span>
                 </a>
             </div>
-            <div class="menu-item" id="OB_GEOFENCE">
-            <a class="menu-link" href="{{ url('onboarding:geofence') }}?template=true">
-              <span class="menu-bullet">
-                <span class="bullet bullet-dot"></span>
-              </span>
-              <span class="menu-title">Geofence</span>
-            </a>
-          </div>
             <div class="menu-item" id="OB_ASSET">
                 <a class="menu-link" href="{{ url('activity:asset') }}?template=true&type=QUESTIONSET">
                     <span class="menu-bullet">
@@ -705,7 +705,6 @@
     </div> #}
     {% endif %}
     {% else %}
-   
     <div class="menu-item" id="DASHBOARD" style="">
         <a class="menu-link" href="/reports/generatepdf/">
             <span class="menu-icon">
@@ -720,6 +719,19 @@
             <span class="menu-title">Generate PDF</span>
         </a>
     </div>
-    
+    {% if request.session.sitecode in ["SPSESIC"] %}
+    <div class="menu-item" id="DASHBOARD" style="">
+        <a class="menu-link" href="/reports/generateletter/">
+            <span class="menu-icon">
+                <span class="svg-icon svg-icon-2">
+                    <span class="material-symbols-outlined">
+                        description
+                    </span>
+                </span>
+            </span>
+            <span class="menu-title">Generate Letter</span>
+        </a>
+    </div>
+    {% endif %}
     {% endif %}
 </div>
