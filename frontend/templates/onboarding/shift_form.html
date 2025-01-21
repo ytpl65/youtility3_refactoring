@@ -109,6 +109,23 @@ Shift Form
             </div>
         </div>
     </div>
+    <!-- Validation Error Modal -->
+    <div class="modal fade" id="validationErrorModal" tabindex="-1" aria-labelledby="validationErrorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered"> <!-- Added modal-dialog-centered class -->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="validationErrorModalLabel">Validation Error</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="validationErrorMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </form>
 {% endblock form %}
 
@@ -273,14 +290,18 @@ Shift Form
         // Convert times from UTC to IST on form load
         const startTime = $("#id_starttime").val();
         const endTime = $("#id_endtime").val();
-        
+
+        const shift_designwise_counts = {{ designation_wise_count }}
+        const contract_designwise_counts = {{ count_as_per_design }}
+        const ppl_count_on_shift = {{ total_shifts_ppl_count }}
+        const ppl_count_on_contract = {{ total_ppl_count_on_site }}
+
         if (startTime) {
             $("#id_starttime").val(convertToIST(startTime));
         }
         if (endTime) {
             $("#id_endtime").val(convertToIST(endTime));
         }
-
 
         // Set ctzoffset
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset());
@@ -357,6 +378,16 @@ Shift Form
         $("#shiftform").on('submit', function(e) {
             var form = $(this);
             e.preventDefault();
+            var total_ppl_count = parseInt($("#id_peoplecount").val() || 0);
+            var current_shift_ppl_count = {{ current_shift_ppl_count }};
+    
+            if(total_ppl_count + ppl_count_on_shift - current_shift_ppl_count > ppl_count_on_contract){
+            const balance_ppl = ppl_count_on_contract - ppl_count_on_shift;
+            show_error_alert(`Total Allowed People count on site is ${ppl_count_on_contract}. 
+                                You have already assigned ${ppl_count_on_shift} people to other shifts. 
+                                You can only assign ${balance_ppl} people to this shift.`);
+            return;}
+            
             if (isValidPositiveNumber($('#id_captchafreq').val()) && isValidPositiveNumber($('#id_peoplecount').val())){
                 const params = {url: "{{ url('onboarding:shift') }}", modal: false};
                 const id = "{{ shift_form.instance.pk }}";
@@ -425,12 +456,12 @@ Shift Form
                     {label: "People count", name: "count", type: "text", attr: {
                         type: 'number',
                         min: '1'
-                    }},
+                    } },
                     {label: "Overtime (hours)", name: "overtime", type: "text", attr: {
                         type: 'number',
                         min: '0',
                         step: '0.5'  
-                    }},
+                    } },
                     {
                         label: "Grace Time (minutes)", 
                         name: "gracetime", 
@@ -450,39 +481,28 @@ Shift Form
             $("#DTE_Field_designation").addClass("form-control form-select");
             $("#DTE_Field_count").addClass("form-control");
             $("#DTE_Field_overtime").addClass("form-control");
+            var designation_choices_from_server = {{ designation_choices }};
 
-            //if (action == 'create' || action == 'edit') {
-            // fectching designation choices from form instance
-            var designation_choices =[{ label: "-------", value: "" }];
-            $("#id_designation option").each(function() {
-                var value = $(this).val();
-                var label = $(this).text();
-                console.log('value',value)
-                console.log('label',label)
-                if (value) {
-
-                    designation_choices.push({label: label, value: value});
-                }
-            });
-            console.log('designation choices',designation_choices)
-
-            // showing the drop down data from list of dictionary value 
-            editor.field('designation').update(designation_choices);
-            
             if (action === 'edit') {
                 // Get the current row data
                 var currentRow = table.row({ selected: true }).data();
-                console.log('currentroe',currentRow.designation)
                 if (currentRow) {
-                    // Set the value after a brief delay to ensure options are loaded
-                    setTimeout(() => {
-                        editor.field('designation').val(currentRow.designation);
-                    }, 100);
-                }             
-            }
-            else if (action === 'create') {
+                    // Find the corresponding value for the label from designation_choices_from_server
+                    var selectedValue = Object.keys(designation_choices_from_server).find(key => designation_choices_from_server[key] === currentRow.designation);
+                    // Clear all options and add only the selected row's designation
+                    editor.field('designation').update([{ label: currentRow.designation, value: selectedValue }]);
+                    // Set the value to the selected row's designation
+                    editor.field('designation').val(selectedValue);
+                }
+            } else if (action === 'create') {
+                // Populate the designation choices array from server data
+                var designation_choices = [{ label: "-------", value: "" }];
+                $.each(designation_choices_from_server, function(key, value) {
+                    designation_choices.push({ label: value, value: key });
+                });
+                // Updating the editor field with designation choices
+                editor.field('designation').update(designation_choices);
                 editor.field('designation').val("");
-            
             }
 
         });
@@ -508,6 +528,15 @@ Shift Form
                     this.error('count', 'People count must be greater than 0.');
                     return false;
                 }
+                                
+                var current_shift_design_count = {{ current_shift_designation_counts }};
+                if (shift_designwise_counts[rowData.designation] + rowCount - current_shift_design_count[rowData.designation] > contract_designwise_counts[rowData.designation]){
+                    this.error('count', `Total Allowed People count for ${rowData.designation} is 
+                                        ${contract_designwise_counts[rowData.designation]}, You have already assigned ${shift_designwise_counts[rowData.designation] - current_shift_design_count[rowData.designation]},
+                                        You can only assign ${contract_designwise_counts[rowData.designation] - shift_designwise_counts[rowData.designation] + current_shift_design_count[rowData.designation]} people to this shift.`);
+                    return false;
+                }
+                
 
                 if (action === 'edit') {
                     // If editing, subtract the old value first
@@ -515,7 +544,8 @@ Shift Form
                     totalCount -= parseInt(currentRowData.count || 0);
                 }
                 totalCount += rowCount;
-            }
+
+            };
 
             if (action === 'remove') {
 
@@ -566,8 +596,6 @@ Shift Form
             }
         });
 
-        
-
         editor.on('opened', function(e, moed, action){
             $('.DTED_Lightbox_Content').draggable()
         })
@@ -586,7 +614,7 @@ Shift Form
                 {data:'count',title:'People Count'},
                 {data:'overtime', title:'Overtime (hours)', render: function(data) {
                     return data === null ? '0' : data;
-                }},
+                } },
                 {
                     data: 'gracetime', 
                     title: 'Grace Time (min)',
@@ -630,7 +658,7 @@ Shift Form
     }
 
     function validatePeopleCount(totalCount) {
-        const formPeopleCount = parseInt($("#id_peoplecount").val() || 0);
+        const formPeopleCount = ppl_count_on_shift
         return totalCount <= formPeopleCount;
     }
 

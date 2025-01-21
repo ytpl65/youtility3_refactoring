@@ -51,9 +51,12 @@ def bu_defaults():
         'onstopmessage'           : '',
         'clienttimezone'          : "",
         'billingtype'             : "",
+        'total_people_count'     : 0,
+        'contract_designcount'    : {}
     }
 
 class Bt(BaseModel, TenantAwareModel):
+    
     uuid                = models.UUIDField(null=True)
     bucode              = models.CharField(_('Code'), max_length = 30)
     solid               = models.CharField(max_length=30, null=True, blank=True, verbose_name='Sol ID')

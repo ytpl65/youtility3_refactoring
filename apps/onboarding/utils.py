@@ -545,7 +545,6 @@ def get_designation_choices(request,P):
     for type_assist in form_instance.fields['designation'].queryset:
         designation_choices[type_assist.tacode] = type_assist.taname
     designation_choices = json.dumps(designation_choices)
-
     return designation_choices
 
 
@@ -579,7 +578,6 @@ def handle_shift_data_edit(request,self):
     shift = utils.get_model_obj(int(shift_id), request, self.params)
     dataa = request.POST.dict()
     action = dataa.get('action')
-
     data = {}
     
     for key, value in dataa.items():
@@ -588,7 +586,7 @@ def handle_shift_data_edit(request,self):
             data[field_name] = value
         else:
             data[key] = value
-    
+            
     designation = str(data['designation'])
 
     if action == 'create':
@@ -602,7 +600,7 @@ def handle_shift_data_edit(request,self):
     elif action == 'edit':
         edit_id = data.get('id')
         for key,value in shift.shift_data.items():
-            val = value.get('id')
+            val = int(value.get('id'))
             if val == int(edit_id):
                 designation_details = shift.shift_data[designation]
                 designation_details['id'] = edit_id
@@ -619,7 +617,6 @@ def handle_shift_data_edit(request,self):
                 del shift.shift_data[key]
                 break
         reassign_ids(shift)
-
     shift.save()
     return rp.JsonResponse({'status': 'success'}, status=200)
 
@@ -726,3 +723,11 @@ def bulk_create_geofence(gpslocation, radius):
         print("Validation Error:", ve)
     except Exception as e:
         print("Error processing geometry:", e)
+
+
+def get_designation_choices_asper_contract(designation_choices,contract_design_count):
+    updated_design_choices = {}
+    for key,value in json.loads(designation_choices).items():
+        if key in contract_design_count:
+            updated_design_choices[key] = value
+    return updated_design_choices
