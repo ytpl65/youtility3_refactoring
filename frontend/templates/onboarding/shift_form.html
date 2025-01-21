@@ -375,17 +375,19 @@ Shift Form
             location.href = "{{ url('onboarding:shift') }}?action=form";
         });
 
+        var current_shift_ppl_count = {{ current_shift_ppl_count }};
+
         $("#shiftform").on('submit', function(e) {
             var form = $(this);
             e.preventDefault();
             var total_ppl_count = parseInt($("#id_peoplecount").val() || 0);
-            var current_shift_ppl_count = {{ current_shift_ppl_count }};
+            //var current_shift_ppl_count = {{ current_shift_ppl_count }};
     
             if(total_ppl_count + ppl_count_on_shift - current_shift_ppl_count > ppl_count_on_contract){
             const balance_ppl = ppl_count_on_contract - ppl_count_on_shift;
             show_error_alert(`Total Allowed People count on site is ${ppl_count_on_contract}. 
-                                You have already assigned ${ppl_count_on_shift} people to other shifts. 
-                                You can only assign ${balance_ppl} people to this shift.`);
+                                You have already assigned ${ppl_count_on_shift - current_shift_ppl_count} people to other shifts. 
+                                You can only assign ${balance_ppl + current_shift_ppl_count} people to this shift.`);
             return;}
             
             if (isValidPositiveNumber($('#id_captchafreq').val()) && isValidPositiveNumber($('#id_peoplecount').val())){
@@ -536,6 +538,8 @@ Shift Form
                                         You can only assign ${contract_designwise_counts[rowData.designation] - shift_designwise_counts[rowData.designation] + current_shift_design_count[rowData.designation]} people to this shift.`);
                     return false;
                 }
+
+
                 
 
                 if (action === 'edit') {
@@ -544,6 +548,11 @@ Shift Form
                     totalCount -= parseInt(currentRowData.count || 0);
                 }
                 totalCount += rowCount;
+
+                /*if (current_shift_ppl_count !== totalCount) {
+                    this.error('count', 'The total people count on this shift should be equal to the total people count on the form.');
+                    return false;
+                }*/
 
             };
 
@@ -555,6 +564,7 @@ Shift Form
                 this.error('count', 'The total people count exceeds the allowed number of people for this shift.');
                 return false;
             }
+
 
             if (!isValidPositiveNumber(rowCount.toString())) {
                 this.error('count', 'Enter Positive Integer Number Only.');

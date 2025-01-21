@@ -448,20 +448,13 @@ class ShiftManager(models.Manager):
         total_ppl_count_on_shift = 0   
         designation_wise_counts = {}
         qset = self.filter(bu_id = S['bu_id'], client_id = S['client_id'], enable = True).values('id','peoplecount','shift_data')
-        print('qset',qset)
         current_shift_design_counts = {}
         current_shift_count = 0
         for i in qset :
-            print('i',i)
-            print('id',id)
             if int(i['id']) == int(id):
-                print('enterd in the if condition')
                 current_shift_count = current_shift_count + int(i['peoplecount'])
                 for key,value in i['shift_data'].items():
                     current_shift_design_counts[key] = int(value['count'])
-                print('current_shift_design_counts',current_shift_design_counts)
-                print('current_shift_counts',current_shift_count)
-
             total_ppl_count_on_shift += int(i['peoplecount'])   
             for key, value in i['shift_data'].items():
                 count = int(value['count'])
