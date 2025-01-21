@@ -282,12 +282,15 @@ class BtManager(models.Manager):
                                                                   "bupreferences__contract_designcount").first()
         total_count = qset.get('bupreferences__total_people_count')
         design_count = qset.get('bupreferences__contract_designcount')
-
-        mod_design_count = {}
-        for key, value in design_count.items():
-            desgn_qset = TypeAssist.objects.filter(id = int(key)).values('tacode').first()
-            desgn_tacode = desgn_qset.get('tacode')
-            mod_design_count[desgn_tacode] = value
+        if total_count and design_count is not None:
+            mod_design_count = {}
+            for key, value in design_count.items():
+                desgn_qset = TypeAssist.objects.filter(id = int(key)).values('tacode').first()
+                desgn_tacode = desgn_qset.get('tacode')
+                mod_design_count[desgn_tacode] = value
+        else:
+            total_count = 0 
+            mod_design_count = {}
         return total_count,mod_design_count
     
 
