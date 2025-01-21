@@ -4,8 +4,7 @@ from django.contrib.gis.db.models import PolygonField
 from django.db import models
 from apps.tenants.models import TenantAwareModel
 from apps.peoples.models import BaseModel
-from .managers import (BtManager, TypeAssistManager, GeofenceManager,
-ShiftManager, DeviceManager, SubscriptionManger)
+from .managers import BtManager, TypeAssistManager, GeofenceManager,ShiftManager, DeviceManager, SubscriptionManger
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
 from django.contrib.gis.db.models import PointField

@@ -131,18 +131,38 @@ class WorkOrderManager(models.Manager):
         return qset or self.none()
     
     def get_workpermitlist(self, request):
+        from apps.work_order_management.models import Approver
         R, S = request.GET, request.session
         P = json.loads(R.get('params', "{}"))
-        qobjs = self.select_related('cuser', 'bu', 'qset','vendor').filter(
-           ~Q(workpermit__in =  ['NOT_REQUIRED', 'NOTREQUIRED']),
-            ~Q(identifier = 'SLA'),
-            parent_id = 1,
-            client_id = S['client_id'],
-            bu_id = S['bu_id'],
-            cdtz__date__gte = P['from'],
-            cdtz__date__lte = P['to'],
-        ).order_by('-other_data__wp_seqno').values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
-                 'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode','identifier','verifiers_status','vendor__name','remarks')
+        people_id = S['people_id']
+        try:
+            identifier = Approver.objects.get(people_id=people_id, approverfor='{WORKPERMIT}').identifier
+        except Approver.DoesNotExist:
+            identifier = None
+        if identifier == 'APPROVER':
+            qobjs = self.select_related('cuser', 'bu', 'qset','vendor').filter(
+            ~Q(workpermit__in =  ['NOT_REQUIRED', 'NOTREQUIRED']),
+                ~Q(identifier = 'SLA'),
+                parent_id = 1,
+                client_id = S['client_id'],
+                bu_id = S['bu_id'],
+                cdtz__date__gte = P['from'],
+                cdtz__date__lte = P['to'],
+                verifiers_status='APPROVED'
+            ).order_by('-other_data__wp_seqno').values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
+                    'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode','identifier','verifiers_status','vendor__name','remarks')
+        else:
+            qobjs = self.select_related('cuser', 'bu', 'qset','vendor').filter(
+            ~Q(workpermit__in =  ['NOT_REQUIRED', 'NOTREQUIRED']),
+                ~Q(identifier = 'SLA'),
+                parent_id = 1,
+                client_id = S['client_id'],
+                bu_id = S['bu_id'],
+                cdtz__date__gte = P['from'],
+                cdtz__date__lte = P['to'],
+            ).order_by('-other_data__wp_seqno').values('cdtz', 'other_data__wp_seqno', 'qset__qsetname', 'workpermit', 'ctzoffset',
+                    'workstatus', 'id', 'cuser__peoplename', 'bu__buname', 'bu__bucode','identifier','verifiers_status','vendor__name','remarks')
+        
         return qobjs or self.none()
          
 
@@ -317,6 +337,7 @@ class WorkOrderManager(models.Manager):
     
     def get_wom_records_for_mobile(self, fromdate, todate, peopleid, workpermit, buid, clientid, parentid):
         from apps.peoples.models import People
+        from apps.work_order_management.models import Approver
         people = People.objects.get(id=peopleid)
         workpermit_statuses = workpermit.replace(', ', ',').split(',')
         fields = ['cuser_id', 'muser_id', 'cdtz', 'mdtz', 'ctzoffset','description', 'uuid', 'plandatetime',
@@ -324,19 +345,40 @@ class WorkOrderManager(models.Manager):
                   'workstatus', 'workpermit', 'priority','parent_id', 'alerts', 'permitno', 'approverstatus', 
                   'performedby','ismailsent', 'isdenied', 'client_id', 'bu_id', 'approvers', 'id','verifiers','verifierstatus','vendor_id','qset_id__qsetname']
         
-        qset = self.select_related().annotate(
-            permitno = F('other_data__wp_seqno'),
-            approverstatus = F('other_data__wp_approvers'),
-            verifierstatus = F('other_data__wp_verifiers')
-            ).filter(
-            Q(cuser_id = peopleid) | Q(muser_id=peopleid) | Q(approvers__contains = [people.peoplecode])|Q(verifiers__contains = [people.peoplecode]),
-            cdtz__date__gte = fromdate,
-            cdtz__date__lte = todate,
-            workpermit__in = workpermit_statuses,
-            bu_id = buid,
-            client_id = clientid,
-            parent_id=parentid
-        ).values(*fields).order_by('-cdtz')
+        try:
+            identifier = Approver.objects.get(people_id=peopleid, approverfor='{WORKPERMIT}').identifier
+        except Approver.DoesNotExist:
+            identifier = None
+        
+        if identifier == 'APPROVER':
+            qset = self.select_related().annotate(
+                permitno = F('other_data__wp_seqno'),
+                approverstatus = F('other_data__wp_approvers'),
+                verifierstatus = F('other_data__wp_verifiers')
+                ).filter(
+                Q(cuser_id = peopleid) | Q(muser_id=peopleid) | Q(approvers__contains = [people.peoplecode])|Q(verifiers__contains = [people.peoplecode]),
+                cdtz__date__gte = fromdate,
+                cdtz__date__lte = todate,
+                workpermit__in = workpermit_statuses,
+                bu_id = buid,
+                client_id = clientid,
+                parent_id=parentid,
+                verifiers_status='APPROVED'
+            ).values(*fields).order_by('-cdtz')
+        else:
+            qset = self.select_related().annotate(
+                permitno = F('other_data__wp_seqno'),
+                approverstatus = F('other_data__wp_approvers'),
+                verifierstatus = F('other_data__wp_verifiers')
+                ).filter(
+                Q(cuser_id = peopleid) | Q(muser_id=peopleid) | Q(approvers__contains = [people.peoplecode])|Q(verifiers__contains = [people.peoplecode]),
+                cdtz__date__gte = fromdate,
+                cdtz__date__lte = todate,
+                workpermit__in = workpermit_statuses,
+                bu_id = buid,
+                client_id = clientid,
+                parent_id=parentid,
+            ).values(*fields).order_by('-cdtz')
         print(str(qset.query))
         return qset or self.none()
     

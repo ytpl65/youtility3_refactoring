@@ -497,7 +497,8 @@ class WorkPermit(LoginRequiredMixin, View):
             cxt['identifier']=identifier
             cxt['is_valid_approver'] = is_valid_approver
             cxt['is_valid_verifier'] = is_valid_verifier
-            if obj.workpermit == Wom.WorkPermitStatus.APPROVED and obj.workstatus != Wom.Workstatus.COMPLETED:
+            if obj.workpermit == Wom.WorkPermitStatus.APPROVED and obj.workstatus != Wom.Workstatus.COMPLETED and ( identifier !='APPROVER' and identifier !='VERIFIER'):
+                print("Here I am")
                 qset_id = obj.qset.id
                 rwp_details = Wom.objects.get_return_wp_details(qset_id)
                 log.info(f"return work permit details are as follows: {rwp_details}")
@@ -1033,7 +1034,7 @@ class SLA_View(LoginRequiredMixin, View):
             objs = self.params['model'].objects.get_slalist(request)
             print("OBJS",objs)
             return rp.JsonResponse(data = {'data':list(objs)},safe = False)
-
+        
         if action == 'approver_list':
             objs = Wom.objects.get_approver_verifier_status(R['womid'])
             return rp.JsonResponse({'data': objs}, status=200)
