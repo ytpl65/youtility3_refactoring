@@ -19,4 +19,5 @@ urlpatterns = [
     path('generatepdf/',               views.GeneratePdf.as_view(),                    name="generatepdf"),
     path('generatepdf-getdata/',       views.get_data,                                 name='generatepdf-getdata'),
     path('upload-pdf/',                views.upload_pdf,                               name='upload-pdf'),
+    path('generateletter/',            views.GenerateLetter.as_view(),                 name="generateletter"),
 ]
