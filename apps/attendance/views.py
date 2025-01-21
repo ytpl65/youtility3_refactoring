@@ -35,7 +35,7 @@ class Attendance(LoginRequiredMixin, View):
         'form_initials':{},
         'fields': ['id', 'people__peoplename', 'people__peoplecode', 'verifiedby__peoplename', 'peventtype__taname','peventtype__tacode', 'bu__buname', 'datefor','uuid', 'people__id',
                    'punchintime', 'punchouttime', 'facerecognitionin', 'facerecognitionout','shift__shiftname', 'ctzoffset', 'peventlogextras', 'sL', 'eL', 'people__location__locname',
-                   'people__mobno', 'bu__siteincharge__peoplename', 'bu__siteincharge__mobno', 'bu__siteincharge__email']}
+                   'people__mobno', 'bu__siteincharge__peoplename', 'bu__siteincharge__mobno', 'bu__siteincharge__email', 'shift__starttime', 'shift__endtime']}
 
     def get(self, request, *args, **kwargs):
         R, P, resp = request.GET, self.params, None

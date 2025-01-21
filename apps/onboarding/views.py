@@ -257,9 +257,22 @@ class ShiftView(LoginRequiredMixin, View):
             resp = rp.JsonResponse(data={'data': list(objs)}, status=200, safe=False)
 
         elif R.get('action', None) == 'form':
+            designation_choices = obutils.get_designation_choices(request,P)
+            #contact_details
+            total_ppl_count_on_site,count_as_per_design = Bt.objects.get_sitecontract_details(request)
+            #current_shift_details
+            total_shifts_ppl_count,designation_wise_count,current_shift_ppl_count,current_shift_design_counts = self.params['model'].objects.get_shiftcontract_details(request, R.get('id', 0))
+            design_choices_contract = obutils.get_designation_choices_asper_contract(designation_choices,count_as_per_design)
             # designation_choices = obutils.get_designation_choices(request,P)
             cxt = {'shift_form': self.params['form_class'](request=request),
-                   'msg': "create shift requested"}
+                   'msg': "create shift requested", 
+                   'total_ppl_count_on_site':total_ppl_count_on_site,#contract_details,
+                   'count_as_per_design':count_as_per_design,#contract_details,
+                   'designation_choices': design_choices_contract,
+                   'total_shifts_ppl_count':total_shifts_ppl_count,
+                   'designation_wise_count':designation_wise_count,
+                   'current_shift_ppl_count': current_shift_ppl_count,
+                   'current_shift_designation_counts': current_shift_design_counts}
             resp = render(request, P['shift_form'], cxt)
 
         elif R.get('action', None) == "delete" and R.get('id', None):
@@ -275,13 +288,23 @@ class ShiftView(LoginRequiredMixin, View):
                 data = [{'designation': designation_lookup.get(designation, 'Unknown'),**details }for designation, details in raw_data.items()]
             else:
                 data = [{'designation': 'Unknown', 'count':'', 'overtime': 0, 'gracetime': 0}]
-            print('final returning data from server',data)
             return rp.JsonResponse({'data':data}, status=200, safe=False)
             
         elif R.get('id', None):
+            designation_choices = obutils.get_designation_choices(request,P)
+            total_ppl_count_on_site,count_as_per_design = Bt.objects.get_sitecontract_details(request)
+            total_shifts_ppl_count,designation_wise_count,current_shift_ppl_count,current_shift_designation_counts = self.params['model'].objects.get_shiftcontract_details(request,R.get('id'))
+            design_choices_contract = obutils.get_designation_choices_asper_contract(designation_choices,count_as_per_design)
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'shift_form':P['form_class'](instance=obj, request=request),
-                   'msg': "update shift requested"}
+                   'msg': "update shift requested",
+                   'designation_choices': design_choices_contract,
+                   'total_ppl_count_on_site':total_ppl_count_on_site,
+                   'count_as_per_design':count_as_per_design,
+                   'total_shifts_ppl_count':total_shifts_ppl_count,
+                   'designation_wise_count':designation_wise_count,
+                   'current_shift_ppl_count':current_shift_ppl_count,
+                   'current_shift_designation_counts':current_shift_designation_counts}
             resp = render(request, P['shift_form'], context = cxt)
         return resp
 
@@ -289,7 +312,6 @@ class ShiftView(LoginRequiredMixin, View):
         resp, create = None, True
         try:    
             if request.POST.get('actiond') == 'edit_shift_data':
-                print('request',request)
                 return obutils.handle_shift_data_edit(request,self)
             data = QueryDict(request.POST['formData'])
             pk = request.POST.get('pk', None)
@@ -304,7 +326,6 @@ class ShiftView(LoginRequiredMixin, View):
                 resp = self.handle_valid_form(form, request, create)
             else:
                 cxt = {'errors': form.errors}
-                print('context',cxt)
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
             logger.error("SHIFT saving error!", exc_info=True)
@@ -748,7 +769,6 @@ class Client(LoginRequiredMixin, View):
             return rp.JsonResponse(resp, status=200)
         
         if R.get('action') == 'saveUserLimits' and R.get('pk') !=None:
-            print("user Limits")
             data = QueryDict(request.POST['formData'])
             resp = P['model'].objects.handle_user_limits_post(data)
             return rp.JsonResponse(resp, status=200)
@@ -824,6 +844,7 @@ class BtView(LoginRequiredMixin, View):
             return rp.JsonResponse(data={'data': list(objs)})
 
         elif R.get('action', None) == 'form':
+
             cxt = {'buform': self.params['form_class'](request=request),
                    'ta_form': obforms.TypeAssistForm(auto_id=False, request=request),
                    'msg': "create bu requested"}
@@ -834,7 +855,9 @@ class BtView(LoginRequiredMixin, View):
 
         elif R.get('id', None):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
-            initial = {'controlroom': obj.bupreferences.get('controlroom')}
+            # designation_data = obj.bupreferences.get('contract_designcount', {})
+            initial = {'controlroom': obj.bupreferences.get('controlroom'),
+                       'jsonData': json.dumps(obj.bupreferences.get('contract_designcount', {}))}
             cxt = {'ta_form': obforms.TypeAssistForm(auto_id=False, request=request),
                    'buform': self.params['form_class'](request=request, instance=obj, initial=initial)}
         return render(request, self.params['template_form'], context=cxt)
@@ -855,7 +878,8 @@ class BtView(LoginRequiredMixin, View):
                 form = self.params['form_class'](data, request=request)
 
             if form.is_valid():
-                resp = self.handle_valid_form(form, request, create)
+                designations_count = request.POST['jsonData']
+                resp = self.handle_valid_form(form, request, create,designations_count)
             else:
                 cxt = {'errors': form.errors}
                 ic(len(form.errors), form.errors.get('gpslocation'))
@@ -865,12 +889,14 @@ class BtView(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, request, create):
+    def handle_valid_form(self, form, request, create,designations_count):
         logger.info('bu form is valid')
         from apps.core.utils import handle_intergrity_error
         try:
             bu = form.save(commit=False)
             ic(form.cleaned_data)
+            bu.bupreferences['contract_designcount'] = form.cleaned_data['jsonData']
+            bu.bupreferences['total_people_count'] = form.cleaned_data['total_people_count']
             bu.gpslocation = form.cleaned_data['gpslocation']
             bu.bupreferences['permissibledistance'] = form.cleaned_data['permissibledistance']
             bu.bupreferences['controlroom'] = form.cleaned_data['controlroom']

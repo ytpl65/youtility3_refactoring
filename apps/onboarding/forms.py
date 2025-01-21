@@ -9,6 +9,7 @@ from apps.core import utils
 from icecream import ic
 from django_select2 import forms as s2forms
 from django.conf import settings
+import json
 
 # from this project
 import apps.onboarding.models as obm # onboarding-models
@@ -112,7 +113,10 @@ class BtForm(forms.ModelForm):
     controlroom = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=False, label='Control Room')
     permissibledistance = forms.IntegerField(required=False, label='Permissible Distance')
     address = forms.CharField(required=False, label='Address', max_length=500, widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
-    
+    total_people_count = forms.IntegerField(required=False, min_value=0,label='Total People Count')
+    designation = forms.ModelChoiceField(label='Desigantion',required=False,widget = s2forms.Select2Widget, queryset = obm.TypeAssist.objects.filter(tatype__tacode='DESIGNATION'))
+    designation_count = forms.IntegerField(required=False, min_value=0,label='Designation Count')
+    jsonData = forms.CharField(widget=forms.HiddenInput(), required=False)
     class Meta:
         model  = obm.Bt
         fields = ['bucode', 'buname', 'parent', 'butype', 'identifier', 'siteincharge',
@@ -127,20 +131,21 @@ class BtForm(forms.ModelForm):
             'iswarehouse'        : 'Warehouse',
             'isenable'           : 'Enable',
             'isvendor'           : 'Vendor',
-            'isserviceprovider' : 'Service Provider',
+            'isserviceprovider'  : 'Service Provider',
             'gpsenable'          : 'GPS Enable', 
             'skipsiteaudit'      : 'Skip Site Audit',
             'enablesleepingguard': 'Enable Sleeping Guard',
             'deviceevent'        : 'Device Event Log',
-            'solid'        : 'Sol Id',
-            'siteincharge':'Site Manager'   
+            'solid'              : 'Sol Id',
+            'siteincharge'       :'Site Manager'   
         }
 
         widgets = { 
             'bucode'      : forms.TextInput(attrs={'style': 'text-transform:uppercase;', 'placeholder': 'Enter text without space & special characters'}),
             'buname'      : forms.TextInput(attrs={'placeholder': 'Name'}),
             'identifier'  : s2forms.Select2Widget,
-            'butype'      : s2forms.Select2Widget}    
+            'butype'      : s2forms.Select2Widget
+            }    
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""
@@ -161,6 +166,7 @@ class BtForm(forms.ModelForm):
         self.fields['parent'].queryset = obm.Bt.objects.filter(id__in = qset)
         self.fields['controlroom'].choices = pm.People.objects.controlroomchoices(self.request)
         self.fields['siteincharge'].queryset = pm.People.objects.filter(Q(peoplecode ='NONE') | (Q(client_id = self.request.session['client_id']) & Q(enable=True)))
+        self.fields['designation'].queryset = obm.TypeAssist.objects.filter(Q(bu_id__in=[S['bu_id'], 1]) | Q(bu_id__in=S['assignedsites']), client_id__in = [S['client_id'], 1],tatype__tacode='DESIGNATION')
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -183,6 +189,9 @@ class BtForm(forms.ModelForm):
         if self.cleaned_data.get('gpslocation'):
             data = QueryDict(self.request.POST['formData'])
             self.cleaned_data['gpslocation'] = self.clean_gpslocation(data.get('gpslocation', 'NONE'))
+        if self.request.POST.get('jsonData'):
+            json_data = self.request.POST.get('jsonData')
+            self.cleaned_data['jsonData'] = json.loads(json_data)
         return self.cleaned_data
 
 
@@ -247,6 +256,8 @@ class ShiftForm(forms.ModelForm):
     shiftduration = forms.CharField(widget = forms.TextInput(attrs={'readonly':True}), label="Duration", required = False)
     overtime = forms.IntegerField(required=False, min_value=0, label="Overtime (hours)", 
                                 widget=forms.NumberInput(attrs={'placeholder': "Enter overtime hours"}))
+    peoplecount = forms.IntegerField(required=True, min_value=1, label="People Count", 
+                                 widget=forms.NumberInput(attrs={'placeholder': "Enter people count"}))
 
     class Meta:
         model = obm.Shift
@@ -284,14 +295,14 @@ class ShiftForm(forms.ModelForm):
         S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['nightshiftappicable'].initial = False
-        self.fields['designation'].queryset = obm.TypeAssist.objects.filter(Q(bu_id__in=[S['bu_id'], 1]) | Q(bu_id__in=S['assignedsites']), client_id__in = [S['client_id'], 1],tatype__tacode='DESIGNATION')
+        self.fields['designation'].queryset = obm.TypeAssist.objects.filter(Q(bu_id__in=[S['bu_id'], 1]) | Q(bu_id__in=S['assignedsites']),
+                                                                             client_id__in = [S['client_id'], 1],tatype__tacode='DESIGNATION')
         self.fields['designation'].widget = forms.Select(
             choices=[
                 (item.tacode, item.taname)  # (value, label)
                 for item in self.fields['designation'].queryset
             ]
         )
-        # print('from forms.py ',self.fields['designation'].queryset.values())
         utils.initailize_form_fields(self)
 
     def clean_shiftname(self):

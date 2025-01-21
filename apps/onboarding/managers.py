@@ -275,10 +275,21 @@ class BtManager(models.Manager):
                 return {'msg':"Updated Successfully"}
         return {"msg":"Something went wrong"}
 
+    def get_sitecontract_details(self,request):
+        from .models import TypeAssist
+        S = request.session
+        qset = self.filter(id = S['bu_id'], enable = True).values("bupreferences__total_people_count",
+                                                                  "bupreferences__contract_designcount").first()
+        total_count = qset.get('bupreferences__total_people_count')
+        design_count = qset.get('bupreferences__contract_designcount')
+
+        mod_design_count = {}
+        for key, value in design_count.items():
+            desgn_qset = TypeAssist.objects.filter(id = int(key)).values('tacode').first()
+            desgn_tacode = desgn_qset.get('tacode')
+            mod_design_count[desgn_tacode] = value
+        return total_count,mod_design_count
     
-
-
-
 
 
 class TypeAssistManager(models.Manager):
@@ -428,6 +439,35 @@ class ShiftManager(models.Manager):
             bu_id = S['bu_id'],
             id = id
         ).values('designation__taname', 'designation__tacode', 'peoplecount' ) or self.none()
+    
+    def get_shiftcontract_details(self, request,id):
+        S = request.session
+        total_ppl_count_on_shift = 0   
+        designation_wise_counts = {}
+        qset = self.filter(bu_id = S['bu_id'], client_id = S['client_id'], enable = True).values('id','peoplecount','shift_data')
+        print('qset',qset)
+        current_shift_design_counts = {}
+        current_shift_count = 0
+        for i in qset :
+            print('i',i)
+            print('id',id)
+            if int(i['id']) == int(id):
+                print('enterd in the if condition')
+                current_shift_count = current_shift_count + int(i['peoplecount'])
+                for key,value in i['shift_data'].items():
+                    current_shift_design_counts[key] = int(value['count'])
+                print('current_shift_design_counts',current_shift_design_counts)
+                print('current_shift_counts',current_shift_count)
+
+            total_ppl_count_on_shift += int(i['peoplecount'])   
+            for key, value in i['shift_data'].items():
+                count = int(value['count'])
+                if key in designation_wise_counts:
+                    designation_wise_counts[key] += count
+                else:
+                    designation_wise_counts[key] = count
+
+        return total_ppl_count_on_shift,designation_wise_counts,current_shift_count,current_shift_design_counts
 
 class DeviceManager(models.Manager):
     use_in_migrations=True
