@@ -18,6 +18,8 @@ BV Form
 	display: inline-block;
 	float: left;
 }
+
+
 </style>
 {% endblock extra_css %}
 
@@ -196,6 +198,7 @@ Business-View
 			</div>
 			{{ buform.siteincharge.errors }}
 		</div>
+
 		<!--Control Room-->
 		<label for="id_controlroom" class="col-form-label col-md-2 col-sm-2 text-sm-right">Control Room:
 		</label>
@@ -236,7 +239,6 @@ Business-View
 			{{ buform.address }}
 		</div>
 		
-
 		<!--CONTRACT DETAILS -->
 		<label for="id_total_people_count" class="col-form-label col-md-2 col-sm-2 text-sm-right">Total People Count:
 		</label>
@@ -254,33 +256,22 @@ Business-View
 			{{ buform.posted_people.errors }}
 		</div>
 
-		<!--CONTACT PEOPLE DETAILS
+		<!--CONTACT PEOPLE DETAILS -->
 		<label for="id_designation" class="col-form-label col-md-2 col-sm-2 text-sm-right">Designation:</label>
-		<div class="col-md-4 d-flex align-items-center">
-			<div class="me-5" >
-				{{ buform.designation }}
-			</div>
-			<div >
-				{{ buform.designation_count }}
-			</div>
-		</div> -->
-
-		<div class="container mt-3">
-			<label for="id_designation" class="col-form-label">Designation:</label>
-			<div id="field-container">
-				<div class="row mb-2 align-items-center">
-					<div class="col-md-5">
-						{{ buform.designation }}
-					</div>
-					<div class="col-md-2">
-						{{ buform.designation_count }}
-					</div>
-					<div class="col-md-1">
-						<button type="button" class="btn btn-success add-field">+</button>
-					</div>
+		<div class="col-md-10" style="width:46.75rem" id="field-container">
+			<div class="row mb-2 align-items-center">
+				<div class="col-md-5" style="width: 450px;">
+					{{ buform.designation }}
+				</div>
+				<div class="col-md-2"style="width: 100px;">
+					{{ buform.designation_count }}
+				</div>
+				<div class="col-md-1" style="width: 40px;">
+					<button type="button" class="btn btn-success add-field">+</button>
 				</div>
 			</div>
 		</div> 
+
 
 		<!-- Validation Error Modal -->
 		<div class="modal fade" id="validationErrorModal" tabindex="-1" aria-labelledby="validationErrorModalLabel" aria-hidden="true">
@@ -301,7 +292,7 @@ Business-View
 		</div>
 
 		<!--------------------- BEGIN CHECKBOXES ---------------------------->
-		<div class="booleans col-md-6 d-flex justify-content-sm-between mt-5">
+		<div class="booleans col-md-6 d-flex justify-content-sm-between mt-5" >
 			<label for="{{ buform.iswarehouse.id_for_label }}"
 				class="form-check-label bool col-form-label me-5 text-sm-right">
 				{{ buform.iswarehouse }} &nbsp; {{ buform.iswarehouse.label }}
