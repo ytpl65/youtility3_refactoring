@@ -1159,7 +1159,6 @@ def send_email_notification_for_sla_report(self,slaid,sitename):
         vendor_name = Vendor.objects.get(id=vendor_id).name
         if sla_details:
             qset = People.objects.filter(peoplecode__in = approvers)
-            dlog.info("Qset: ",qset)
             for p in qset.values('email', 'id'):
                 dlog.info(f"sending email to {p['email'] = }")
                 jsonresp['story'] += f"sending email to {p['email'] = }"
