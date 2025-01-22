@@ -30,26 +30,26 @@
             height: auto;
         }
         .content {
-            margin-top: 20px;
+            margin-top: 25px;
         }
         .content .salutation {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 10px;
         }
         table, th, td {
             border: 1px solid black;
         }
         th, td {
-            padding: 2px;
+            padding: 1px;
+            font-size: 10px;
             text-align: left;
         }
         .footer {
             margin-top: 40px;
-            padding-top: 20px;
             display: flex;
             justify-content: space-between;
         }
@@ -112,11 +112,20 @@
             </table>
         </div>
     </div>
+    {% if Company == 'SPS' %}
     <div class="footer">
         <div class="signature">
             <strong>For Security & Personnel Services Pvt. Ltd</strong>
             <br><br><br>Authorized Signatory
         </div>
     </div>
+    {% else %}
+    <div class="footer">
+        <div class="signature">
+            <strong>For Sukhi Orion Security Systems Pvt. Ltd</strong>
+            <br><br><br>Authorized Signatory
+        </div>
+    </div>
+    {% endif %}
 </body>
 </html>
