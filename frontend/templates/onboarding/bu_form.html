@@ -235,12 +235,23 @@ Business-View
 		<div class="col-md-4">
 			{{ buform.address }}
 		</div>
+		
 
 		<!--CONTRACT DETAILS -->
 		<label for="id_total_people_count" class="col-form-label col-md-2 col-sm-2 text-sm-right">Total People Count:
 		</label>
 		<div class="col-md-4">
 			{{ buform.total_people_count }}
+		</div>
+
+		<!--Control Room-->
+		<label for="id_posted_people" class="col-form-label col-md-2 col-sm-2 text-sm-right">Posted People:
+		</label>
+		<div class="col-md-4">
+			<div class="d-flex flex-row">
+				{{ buform.posted_people }}
+			</div>
+			{{ buform.posted_people.errors }}
 		</div>
 
 		<!--CONTACT PEOPLE DETAILS

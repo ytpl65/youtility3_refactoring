@@ -53,7 +53,8 @@ def bu_defaults():
         'clienttimezone'          : "",
         'billingtype'             : "",
         'total_people_count'     : 0,
-        'contract_designcount'    : {}
+        'contract_designcount'    : {},
+        'posted_people'           : []
     }
 
 class Bt(BaseModel, TenantAwareModel):

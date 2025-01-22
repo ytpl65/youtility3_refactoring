@@ -857,7 +857,8 @@ class BtView(LoginRequiredMixin, View):
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             # designation_data = obj.bupreferences.get('contract_designcount', {})
             initial = {'controlroom': obj.bupreferences.get('controlroom'),
-                       'jsonData': json.dumps(obj.bupreferences.get('contract_designcount', {}))}
+                       'jsonData': json.dumps(obj.bupreferences.get('contract_designcount', {})),
+                       'posted_people': obj.bupreferences.get('posted_people')}
             cxt = {'ta_form': obforms.TypeAssistForm(auto_id=False, request=request),
                    'buform': self.params['form_class'](request=request, instance=obj, initial=initial)}
         return render(request, self.params['template_form'], context=cxt)
@@ -895,6 +896,7 @@ class BtView(LoginRequiredMixin, View):
         try:
             bu = form.save(commit=False)
             ic(form.cleaned_data)
+            bu.bupreferences['posted_people'] = form.cleaned_data['posted_people']
             bu.bupreferences['contract_designcount'] = form.cleaned_data['jsonData']
             bu.bupreferences['total_people_count'] = form.cleaned_data['total_people_count']
             bu.gpslocation = form.cleaned_data['gpslocation']

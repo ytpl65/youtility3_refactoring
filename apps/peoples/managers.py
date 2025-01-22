@@ -77,6 +77,13 @@ class PeopleManager(BaseUserManager):
         ).annotate(text =Concat(F('peoplename'), V(' ('), F('peoplecode'), V(')'))).values_list('id', 'text')
         return qset or self.none()
     
+    def get_people_for_posted_ppl_on_bu(self,request):
+        qset = self.filter(client_id = request.session['client_id'],enable = True
+                           ).exclude(
+                               Q(designation__tacode__in = ['CR']) |  Q(worktype__tacode__in = ['CR'])
+                           ).annotate( text = Concat(F('peoplename'), V(' ('), F('peoplecode'), V(')'))).values_list('id', 'text')
+        return qset or self.none()
+    
     def get_assigned_sites(self, clientid, peopleid):
         from apps.onboarding.models import Bt
         qset = Bt.objects.filter(id__gte=12, id__lte=150).annotate(

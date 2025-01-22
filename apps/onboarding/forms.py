@@ -113,9 +113,10 @@ class BtForm(forms.ModelForm):
     controlroom = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=False, label='Control Room')
     permissibledistance = forms.IntegerField(required=False, label='Permissible Distance')
     address = forms.CharField(required=False, label='Address', max_length=500, widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
-    total_people_count = forms.IntegerField(required=False, min_value=0,label='Total People Count')
-    designation = forms.ModelChoiceField(label='Desigantion',required=False,widget = s2forms.Select2Widget, queryset = obm.TypeAssist.objects.filter(tatype__tacode='DESIGNATION'))
+    total_people_count = forms.IntegerField(required=True, min_value=0,label='Total People Count')
+    designation = forms.ModelChoiceField(label='Desigantion',required=False,widget = s2forms.Select2Widget, queryset = obm.TypeAssist.objects.filter(tatype__tacode='DESIGNATION',enable = True))
     designation_count = forms.IntegerField(required=False, min_value=0,label='Designation Count')
+    posted_people = forms.MultipleChoiceField(label='Posted People', required=False, widget = s2forms.Select2MultipleWidget)
     jsonData = forms.CharField(widget=forms.HiddenInput(), required=False)
     class Meta:
         model  = obm.Bt
@@ -165,6 +166,7 @@ class BtForm(forms.ModelForm):
         qset = obm.Bt.objects.get_whole_tree(self.request.session['client_id'])
         self.fields['parent'].queryset = obm.Bt.objects.filter(id__in = qset)
         self.fields['controlroom'].choices = pm.People.objects.controlroomchoices(self.request)
+        self.fields['posted_people'].choices = pm.People.objects.get_people_for_posted_ppl_on_bu(self.request)
         self.fields['siteincharge'].queryset = pm.People.objects.filter(Q(peoplecode ='NONE') | (Q(client_id = self.request.session['client_id']) & Q(enable=True)))
         self.fields['designation'].queryset = obm.TypeAssist.objects.filter(Q(bu_id__in=[S['bu_id'], 1]) | Q(bu_id__in=S['assignedsites']), client_id__in = [S['client_id'], 1],tatype__tacode='DESIGNATION')
         utils.initailize_form_fields(self)
