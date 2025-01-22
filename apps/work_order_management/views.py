@@ -6,7 +6,7 @@ from .forms import VendorForm, WorkOrderForm, WorkPermitForm, ApproverForm,SlaFo
 from .models import Vendor, Wom, WomDetails, Approver
 from apps.peoples.models import People
 from apps.activity.models import QuestionSetBelonging, QuestionSet
-from background_tasks.tasks import send_email_notification_for_sla_vendor,send_email_notification_for_vendor_and_security_of_wp_cancellation,send_email_notification_for_vendor_and_security,send_email_notification_for_wp_verifier,send_email_notification_for_workpermit_approval
+from background_tasks.tasks import send_email_notification_for_sla_vendor,send_email_notification_for_vendor_and_security_of_wp_cancellation,send_email_notification_for_vendor_and_security_for_rwp,send_email_notification_for_vendor_and_security_after_approval,send_email_notification_for_wp_verifier,send_email_notification_for_workpermit_approval
 from django.http import Http404, QueryDict, response as rp, HttpResponse
 from apps.core  import utils
 from apps.peoples import utils as putils
@@ -414,7 +414,7 @@ class WorkPermit(LoginRequiredMixin, View):
                     workpermit_status = 'APPROVED'
                     Wom.objects.filter(id=R['womid']).update(workstatus=Wom.Workstatus.INPROGRESS.value)
                     print("permit Name in approve_wp",permit_name)
-                    send_email_notification_for_vendor_and_security.delay(R['womid'],sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no)
+                    send_email_notification_for_vendor_and_security_after_approval.delay(R['womid'],sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no)
             return rp.JsonResponse(data={'status': 'Approved'}, status=200)
 
 
@@ -531,8 +531,7 @@ class WorkPermit(LoginRequiredMixin, View):
                 vendor_name = Vendor.objects.get(id=wom.vendor_id).name
                 site_name  = Bt.objects.get(id=wom.bu_id).buname
                 pdf_path = wom_utils.save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=permit_no)
-                submit_work_permit = True
-                send_email_notification_for_vendor_and_security.delay(R['wom_id'],site_name,workpermit_status,vendor_name,pdf_path,permit_name,permit_no,submit_work_permit)
+                send_email_notification_for_vendor_and_security_for_rwp.delay(R['wom_id'],site_name,workpermit_status,vendor_name,pdf_path,permit_name,permit_no)
                 return rp.JsonResponse({'pk':wom.id})   
                 
             if R.get('action') == 'cancellation_remark':
@@ -843,7 +842,7 @@ class ReplyWorkPermit(View):
                         vendor_name = Vendor.objects.get(id=wom.vendor_id).name
                         pdf_path = wom_utils.save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=permit_no)
                         Wom.objects.filter(id=R['womid']).update(workstatus=Wom.Workstatus.INPROGRESS.value)
-                        send_email_notification_for_vendor_and_security.delay(wom_id,sitename,worpermit_status,vendor_name,pdf_path,permit_name,permit_no)
+                        send_email_notification_for_vendor_and_security_after_approval.delay(wom_id,sitename,worpermit_status,vendor_name,pdf_path,permit_name,permit_no)
                 else:
                     return render(request, P['email_template'], context={'alreadyapproved':True})
             cxt = {'status': Wom.WorkPermitStatus.APPROVED.value, 'action_acknowledged':True, 'seqno':wp.other_data['wp_seqno']}

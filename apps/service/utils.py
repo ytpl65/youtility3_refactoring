@@ -15,7 +15,7 @@ from apps.core import utils
 from apps.core import exceptions as excp
 from apps.service import serializers as sz
 from apps.y_helpdesk.models import Ticket
-from background_tasks.tasks import alert_sendmail,send_email_notification_for_vendor_and_security_of_wp_cancellation,send_email_notification_for_wp_from_mobile_for_verifier, send_email_notification_for_vendor_and_security,insert_json_records_async
+from background_tasks.tasks import alert_sendmail,send_email_notification_for_wp_from_mobile_for_verifier, send_email_notification_for_vendor_and_security_for_rwp,insert_json_records_async
 from intelliwiz_config.celery import app
 from apps.work_order_management.utils import save_approvers_injson,save_verifiers_injson
 from apps.schedhuler.utils import create_dynamic_job
@@ -336,8 +336,7 @@ def save_parent_childs(sz, jn_parent_serializer, child, M, tablename, is_return_
             permit_no = wom.other_data['wp_seqno']
             sitename = Bt.objects.get(id=wom.bu.id).buname
             pdf_path = save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=wom.other_data['wp_seqno'])
-            send_email_notification_for_vendor_and_security.delay(wom.id,sitename,wom.workstatus,vendor_name,pdf_path,permit_name,permit_no,submit_work_permit=True,submit_work_permit_from_mobile=True)       
-
+            send_email_notification_for_vendor_and_security_for_rwp.delay(wom.id,sitename,wom.workstatus,vendor_name,pdf_path,permit_name,permit_no)       
         else:
             log.error(jn_parent_serializer.errors)
             traceback, msg, rc = str(jn_parent_serializer.errors), M.INSERT_FAILED, 1

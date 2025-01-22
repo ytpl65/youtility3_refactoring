@@ -771,29 +771,77 @@ def send_email_notification_for_vendor_and_security_of_wp_cancellation(self,wom_
 
 
 
-@shared_task(bind=True, name="Create Workpermit email notification for vendor and security")
-def send_email_notification_for_vendor_and_security(self,wom_id,sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no,submit_work_permit=False,submit_work_permit_from_mobile=False):
+@shared_task(bind=True, name="Create Workpermit email notification for vendor and security after filling return work permit")
+def send_email_notification_for_vendor_and_security_for_rwp(self,wom_id,sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no):
     jsonresp = {'story':"", 'traceback':""}
     try:
         from apps.work_order_management.models import Wom,WomDetails
         from apps.onboarding.models import Bt
         from django.template.loader import render_to_string
         from apps.work_order_management.models import Vendor
-        wom = Wom.objects.filter(parent_id=wom_id)
+        wom = Wom.objects.filter(parent_id=wom_id).order_by('id')
         site_id = wom[0].bu_id
         sitename = Bt.objects.get(id=site_id).buname
 
         log.info(f'THe Site Name for vendor and security is {sitename}')
         # sitename = Bt.objects.get((Wom.objects.get(id=wom_id).client.id)).buname
         sections = [x for x in wom]
-        if not submit_work_permit_from_mobile:
-            if submit_work_permit:
-                wom_detail = sections[-2].id
-            else:
-                wom_detail = sections[-1].id 
-        else:
-            if submit_work_permit:
-                wom_detail = sections[-2].id 
+        # if not submit_work_permit_from_mobile:
+        #     wom_detail = sections[-2].id
+        # else:
+        #     wom_detail = sections[-2].id
+
+        wom_detail = sections[-2].id
+        dlog.info(f"sections: {sections}")
+        dlog.info(f"wom_detail: {wom_detail}")
+        vendor_email = Vendor.objects.get(id=wom[0].vendor.id).email
+        wom_detail_email_section = WomDetails.objects.filter(wom_id=wom_detail)
+        log.info(f'WOM Detail Answer Section: {wom_detail_email_section}')
+        log.info(f'Vendor Email: {vendor_email}')
+        log.info(f'WOM Detail Email Section: {wom_detail_email_section}')
+        for emailsection in wom_detail_email_section:
+            dlog.info(f"email: {emailsection.answer}")
+            emails = emailsection.answer.split(',')
+            for email in emails:
+                msg = EmailMessage()
+                msg.subject = f"{permit_name}-{permit_no}-{sitename}-{workpermit_status}"
+                msg.to = [email]
+                msg.from_email = settings.EMAIL_HOST_USER
+                cxt = {
+                    'permit_name':permit_name,
+                    'sitename':sitename,
+                    'status':workpermit_status,
+                    'vendor_name':vendor_name,
+                    'permit_no':permit_no,
+                }
+                html = render_to_string(
+                    'work_order_management/workpermit_vendor.html', context=cxt)
+                msg.body = html
+                msg.content_subtype = 'html'
+                msg.attach_file(pdf_path, mimetype='application/pdf')
+                msg.send()
+                dlog.info(f"email sent to {email}")
+    except Exception as e:
+        dlog.critical("something went wrong while sending email to vendor and security", exc_info=True)
+        jsonresp['traceback'] += tb.format_exc()
+    return jsonresp
+
+
+@shared_task(bind=True, name="Create Workpermit email notification for vendor and security after approval")
+def send_email_notification_for_vendor_and_security_after_approval(self,wom_id,sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no):
+    jsonresp = {'story':"", 'traceback':""}
+    try:
+        from apps.work_order_management.models import Wom,WomDetails
+        from apps.onboarding.models import Bt
+        from django.template.loader import render_to_string
+        from apps.work_order_management.models import Vendor
+        wom = Wom.objects.filter(parent_id=wom_id).order_by('id')
+        site_id = wom[0].bu_id
+        sitename = Bt.objects.get(id=site_id).buname
+
+        log.info(f'THe Site Name for vendor and security is {sitename}')
+        sections = [x for x in wom]
+        wom_detail = sections[-1].id
         dlog.info(f"sections: {sections}")
         dlog.info(f"wom_detail: {wom_detail}")
         vendor_email = Vendor.objects.get(id=wom[0].vendor.id).email

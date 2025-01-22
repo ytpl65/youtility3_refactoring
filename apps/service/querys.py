@@ -233,7 +233,7 @@ class Query(graphene.ObjectType):
     
     @staticmethod
     def resolve_approve_workpermit(self, info, wom_uuid, peopleid,identifier):
-        from background_tasks.tasks import send_email_notification_for_workpermit_approval,send_email_notification_for_vendor_and_security
+        from background_tasks.tasks import send_email_notification_for_workpermit_approval,send_email_notification_for_vendor_and_security_after_approval
         from apps.work_order_management.models import Wom
         from apps.work_order_management.views import WorkPermit
         from apps.onboarding.models import Bt
@@ -270,7 +270,7 @@ class Query(graphene.ObjectType):
                     report = report_object(filename=permit_name,client_id=wom.client_id,returnfile=True,formdata = {'id':wom.id},request=None)
                     report_pdf_object = report.execute()
                     pdf_path = save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=wom.other_data['wp_seqno'])
-                    send_email_notification_for_vendor_and_security.delay(wom.id,sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no)
+                    send_email_notification_for_vendor_and_security_after_approval.delay(wom.id,sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no)
                     pass
                 rc, msg = 0, "success"
             else:

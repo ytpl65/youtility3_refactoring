@@ -1202,7 +1202,8 @@ class GenerateLetter(LoginRequiredMixin, View):
                 "YearMonth": data['period_from'][0],
                 "PFCodeNo": data['pf_code_no'],
                 "ESICCodeNo": data['esic_code_no'],
-                "table_data": person_data
+                "table_data": person_data,
+                "Company": data["company"]
             })
             
             # Convert HTML to PDF
