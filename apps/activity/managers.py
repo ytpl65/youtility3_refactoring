@@ -740,14 +740,19 @@ class JobneedManager(models.Manager):
                 ~Q(jobstatus__in = ['COMPLETED', 'PARTIALLYCOMPLETED']),
                 ~Q(other_info__autoclosed_by_server = True),
                 ~Q(other_info__isdynamic = True),
-                ~Q(Q(jobstatus = 'AUTOCLOSED') & Q(other_info__email_sent = True))|
-                ~Q(Q(jobstatus = 'AUTOCLOSED') & Q(other_info__ticket_generated = True)),
-                Q(parent_id = 1), Q(identifier__in = ['TASK', 'INTERNALTOUR', 'PPM', 'EXTERNALTOUR', "SITEREPORT"]),
+                ~Q(Q(jobstatus = 'AUTOCLOSED') & (Q(other_info__email_sent = True)| Q(other_info__ticket_generated = True))),
+                Q(parent_id = 1), 
+                Q(identifier__in = ['TASK', 'INTERNALTOUR', 'PPM', 'EXTERNALTOUR', "SITEREPORT"]),
                 expirydatetime__gte=datetime.now(timezone.utc) - timedelta(days=1),
                 expirydatetime__lte=datetime.now(timezone.utc),            
             )
+
+            log.info(f'Qset Without Identifier: {qset}')
+
         else:
+            
             qset = self.filter(id=id).annotate(**annotation).select_related(*related_fields)
+            log.info(f'Qset With Identifier: {id} {qset}')
         qset = qset.values(
             'assignedto', 'bu__buname', 'pgroup__groupname', 'cuser__peoplename', 'asset_id',
             'people__peoplename', 'expirydatetime', 'plandatetime', 'pgroup_id', 'people_id',

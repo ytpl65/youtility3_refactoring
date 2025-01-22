@@ -12,15 +12,17 @@
     border: 1.5px solid black;
   }
 
-  th,
   td {
     border: 1px solid black;
     padding: 8px;
-    text-align: center;
+    text-align: left;
   }
 
   th {
     background-color: #f2f2f2;
+    border: 1px solid black;
+    padding: 8px;
+    text-align: center;
   }
 
   thead th {
@@ -164,34 +166,29 @@
     <span>Service Description: {{ vendor_description }}</span>
     
   </div>
-
-
-    <table>
-      <thead style="background-color: #f2f2f2;">
-          <tr>
-            <td colspan="6" style="color:black; background-color:#f2f2f2 ;font-size:12px;font-weight:bold" >KPI FOR THE MONTH {{ month_year }}</td>
-          </tr>   
-          <tr style="background-color: #f2f2f2;">
-            <td colspan="1">Response Time</td>
-            <td colspan="5" style="text-align:left;">{{ response_time }}</td>
-          </tr>
-
-          <tr style="background-color: #f2f2f2;">
-            <td colspan="1">Resolution Time</td>
-            <td colspan="5" style="text-align:left;"> {{ response_time }} </td>
-          </tr>
-          <tr style="background-color: #f2f2f2; font-weight:bold">
-            <td colspan="1" style="font-size: 12px;">Uptime (%)</td>
-            <td colspan="5" style="font-size: 12px; text-align:left">{{ uptime_score }}</td>
-          </tr>
-
-          <tr>
-            <td colspan="6" style="background-color: #f2f2f2;"></td>
-          </tr>
-          <tr style="background-color:#f2f2f2 ; font-weight:bold">
-            <td colspan="6">Scores 1-10 per category</td>
-          </tr>
-      </thead>
+    <table style="width: 100%; border-collapse: collapse; border: 1.5px solid black;">
+      <tbody style="background-color: white;">
+        <tr>
+          <th colspan="6" style="color:black; background-color:white; font-size:12px; font-weight:bold;">
+            KPI FOR THE MONTH {{ month_year }}
+          </th>
+        </tr>
+        <tr style="background-color: white;">
+          <td colspan="1">Response Time</td>
+          <td colspan="5">{{ response_time }}</td>
+        </tr>
+        <tr style="background-color: white;">
+          <td colspan="1">Resolution Time</td>
+          <td colspan="5">{{ resolution_time }}</td>
+        </tr>
+        <tr style="background-color: white; font-weight:bold;">
+          <td colspan="1">Uptime (%)</td>
+          <td colspan="5">{{ uptime_score }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <table style="width: 100%; border-collapse: collapse; border: 1.5px solid black;">
       <tbody>
         <tr>
           <th colspan="6">SUPPLIER MONTHLY PERFORMANCE MEASUREMENT</th>
@@ -261,29 +258,28 @@
           <td colspan="6"></td>
         </tr>
         <tr>
-          <th>DOCUMENTATION/RECORD</th>
-          <th>20%</th>
-          <th>TECHNOLOGY DESIGN</th>
-          <th>10%</th>
           <th>CPI</th>
           <th>10%</th>
+          <th>TECHNOLOGY DESIGN</th>
+          <th>10%</th>
+          <th>DOCUMENTATION/RECORD</th>
+          <th>20%</th>
         </tr>
         <tr>
-          <td>Timely submission of Service reports</td>
-          <td>{{ question_answer['Timely submission of Service reports']}}</td>
-          <td>Innovative new products</td>
-          <td>{{ question_answer['Innovative new products']}}</td>
           <td>Continuous process improvement</td>
           <td>{{ question_answer['Continuous process improvement']}}</td>
+          <td>Innovative new products</td>
+          <td>{{ question_answer['Innovative new products']}}</td>
+          <td>Timely submission of Service reports</td>
+          <td>{{ question_answer['Timely submission of Service reports']}}</td>
         </tr>
         <tr>
-          <td>Equipment History - Record of alteration, breakdown, addition, Preventive maintenance and modifications</td>
-          <td>{{ question_answer["Equipment History - Record of alteration, breakdown, addition, Preventive maintenance and modifications"]}}</td>
+          <td></td>
+          <td></td>
           <td>Technology level</td>
           <td>{{ question_answer["Technology level"] }}</td>
-          <td></td>
-          <td></td>
-        
+          <td>Equipment History - Record of alteration, breakdown, addition, Preventive maintenance and modifications</td>
+          <td>{{ question_answer["Equipment History - Record of alteration, breakdown, addition, Preventive maintenance and modifications"]}}</td>
         </tr>
         <tr>
           <th>Average score</th>
