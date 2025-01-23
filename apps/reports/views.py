@@ -850,12 +850,12 @@ class GeneratePdf(LoginRequiredMixin, View):
             file_path = rutils.find_file(data['file_name'])
             if file_path:
                 if data["document_type"] == 'PF':
-                    uan_list= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[0]
+                    uan_list= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'], data["document_type"])[0]
                 elif data["document_type"] == 'ESIC':
-                    uan_list= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[1]
+                    uan_list= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'], data["document_type"])[1]
                 else:
-                    people_code= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[2]
-                    people_acc_no= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[3]
+                    people_code= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'], data["document_type"])[0]
+                    people_acc_no= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'], data["document_type"])[1]
                     uan_list = [people_code, people_acc_no]
                 input_pdf_path = file_path
                 output_pdf_path = rutils.trim_filename_from_path(input_pdf_path) + 'downloaded_file.pdf'
@@ -937,7 +937,7 @@ def getCustomersSites(company, customer_code):
     #     print("!!!!!!",sites)
     #     return sites
 
-def getAllUAN(company, customer_code, site_code, periods):
+def getAllUAN(company, customer_code, site_code, periods, document_type):
     # Set filters based on the presence of site_code
     filters = None
     if site_code:
@@ -945,66 +945,99 @@ def getAllUAN(company, customer_code, site_code, periods):
     else:
         filters = {'customer_code': customer_code, 'period': ['in', periods]}
     
-    # Define fields to fetch from Processed Payroll and Difference Processed Payroll
-    fields = ['emp_id', 'pf_deduction_amount', 'pf_employee_amount', 'calcesi', 'esi_employee']
-    client = getClient(company)
-    
-    # Fetch data from Processed Payroll and Difference Processed Payroll
-    processed_payroll_emp_list = get_frappe_data(company, 'Processed Payroll', filters, fields) or []
-    difference_processed_payroll_emp_list = get_frappe_data(company, 'Difference Processed Payroll', filters, fields) or []
-    
-    # Combine the two lists
-    combined_payroll_data = processed_payroll_emp_list + difference_processed_payroll_emp_list
-    emp_id_list = [row["emp_id"] for row in combined_payroll_data]
-    
-    # Fetch UAN data for the filtered employees
-    filters = {'name': ['in', emp_id_list]}
-    fields = ['uan_number', "esi_number", "employee", "bank_ac_no", 'employee_name', 'work_type']
-    uan_data = get_frappe_data(company, 'Employee', filters, fields) or []
-    
-    # Prepare a dictionary for easier access to payroll data by emp_id
-    payroll_data_map = {row["emp_id"]: row for row in combined_payroll_data}
-    
-    # Separate fields into lists
-    uan_list = []
-    esic_list = []
-    employee_list = []
-    bank_ac_no_list = []
-    name_list = []
-    designation_list = []
-    pf_deduction_amount_list = []
-    pf_employee_amount_list = []
-    calcesi_list = []
-    esi_employee_list = []
-    
-    for uan_detail in uan_data:
-        emp_id = uan_detail.get('employee')
-        payroll_data = payroll_data_map.get(emp_id, {})
+    if document_type == 'PAYROLL':
+        # Define fields to fetch from Processed Payroll and Difference Processed Payroll
+        fields = ['emp_id']
+        client = getClient(company)
+        # Fetch data from Processed Payroll and Difference Processed Payroll
+        processed_payroll_emp_list = get_frappe_data(company, 'Processed Payroll', filters, fields) or []
         
-        # Append data to respective lists
-        uan_list.append(uan_detail.get('uan_number', '').strip())
-        esic_list.append(uan_detail.get('esi_number', '').strip())
-        employee_list.append(uan_detail.get('employee', '').strip())
-        bank_ac_no_list.append(uan_detail.get('bank_ac_no', '').strip())
-        name_list.append(uan_detail.get('employee_name', '').strip())
-        designation_list.append(uan_detail.get('work_type', '').strip())
-        pf_deduction_amount_list.append(int(payroll_data.get('pf_deduction_amount', 0)))
-        pf_employee_amount_list.append(int(payroll_data.get('pf_employee_amount', 0)))
-        calcesi_list.append(int(payroll_data.get('calcesi', 0)))
-        esi_employee_list.append(int(payroll_data.get('esi_employee', 0)))
-    
-    return (
-        uan_list,
-        esic_list,
-        employee_list,
-        bank_ac_no_list,
-        name_list,
-        designation_list,
-        pf_deduction_amount_list,
-        pf_employee_amount_list,
-        calcesi_list,
-        esi_employee_list,
-    )
+        # Combine the two lists
+        combined_payroll_data = processed_payroll_emp_list
+        emp_id_list = [row["emp_id"] for row in combined_payroll_data]
+        
+        # Fetch UAN data for the filtered employees
+        filters = {'name': ['in', emp_id_list]}
+        fields = ["employee", "bank_ac_no"]
+        uan_data = get_frappe_data(company, 'Employee', filters, fields) or []
+        
+        # Prepare a dictionary for easier access to payroll data by emp_id
+        payroll_data_map = {row["emp_id"]: row for row in combined_payroll_data}
+        
+        # Separate fields into lists
+        employee_list = []
+        bank_ac_no_list = []
+        for uan_detail in uan_data:
+            emp_id = uan_detail.get('employee')
+            payroll_data = payroll_data_map.get(emp_id, {})
+            employee_list.append(uan_detail.get('employee', '').strip() if uan_detail.get('employee', '') else '')
+            bank_ac_no_list.append(uan_detail.get('bank_ac_no', '').strip() if uan_detail.get('bank_ac_no', '') else '')
+        
+        return (
+            employee_list,
+            bank_ac_no_list,
+        )
+    else:
+        # Define fields to fetch from Processed Payroll and Difference Processed Payroll
+        fields = ['emp_id', 'pf_deduction_amount', 'pf_employee_amount', 'calcesi', 'esi_employee']
+        client = getClient(company)
+        
+        # Fetch data from Processed Payroll and Difference Processed Payroll
+        processed_payroll_emp_list = get_frappe_data(company, 'Processed Payroll', filters, fields) or []
+        difference_processed_payroll_emp_list = get_frappe_data(company, 'Difference Processed Payroll', filters, fields) or []
+        
+        # Combine the two lists
+        combined_payroll_data = processed_payroll_emp_list + difference_processed_payroll_emp_list
+        emp_id_list = [row["emp_id"] for row in combined_payroll_data]
+        
+        # Fetch UAN data for the filtered employees
+        filters = {'name': ['in', emp_id_list]}
+        fields = ['uan_number', "esi_number", "employee", "bank_ac_no", 'employee_name', 'work_type']
+        uan_data = get_frappe_data(company, 'Employee', filters, fields) or []
+        
+        # Prepare a dictionary for easier access to payroll data by emp_id
+        payroll_data_map = {row["emp_id"]: row for row in combined_payroll_data}
+        
+        # Separate fields into lists
+        uan_list = []
+        esic_list = []
+        employee_list = []
+        bank_ac_no_list = []
+        name_list = []
+        designation_list = []
+        pf_deduction_amount_list = []
+        pf_employee_amount_list = []
+        calcesi_list = []
+        esi_employee_list = []
+        
+        for uan_detail in uan_data:
+            emp_id = uan_detail.get('employee')
+            payroll_data = payroll_data_map.get(emp_id, {})
+            
+            # Append data to respective lists
+            uan_list.append(uan_detail.get('uan_number', '').strip() if uan_detail.get('uan_number', '') else '')
+            esic_list.append(uan_detail.get('esi_number', '').strip() if uan_detail.get('esi_number', '') else '')
+            employee_list.append(uan_detail.get('employee', '').strip() if uan_detail.get('employee', '') else '')
+            bank_ac_no_list.append(uan_detail.get('bank_ac_no', '').strip() if uan_detail.get('bank_ac_no', '') else '')
+            name_list.append(uan_detail.get('employee_name', '').strip() if uan_detail.get('employee_name', '') else '')
+            designation_list.append(uan_detail.get('work_type', '').strip() if uan_detail.get('work_type', '') else '')
+            pf_deduction_amount_list.append(int(payroll_data.get('pf_deduction_amount', 0)))
+            pf_employee_amount_list.append(int(payroll_data.get('pf_employee_amount', 0)))
+            calcesi_list.append(int(payroll_data.get('calcesi', 0)))
+            esi_employee_list.append(int(payroll_data.get('esi_employee', 0)))
+        
+        return (
+            uan_list,
+            esic_list,
+            employee_list,
+            bank_ac_no_list,
+            name_list,
+            designation_list,
+            pf_deduction_amount_list,
+            pf_employee_amount_list,
+            calcesi_list,
+            esi_employee_list,
+        )
 
 
 
@@ -1183,15 +1216,15 @@ class GenerateLetter(LoginRequiredMixin, View):
         try:
             data = json.loads(request.body)
             person_data = {}
-            person_data["uan_list"]= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[0]
-            person_data['esic_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[1]
-            person_data['employee_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[2]
-            person_data['name_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[4]
-            person_data['designation_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[5]
-            person_data['pf_deduction_amount_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[6]
-            person_data['pf_employee_amount_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[7]
-            person_data['calcesi_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[8]
-            person_data['esi_employee_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[9]
+            person_data["uan_list"]= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[0]
+            person_data['esic_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[1]
+            person_data['employee_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[2]
+            person_data['name_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[4]
+            person_data['designation_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[5]
+            person_data['pf_deduction_amount_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[6]
+            person_data['pf_employee_amount_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[7]
+            person_data['calcesi_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[8]
+            person_data['esi_employee_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[9]
             from django.http import HttpResponse
             from weasyprint import HTML
             from django.template.loader import render_to_string
@@ -1202,7 +1235,8 @@ class GenerateLetter(LoginRequiredMixin, View):
                 "YearMonth": data['period_from'][0],
                 "PFCodeNo": data['pf_code_no'],
                 "ESICCodeNo": data['esic_code_no'],
-                "table_data": person_data
+                "table_data": person_data,
+                "Company": data["company"]
             })
             
             # Convert HTML to PDF
