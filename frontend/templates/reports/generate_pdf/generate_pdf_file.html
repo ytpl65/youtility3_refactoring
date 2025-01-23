@@ -426,26 +426,34 @@ Generate PDF Form
 
           e.preventDefault()
           
-          function downloadedFileName(){
+          function downloadedFileName() {
             const type = $('#id_document_type').val();
             const isPF = type === 'PF';
+            const isPayroll = type === 'PAYROLL'; // Check if type is Payroll
             const siteText = $('#id_site').find('option:selected').text();
             const customerText = $('#id_customer').find('option:selected').text();
-
+            const payrolldate =  $('#id_period_from').val()[0];
+        
             // Extract relevant part from filename
             const match = filename.match(/(\w+ \d{4}\.pdf)$/);
             const result = match ? " " + match[0] : ".pdf";
-
+        
+            // If Payroll, return specific file name format
+            if (isPayroll) {
+                return "BankPayout - " + payrolldate + " - " + customerText + ".pdf";
+            }
+        
             // Determine prefix based on document type
             const prefix = isPF ? "ECR PF_" : "MCR ESIC_";
-
+        
             // Choose source of site or customer text
             const textSource = siteText !== ' - ' ? siteText : customerText;
-            const parts = textSource.split(' - ')
+            const parts = textSource.split(' - ');
             const trimmedText = parts.slice(1).join('-').trim();
-      
+        
             return prefix + trimmedText + result;
-          }
+        }
+        
 
           const formData = {
             document_type: $('#id_document_type').val(), 
