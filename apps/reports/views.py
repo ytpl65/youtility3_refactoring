@@ -1088,8 +1088,12 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight, p
                 page_has_highlight = True
 
         # Logic to determine whether to keep the page
-        if not page_required or page_has_highlight or page_num == 0:
-            pages_to_keep.append(page_num)
+        if page_required:
+            if page_has_highlight or page_num == 0:  # Always keep the first page
+                pages_to_keep.append(page_num)
+        else:
+            if page_has_highlight or page_num == 0 or page_num == document.page_count - 1:  # Keep first, last, and highlighted pages
+                pages_to_keep.append(page_num)
 
     # Create a new document with all pages to be kept
     new_document = fitz.open()
@@ -1100,6 +1104,7 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight, p
     new_document.save(output_pdf_path)
     new_document.close()
     document.close()
+
 
 # def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):        
 #     # Open the PDF
