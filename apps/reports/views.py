@@ -947,36 +947,23 @@ def getAllUAN(company, customer_code, site_code, periods, document_type):
     
     if document_type == 'PAYROLL':
         # Define fields to fetch from Processed Payroll and Difference Processed Payroll
-        fields = ['emp_id']
+        fields = ['emp_id', 'bank_ac_no']
         client = getClient(company)
-        # Fetch data from Processed Payroll and Difference Processed Payroll
+        # Fetch data from Processed Payroll
         processed_payroll_emp_list = get_frappe_data(company, 'Processed Payroll', filters, fields) or []
-        
-        # Combine the two lists
-        combined_payroll_data = processed_payroll_emp_list
-        emp_id_list = [row["emp_id"] for row in combined_payroll_data]
-        
-        # Fetch UAN data for the filtered employees
-        filters = {'name': ['in', emp_id_list]}
-        fields = ["employee", "bank_ac_no"]
-        uan_data = get_frappe_data(company, 'Employee', filters, fields) or []
-        
         # Prepare a dictionary for easier access to payroll data by emp_id
-        payroll_data_map = {row["emp_id"]: row for row in combined_payroll_data}
-        
+        payroll_data_map = {row["emp_id"]: row for row in processed_payroll_emp_list}
         # Separate fields into lists
         employee_list = []
         bank_ac_no_list = []
-        for uan_detail in uan_data:
-            emp_id = uan_detail.get('employee')
-            payroll_data = payroll_data_map.get(emp_id, {})
-            employee_list.append(uan_detail.get('employee', '').strip() if uan_detail.get('employee', '') else '')
-            bank_ac_no_list.append(uan_detail.get('bank_ac_no', '').strip() if uan_detail.get('bank_ac_no', '') else '')
-        
+        for payroll_detail in processed_payroll_emp_list:
+            employee_list.append(payroll_detail.get('emp_id', '').strip() if payroll_detail.get('emp_id', '') else '')
+            bank_ac_no_list.append(payroll_detail.get('bank_ac_no', '').strip() if payroll_detail.get('bank_ac_no', '') else '')
         return (
             employee_list,
             bank_ac_no_list,
         )
+
     else:
         # Define fields to fetch from Processed Payroll and Difference Processed Payroll
         fields = ['emp_id', 'pf_deduction_amount', 'pf_employee_amount', 'calcesi', 'esi_employee']
@@ -1057,8 +1044,19 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight, p
 
     # Function to handle text splitting
     def find_and_highlight_text(page, text):
-        """Search for text and highlight it even if it's split across lines or cells."""
+        """Search for text and highlight it if not already highlighted."""
         words = page.get_text("words")  # Extract words as bounding boxes
+        existing_highlights = page.annots()  # Get existing annotations on the page
+
+        # Helper function to check if a bounding box overlaps with existing highlights
+        def is_already_highlighted(bbox):
+            if not existing_highlights:
+                return False
+            for annot in existing_highlights:
+                if annot.rect.intersects(fitz.Rect(bbox)):
+                    return True
+            return False
+
         for i, word in enumerate(words):
             if text.startswith(word[4]):
                 combined_text = word[4]
@@ -1072,12 +1070,13 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight, p
                     j += 1
 
                 if combined_text == text:
-                    # Highlight the combined bounding boxes
-                    for box in bbox:
-                        highlight = page.add_highlight_annot(fitz.Rect(box))
-                        highlight.set_colors(stroke=orange_color)  # Set highlight color
-                        highlight.update()
-                    return True
+                    # Highlight only if not already highlighted
+                    if not any(is_already_highlighted(box) for box in bbox):
+                        for box in bbox:
+                            highlight = page.add_highlight_annot(fitz.Rect(box))
+                            highlight.set_colors(stroke=orange_color)  # Set highlight color
+                            highlight.update()
+                        return True
         return False
 
     # Check and highlight text on each page
@@ -1101,7 +1100,6 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight, p
     new_document.save(output_pdf_path)
     new_document.close()
     document.close()
-
 
 # def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight):        
 #     # Open the PDF
