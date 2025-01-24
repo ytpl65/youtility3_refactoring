@@ -214,7 +214,7 @@ def update_job_autoclose_status(record, resp):
     obj = Jobneed.objects.get(id=record['id'])
     obj.mdtz = datetime.now(timezone.utc)
     log.info(f'Before status update {obj.jobstatus = }')
-    if obj.jobstatus != 'PARTIALLYCOMPLETED':
+    if obj.jobstatus != 'PARTIALLYCOMPLETED' and obj.jobstatus!='COMPLETED':
         obj.jobstatus = 'AUTOCLOSED'
         obj.other_info['email_sent'] = record['ticketcategory__tacode'] == 'AUTOCLOSENOTIFY'
         obj.other_info['ticket_generated'] = record['ticketcategory__tacode'] == 'RAISETICKETNOTIFY'
