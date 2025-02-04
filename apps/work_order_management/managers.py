@@ -71,25 +71,46 @@ class ApproverManager(models.Manager):
     
     def get_approver_options_wp(self, request):
         S = request.session
+        assignedsites = S.get('assignedsites', [])
+        
+        # Ensure assignedsites is always a list
+        if isinstance(assignedsites, (int, str)):
+            assignedsites = [assignedsites]
+        elif not isinstance(assignedsites, (list, tuple)):
+            assignedsites = []
+            
         qset = self.annotate(
-            text = F('people__peoplename'),
-        ).filter( (Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) & 
-        Q(client_id = S['client_id'])),approverfor__contains = ['WORKPERMIT'],identifier = 'APPROVER').values('id', 'text')
+            text=F('people__peoplename'),
+        ).filter( 
+            (Q(bu_id=S['bu_id']) | Q(sites__contains=assignedsites)) | 
+            (Q(forallsites=True) & Q(client_id=S['client_id'])),
+            approverfor__contains=['WORKPERMIT'],
+            identifier='APPROVER'
+        ).values('id', 'text')
+        
+        print("Qset Approver", qset)
         return qset or self.none()
     
     def get_verifier_options_wp(self,request):
         S = request.session
+        assignedsites = S.get('assignedsites', [])
+        if not isinstance(assignedsites, (list, tuple)):
+            assignedsites = [assignedsites]
         qset = self.annotate(
-            text = F('people__peoplename'),
-        ).filter( (Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) &
-         Q(client_id = S['client_id'])),approverfor__contains = ['WORKPERMIT'],identifier = 'VERIFIER').values('id', 'text')
+            text=F('people__peoplename'),
+        ).filter(
+            (Q(bu_id=S['bu_id']) | Q(sites__contains=assignedsites)) | 
+            (Q(forallsites=True) & Q(client_id=S['client_id'])),
+            approverfor__contains=['WORKPERMIT'],  # Ensure this is a list
+            identifier='VERIFIER'
+        ).values('id', 'text')
         return qset or self.none()
     
     def get_approver_options_sla(self,request):
         S = request.session
         qset = self.annotate(
             text = F('people__peoplename'),
-        ).filter( (Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) & 
+        ).filter( (Q(bu_id = S['bu_id']) | Q( sites__contains = S['assignedsites'])) | (Q(forallsites = True) & 
         Q(client_id = S['client_id'])),approverfor__contains = ['SLA_TEMPLATE'],identifier = 'APPROVER').values('id', 'text')
         return qset or self.none()
     
