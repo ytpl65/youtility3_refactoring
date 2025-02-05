@@ -37,9 +37,7 @@ STATUS_TOPIC = "response/status"
 TESTMQ = "post"
 TESTPUBMQ = "received"
 
-
-SG_TO_NOC_TOPIC = "sg_to_noc"
-
+REDMINE_TO_NOC = "redmine_to_noc"
 
 
 def get_task_status(item):

@@ -35,7 +35,7 @@ def create_asset_log(sender, instance, created, **kwargs):
 @receiver(post_save,sender=Attachment)
 def create_attachment_record(sender,instance,created,**kwargs):
     print('I am here in Attachment Record Creation')
-    from paho_client import MqttClient,SG_TO_NOC_TOPIC
+    from paho_client import MqttClient,REDMINE_TO_NOC
     client = MqttClient()
     client.client.connect('localhost',1883,60)
 
@@ -50,5 +50,5 @@ def create_attachment_record(sender,instance,created,**kwargs):
     }
 
     payload = json.dumps(data)
-    client.publish_message(SG_TO_NOC_TOPIC,payload)
+    client.publish_message(REDMINE_TO_NOC,payload)
     client.client.disconnect()

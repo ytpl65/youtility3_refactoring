@@ -40,7 +40,7 @@ def set_serial_no(sender, instance, **kwargs):
 @receiver(post_save, sender=Wom)
 def wom_post_save(sender,instance,created,**kwargs):
     print('I am here in signals')
-    from paho_client import MqttClient,SG_TO_NOC_TOPIC
+    from paho_client import MqttClient,REDMINE_TO_NOC
     client = MqttClient()
     client.client.connect('localhost',1883,60)
 
@@ -53,14 +53,14 @@ def wom_post_save(sender,instance,created,**kwargs):
         "payload": serializer.data
     }
     payload = json.dumps(data)
-    client.publish_message(SG_TO_NOC_TOPIC,payload)
+    client.publish_message(REDMINE_TO_NOC,payload)
     client.client.disconnect()
 
 
 @receiver(post_save, sender=WomDetails)
 def wom_details_post_save(sender,instance,created,**kwargs):
     print('I am here in signals')
-    from paho_client import MqttClient,SG_TO_NOC_TOPIC
+    from paho_client import MqttClient,REDMINE_TO_NOC
     client = MqttClient()
     client.client.connect('localhost',1883,60)
 
@@ -73,5 +73,5 @@ def wom_details_post_save(sender,instance,created,**kwargs):
         "payload": serializer.data
     }
     payload = json.dumps(data)
-    client.publish_message(SG_TO_NOC_TOPIC,payload)
+    client.publish_message(REDMINE_TO_NOC,payload)
     client.client.disconnect()
