@@ -963,7 +963,20 @@ def getAllUAN(company, customer_code, site_code, periods, document_type):
             employee_list,
             bank_ac_no_list,
         )
-
+    elif document_type == "ATTENDANCE":
+        if site_code:
+            filters = {'customer_code': customer_code, 'site': site_code, 'attendance_period': ['in', periods]}
+        else:
+            filters = {'customer_code': customer_code, 'attendance_period': ['in', periods]}
+        fields = ['attendance_name']
+        client = getClient(company)
+        people_attendance_emp_list = get_frappe_data(company, 'People Attendance', filters, fields) or []
+        filters = {'attendance_name': ['in', people_attendance_emp_list]}
+        fields = ['employee', 'employee_name', "work_type"]
+        client= getClient(company)
+        attendance_data= client.get_doc('People Attendance', people_attendance_emp_list[0]['attendance_name'])
+        return (attendance_data)
+        
     else:
         # Define fields to fetch from Processed Payroll and Difference Processed Payroll
         fields = ['emp_id', 'pf_deduction_amount', 'pf_employee_amount', 'calcesi', 'esi_employee']
@@ -1248,6 +1261,181 @@ class GenerateLetter(LoginRequiredMixin, View):
             # Send the PDF as a downloadable response
             response = HttpResponse(pdf, content_type="application/pdf")
             response["Content-Disposition"] = "attachment; filename=letterpad.pdf"
+            return response
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        
+class GenerateAttendance(LoginRequiredMixin, View):
+    PARAMS = {
+        'template_form':"reports/generate_pdf/generateattendance.html",
+        'form':rp_forms.GeneratePDFForm,
+    }
+    def get(self, request, *args, **kwargs):
+        import uuid
+        P = self.PARAMS
+        form = P['form'](request=request)
+        cxt = {
+            'form':form,
+            'ownerid' : uuid.uuid4()
+        }
+        return render(request, P['template_form'], context=cxt)
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            site_attendance_data = {}
+            if data['company'] == 'SPS':
+                server_url = 'http://leave.spsindia.com:8007'
+            elif data['company'] == 'SFS':
+                server_url = 'http://leave.spsindia.com:8008'
+            elif data['company'] == 'TARGET':
+                server_url = 'http://leave.spsindia.com:8002'
+            else:
+                return None
+
+            import requests
+            from urllib.parse import urljoin, urlencode
+            # API endpoint
+            endpoint = "/api/method/sps.sps.api.getERPNextPostingData"
+            # Query parameters
+            if data['site']:
+                params = {
+                    "period": data['period_from'][0],
+                    "customer": data['customerName'],
+                    "site": data['site']
+                }
+            else:
+                params = {
+                    "period": data['period_from'][0],
+                    "customer": data['customerName']
+                }
+            # Construct the full URL
+            url = urljoin(server_url, endpoint) + "?" + urlencode(params)
+            # Make the GET request
+            try:
+                response = requests.get(url)
+                # Check if the request was successful (status code 200)
+                if response.status_code == 200:
+                    # Parse the response (assuming it's JSON)
+                    resp_data = response.json()
+                    output_data = {"message": {}}
+                    for key, entries in resp_data["message"].items():
+                        transformed_entry = {}
+                        employee_details = []
+                        for entry in entries:
+                            employee_details.append({
+                                "employee": entry["employee"],
+                                "employee_name": entry["employee_name"],
+                                "work_type": entry["work_type"]
+                            })   
+                            # Copy non-employee specific fields once
+                            if not transformed_entry:
+                                transformed_entry = {k: v for k, v in entry.items() if k not in ["employee", "employee_name", "work_type"]}
+                        transformed_entry["employee_details"] = employee_details
+                        output_data["message"][key] = [transformed_entry]
+
+                    site_attendance_data["site_attendance_data"]= output_data["message"]
+                    site_attendance_data["period"] = data['period_from'][0]
+                    site_attendance_data["type_form"] = data['type_form']
+                    if site_attendance_data["site_attendance_data"]:
+                        request.session['report_data'] = site_attendance_data
+                        return JsonResponse({"success": True, "message": "Report generated successfully!"})
+                    else:
+                        return JsonResponse({"success": False, "message": "No Data Found"})
+                else:
+                    # Handle errors
+                    print(f"Failed to fetch data. Status code: {response.status_code}")
+                    print(f"Response: {response.text}")
+            except requests.exceptions.RequestException as e:
+                # Handle exceptions (e.g., network issues)
+                print(f"An error occurred: {e}")
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        
+class AttendanceTemplate(LoginRequiredMixin, View):
+    PARAMS = {
+        'template_normal':"reports/generate_pdf/attendance_template_normal.html",
+        'template_form16':"reports/generate_pdf/attendance_template_form16.html",
+        'template_form26TO25':"reports/generate_pdf/attendance_template_form26TO25.html",
+        'template_form25TO24':"reports/generate_pdf/attendance_template_form25TO24.html",
+        'template_form15TO14':"reports/generate_pdf/attendance_template_form15TO14.html",
+    }
+    def get(self, request, *args, **kwargs):
+        P, S = self.PARAMS, request.session
+        attendance_data = S.get('report_data', {})
+        print("Attendace Data: ",attendance_data)
+        if attendance_data:
+            if attendance_data["type_form"] == 'NORMAL FORM':
+                return render(request, P['template_normal'], {"attendance_data": attendance_data})
+            if attendance_data["type_form"] == 'FORM 16':
+                return render(request, P['template_form16'], {"attendance_data": attendance_data})
+            if attendance_data["type_form"] == 'FORM 26 TO 25':
+                return render(request, P['template_form26TO25'], {"attendance_data": attendance_data})
+            if attendance_data["type_form"] == 'FORM 25 TO 24':
+                return render(request, P['template_form25TO24'], {"attendance_data": attendance_data})
+            if attendance_data["type_form"] == 'FORM 15 TO 14':
+                return render(request, P['template_form15TO14'], {"attendance_data": attendance_data})
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            if len(data):
+                return JsonResponse({"success": True, "message": "Report generated successfully!"})
+            else:
+                return JsonResponse({"success": False, "message": "No Data Found"})
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        
+class GenerateDecalartionForm(LoginRequiredMixin, View):
+    PARAMS = {
+        'template_form':"reports/generate_pdf/generate_declaration_form.html",
+        'form':rp_forms.GeneratePDFForm,
+    }
+    def get(self, request, *args, **kwargs):
+        import uuid
+        P = self.PARAMS
+        form = P['form'](request=request)
+        cxt = {
+            'form':form,
+            'ownerid' : uuid.uuid4()
+        }
+        return render(request, P['template_form'], context=cxt)
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            get_client = getClient("SPS")
+            doc_employee_detail = get_client.get_list("Employee", filters={"name":data['ticket_no']})
+            doc_payroll_detail = get_client.get_list("Processed Payroll", filters={"emp_id":data['ticket_no']})
+            if str(doc_payroll_detail[0]["net_pay"]).endswith('.0'):
+                result = str(doc_payroll_detail[0]["net_pay"]).split('.')[0]
+            else:
+                result = str(doc_payroll_detail[0]["net_pay"])
+            # print("GET CLIENT",doc_employee_detail)
+            from django.http import HttpResponse
+            from weasyprint import HTML
+            from django.template.loader import render_to_string
+            if len(doc_employee_detail) != 0 and len(doc_payroll_detail) != 0:
+                html_string = render_to_string("/reports/generate_pdf/declaration_form_template.html", {
+                "FullName": doc_employee_detail[0]["employee_name"],
+                "FatherName": doc_employee_detail[0]["father_name"],
+                "CurrentAddress": doc_employee_detail[0]["current_address"],
+                "BankACNo": doc_employee_detail[0]["bank_ac_no"],
+                "BankBranch": doc_employee_detail[0]["bank_branch"],
+                "BankIFSCCode": doc_employee_detail[0]["bank_ifsc_code"],
+                "FromDate": doc_employee_detail[0]["date_of_joining"],
+                "ToDate": doc_employee_detail[0]["relieving_date"] if doc_employee_detail[0]["relieving_date"] else "NILL",
+                "CompanyName": doc_employee_detail[0]["company"],
+                "NetPay": result
+            })
+            
+            # Convert HTML to PDF
+            pdf = HTML(string=html_string).write_pdf()
+            
+            # Send the PDF as a downloadable response
+            response = HttpResponse(pdf, content_type="application/pdf")
+            response["Content-Disposition"] = "attachment; filename=declaration_form.pdf"
             return response
 
         except json.JSONDecodeError:

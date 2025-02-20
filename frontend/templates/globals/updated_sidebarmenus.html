@@ -1,6 +1,6 @@
 <div class="menu menu-column menu-title-gray-800 menu-state-title-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow text-white mb-1-gray-500"
     id="kt_aside_menu" data-kt-menu="true">
-    {% if request.session.sitecode not in ["SPSESIC", "SPSPAYROLL"] %}
+    {% if request.session.sitecode not in ["SPSESIC", "SPSPAYROLL", "SPSOPS", "SPSOPERATION"] %}
     <!----DASHBOARD---->
     <div class="menu-item" id="DASHBOARD" style="display:none;">
         <a class="menu-link" href="{{ url('onboarding:rp_dashboard') }}">
@@ -35,11 +35,9 @@
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion" style="display:none;" id="SITESURVEY">
                 <span class="menu-link">
                     <span class="menu-icon">
-                        <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
                         <span class="svg-icon svg-icon-2">
                             <span class="material-icons">report</span>
                         </span>
-                        <!--end::Svg Icon-->
                     </span>
                     <span class="menu-title">Site Survey</span>
                     <span class="menu-arrow text-white mb-1"></span>
@@ -129,7 +127,7 @@
                 <span class="svg-icon svg-icon-2">
                     <span class="material-icons">
                         legend_toggle
-                    </span>
+                    </span>    
                     
                 </span>
                 <!--end::Svg Icon-->
@@ -160,10 +158,10 @@
                         <span class="bullet bullet-dot"></span>
                     </span>
                     <span class="menu-title">Parameter Comparsion</span>
-                </a>
-            </div>
+            </a>
+          </div>
         </div>
-    </div>
+      </div>
     <div data-kt-menu-trigger="click" id="ONBOARDING" class="menu-item menu-accordion" style="display:none;">
         <span class="menu-link">
             <span class="menu-icon">
@@ -209,9 +207,9 @@
                     </div>
                     <div class="menu-item" id="OB_GEOFENCE">
                         <a class="menu-link" href="{{ url('onboarding:geofence') }}?template=true">
-                          <span class="menu-bullet">
-                            <span class="bullet bullet-dot"></span>
-                          </span>
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
                           <span class="menu-title">Geofence</span>
                         </a>
                     </div>
@@ -225,9 +223,9 @@
                     </div>
                     <div class="menu-item" id="OB_CS_APPROVERS">
                         <a class="menu-link" href="{{ url('work_order_management:approvers') }}?template=true">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
+                          <span class="menu-bullet">
+                            <span class="bullet bullet-dot"></span>
+                          </span>
                             <span class="menu-title">Approvers</span>
                         </a>
                     </div>
@@ -237,63 +235,63 @@
 
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="overflow: hidden;">
             <div class="menu-item" id="OB_SHIFT">
-                <a class="menu-link" href="{{ url('onboarding:shift') }}?template=true&type=QUESTIONSET">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
-                    <span class="menu-title">Shift</span>
-                </a>
-            </div>
+                        <a class="menu-link" href="{{ url('onboarding:shift') }}?template=true&type=QUESTIONSET">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Shift</span>
+                        </a>
+                    </div>
             <div class="menu-item" id="OB_PEOPLEGROUP">
-                <a class="menu-link" href="{{ url('peoples:peoplegroup') }}?template=true&type=QUESTIONSET">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
-                    <span class="menu-title">People Group</span>
-                </a>
-            </div>
+                        <a class="menu-link" href="{{ url('peoples:peoplegroup') }}?template=true&type=QUESTIONSET">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">People Group</span>
+                        </a>
+                    </div>
             <div class="menu-item" id="OB_LOCATION">
-                <a class="menu-link" href="{{ url('activity:location') }}?template=true">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
-                    <span class="menu-title">Location</span>
-                </a>
-            </div>
+                        <a class="menu-link" href="{{ url('activity:location') }}?template=true">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Location</span>
+                        </a>
+                    </div>
             <div class="menu-item" id="OB_ASSET">
-                <a class="menu-link" href="{{ url('activity:asset') }}?template=true&type=QUESTIONSET">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
-                    <span class="menu-title">Asset</span>
-                </a>
-            </div>
+                        <a class="menu-link" href="{{ url('activity:asset') }}?template=true&type=QUESTIONSET">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Asset</span>
+                        </a>
+                    </div>
             <div class="menu-item" id="OB_CHECKPOINT">
-                <a class="menu-link" href="{{ url('activity:checkpoint') }}?template=true&type=QUESTIONSET">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
-                    <span class="menu-title">Checkpoint</span>
-                </a>
-            </div>
+                        <a class="menu-link" href="{{ url('activity:checkpoint') }}?template=true&type=QUESTIONSET">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Checkpoint</span>
+                        </a>
+                    </div>
 
             <div class="menu-item" id="OB_QUESTION">
-                <a class="menu-link" href="{{ url('activity:question') }}?template=true">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
-                    <span class="menu-title">Question</span>
-                </a>
-            </div>
+                        <a class="menu-link" href="{{ url('activity:question') }}?template=true">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Question</span>
+                        </a>
+                    </div>
 
             <div class="menu-item" id="OB_QUESTIONSET">
-                <a class="menu-link" href="{{ url('activity:checklist') }}?template=true&type=QUESTIONSET">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
-                    <span class="menu-title">Questionset</span>
-                </a>
-            </div>
+                        <a class="menu-link" href="{{ url('activity:checklist') }}?template=true&type=QUESTIONSET">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Questionset</span>
+                        </a>
+                    </div>
             <div class="menu-item" id="OB_VENDOR">
                 <a class="menu-link" href="{{ url('work_order_management:vendor') }}?template=true">
                     <span class="menu-bullet">
@@ -305,51 +303,51 @@
         </div>
     </div>
     <div data-kt-menu-trigger="click" id="SCHEDULING" class="menu-item menu-accordion" style="display:none;">
-        <span class="menu-link">
-            <span class="menu-icon">
+                <span class="menu-link">
+                    <span class="menu-icon">
                 <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
-                <span class="svg-icon svg-icon-2">
+                        <span class="svg-icon svg-icon-2">
                     <span class="material-icons">alarm</span>
-                </span>
+                        </span>
                 <!--end::Svg Icon-->
-            </span>
+                    </span>
             <span class="menu-title">Scheduling</span>
-            <span class="menu-arrow text-white mb-1"></span>
-        </span>
+                    <span class="menu-arrow text-white mb-1"></span>
+                </span>
         <div class="menu-sub menu-sub-accordion" kt-hidden-height="116" style="display: none; overflow: hidden;">
             <div class="menu-item" id="SHD_TASK">
-                <a class="menu-link" href="{{ url('schedhuler:jobschdtasks') }}?template=true">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
-                    <span class="menu-title">Task</span>
-                </a>
-            </div>
+                        <a class="menu-link" href="{{ url('schedhuler:jobschdtasks') }}?template=true">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Task</span>
+                        </a>
+                    </div>
             <div class="menu-item" id="SHD_PPMPLAN">
-                <a class="menu-link" href="{{ url('activity:ppm') }}?template=true">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
+                        <a class="menu-link" href="{{ url('activity:ppm') }}?template=true">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
                     <span class="menu-title">PPM Plan</span>
-                </a>
-            </div>
+                        </a>
+                    </div>
             <div class="menu-item" id="SHD_TOUR">
-                <a class="menu-link" href="{{ url('schedhuler:schd_internal_tour') }}?template=true">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
-                    <span class="menu-title">Tour</span>
-                </a>
-            </div>
+                        <a class="menu-link" href="{{ url('schedhuler:schd_internal_tour') }}?template=true">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Tour</span>
+                        </a>
+                    </div>
             <div class="menu-item" id="SHD_ROUTEPLAN">
-                <a class="menu-link" href="{{ url('schedhuler:schd_external_tour') }}?template=true">
-                    <span class="menu-bullet">
-                        <span class="bullet bullet-dot"></span>
-                    </span>
-                    <span class="menu-title">Route Plan</span>
-                </a>
-            </div>
-        </div>
+                        <a class="menu-link" href="{{ url('schedhuler:schd_external_tour') }}?template=true">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Route Plan</span>
+                        </a>
+                    </div>
+                </div>
     </div>
 
 
@@ -634,23 +632,51 @@
     </div> #}
     {% endif %}
     {% else %}
-    <div class="menu-item" id="DASHBOARD" style="">
-        <a class="menu-link" href="/reports/generatepdf/">
-            <span class="menu-icon">
-                <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
-                <span class="svg-icon svg-icon-2">
-                    <span class="material-symbols-outlined">
-                        picture_as_pdf
+    {% if request.session.sitecode not in ["SPSOPERATION"] %}
+        {% if request.session.sitecode not in ["SPSOPS"] %}
+            <div class="menu-item" id="DASHBOARD" style="">
+                <a class="menu-link" href="/reports/generatepdf/">
+                    <span class="menu-icon">
+                        <span class="svg-icon svg-icon-2">
+                            <span class="material-symbols-outlined">
+                                picture_as_pdf
+                            </span>
+                        </span>
                     </span>
-                  </span>
-                <!--end::Svg Icon-->
-            </span>
-            <span class="menu-title">Generate PDF</span>
-        </a>
-    </div>
-    {% if request.session.sitecode in ["SPSESIC"] %}
+                    <span class="menu-title">Generate PDF</span>
+                </a>
+            </div>
+            {% if request.session.sitecode in ["SPSESIC"] %}
+            <div class="menu-item" id="DASHBOARD" style="">
+                <a class="menu-link" href="/reports/generateletter/">
+                    <span class="menu-icon">
+                        <span class="svg-icon svg-icon-2">
+                            <span class="material-symbols-outlined">
+                                description
+                            </span>
+                        </span>
+                    </span>
+                    <span class="menu-title">Generate Letter</span>
+                </a>
+            </div>
+            {% endif %}
+        {% else %}
+        <div class="menu-item" id="DASHBOARD" style="">
+            <a class="menu-link" href="/reports/generateattendance/">
+                <span class="menu-icon">
+                    <span class="svg-icon svg-icon-2">
+                        <span class="material-symbols-outlined">
+                            description
+                        </span>
+                    </span>
+                </span>
+                <span class="menu-title">Generate Attendance</span>
+            </a>
+        </div>
+        {% endif %}
+    {% else %}
     <div class="menu-item" id="DASHBOARD" style="">
-        <a class="menu-link" href="/reports/generateletter/">
+        <a class="menu-link" href="/reports/generate_declaration_form/">
             <span class="menu-icon">
                 <span class="svg-icon svg-icon-2">
                     <span class="material-symbols-outlined">
@@ -658,7 +684,7 @@
                     </span>
                 </span>
             </span>
-            <span class="menu-title">Generate Letter</span>
+            <span class="menu-title">Generate Declaration Form</span>
         </a>
     </div>
     {% endif %}
