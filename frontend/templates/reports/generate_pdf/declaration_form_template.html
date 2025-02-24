@@ -47,6 +47,11 @@
             display: inline-block;
             width: 300px;
         }
+        .underline-lst-bonus {
+            border-bottom: 1px dotted black;
+            display: inline-block;
+            width: 130px;
+        }
         .section {
             margin: 10px 0;
             line-height: 1;
@@ -91,13 +96,13 @@
            <br> I HAVE RECEIVED below mentioned dues from contractor (प्राप्त हो रहा है) – below mentioned <span class="background-yellow">DOCUMENTS /Evidence are attached with forms. </span></p>
         <ul>
             <li><div class="section">RS <span class="underline-lst">{{ NetPay }}</span> Pending salary AS WAGES UPTO duty date (मजदूरी के रूप में) <span class="underline-lst">{{ "31/12/2024" }}</span></div></li>
-            <li><div class="section">RS <span class="underline-lst">{{ "NILL" }}</span> AS PRORATA BONUS UPTO (प्रोराटा बोनस के रूप में) <span class="underline-lst">{{ " " }}</span></div></li>
-            <li><div class="section">RS <span class="underline-lst">{{ "NILL" }}</span> AS LEAVE ENCASHMENT UPTO (छुट्टी नकदीकरण के रूप में) <span class="underline-lst">{{ "Aug-24 To Dec-24" }}</span></div></li>
-            <li><div class="section">RS <span class="underline-lst">{{ "NILL" }}</span> AS NOTICE PAY UPTO (नोटिस के रूप में भुगतान करे) <span class="underline-lst">{{ " " }}</span>AND तथा</div></li>
+            <li><div class="section">RS <span class="underline-lst">{{ Bonus }}</span> AS PRORATA BONUS UPTO (प्रोराटा बोनस के रूप में) <span class="underline-lst-bonus">{{ "will be paid on Diwali" }}</span></div></li>
+            <li><div class="section">RS <span class="underline-lst">{{ Leave }}</span> AS LEAVE ENCASHMENT UPTO (छुट्टी नकदीकरण के रूप में) <span class="underline-lst">{{ "Aug-24 To Dec-24" }}</span></div></li>
+            <li><div class="section">RS <span class="underline-lst">{{ "NILL" }}</span> AS NOTICE PAY UPTO (नोटिस के रूप में भुगतान करे) <span class="underline-lst">{{ "NILL" }}</span>AND तथा</div></li>
             <li><div class="section">RS <span class="underline-lst">{{ "NILL" }}</span> AS GRATUITY (ग्रेच्युटी के रूप में) [IF APPLICABLE]. [यदि लागू हो]</div></li>
             <li><div class="section">RS <span class="underline-lst">{{ "NILL" }}</span> PF with damages + interest paid. </div></li>
             <li><div class="section">RS <span class="underline-lst">{{ "WC Coverage" }}</span> ESIC/WC contribution paid </div></li>
-            <li><div class="section">RS <span class="underline-lst">{{ " " }}</span> MLWF contribution paid. </div></li>
+            <li><div class="section">RS <span class="underline-lst">{{ "NILL" }}</span> MLWF contribution paid. </div></li>
         </ul>
         <p>I HAVE RECEIVED ALL MY DUES FOR MY PERIOD OF SERVICE which are transferred in my Bank account (मुझे अपनी सेवा की अवधि के लिए मेरे सभी बकाया प्राप्त हो गए हैं)</p>
         
