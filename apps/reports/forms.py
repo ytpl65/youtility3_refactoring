@@ -298,7 +298,7 @@ class GeneratePDFForm(forms.ModelForm):
     required_css_class = "required"
     class Meta:
         model = GeneratePDF
-        fields = ["additional_filter","customer","site","period_from","company","document_type","is_page_required"] #period_to & number_of_period
+        fields = ["additional_filter","customer","site","period_from","company","document_type","is_page_required","type_of_form"] #period_to & number_of_period
 
     # data fields
     customer              = forms.ChoiceField(label='Customer', required=True)
@@ -313,7 +313,7 @@ class GeneratePDFForm(forms.ModelForm):
     )
     pf_code_no = forms.CharField(label='PF Code No.', required=True)
     esic_code_no = forms.CharField(label='ESIC Code No.', required=True)
-
+    ticket_no = forms.CharField(label='Ticket No.', required=True)
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)

@@ -763,7 +763,6 @@ class ShiftResource(resources.ModelResource):
         self.is_superuser = kwargs.pop('is_superuser', None)
         self.request = kwargs.pop('request', None)
 
-    
     def convert_ist_to_utc(self, time_input):
         import pytz
         from datetime import datetime
@@ -788,7 +787,6 @@ class ShiftResource(resources.ModelResource):
         duration = (end_dt - start_dt).total_seconds() / 60
         return int(duration)
         
-    
     def before_import_row(self, row, **kwargs):
         if row['Name*'] in ['', None]: raise ValidationError("Name* is required field")
         if row['Start Time*'] in ['', None]: raise ValidationError("Start Time* is required field")
@@ -796,7 +794,11 @@ class ShiftResource(resources.ModelResource):
         if row['People Count*'] in ['', None]: raise ValidationError("People Count* is required field")
         if row['Enable*'] in ['', None]: raise ValidationError("Enable* is required field")
         if row['Night Shift*'] in ['', None]: raise ValidationError("Night Shift* is required field")
-        if row['Shift Data*'] in ['', None]: raise ValidationError("Shift Data* is required field")
+        if row['Type*'] in ['', None]: raise ValidationError("Type* is required field")
+        if row['Id*'] in ['', None]: raise ValidationError("Id* is required field")
+        if row['Count*'] in ['', None]: raise ValidationError("Count* is required field")
+        if row['Overtime*'] in ['', None]: raise ValidationError("Overtime* is required field")
+        if row['Gracetime*'] in ['', None]: raise ValidationError("Gracetime* is required field")
         
         row['Name*'] = clean_string(row.get('Name*', "NONE"))
         self._shiftname = row['Name*']
@@ -805,42 +807,66 @@ class ShiftResource(resources.ModelResource):
         self._peoplecount = int(row['People Count*'])
         self._enable = row['Enable*']
         self._nightshiftappicable = row['Night Shift*']
-        self._shift_data = row['Shift Data*']
         self._client = row['Client*']
         self._site = row['Site*']
+        
+        shift_data_dict = {}
+
+        # Parse fields into lists
+        types = [item.strip() for item in row['Type*'].split(",")]
+        ids = [item.strip() for item in row['Id*'].split(",")]
+        counts = [item.strip() for item in row['Count*'].split(",")]
+        overtimes = [item.strip() for item in row['Overtime*'].split(",")]
+        gracetimes = [item.strip() for item in row['Gracetime*'].split(",")]
+
+        # Combine the data into the desired structure
+        for type_data, id_data, count, overtime, gracetime in zip(types, ids, counts, overtimes, gracetimes):
+            shift_data_dict[type_data] = {
+                "id": int(id_data),
+                "count": count,
+                "overtime": overtime,
+                "gracetime": gracetime
+            }
 
         if self._peoplecount < 1:
             raise ValidationError("People Count* must be greater than or equal to 1")
 
-        import json
-        try:
-            shift_data = json.loads(self._shift_data)  # Parse shift_data
-        except json.JSONDecodeError:
-            raise ValidationError("Shift Data* is not a valid JSON")
-        
-        gracetime = shift_data.get("gracetime", "0")
-        if gracetime == "" or not gracetime.isdigit() or not (0 < int(gracetime) <= 60):
-            raise ValidationError("gracetime in Shift Data* must be a number greater than 0 and less than or equal to 60")
+        # Validate the shift data dictionary
+        shift_data = shift_data_dict  # No need to use self._shift_data if the data is already available as a dictionary
 
+        # Validate gracetime
+        for type_key, details in shift_data.items():
+            gracetime = details.get("gracetime", "0")
+            if gracetime == "" or not gracetime.isdigit() or not (0 < int(gracetime) <= 60):
+                raise ValidationError(
+                    f"Gracetime for type {type_key} in Shift Data* must be a number greater than 0 and less than or equal to 60"
+                )
+
+        # Validate counts and calculate total count
         total_count = 0
-        for detail in shift_data.get("designation_details", []):
-            count = int(detail.get('count', 0))
+        for type_key, details in shift_data.items():
+            count = int(details.get("count", 0))
             if count < 1:
-                raise ValidationError("Each count in designation_details must be greater than or equal to 1")
+                raise ValidationError(f"Count for type {type_key} must be greater than or equal to 1")
             total_count += count
 
-        if not (self._peoplecount >= total_count):
+        # Ensure total count does not exceed people count
+        if total_count > self._peoplecount:
             raise ValidationError(
-                f"Total available count in Shift Data* ({total_count}) exceeds the People Count* ({self._peoplecount})"
+                f"Total count in Shift Data* ({total_count}) exceeds the People Count* ({self._peoplecount})"
             )
 
+        # Check for existing records
         if om.Shift.objects.filter(shiftname=row['Name*'], client__bucode=row['Client*']).exists():
-            raise ValidationError(f"Record with these values already exist {row.values()}")
-        
+            raise ValidationError(f"Record with these values already exists: {row.values()}")
+
+        self._shift_data = shift_data_dict
         super().before_import_row(row, **kwargs)
 
+    # Handle instance before saving
     def before_save_instance(self, instance, using_transactions, dry_run):
         instance.starttime = self._starttime
         instance.endtime = self._endtime
         instance.shiftduration = self.calculate_duration(self._starttime, self._endtime)
+        instance.shift_data = self._shift_data
         utils.save_common_stuff(self.request, instance)

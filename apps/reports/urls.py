@@ -20,4 +20,7 @@ urlpatterns = [
     path('generatepdf-getdata/',       views.get_data,                                 name='generatepdf-getdata'),
     path('upload-pdf/',                views.upload_pdf,                               name='upload-pdf'),
     path('generateletter/',            views.GenerateLetter.as_view(),                 name="generateletter"),
+    path('generateattendance/',        views.GenerateAttendance.as_view(),             name="generateattendance"),
+    path('attendance_template/',       views.AttendanceTemplate.as_view(),             name="attendance_template"),
+    path('generate_declaration_form/', views.GenerateDecalartionForm.as_view(),   name="generate_declaration_form"),
 ]

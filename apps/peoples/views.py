@@ -76,8 +76,12 @@ class SignIn(View):
                     display_user_session_info(request.session)
                     logger.info(f"User logged in {request.user.peoplecode}")
                     if request.session.get('bu_id') in [1, None]: return redirect('peoples:no_site')
-                    if request.session.get('sitecode') not in ["SPSESIC", "SPSPAYROLL"]:
+                    if request.session.get('sitecode') not in ["SPSESIC", "SPSPAYROLL", "SPSOPS", "SPSOPERATION"]:
                         response = redirect('onboarding:wizard_delete') if request.session.get('wizard_data') else redirect('onboarding:rp_dashboard')
+                    elif request.session.get('sitecode') in ["SPSOPS"]:
+                        response = redirect('reports:generateattendance')
+                    elif request.session.get('sitecode') in ["SPSOPERATION"]:
+                        response = redirect('reports:generate_declaration_form')
                     else:
                         response = redirect('reports:generatepdf')
                 else:

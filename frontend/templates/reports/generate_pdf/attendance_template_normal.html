@@ -1,0 +1,463 @@
+{% extends "globals/base_form.html" %}
+
+{% block extra_css %}
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+    }
+
+    body {
+        padding: 10px;
+        background-color: white;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 18px;
+    }
+
+    .page-header h1 {
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+
+    .page-header h2 {
+        font-size: 18px;
+        margin-bottom: 5px;
+    }
+
+    .page-header h3 {
+        font-size: 16px;
+    }
+
+    .date-time {
+        text-align: right;
+        margin-bottom: 15px;
+    }
+
+    .date-time input {
+        border: none;
+        border-bottom: 1px solid black;
+        width: 200px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 5px;
+        margin-bottom: 15px;
+        border: 1px solid black;
+    }
+
+    .info-item {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        padding: 5px;
+        border: 1px solid black;
+    }
+
+    .info-label {
+        font-weight: normal;
+        padding-right: 10px;
+    }
+
+    .prepared-by {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 5px;
+        margin-bottom: 15px;
+        border: 1px solid black;
+    }
+
+    .prepared-item {
+        padding: 5px;
+        border: 1px solid black;
+    }
+
+    .note {
+        text-align: center;
+        margin: 15px 0;
+        font-weight: bold;
+    }
+
+    .attendance-table {
+        width: 100%;
+        margin-bottom: 20px;
+        border-collapse: collapse;
+    }
+
+    .attendance-table th, 
+    .attendance-table td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: center;
+        font-size: 14px;
+        color: black;
+    }
+
+    .attendance-table input {
+        width: 100%;
+        border: none;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .name-cell {
+        text-align: left !important;
+        white-space: pre-line;
+    }
+
+    .summary-section {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+        margin-bottom: 20px;
+    }
+
+    .summary-item {
+        border: 1px solid black;
+        padding: 5px;
+    }
+
+    .footer {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 30px;
+    }
+
+    .signature-block {
+        text-align: left;
+    }
+
+    .signature-line {
+        margin-top: 50px;
+        border-top: 1px solid black;
+    }
+
+    .page-number {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .red-text {
+        color: red;
+    }
+
+    .client-signature {
+        text-align: right;
+        margin-top: 20px;
+    }
+
+    hr {
+        border: none;
+        height: 2px;
+        background: repeating-linear-gradient(
+            to right,
+            black 0px,
+            black 10px,
+            transparent 10px,
+            transparent 20px
+        );
+    }
+</style>
+{% endblock extra_css %}
+<!-- ------------------------ BEGIN PAGE BREADCUMB --------------------- -->
+{% block pagebreadcumb %}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Generate Attendance Form (NORMAL FORM)</a></li>
+{% endblock pagebreadcumb %}
+<!-------------------------- END PAGE BREADCUMB ----------------------- -->
+
+{% block form %}
+<form action="{{ url('reports:generateattendance') }}" method="post" class="validate">
+  <!-- ------------------------ CSRF MIDDLEWARE TOKEN ------------------ -->
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+  {% for att_data_key, att_data_value in attendance_data.site_attendance_data.items() %}
+    {% set outer_loop = loop.index0 %}
+    {% for single_contract_data in att_data_value %}
+    <div class="attendance-section">
+        <div class="page-header">
+            <h1>{{ "Security & Personnel Services Pvt. Ltd." }}</h1>
+            <h2>Muster Roll For The Month of {{ attendance_data.period }}</h2>
+            <h3>Form II See Rule 27(1)</h3>
+        </div>
+
+        <div class="date-time">
+            Date & Time: <input type="text">
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">Contract:</span>
+                <span>{{single_contract_data.contract_name}}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Party Name:</span>
+                <span>{{single_contract_data.party_name}}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Site Name:</span>
+                <span>{{single_contract_data.bu_site_name}}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Party Code:</span>
+                <span>{{single_contract_data.party_code}}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Site Code:</span>
+                <span>{{single_contract_data.bu_site}}</span>
+            </div>
+        </div>
+
+        <div class="note">
+            NOTE: P-PRESENT, A-ABSENT, O-WEEKLY OFF, D-EXTRA DUTY (A, O, D TO BE SHOWN IN RED) (N/H- NATION HOLIDAY)
+        </div>
+
+        <table class="attendance-table" id="attendance-table-{{ outer_loop }}-{{ loop.index0 }}">
+            <thead>
+                <tr>
+                    <th rowspan="2">SR#</th>
+                    <th rowspan="2">TICKET.NO</th>
+                    <th rowspan="2">NAME.OF.EMPLOYEE</th>
+                    <th rowspan="2">DESIG</th>
+                    <th colspan="31">DAYS</th>
+                    <th colspan="6">SUMMARY</th>
+                </tr>
+                <tr>
+                    <!-- Days will be added by JavaScript -->
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be added by JavaScript -->
+            </tbody>
+        </table>
+
+        <div class="summary-section">
+            <div class="summary-item">
+                Present Day(A): <span class="presentDays">0</span>
+            </div>
+            <div class="summary-item">
+                Extra Duty(B): <span class="extraDuty">0</span>
+            </div>
+            <div class="summary-item">
+                TOTAL DUTY(A+B): <span class="totalDuty">0</span>
+            </div>
+            <div class="summary-item">
+                NH: <span class="nh">0</span>
+            </div>
+            <div class="summary-item">
+                W/OFF: <span class="woff">0</span>
+            </div>
+            <div class="summary-item">
+                CONTRACT DUTIES(A+B):{{ single_contract_data.bu_site_total_quantity }}
+            </div>
+        </div>
+
+        <div class="client-signature">
+            CERTIFIED BY/APPROVED BY CLIENT
+            <div class="signature-line">Name, Sign & Mobile</div>
+        </div>
+
+        <div class="footer">
+            <div class="signature-block">
+                Checked by AO/AM
+                <div class="signature-line">Name & Sign</div>
+            </div>
+            <div class="signature-block">
+                Verified by Ops Manager
+                <div class="signature-line">Name & Sign</div>
+            </div>
+        </div>
+
+        <div class="page-number">Page {{ loop.index }}</div>
+        <hr>
+        <br><br>
+    </div>
+    {% endfor %}
+{% endfor %}
+    <br><br>
+  <div class="form-actions" style="text-align: center;">
+    <button type="submit" form="report_form" id="submit" class="btn btn-sm btn-primary2 btn-hover-scale" style="margin-right: 10px;">
+      Download &nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
+    </button>
+    <button type="button" id="btn_clear" class="btn btn-sm btn-secondary btn-hover-scale">
+      Clear&nbsp;<i class="fas fa-times"></i>
+    </button>
+</div>
+</form>
+{% endblock form %}
+
+{% block extra_scripts %}
+<script>
+    // Function to create a unique table for each contract's employee details
+    function initializeAttendanceTables() {
+        const attendanceData = {{ attendance_data.site_attendance_data|safe }};
+        
+        // Process each contract group
+        Object.entries(attendanceData).forEach(([contractKey, contractDataArray], contractIndex) => {
+            contractDataArray.forEach((contractData, dataIndex) => {
+                const tableId = `attendance-table-${contractIndex}-${dataIndex}`;
+                const tableBody = document.querySelector(`#${tableId} tbody`);
+                const daysRow = document.querySelector(`#${tableId} thead tr:last-child`);
+                
+                // Initialize days headers
+                for (let i = 1; i <= 31; i++) {
+                    const th = document.createElement('th');
+                    th.textContent = i.toString().padStart(2, '0');
+                    daysRow.appendChild(th);
+                }
+    
+                // Add summary column headers
+                const summaryHeaders = ['PD(A)', 'WO(B)', 'TOTAL(A+B=C)', 'ED(D)', 'NH(E)', 'TOTAL(C+D+E)'];
+                summaryHeaders.forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    daysRow.appendChild(th);
+                });
+    
+                // Load employee data for this contract
+                loadEmployeeData(tableBody, contractData.employee_details, tableId);
+            });
+        });
+    }
+    
+    function loadEmployeeData(tableBody, employees, tableId) {
+        employees.forEach((employee, index) => {
+            const sr = index + 1;
+            const row = document.createElement('tr');
+            
+            // Add employee info
+            row.innerHTML = `
+                <td>${sr}</td>
+                <td>${employee.employee}</td>
+                <td class="name-cell">${employee.employee_name}</td>
+                <td>${employee.work_type}</td>
+            `;
+            
+            // Add attendance cells
+            for (let i = 1; i <= 31; i++) {
+                const td = document.createElement('td');
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.maxLength = 3;
+                input.dataset.row = sr;
+                input.dataset.day = i;
+                input.dataset.table = tableId;
+    
+                if (nationalHolidays.includes(i)) {
+                    input.value = 'N/H';
+                    input.disabled = false;
+                    input.style.color = 'black';
+                } else {
+                    input.value = 'P';
+                    input.style.color = 'black';
+                }
+    
+                input.addEventListener('input', validateAttendance);
+                input.addEventListener('change', (e) => updateSummary(e, tableId));
+                td.appendChild(input);
+                row.appendChild(td);
+            }
+            
+            // Add summary cells
+            ['pd', 'wo', 'total', 'ed', 'nh', 'final'].forEach(summary => {
+                const td = document.createElement('td');
+                td.id = `${summary}-${tableId}-${sr}`;
+                td.textContent = '0';
+                row.appendChild(td);
+            });
+            
+            tableBody.appendChild(row);
+        });
+        
+        // Initial update of summaries
+        const firstInput = tableBody.querySelector('input');
+        if (firstInput) {
+            updateSummary({ target: firstInput }, tableId);
+        }
+    }
+    
+    function validateAttendance(event) {
+        const input = event.target;
+        let value = input.value.toUpperCase();
+    
+        if (!['A', 'O', 'D', ''].includes(value) && !input.disabled) {
+            input.value = 'P';
+            return;
+        }
+    
+        input.style.color = ['A', 'O', 'D'].includes(value) ? 'red' : 'black';
+        input.value = value;
+    }
+    
+    function updateSummary(event, tableId) {
+        const row = event.target.dataset.row;
+        const inputs = document.querySelectorAll(`#${tableId} input[data-row="${row}"]`);
+    
+        let present = 0;
+        let weeklyOff = 0;
+        let extraDuty = 0;
+        let nationalHoliday = 0;
+    
+        inputs.forEach(input => {
+            switch (input.value) {
+                case 'P': present++; break;
+                case 'O': weeklyOff++; break;
+                case 'D': extraDuty++; break;
+                case 'N/H': nationalHoliday++; break;
+            }
+        });
+    
+        // Update row totals
+        document.getElementById(`pd-${tableId}-${row}`).textContent = present;
+        document.getElementById(`wo-${tableId}-${row}`).textContent = weeklyOff;
+        document.getElementById(`total-${tableId}-${row}`).textContent = present + weeklyOff;
+        document.getElementById(`ed-${tableId}-${row}`).textContent = extraDuty;
+        document.getElementById(`nh-${tableId}-${row}`).textContent = nationalHoliday;
+        document.getElementById(`final-${tableId}-${row}`).textContent = 
+            present + weeklyOff + extraDuty + nationalHoliday;
+    
+        updateGlobalSummary(tableId);
+    }
+    
+    function updateGlobalSummary(tableId) {
+        const summaryContainer = document.querySelector(`#${tableId}`).closest('.attendance-section')
+            .querySelector('.summary-section');
+        
+        let totalPresent = 0;
+        let totalExtraDuty = 0;
+        let totalWOff = 0;
+        let totalNH = 0;
+    
+        document.querySelectorAll(`#${tableId} [id^="pd-"]`).forEach(el => {
+            totalPresent += parseInt(el.textContent) || 0;
+        });
+    
+        document.querySelectorAll(`#${tableId} [id^="ed-"]`).forEach(el => {
+            totalExtraDuty += parseInt(el.textContent) || 0;
+        });
+    
+        document.querySelectorAll(`#${tableId} [id^="wo-"]`).forEach(el => {
+            totalWOff += parseInt(el.textContent) || 0;
+        });
+    
+        document.querySelectorAll(`#${tableId} [id^="nh-"]`).forEach(el => {
+            totalNH += parseInt(el.textContent) || 0;
+        });
+    
+        summaryContainer.querySelector('.presentDays').textContent = totalPresent;
+        summaryContainer.querySelector('.extraDuty').textContent = totalExtraDuty;
+        summaryContainer.querySelector('.totalDuty').textContent = totalPresent + totalExtraDuty;
+        summaryContainer.querySelector('.woff').textContent = totalWOff;
+        summaryContainer.querySelector('.nh').textContent = totalNH;
+    }
+    
+    const nationalHolidays = [2, 24];
+    
+    document.addEventListener('DOMContentLoaded', initializeAttendanceTables);
+</script>
+
+{% endblock extra_scripts %}
