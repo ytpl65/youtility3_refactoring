@@ -171,25 +171,34 @@ class QuestionResource(resources.ModelResource):
     def handle_nan_values(self, row):
         values = ["Min", "Max", "Alert Below", "Alert Above"]
         for val in values:
-            if type(row.get(val)) == int:
-                continue
-            elif row.get(val) == None:
-                continue
-            elif isnan(row.get(val)):
+            value = row.get(val)
+            if value is None or value == "NONE":  # Allow "NONE" and None values
                 row[val] = None
+                continue
+            try:
+                row[val] = float(value)  # Convert valid numbers
+            except (ValueError, TypeError):
+                row[val] = None  # Replace invalid values with None
+
 
     def validate_numeric_values(self, row):
+        self.handle_nan_values(row)
         min_value = row.get("Min")
         max_value = row.get("Max")
         alert_below = row.get("Alert Below")
         alert_above = row.get("Alert Above")
+        if min_value is not None and alert_below is not None:
+            if min_value > alert_below:
+                raise ValidationError("Alert Below should be greater than Min")
 
-        if min_value and alert_below and float(min_value) > float(alert_below):
-            raise ValidationError("Alert Below should be greater than Min")
-        if max_value and alert_above and float(max_value) < float(alert_above):
-            raise ValidationError("Alert Above should be smaller than Max")
-        if alert_above and alert_below and float(alert_above) < float(alert_below):
-            raise ValidationError("Alert Above should be greater than Alert Below")
+        if max_value is not None and alert_above is not None:
+            if max_value < alert_above:
+                raise ValidationError("Alert Above should be smaller than Max")
+
+        if alert_above is not None and alert_below is not None:
+            if alert_above < alert_below:
+                raise ValidationError("Alert Above should be greater than Alert Below")
+
 
     def validate_options_values(self, row):
         if row["Answer Type*"] in ["CHECKBOX", "DROPDOWN"]:

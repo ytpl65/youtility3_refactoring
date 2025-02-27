@@ -217,7 +217,10 @@ class BtResource(resources.ModelResource):
         self._city = row['City']
         self._country = row['Country']
         self._latlng = row['GPS Location']
-        control_room_list = row['Control Room'].strip("[]").replace("'", "").split(", ")
+        if row['Control Room']:
+            control_room_list = row['Control Room'].strip("[]").replace("'", "").split(", ")
+        else:
+            control_room_list = []
         from django.db.models import Q
         control_id_list = list(
         pm.People.objects.filter(
