@@ -22,5 +22,5 @@ urlpatterns = [
     path('generateletter/',            views.GenerateLetter.as_view(),                 name="generateletter"),
     path('generateattendance/',        views.GenerateAttendance.as_view(),             name="generateattendance"),
     path('attendance_template/',       views.AttendanceTemplate.as_view(),             name="attendance_template"),
-    path('generate_declaration_form/', views.GenerateDecalartionForm.as_view(),   name="generate_declaration_form"),
+    path('generate_declaration_form/', views.GenerateDecalartionForm.as_view(),        name="generate_declaration_form"),
 ]

@@ -1357,35 +1357,101 @@ class AttendanceTemplate(LoginRequiredMixin, View):
     PARAMS = {
         'template_normal':"reports/generate_pdf/attendance_template_normal.html",
         'template_form16':"reports/generate_pdf/attendance_template_form16.html",
-        'template_form26TO25':"reports/generate_pdf/attendance_template_form26TO25.html",
-        'template_form25TO24':"reports/generate_pdf/attendance_template_form25TO24.html",
-        'template_form15TO14':"reports/generate_pdf/attendance_template_form15TO14.html",
+        'download_template_normal':"reports/generate_pdf/generate_normal_attendance_pdf.html",
     }
     def get(self, request, *args, **kwargs):
         P, S = self.PARAMS, request.session
         attendance_data = S.get('report_data', {})
-        print("Attendace Data: ",attendance_data)
         if attendance_data:
             if attendance_data["type_form"] == 'NORMAL FORM':
                 return render(request, P['template_normal'], {"attendance_data": attendance_data})
             if attendance_data["type_form"] == 'FORM 16':
                 return render(request, P['template_form16'], {"attendance_data": attendance_data})
-            if attendance_data["type_form"] == 'FORM 26 TO 25':
-                return render(request, P['template_form26TO25'], {"attendance_data": attendance_data})
-            if attendance_data["type_form"] == 'FORM 25 TO 24':
-                return render(request, P['template_form25TO24'], {"attendance_data": attendance_data})
-            if attendance_data["type_form"] == 'FORM 15 TO 14':
-                return render(request, P['template_form15TO14'], {"attendance_data": attendance_data})
     
     def post(self, request, *args, **kwargs):
+        P, S = self.PARAMS, request.session
+        attendance_data = S.get('report_data', {})
+        
+        if not attendance_data:
+            return JsonResponse({"success": False, "message": "No Data Found"})
+        
+        # Get the appropriate template based on form type
+        template_name = None
+        if attendance_data["type_form"] == 'NORMAL FORM':
+            template_name = P['download_template_normal']
+        elif attendance_data["type_form"] == 'FORM 16':
+            template_name = P['template_form16']
+        elif attendance_data["type_form"] == 'FORM 26 TO 25':
+            template_name = P['template_form26TO25']
+        elif attendance_data["type_form"] == 'FORM 25 TO 24':
+            template_name = P['template_form25TO24']
+        elif attendance_data["type_form"] == 'FORM 15 TO 14':
+            template_name = P['template_form15TO14']
+            
+        if not template_name:
+            return JsonResponse({"success": False, "message": "Invalid form type"})
+        
+        # Generate PDF
         try:
-            data = json.loads(request.body)
-            if len(data):
-                return JsonResponse({"success": True, "message": "Report generated successfully!"})
-            else:
-                return JsonResponse({"success": False, "message": "No Data Found"})
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+            from django.http import FileResponse, JsonResponse
+            from django.template.loader import render_to_string
+            from weasyprint import HTML, CSS
+            import json
+            import tempfile
+
+            # Parse attendance data from frontend
+            attendance_data_frontend = json.loads(request.POST.get('complete_attendance_data', '{}'))
+            print("===========>",attendance_data_frontend)
+            summary_data_frontend = json.loads(request.POST.get('summary_data', '{}'))
+            date_time_frontend = request.POST.get('submissionDateTime', '')
+            
+            # Transform attendance dictionary into a list for template processing
+            for key, employees in attendance_data_frontend.items():
+                for emp in employees:
+                    # Convert attendance dictionary {"day_1": "P", "day_2": "A"} → ["P", "A", ...]
+                    emp["attendance_list"] = [emp["attendance"].get(f"day_{i}", "") for i in range(1, 32)]
+            
+            # Render the template with processed data
+            html_string = render_to_string(
+                template_name,
+                {
+                    'attendance_data': attendance_data,
+                    'complete_attendance_data': attendance_data_frontend,
+                    'summary_data': summary_data_frontend,
+                    "date_time": date_time_frontend
+                },
+                request=request
+            )
+            
+            # Create a temporary file for the PDF
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as output:
+                pdf_file = output.name
+
+            # Generate PDF using WeasyPrint
+            HTML(string=html_string).write_pdf(
+                pdf_file,
+                stylesheets=[
+                    CSS(string="""
+                        @page { 
+                            margin: 1cm; 
+                            size: A4 landscape; 
+                        }
+                    """)
+                ]
+            )
+
+            # Return PDF as a downloadable file
+            response = FileResponse(open(pdf_file, 'rb'), content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="attendance_report.pdf"'
+            return response
+
+        except Exception as e:
+            print(f"PDF generation error: {str(e)}")
+            return JsonResponse({"success": False, "message": f"Error generating PDF: {str(e)}"})
+
+        except Exception as e:
+            print(f"PDF generation error: {str(e)}")
+            return JsonResponse({"success": False, "message": f"Error generating PDF: {str(e)}"})
         
 class GenerateDecalartionForm(LoginRequiredMixin, View):
     PARAMS = {
@@ -1408,11 +1474,29 @@ class GenerateDecalartionForm(LoginRequiredMixin, View):
             get_client = getClient("SPS")
             doc_employee_detail = get_client.get_list("Employee", filters={"name":data['ticket_no']})
             doc_payroll_detail = get_client.get_list("Processed Payroll", filters={"emp_id":data['ticket_no']})
+
+            import pandas as pd
+            # Load the Excel file
+            file_path = "/home/pankaj/Pankaj/codebase (1)/JNPT LEAVE BONUS SAL DATA AUG -DEC 2024.xls"  # Change this to your actual file path
+            df = pd.read_excel(file_path)
+
+            # Find the matching row
+            matched_row = df[df["Row Labels"] == data['ticket_no']]
+
+            # Fetch required columns
+            if not matched_row.empty:
+                row_data = matched_row[["Row Labels", "Name", "Sum of Bonus Amt", "Leave amt", "Dec 24 net pay", "MLWF", "PF AMT"]]
+            else:
+                print("No match found")
+
             if str(doc_payroll_detail[0]["net_pay"]).endswith('.0'):
                 result = str(doc_payroll_detail[0]["net_pay"]).split('.')[0]
             else:
                 result = str(doc_payroll_detail[0]["net_pay"])
             # print("GET CLIENT",doc_employee_detail)
+            date_str = str(doc_employee_detail[0]["date_of_joining"])
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+            formatted_from_date = date_obj.strftime("%b-%y").upper()
             from django.http import HttpResponse
             from weasyprint import HTML
             from django.template.loader import render_to_string
@@ -1424,10 +1508,14 @@ class GenerateDecalartionForm(LoginRequiredMixin, View):
                 "BankACNo": doc_employee_detail[0]["bank_ac_no"],
                 "BankBranch": doc_employee_detail[0]["bank_branch"],
                 "BankIFSCCode": doc_employee_detail[0]["bank_ifsc_code"],
-                "FromDate": doc_employee_detail[0]["date_of_joining"],
-                "ToDate": doc_employee_detail[0]["relieving_date"] if doc_employee_detail[0]["relieving_date"] else "NILL",
+                "FromDate": formatted_from_date,
+                "ToDate": "DEC-24",
                 "CompanyName": doc_employee_detail[0]["company"],
-                "NetPay": result
+                "NetPay": row_data["Dec 24 net pay"].values[0],
+                "Bonus": row_data["Sum of Bonus Amt"].values[0],
+                "Leave": row_data["Leave amt"].values[0],
+                "MLWF": row_data["MLWF"].values[0],
+                "PFAMT": row_data["PF AMT"].values[0] if not pd.isna(row_data["PF AMT"].values[0]) else "NILL" 
             })
             
             # Convert HTML to PDF
