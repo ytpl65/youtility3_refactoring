@@ -1401,7 +1401,6 @@ class AttendanceTemplate(LoginRequiredMixin, View):
 
             # Parse attendance data from frontend
             attendance_data_frontend = json.loads(request.POST.get('complete_attendance_data', '{}'))
-            print("===========>",attendance_data_frontend)
             summary_data_frontend = json.loads(request.POST.get('summary_data', '{}'))
             date_time_frontend = request.POST.get('submissionDateTime', '')
             
@@ -1444,10 +1443,6 @@ class AttendanceTemplate(LoginRequiredMixin, View):
             response = FileResponse(open(pdf_file, 'rb'), content_type='application/pdf')
             response['Content-Disposition'] = 'attachment; filename="attendance_report.pdf"'
             return response
-
-        except Exception as e:
-            print(f"PDF generation error: {str(e)}")
-            return JsonResponse({"success": False, "message": f"Error generating PDF: {str(e)}"})
 
         except Exception as e:
             print(f"PDF generation error: {str(e)}")

@@ -363,7 +363,6 @@
     // Update every second (1000 milliseconds)
     setInterval(updateDateTime, 1000);
     
-    
     function initializeAttendanceTables() {
         const attendanceData = {{ attendance_data.site_attendance_data|safe }};
         const periodText = "{{ attendance_data.period }}"; // Get the period from the template
@@ -485,7 +484,6 @@
                 daysArray.push(i);
             }
         }
-        
         return daysArray;
     }
     
@@ -567,8 +565,7 @@
             }
         });
     }
-     
-    
+
     function validateAttendance(event) {
         const input = event.target;
         let value = input.value.toUpperCase();
@@ -597,19 +594,20 @@
         for (let i = 0; i < inputs.length; i++) {
             const val = inputs[i].value.toUpperCase();
             
-            if (val === 'P') {
-                pCount++; // Count consecutive 'P's
+            // Count 'D' as 'P' for consecutive P count calculation
+            if (val === 'P' || val === 'D') {
+                pCount++; // Count consecutive 'P's and 'D's
             } else if (val === 'O') {
                 oCount++; // Track number of 'O's
     
                 if (oCount === 1) {
-                    // First "O" should be preceded by at most 6 "P"s
+                    // First "O" should be preceded by at most 6 "P"s or "D"s
                     if (pCount > 6) {
                         error = true;
                         break;
                     }
                 } else {
-                    // Subsequent "O"s should be preceded by exactly 6 "P"s
+                    // Subsequent "O"s should be preceded by exactly 6 "P"s or "D"s
                     if (pCount !== 6) {
                         error = true;
                         break;
@@ -617,20 +615,18 @@
                 }
                 pCount = 0; // Reset P count after each "O"
             } else {
-                // Reset P count for 'A', 'D', 'N/H', they don't contribute to the count
+                // Reset P count for 'A', 'N/H', they don't contribute to the count
                 pCount = 0;
             }
         }
     
         // Display error if the rule is violated
         if (error) {
-            alert('Error: The first "O" must be preceded by at most 6 "P"s. All subsequent "O"s must have exactly 6 "P"s before them.');
+            alert('Error: The first "O" must be preceded by at most 6 "P"s or "D"s. All subsequent "O"s must have exactly 6 "P"s or "D"s before them.');
             input.value = 'P'; // Revert the input to 'P'
             input.style.color = 'black';
         }
     }
-    
-    
     
     function updateSummary(event, tableId) {
         const row = event.target.dataset.row;
@@ -643,21 +639,31 @@
     
         inputs.forEach(input => {
             switch (input.value) {
-                case 'P': present++; break;
-                case 'O': weeklyOff++; break;
-                case 'D': extraDuty++; break;
-                case 'N/H': nationalHoliday++; break;
+                case 'P': 
+                    present++; 
+                    break;
+                case 'O': 
+                    weeklyOff++; 
+                    break;
+                case 'D': 
+                    // D counts as both present (1) and extra duty (0.5)
+                    present++; 
+                    extraDuty += 0.5; 
+                    break;
+                case 'N/H': 
+                    nationalHoliday++; 
+                    break;
             }
         });
     
-        // Update row totals
+        // Update row totals - format extraDuty to 1 decimal place
         document.getElementById(`pd-${tableId}-${row}`).textContent = present;
         document.getElementById(`wo-${tableId}-${row}`).textContent = weeklyOff;
         document.getElementById(`total-${tableId}-${row}`).textContent = present + weeklyOff;
-        document.getElementById(`ed-${tableId}-${row}`).textContent = extraDuty;
+        document.getElementById(`ed-${tableId}-${row}`).textContent = extraDuty.toFixed(1);
         document.getElementById(`nh-${tableId}-${row}`).textContent = nationalHoliday;
         document.getElementById(`final-${tableId}-${row}`).textContent = 
-            present + weeklyOff + extraDuty + nationalHoliday;
+            (present + weeklyOff + extraDuty + nationalHoliday).toFixed(1);
     
         updateGlobalSummary(tableId);
     }
@@ -672,24 +678,25 @@
         let totalNH = 0;
     
         document.querySelectorAll(`#${tableId} [id^="pd-"]`).forEach(el => {
-            totalPresent += parseInt(el.textContent) || 0;
+            totalPresent += parseFloat(el.textContent) || 0;
         });
     
         document.querySelectorAll(`#${tableId} [id^="ed-"]`).forEach(el => {
-            totalExtraDuty += parseInt(el.textContent) || 0;
+            totalExtraDuty += parseFloat(el.textContent) || 0;
         });
     
         document.querySelectorAll(`#${tableId} [id^="wo-"]`).forEach(el => {
-            totalWOff += parseInt(el.textContent) || 0;
+            totalWOff += parseFloat(el.textContent) || 0;
         });
     
         document.querySelectorAll(`#${tableId} [id^="nh-"]`).forEach(el => {
-            totalNH += parseInt(el.textContent) || 0;
+            totalNH += parseFloat(el.textContent) || 0;
         });
     
+        // Format with 1 decimal place where needed
         summaryContainer.querySelector('.presentDays').textContent = totalPresent;
-        summaryContainer.querySelector('.extraDuty').textContent = totalExtraDuty;
-        summaryContainer.querySelector('.totalDuty').textContent = totalPresent + totalExtraDuty;
+        summaryContainer.querySelector('.extraDuty').textContent = totalExtraDuty.toFixed(1);
+        summaryContainer.querySelector('.totalDuty').textContent = (totalPresent + totalExtraDuty).toFixed(1);
         summaryContainer.querySelector('.woff').textContent = totalWOff;
         summaryContainer.querySelector('.nh').textContent = totalNH;
     }
