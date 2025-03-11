@@ -128,10 +128,10 @@ class GeneratePDF(BaseModel):
 
     class FormType(models.TextChoices):
         NORMALFORM = ('NORMAL FORM', 'NORMAL FORM')
-        FORM16 = ('FORM 16', 'FORM 16')
-        FORM26TO25 = ('FORM 26 TO 25', 'FORM 26 TO 25')
-        FORM25TO24 = ('FORM 25 TO 24', 'FORM 25 TO 24')
-        FORM15TO14 = ('FORM 15 TO 14', 'FORM 15 TO 14')
+        # FORM16 = ('FORM 16', 'FORM 16')
+        # FORM26TO25 = ('FORM 26 TO 25', 'FORM 26 TO 25')
+        # FORM25TO24 = ('FORM 25 TO 24', 'FORM 25 TO 24')
+        # FORM15TO14 = ('FORM 15 TO 14', 'FORM 15 TO 14')
 
     document_type = models.CharField('Document Type', choices = DocumentType.choices, null=True, max_length = 60)    
     company = models.CharField('Company', choices = Company.choices, null=True, max_length = 60)
