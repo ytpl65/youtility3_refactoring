@@ -201,6 +201,11 @@
         size: landscape;
     }
     
+    .page-number {
+        text-align: center;
+        margin-top: 20px;
+        font-weight: bold;
+    }
     
 </style>
 {% endblock extra_css %}
@@ -311,7 +316,8 @@
             </div>
         </div>
 
-        <div class="page-number">Page {{ loop.index }}</div>
+        {% set page_number = outer_loop * att_data_value|length + loop.index %}
+        <div class="page-number">Page {{ page_number }}</div>
         <hr>
         <br><br>
         <input type="hidden" name="attendance_data" id="attendance-data-{{ outer_loop }}-{{ loop.index0 }}" value="">
@@ -428,56 +434,68 @@
             }
         } 
         else if (formatARegex.test(periodText)) {
-            // Format A: 15th to 14th of next month (e.g., "JAN 2025 - A")
+            // Format A: 15th to 14th of current month from previous month
             const [_, monthStr, yearStr] = formatARegex.exec(periodText);
             const year = parseInt(yearStr);
             const month = getMonthNumberFromString(monthStr);
             
-            // Create days from 15th to end of current month
-            const daysInMonth = getDaysInMonth(month, year);
-            for (let i = 15; i <= daysInMonth; i++) {
+            // Calculate previous month
+            const prevMonth = month === 0 ? 11 : month - 1;
+            const prevYear = month === 0 ? year - 1 : year;
+            
+            // Create days from 15th to end of previous month
+            const daysInPrevMonth = getDaysInMonth(prevMonth, prevYear);
+            for (let i = 15; i <= daysInPrevMonth; i++) {
                 daysArray.push(i);
             }
-            
-            // Create days from 1st to 14th of next month
+        
+            // Create days from 1st to 14th of current month
             for (let i = 1; i <= 14; i++) {
                 daysArray.push(i);
             }
         } 
         else if (formatBRegex.test(periodText)) {
-            // Format B: 25th to 24th of next month (e.g., "JAN 2025 - B")
+            // Format B: 25th of previous month to 24th of current month
             const [_, monthStr, yearStr] = formatBRegex.exec(periodText);
             const year = parseInt(yearStr);
             const month = getMonthNumberFromString(monthStr);
             
-            // Create days from 25th to end of current month
-            const daysInMonth = getDaysInMonth(month, year);
-            for (let i = 25; i <= daysInMonth; i++) {
+            // Calculate previous month
+            const prevMonth = month === 0 ? 11 : month - 1;
+            const prevYear = month === 0 ? year - 1 : year;
+            
+            // Create days from 25th to end of previous month
+            const daysInPrevMonth = getDaysInMonth(prevMonth, prevYear);
+            for (let i = 25; i <= daysInPrevMonth; i++) {
                 daysArray.push(i);
             }
-            
-            // Create days from 1st to 24th of next month
+        
+            // Create days from 1st to 24th of current month
             for (let i = 1; i <= 24; i++) {
                 daysArray.push(i);
             }
-        } 
+        }
         else if (formatCRegex.test(periodText)) {
-            // Format C: 26th to 25th of next month (e.g., "JAN 2025 - C")
+            // Format C: 26th of previous month to 25th of current month
             const [_, monthStr, yearStr] = formatCRegex.exec(periodText);
             const year = parseInt(yearStr);
             const month = getMonthNumberFromString(monthStr);
             
-            // Create days from 26th to end of current month
-            const daysInMonth = getDaysInMonth(month, year);
-            for (let i = 26; i <= daysInMonth; i++) {
+            // Calculate previous month
+            const prevMonth = month === 0 ? 11 : month - 1;
+            const prevYear = month === 0 ? year - 1 : year;
+            
+            // Create days from 26th to end of previous month
+            const daysInPrevMonth = getDaysInMonth(prevMonth, prevYear);
+            for (let i = 26; i <= daysInPrevMonth; i++) {
                 daysArray.push(i);
             }
-            
-            // Create days from 1st to 25th of next month
+        
+            // Create days from 1st to 25th of current month
             for (let i = 1; i <= 25; i++) {
                 daysArray.push(i);
             }
-        } 
+        }         
         else {
             // Default to 31 days if format is unrecognized
             for (let i = 1; i <= 31; i++) {

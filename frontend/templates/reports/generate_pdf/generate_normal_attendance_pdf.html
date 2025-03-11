@@ -334,7 +334,8 @@
                             <div class="signature-line">Name & Sign</div>
                         </div>
                     </div>
-                    <div class="page-number">Page {{ chunk_index + 1 }} of {{ chunks }}</div>
+                    {% set page_number = outer_loop * att_data_value|length + loop.index %}
+                    <div class="page-number">Page {{ page_number }}</div>
                 </div>
             {% endfor %}
         {% endfor %}
