@@ -12,7 +12,7 @@ import json
 @receiver(post_save,sender=Job)
 def job_post_save(sender,instance,created,**kwargs):
     print('Job Signals')
-    from paho_client import MqttClient, SG_TO_NOC_TOPIC
+    from paho_client import MqttClient, REDMINE_TO_NOC
     client = MqttClient()
     client.client.connect('localhost',1883,60)
 

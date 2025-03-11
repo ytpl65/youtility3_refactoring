@@ -1,7 +1,24 @@
 from rest_framework import serializers
 from apps.activity.models import Job,Jobneed,JobneedDetails,Question,QuestionSet,QuestionSetBelonging
+from datetime import datetime,time
+
+class CustomTimeField(serializers.Field):
+    def to_representation(self, value):
+        if isinstance(value, datetime):
+            return value.time().isoformat()  # Convert datetime to time
+        elif isinstance(value, time):
+            return value.isoformat()
+        return None
+
+    def to_internal_value(self, data):
+        try:
+            return datetime.strptime(data, '%H:%M:%S').time()
+        except ValueError:
+            raise serializers.ValidationError("Invalid time format. Use 'HH:MM:SS'.")
 
 class JobSerializers(serializers.ModelSerializer):
+    starttime = CustomTimeField()
+    endtime = CustomTimeField()
     class Meta:
         model = Job
         fields = '__all__'

@@ -22,7 +22,8 @@ class VendorManager(models.Manager):
         qobjs =  self.select_related(*related).filter(
             client_id = S['client_id'],
             enable=True
-        ).values(*fields)
+        ).values(*fields).order_by('name')
+        print("Qobjs",qobjs)
         return qobjs or self.none()
     
     def get_vendors_for_mobile(self, request, clientid, mdtz, buid, ctzoffset):
@@ -384,7 +385,8 @@ class WorkOrderManager(models.Manager):
                 bu_id = buid,
                 client_id = clientid,
                 parent_id=parentid,
-                verifiers_status='APPROVED'
+                verifiers_status='APPROVED',
+                identifier='WP'
             ).values(*fields).order_by('-cdtz')
         else:
             qset = self.select_related().annotate(
@@ -399,11 +401,12 @@ class WorkOrderManager(models.Manager):
                 bu_id = buid,
                 client_id = clientid,
                 parent_id=parentid,
+                identifier='WP'
             ).values(*fields).order_by('-cdtz')
         print(str(qset.query))
         return qset or self.none()
     
-
+    
     def get_empty_rwp_section(self):
         return {
             'section':'THIS SECTION TO BE COMPLETED ON RETURN OF PERMIT',

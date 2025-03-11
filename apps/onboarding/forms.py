@@ -168,7 +168,7 @@ class BtForm(forms.ModelForm):
         self.fields['controlroom'].choices = pm.People.objects.controlroomchoices(self.request)
         self.fields['posted_people'].choices = pm.People.objects.get_people_for_posted_ppl_on_bu(self.request)
         self.fields['siteincharge'].queryset = pm.People.objects.filter(Q(peoplecode ='NONE') | (Q(client_id = self.request.session['client_id']) & Q(enable=True)))
-        self.fields['designation'].queryset = obm.TypeAssist.objects.filter(Q(bu_id__in=[S['bu_id'], 1]) | Q(bu_id__in=S['assignedsites']), client_id__in = [S['client_id'], 1],tatype__tacode='DESIGNATION')
+        self.fields['designation'].queryset = obm.TypeAssist.objects.filter(Q(bu_id__in=[S['bu_id'], 1]) | Q(bu_id__in=S['assignedsites']) | Q(bu_id__isnull=True),Q(client_id__in=[S['client_id'], 1]),Q(tatype__tacode='DESIGNATION'))        
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -296,9 +296,8 @@ class ShiftForm(forms.ModelForm):
         self.request = kwargs.pop('request', None)
         S = self.request.session
         super().__init__(*args, **kwargs)
-        self.fields['nightshiftappicable'].initial = False
-        self.fields['designation'].queryset = obm.TypeAssist.objects.filter(Q(bu_id__in=[S['bu_id'], 1]) | Q(bu_id__in=S['assignedsites']),
-                                                                             client_id__in = [S['client_id'], 1],tatype__tacode='DESIGNATION')
+        self.fields['nightshiftappicable'].initial = False 
+        self.fields['designation'].queryset = obm.TypeAssist.objects.filter(Q(bu_id__in=[S['bu_id'], 1]) | Q(bu_id__in=S['assignedsites']) | Q(bu_id__isnull=True),Q(client_id__in=[S['client_id'], 1]),Q(tatype__tacode='DESIGNATION'))
         self.fields['designation'].widget = forms.Select(
             choices=[
                 (item.tacode, item.taname)  # (value, label)

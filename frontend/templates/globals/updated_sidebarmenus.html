@@ -458,8 +458,42 @@
             </div>
         </div>
     </div>
+    <div data-kt-menu-trigger="click" id="REPORTS" class="menu-item menu-accordion" style="display: none; overflow: hidden;" >
+        <span class="menu-link">
+        <span class="menu-icon">
+            <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
+            <span class="svg-icon svg-icon-2">
+            <span class="material-icons">
+                summarize
+            </span>
+            </span>
+            <!--end::Svg Icon-->
+        </span>
+        <span class="menu-title">Reports</span>
+        <span class="menu-arrow"></span>
+        </span>
+        
+    <div class="menu-sub menu-sub-accordion" kt-hidden-height="116">
+      <div class="menu-item" id="RP_DOWNLOAD">
+        <a class="menu-link" href="{{ url('reports:exportreports') }}">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Download Report</span>
+        </a>
+      </div>
+      <div class="menu-item" id="RP_SCHEDULE">
+        <a class="menu-link" href="{{ url('reports:schedule_email_report') }}?template=true">
+          <span class="menu-bullet">
+            <span class="bullet bullet-dot"></span>
+          </span>
+          <span class="menu-title">Schedule Report </span>
+        </a>
+      </div>
+    </div>
+    </div>
 
-    <div data-kt-menu-trigger="click" id="REPORTS" class="menu-item menu-accordion" style="display: none; overflow: hidden;">
+    <div data-kt-menu-trigger="click" id="REQUEST" class="menu-item menu-accordion" style="display: none; overflow: hidden;">
         <span class="menu-link">
         <span class="menu-icon">
             <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
@@ -536,48 +570,6 @@
             </div>
         </div>
     </div>
-
-    
-    
-
-    <div data-kt-menu-trigger="click" id="REPORTS" class="menu-item menu-accordion" style="display: none; overflow: hidden;" >
-        <span class="menu-link">
-        <span class="menu-icon">
-            <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
-            <span class="svg-icon svg-icon-2">
-            <span class="material-icons">
-                summarize
-            </span>
-            </span>
-            <!--end::Svg Icon-->
-        </span>
-        <span class="menu-title">Reports</span>
-        <span class="menu-arrow"></span>
-        </span>
-        
-    <div class="menu-sub menu-sub-accordion" kt-hidden-height="116">
-      <div class="menu-item" id="RP_DOWNLOAD">
-        <a class="menu-link" href="{{ url('reports:exportreports') }}">
-          <span class="menu-bullet">
-            <span class="bullet bullet-dot"></span>
-          </span>
-          <span class="menu-title">Download Report</span>
-        </a>
-      </div>
-      <div class="menu-item" id="RP_SCHEDULE">
-        <a class="menu-link" href="{{ url('reports:schedule_email_report') }}?template=true">
-          <span class="menu-bullet">
-            <span class="bullet bullet-dot"></span>
-          </span>
-          <span class="menu-title">Schedule Report </span>
-        </a>
-      </div>
-    </div>
-  </div>
-
-  
-
-  
   
     {% if request.user.is_superuser %}
 
