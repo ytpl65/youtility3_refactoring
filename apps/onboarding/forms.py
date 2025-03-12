@@ -182,9 +182,9 @@ class BtForm(forms.ModelForm):
         super().clean()
         
         from .utils import create_bv_reportting_heirarchy
-        newcode = self.cleaned_data.get('bucode')
-        newtype = self.cleaned_data.get('identifier')
-        parent= self.cleaned_data.get('parent')
+        newcode  = self.cleaned_data.get('bucode')
+        newtype  = self.cleaned_data.get('identifier')
+        parent   = self.cleaned_data.get('parent')
         instance = self.instance
         if newcode and newtype and instance:
             create_bv_reportting_heirarchy(instance, newcode, newtype, parent)
@@ -195,7 +195,6 @@ class BtForm(forms.ModelForm):
             json_data = self.request.POST.get('jsonData')
             self.cleaned_data['jsonData'] = json.loads(json_data)
         return self.cleaned_data
-
 
     def clean_bucode(self):
         self.cleaned_data['gpslocation'] = self.data.get('gpslocation')

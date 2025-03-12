@@ -48,12 +48,12 @@
 <div class="row gy-3">
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-4">
         <div class="col">
-            <div class="db_portlet card card-flush h-100" data-portlet-id="1" id="TASKSCARD">
+            <div class="db_portlet card card-flush h-100 d-none" data-portlet-id="1" id="TASKSCARD">
                 {% include "dashboard/RP_d/partials/dashboard_cards/partial_taskstats_card.html" %}
             </div>
         </div>
         <div class="col">
-            <div class="db_portlet card card-flush h-100" data-portlet-id="2" id="ASSETSCARD">
+            <div class="db_portlet card card-flush h-100 d-none" data-portlet-id="2" id="ASSETSCARD">
                 <div class="card-header mb-3">
                     <h3 class="card-title align-items-start flex-column pt-9">
                         <span class="card-label fw-bold y-primary fw-bold fs-1" style="color: #01579b;">Assets Status</span>
@@ -65,12 +65,12 @@
             </div>
         </div>
         <div class="col">
-            <div class="db_portlet card card-flush h-100" data-portlet-id="3" id="TOURCARD">
+            <div class="db_portlet card card-flush h-100 d-none" data-portlet-id="3" id="TOURCARD">
                 {% include "dashboard/RP_d/partials/dashboard_cards/partial_guardtour_card.html" %}
             </div>
         </div>
         <div class="col">
-            <div class="db_portlet card card-flush h-100" data-portlet-id="4" id="ALERTSCARD">
+            <div class="db_portlet card card-flush h-100 d-none" data-portlet-id="4" id="ALERTSCARD">
                 <div class="card-header mb-3">
                     <h3 class="card-title align-items-start pt-9 flex-column">
                         <span class="card-label fw-bold fs-1" style="color: #01579b;">Alerts</span>
@@ -86,12 +86,12 @@
             </div>
         </div>
         <div class="col">
-            <div class="db_portlet card card-flush h-100" data-portlet-id="5" id="PPMCARD">
+            <div class="db_portlet card card-flush h-100 d-none" data-portlet-id="5" id="PPMCARD">
                 {% include "dashboard/RP_d/partials/dashboard_cards/partial_ppm_card.html" %}
             </div>
         </div>
         <div class="col">
-            <div class="db_portlet card card-flush h-100" data-portlet-id="10" id="TICKETSCARD">
+            <div class="db_portlet card card-flush h-100 d-none" data-portlet-id="10" id="TICKETSCARD">
                 <div class="card-header mb-3">
                     <h3 class="card-title align-items-start flex-column pt-9">
                         <span class="card-label fw-bold y-primary fw-bold fs-1" style="color: #01579b;">Ticket Metrics</span>
@@ -113,9 +113,7 @@
                         <div class="d-flex count-item justify-content-between">
                             <i class="fas text-white align-middle p-4 yiconpadd yicon text-danger fa-exclamation-triangle"></i>
                             <div class="pe-3" data-cardtype='SOSALERTS'>
-                                <h6 class="pb-1 y-primary  timer count-title text-end count-number" id="sos_count">
-    
-                                </h6>
+                                <h6 class="pb-1 y-primary  timer count-title text-end count-number" id="sos_count"></h6>
                                 <p class="h4 text-gray-500 fw-semibold fs-6">SOS Alerts</p>
                             </div>
                         </div>
@@ -149,8 +147,7 @@
                         <div class="d-flex count-item justify-content-between">
                             <i class="fas text-white yicon yiconpadd text-success p-4 fa-route"></i>
                             <div class="pe-3" data-cardtype='ROUTES'>
-                                <h6 class="pb-1 y-primary text-end timer count-title count-number" id="route_count">
-                                </h6>
+                                <h6 class="pb-1 y-primary text-end timer count-title count-number" id="route_count"></h6>
                                 <p class="h4 text-gray-500 fw-semibold fs-6">Routes</p>
                             </div>
                         </div>
@@ -188,7 +185,7 @@
                 </div>
             </div>
             <div class="mt-0 p-2">
-                <div class="db_portlet row card portlet mb-2 p-2 " data-portlet-id ="9" id="PORTLET_DYNAMICTOURS">
+                <div class="db_portlet row card portlet mb-2 p-2 d-none" data-portlet-id ="9" id="PORTLET_DYNAMICTOURS">
                     <div class="card-body counter  bg-gray-100 bg-opacity-60 p-2 rounded-3">
                         <div class="d-flex count-item justify-content-between">
                             <i class="fas  yicon yiconpadd text-danger p-4 fa-infinity"></i>
@@ -202,7 +199,7 @@
                 </div>
             </div>
             <div class="mt-0 p-2">
-                <div class="db_portlet row card portlet mb-2 p-2 " data-portlet-id ="9" id="PORTLET_WORKPERMIT">
+                <div class="db_portlet row card portlet mb-2 p-2 d-none" data-portlet-id ="9" id="PORTLET_WORKPERMIT">
                     <div class="card-body counter  bg-gray-100 bg-opacity-60 p-2 rounded-3">
                         <div class="d-flex count-item justify-content-between">
                             <i class="fas yicon yiconpadd y-primary p-4 fa-file-alt"></i>
