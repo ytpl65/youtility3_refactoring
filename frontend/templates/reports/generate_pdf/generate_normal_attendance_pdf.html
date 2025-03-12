@@ -98,10 +98,18 @@
         .attendance-table th, 
         .attendance-table td {
             border: 1px solid black;
-            padding: 0px;
+            padding: 1.5px;
             text-align: center;
             font-size: 12px;
             color: black;
+        }
+
+        .attendance-table th {
+            min-width: 10px; /* Default width */
+        }
+
+        .attendance-table th:only-child {
+            min-width: 20px; /* Expand space if single-digit */
         }
     
         .attendance-table input {
@@ -267,10 +275,10 @@
                                 {% endfor %}
                                 <th>PD(A)</th>
                                 <th>WO(B)</th>
-                                <th>TOTAL(A+B=C)</th>
+                                <th>TOTAL <br> (A+B=C)</th>
                                 <th>ED(D)</th>
                                 <th>NH(E)</th>
-                                <th>TOTAL(C+D+E)</th>
+                                <th>TOTAL <br> (C+D+E)</th>
                             </tr>
                         </thead>
                         <tbody>
