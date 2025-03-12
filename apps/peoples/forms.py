@@ -157,9 +157,9 @@ class PeopleForm(forms.ModelForm):
         
         #filters for dropdown fields
         self.fields['peopletype'].queryset = om.TypeAssist.objects.filter(tatype__tacode="PEOPLETYPE", client_id = S['client_id'], enable=True)
-        self.fields['worktype'].choices = om.TypeAssist.objects.get_choices_for_worktype(self.request)
+        self.fields['worktype'].queryset = om.TypeAssist.objects.get_choices_for_worktype(self.request)
         self.fields['department'].queryset = om.TypeAssist.objects.filter(tatype__tacode="DEPARTMENT", client_id = S['client_id'], enable=True)
-        self.fields['designation'].choices = om.TypeAssist.objects.filter(tatype__tacode="DESIGNATION", client_id = S['client_id'], enable=True).values_list('id', 'taname')
+        self.fields['designation'].queryset = om.TypeAssist.objects.filter(tatype__tacode="DESIGNATION", client_id = S['client_id'], enable=True)
         buids = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id)
         self.fields['bu'].queryset = om.Bt.objects.filter(id__in = buids)# add query for isadmin
         self.fields['location'].queryset = am.Location.objects.filter(client_id = S['client_id'], enable=True)

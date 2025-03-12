@@ -354,9 +354,9 @@ class TypeAssistManager(models.Manager):
         S = request.session
         qset = self.annotate(custom_field=V('', output_field=models.CharField())).filter(
             tatype__tacode="WORKTYPE", client_id = S['client_id'], enable=True
-        ).select_related('tatype').values_list('id', 'tacode')
+        ).select_related('tatype')
          # add an extra choice with empty strings
-        qset = [('','')] + list(qset)
+        # qset = [('','')] + list(qset)
         return qset or self.none()
     
     def get_asset_types_choices(self, request):

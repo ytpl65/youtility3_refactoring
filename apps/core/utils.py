@@ -363,22 +363,34 @@ def decrypt(obscured: bytes) -> bytes:
     byte_val = decompress(b64d(obscured))
     return byte_val.decode('utf-8')
 
-def save_capsinfo_inside_session(people, request):
+def save_capsinfo_inside_session(people, request,admin):
     logger.info('save_capsinfo_inside_session... STARTED')
     from apps.core.raw_queries import get_query
-    from apps.peoples.models import Capability
-    web, mob, portlet, report = putils.create_caps_choices_for_peopleform(request.user.client)
-    request.session['client_webcaps'] = list(web)
-    request.session['client_mobcaps'] = list(mob)
-    request.session['client_portletcaps'] = list(portlet)
-    request.session['client_reportcaps'] = list(report)
-    
-    caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
-    request.session['people_webcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['webcapability'], cfor='WEB').values_list('capscode', 'capsname')) 
-    request.session['people_mobcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['mobilecapability'], cfor='MOB').values_list('capscode', 'capsname')) 
-    request.session['people_reportcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['reportcapability'], cfor='REPORT').values_list('capscode', 'capsname')) 
-    request.session['people_portletcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['portletcapability'], cfor='PORTLET').values_list('capscode', 'capsname')) 
-    logger.info('save_capsinfo_inside_session... DONE')
+    from apps.peoples.models import Capability,People
+
+    if admin :
+        #extracting the capabilities from client
+        web, mob, portlet, report = putils.create_caps_choices_for_peopleform(request.user.client)
+        request.session['client_webcaps'] = list(web)
+        request.session['client_mobcaps'] = list(mob)
+        request.session['client_portletcaps'] = list(portlet)
+        request.session['client_reportcaps'] = list(report)
+        request.session['people_webcaps'] = []
+        request.session['people_mobcaps'] = []
+        request.session['people_reportcaps'] = []
+        request.session['people_portletcaps'] = []
+    else :
+        caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
+        #extracting capabilities from people details
+        request.session['client_webcaps'] = []
+        request.session['client_mobcaps'] = []
+        request.session['client_portletcaps'] = []
+        request.session['client_reportcaps'] = []
+        request.session['people_webcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['webcapability'], cfor='WEB').values_list('capscode', 'capsname')) 
+        request.session['people_mobcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['mobilecapability'], cfor='MOB').values_list('capscode', 'capsname')) 
+        request.session['people_reportcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['reportcapability'], cfor='REPORT').values_list('capscode', 'capsname')) 
+        request.session['people_portletcaps'] = list(Capability.objects.filter(capscode__in = people.people_extras['portletcapability'], cfor='PORTLET').values_list('capscode', 'capsname')) 
+        logger.info('save_capsinfo_inside_session... DONE')
     
     
 
@@ -389,7 +401,6 @@ def save_user_session(request, people, ctzoffset=None):
     from django.conf import settings
     from django.core.exceptions import ObjectDoesNotExist
     from apps.onboarding import models as Bt
-
     try:
         logger.info('saving user data into the session ... STARTED')
         if ctzoffset: request.session['ctzoffset'] = ctzoffset
@@ -397,15 +408,15 @@ def save_user_session(request, people, ctzoffset=None):
             request.session['is_superadmin'] = True
             session = request.session
             session['people_webcaps'] = session['client_webcaps'] = session['people_mobcaps'] = \
-                session['people_reportcaps'] = session['people_portletcaps'] = session['client_mobcaps'] = \
-                session['client_reportcaps'] = session['client_portletcaps'] = False
+            session['people_reportcaps'] = session['people_portletcaps'] = session['client_mobcaps'] = \
+            session['client_reportcaps'] = session['client_portletcaps'] = False
             logger.info(request.session['is_superadmin'])
             putils.save_tenant_client_info(request)
         else:
             putils.save_tenant_client_info(request)
             request.session['is_superadmin'] = people.peoplecode == 'SUPERADMIN'
             request.session['is_admin'] = people.isadmin
-            save_capsinfo_inside_session(people, request)
+            save_capsinfo_inside_session(people, request, people.isadmin)
             logger.info('saving user data into the session ... DONE')
         request.session['assignedsites'] = list(pm.Pgbelonging.objects.get_assigned_sites_to_people(people.id))
         request.session['assignedsitegroups'] = people.people_extras['assignsitegroup']

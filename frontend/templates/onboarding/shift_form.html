@@ -492,7 +492,7 @@ Shift Form
                     // Find the corresponding value for the label from designation_choices_from_server
                     var selectedValue = Object.keys(designation_choices_from_server).find(key => designation_choices_from_server[key] === currentRow.designation);
                     // Clear all options and add only the selected row's designation
-                    editor.field('designation').update([{ label: currentRow.designation, value: selectedValue }]);
+                    editor.field('designation').update([{ label: currentRow.designation + ' (' + selectedValue + ')' , value: selectedValue }]);
                     // Set the value to the selected row's designation
                     editor.field('designation').val(selectedValue);
                 }
@@ -500,7 +500,7 @@ Shift Form
                 // Populate the designation choices array from server data
                 var designation_choices = [{ label: "-------", value: "" }];
                 $.each(designation_choices_from_server, function(key, value) {
-                    designation_choices.push({ label: value, value: key });
+                    designation_choices.push({ label: value + ' (' + key + ')', value: key });
                 });
                 // Updating the editor field with designation choices
                 editor.field('designation').update(designation_choices);
@@ -620,7 +620,9 @@ Shift Form
                 }
             },
             columns:[
-                {data:'designation',title:'Designation'},
+                {data:'designation',title:'Designation', render: function(data, type, row) {
+                    return data + ' ' + (row.code ? '(' + row.code + ')' : '');
+                } },
                 {data:'count',title:'People Count'},
                 {data:'overtime', title:'Overtime (hours)', render: function(data) {
                     return data === null ? '0' : data;

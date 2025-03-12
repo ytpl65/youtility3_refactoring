@@ -18,4 +18,5 @@ urlpatterns = [
     path('fileUpload/', views.FileUpload.as_view(), name="file_upload"),
     path('subscription/', views.LicenseSubscriptionView.as_view(), name="subscription"),
     path('import_update/', views.BulkImportUpdate.as_view(), name="import_update"),
+    path('contract/', views.ContractView.as_view(), name="contract")
 ]

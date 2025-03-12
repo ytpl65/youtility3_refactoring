@@ -285,7 +285,7 @@ class ShiftView(LoginRequiredMixin, View):
                 designation_codes = list(raw_data.keys())
                 designation_names = TypeAssist.objects.filter(tacode__in=designation_codes).values('tacode', 'taname')
                 designation_lookup = {item['tacode']: item['taname'] for item in designation_names}
-                data = [{'designation': designation_lookup.get(designation, 'Unknown'),**details }for designation, details in raw_data.items()]
+                data = [{'designation': designation_lookup.get(designation, 'Unknown'), 'code' : designation, **details }for designation, details in raw_data.items()]
             else:
                 data = [{'designation': 'Unknown', 'count':'', 'overtime': 0, 'gracetime': 0}]
             return rp.JsonResponse({'data':data}, status=200, safe=False)
@@ -880,7 +880,7 @@ class BtView(LoginRequiredMixin, View):
 
             if form.is_valid():
                 designations_count = request.POST['jsonData']
-                resp = self.handle_valid_form(form, request, create,designations_count)
+                resp = self.handle_valid_form(form, request, create,designations_count,obj)
             else:
                 cxt = {'errors': form.errors}
                 ic(len(form.errors), form.errors.get('gpslocation'))
@@ -890,15 +890,16 @@ class BtView(LoginRequiredMixin, View):
             resp = utils.handle_Exception(request)
         return resp
 
-    def handle_valid_form(self, form, request, create,designations_count):
+    def handle_valid_form(self, form, request, create,designations_count,obj):
         logger.info('bu form is valid')
         from apps.core.utils import handle_intergrity_error
         try:
             bu = form.save(commit=False)
             ic(form.cleaned_data)
-            bu.bupreferences['posted_people'] = form.cleaned_data['posted_people']
-            bu.bupreferences['contract_designcount'] = form.cleaned_data['jsonData']
-            bu.bupreferences['total_people_count'] = form.cleaned_data['total_people_count']
+            if create == False:
+                bu.bupreferences['posted_people'] = obj.bupreferences['posted_people']
+                bu.bupreferences['contract_designcount'] = obj.bupreferences['contract_designcount']
+                bu.bupreferences['total_people_count'] = obj.bupreferences['total_people_count']
             bu.gpslocation = form.cleaned_data['gpslocation']
             bu.bupreferences['permissibledistance'] = form.cleaned_data['permissibledistance']
             bu.bupreferences['controlroom'] = form.cleaned_data['controlroom']
@@ -1123,3 +1124,110 @@ class BulkImportUpdate(LoginRequiredMixin,ParameterMixin, View):
             print(f"The file {filename} does not exist.")
         except Exception as e:
             print(f"An error occurred while trying to remove the file {filename}: {str(e)}")
+
+
+class ContractView(LoginRequiredMixin,View):
+    params = { 'form_class':obforms.BtForm ,
+        'template_form' : 'onboarding/contract_form.html',
+        'template_list': 'onboarding/contract_list.html',
+        'model':Bt } 
+
+    def get(self,request,*args,**kwargs):
+        R, resp = request.GET,None
+
+        if R.get('template'):
+            return render(request,self.params['template_list'])
+        
+        if R.get('action',None) == 'list':
+            buids = self.params['model'].objects.get_whole_tree(
+                request.session['client_id'])
+
+            objs = self.params['model'].objects.select_related('parent').filter(id__in=buids,
+                            identifier__tacode ='SITE').values('id','buname','bucode',
+                    'parent__buname','solid','bupreferences__total_people_count',
+                    'enable','butype__taname'
+                    ).order_by('buname')
+            return rp.JsonResponse(data={'data': list(objs)})
+        
+        elif R.get('action',None) == 'form':
+            print( ' entered in the action form')
+            cxt = {'buform':self.params['form_class'](request=request),
+                   'ta_form':obforms.TypeAssistForm(auto_id=False,request=request),
+                   'msg':"create_bu_requested"}
+            print('The data in the context of the form',cxt)
+            return render(request, self.params['template_form'], context=cxt)
+        
+        elif R.get('id', None):
+            print(' enter in the views id ')
+            obj = utils.get_model_obj(int(R['id']) , request , self.params )
+            # designation_data = obj.bupreferences.get('contract_designcount', {})
+            initial = {'controlroom': obj.bupreferences.get('controlroom'),
+                       'jsonData': json.dumps(obj.bupreferences.get('contract_designcount', {})),
+                       'posted_people': obj.bupreferences.get('posted_people')}
+            cxt = {'ta_form': obforms.TypeAssistForm(auto_id=False, request=request),
+                   'buform': self.params['form_class'](request=request, instance=obj, initial=initial)}
+        return render(request, self.params['template_form'], context=cxt)
+    
+
+    def post(self, request, *args, **kwargs):
+        resp, create = None, True
+        try:
+            ic(request.POST)
+            data = QueryDict(request.POST['formData'])
+            pk = request.POST.get('pk', None)
+            if pk:
+                msg = "bu_view"
+                obj = utils.get_model_obj(pk, request, self.params)
+                form = utils.get_instance_for_update(
+                    data, self.params, msg, int(pk), kwargs={'request': request})
+                create = False
+            else:
+                form = self.params['form_class'](data, request=request)
+
+            if form.is_valid():
+                designations_count = request.POST['jsonData']
+                resp = self.handle_valid_form(form, request, create,designations_count,obj)
+                print(' the response in the form valid', resp)
+            else:
+                cxt = {'errors': form.errors}
+                ic(len(form.errors), form.errors.get('gpslocation'))
+                resp = utils.handle_invalid_form(request, self.params, cxt)
+        except Exception:
+            logger.critical("BU saving error!", exc_info=True)
+            resp = utils.handle_Exception(request)
+        return resp
+
+    def handle_valid_form(self, form, request, create,designations_count,obj):
+        logger.info('bu form is valid')
+        from apps.core.utils import handle_intergrity_error
+        try:
+            bu = form.save(commit=False)
+            bu.enable = obj.enable
+            bu.gpslocation = obj.gpslocation
+            bu.bupreferences['permissibledistance'] = obj.bupreferences['permissibledistance']
+            bu.bupreferences['controlroom'] = obj.bupreferences['controlroom']
+            bu.bupreferences['address'] = obj.bupreferences['address']
+            bu.bupreferences['address2'] = obj.bupreferences['address2']
+            bu.butype = obj.butype
+            bu.ctzoffset = obj.ctzoffset
+            bu.deviceevent = obj.deviceevent
+            bu.enablesleepingguard = obj.enablesleepingguard
+            bu.gpsenable = obj.gpsenable
+            bu.identifier = obj.identifier
+            bu.isserviceprovider = obj.isserviceprovider
+            bu.isvendor = obj.isvendor
+            bu.iswarehouse = obj.iswarehouse
+            bu.parent = obj.parent
+            bu.siteincharge = obj.siteincharge
+            bu.skipsiteaudit = obj.skipsiteaudit
+            bu.solid = obj.solid
+
+            bu.bupreferences['posted_people'] = form.cleaned_data['posted_people']
+            bu.bupreferences['contract_designcount'] = form.cleaned_data['jsonData']
+            bu.bupreferences['total_people_count'] = form.cleaned_data['total_people_count']
+            putils.save_userinfo(
+                bu, request.user, request.session, create=create)
+            logger.info("bu form saved")
+            return rp.JsonResponse({'pk': bu.id}, status=200)
+        except IntegrityError:
+            return handle_intergrity_error("Bu")

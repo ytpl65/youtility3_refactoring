@@ -18,8 +18,6 @@ BV Form
 	display: inline-block;
 	float: left;
 }
-
-
 </style>
 {% endblock extra_css %}
 
@@ -238,39 +236,6 @@ Business-View
 		<div class="col-md-4">
 			{{ buform.address }}
 		</div>
-		
-		<!--CONTRACT DETAILS -->
-		<label for="id_total_people_count" class="col-form-label col-md-2 col-sm-2 text-sm-right">Total People Count:
-		</label>
-		<div class="col-md-4">
-			{{ buform.total_people_count }}
-		</div>
-
-		<!--Control Room-->
-		<label for="id_posted_people" class="col-form-label col-md-2 col-sm-2 text-sm-right">Posted People:
-		</label>
-		<div class="col-md-4">
-			<div class="d-flex flex-row">
-				{{ buform.posted_people }}
-			</div>
-			{{ buform.posted_people.errors }}
-		</div>
-
-		<!--CONTACT PEOPLE DETAILS -->
-		<label for="id_designation" class="col-form-label col-md-2 col-sm-2 text-sm-right">Designation:</label>
-		<div class="col-md-10" style="width:46.75rem" id="field-container">
-			<div class="row mb-2 align-items-center">
-				<div class="col-md-5" style="width: 450px;">
-					{{ buform.designation }}
-				</div>
-				<div class="col-md-2"style="width: 100px;">
-					{{ buform.designation_count }}
-				</div>
-				<div class="col-md-1" style="width: 40px;">
-					<button type="button" class="btn btn-success add-field">+</button>
-				</div>
-			</div>
-		</div> 
 
 
 		<!-- Validation Error Modal -->
@@ -412,129 +377,6 @@ Business-View
 
 	$(document).ready(function () {
 
-		function initializeDesignationFields(savedData) {
-			if (!savedData || Object.keys(savedData).length === 0) return;
-			
-			// Remove all existing rows except the first one
-			$('#field-container .row:not(:first)').remove();
-			
-			// Counter to keep track of how many rows we've added
-			let rowCounter = 0;
-			
-			// Iterate through the saved designation data
-			Object.entries(savedData).forEach(([designationId, count]) => {
-				if (rowCounter === 0) {
-					// For the first row, just set the values
-					const firstRow = $('#field-container .row:first');
-					firstRow.find('select').val(designationId).trigger('change');
-					firstRow.find('input').val(count);
-				} else {
-					// For subsequent rows, create new rows
-					const firstRow = $('#field-container .row').first();
-					const newRow = $('<div>', { class: 'row mb-2 align-items-center' });
-					newRow.html(firstRow.html());
-
-					// Update IDs and names
-					const select = newRow.find('select');
-					const input = newRow.find('input');
-					
-					select
-						.attr('id', `id_designation_${rowCounter}`)
-						.attr('name', `designation_${rowCounter}`)
-						.val(designationId)
-						.next('.select2-container').remove();
-					
-					input
-						.attr('id', `id_designation_count_${rowCounter}`)
-						.attr('name', `designation_count_${rowCounter}`)
-						.val(count);
-
-					// Replace + with - button
-					const addButton = newRow.find('.add-field');
-					addButton
-						.removeClass('btn-success add-field')
-						.addClass('btn-danger remove-field')
-						.text('-');
-
-					$('#field-container').append(newRow);
-
-					if ($.fn.select2) {
-						newRow.find('select').select2({
-							placeholder: 'Select an option',
-							allowClear: true,
-						});
-					}
-
-				}
-				rowCounter++;
-			});
-		}
-
-		const fieldContainer = $('#field-container');
-
-		// Add new field row
-		fieldContainer.on('click', '.add-field', function () {
-			const firstRow = fieldContainer.find('.row').first();
-			const newRow = $('<div>', { class: 'row mb-2 align-items-center' });
-			const index = fieldContainer.find('.row').length; // Get current number of rows
-
-			// Clone the first row
-			newRow.html(firstRow.html());
-
-			// Update IDs and names for the new row
-			newRow.find('select')
-				.attr('id', `id_designation_${index}`)
-				.attr('name', `designation_${index}`)
-				.val('') // Reset value
-				.next('.select2-container').remove(); // Remove any existing Select2 DOM structure
-
-			newRow.find('input')
-				.attr('id', `id_designation_count_${index}`)
-				.attr('name', `designation_count_${index}`)
-				.val(''); // Clear input value
-
-			// Replace "+" with "-" for add/remove button
-			const addButton = newRow.find('.add-field');
-			addButton
-				.removeClass('btn-success add-field')
-				.addClass('btn-danger remove-field')
-				.text('-');
-
-			fieldContainer.append(newRow);
-
-			// Re-initialize Select2 on the new dropdown
-			if ($.fn.select2) {
-				newRow.find('select').select2({
-					placeholder: 'Select an option',
-					allowClear: true,
-				});
-			}
-		});
-
-		// Remove field row
-		fieldContainer.on('click', '.remove-field', function () {
-			$(this).closest('.row').remove();
-		});
-
-		// Ensure Select2 is initialized on the first dropdown
-		if ($.fn.select2) {
-			fieldContainer.find('select').select2({
-				placeholder: 'Select an option',
-				allowClear: true,
-			});
-		}
-
-		if ('{{buform.instance.id}}' != 'None') {
-			try {
-				const savedDesignationData = {{ buform.instance.bupreferences.get('contract_designcount', '{}')|safe }};
-				initializeDesignationFields(savedDesignationData);
-			} catch (e) {
-				console.error('Error initializing designation fields:', e);
-			}
-		}
-
-
-
 		//onclick id_setgps open popup open-map
 		$("#id_setgps").click(function(){
 			$("#open_map").modal('show');
@@ -624,7 +466,7 @@ Business-View
             //var form = $(this)
             e.preventDefault()
 
-			const totalPeopleCount = parseInt($("#id_total_people_count").val(), 10);
+			/*const totalPeopleCount = parseInt($("#id_total_people_count").val(), 10);
 			let designationCountSum = 0;
 
 			// Calculate the sum of all designation counts
@@ -642,11 +484,11 @@ Business-View
 				$("#validationErrorMessage").text(errorMessage);
 				$("#validationErrorModal").modal('show');
 				return; // Prevent form submission
-			}
+			}*/
 
 			var form = $(this)
 			const jsonData = {};
-			fieldContainer.find('.row').each(function (index, row) {
+			/*fieldContainer.find('.row').each(function (index, row) {
 				const dropdown = $(row).find('select');
 				const input = $(row).find('input');
 
@@ -654,7 +496,7 @@ Business-View
 				if (dropdown.val() && input.val()) {
 					jsonData[dropdown.val()] = input.val();
 				}
-			});
+			});*/
 
             const params = {url: "{{ url('onboarding:bu') }}", modal:false}
 			console.log('parama')

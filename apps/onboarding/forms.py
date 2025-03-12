@@ -113,7 +113,7 @@ class BtForm(forms.ModelForm):
     controlroom = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=False, label='Control Room')
     permissibledistance = forms.IntegerField(required=False, label='Permissible Distance')
     address = forms.CharField(required=False, label='Address', max_length=500, widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
-    total_people_count = forms.IntegerField(required=True, min_value=0,label='Total People Count')
+    total_people_count = forms.IntegerField(required=False, min_value=0,label='Total People Count')
     designation = forms.ModelChoiceField(label='Desigantion',required=False,widget = s2forms.Select2Widget, queryset = obm.TypeAssist.objects.filter(tatype__tacode='DESIGNATION',enable = True))
     designation_count = forms.IntegerField(required=False, min_value=0,label='Designation Count')
     posted_people = forms.MultipleChoiceField(label='Posted People', required=False, widget = s2forms.Select2MultipleWidget)
@@ -182,9 +182,9 @@ class BtForm(forms.ModelForm):
         super().clean()
         
         from .utils import create_bv_reportting_heirarchy
-        newcode = self.cleaned_data.get('bucode')
-        newtype = self.cleaned_data.get('identifier')
-        parent= self.cleaned_data.get('parent')
+        newcode  = self.cleaned_data.get('bucode')
+        newtype  = self.cleaned_data.get('identifier')
+        parent   = self.cleaned_data.get('parent')
         instance = self.instance
         if newcode and newtype and instance:
             create_bv_reportting_heirarchy(instance, newcode, newtype, parent)
@@ -195,7 +195,6 @@ class BtForm(forms.ModelForm):
             json_data = self.request.POST.get('jsonData')
             self.cleaned_data['jsonData'] = json.loads(json_data)
         return self.cleaned_data
-
 
     def clean_bucode(self):
         self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
