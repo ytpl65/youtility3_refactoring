@@ -1,0 +1,363 @@
+{% extends "globals/base_form.html" %}
+
+{% block extra_css %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        font-size: 14px;
+    }
+    .container {
+        max-width: 100%;
+        margin: 0 auto;
+        border: 1px solid #000;
+    }
+    .form-title {
+        text-align: center;
+        font-weight: bold;
+        font-size: 16px;
+        margin: 10px 0;
+    }
+    .header-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr;
+        border-bottom: 1px solid #000;
+    }
+    .header-cell {
+        padding: 4px;
+        border: 1px solid #000;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid #000;
+        padding: 2px;
+        font-size: 10px;
+        text-align: center;
+    }
+    .name-column {
+        text-align: left;
+        min-width: 200px;
+        padding-left: 5px;
+    }
+    .red-text {
+        color: red;
+    }
+    .holiday {
+        background-color: #e3f2fd;
+    }
+    .period {
+        font-size: 11px;
+        color: #666;
+    }
+    .footer-section {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        padding: 10px;
+    }
+    .footer-item {
+        border: 1px solid #000;
+        padding: 8px;
+    }
+    .signature-section {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+        padding: 10px 50px;
+    }
+    .attendance-cell {
+        cursor: pointer;
+        background-color: #fff;
+    }
+    .non-editable {
+        background-color: #f5f5f5;
+        cursor: not-allowed;
+    }
+    .totals-box {
+        font-weight: bold;
+    }
+</style>
+{% endblock extra_css %}
+<!-- ------------------------ BEGIN PAGE BREADCUMB --------------------- -->
+{% block pagebreadcumb %}
+<li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Generate Attendance Form (FORM 16)</a></li>
+{% endblock pagebreadcumb %}
+<!-------------------------- END PAGE BREADCUMB ----------------------- -->
+
+{% block form %}    
+<form action="{{ url('reports:generateattendance') }}" method="post" class="validate">
+  <!-- ------------------------ CSRF MIDDLEWARE TOKEN ------------------ -->
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+  <div class="row">
+    <div class="">
+        <div class="container">
+            <div class="form-title">FORM XVI</div>
+            
+            <div class="header-grid">
+                <div class="header-cell">
+                    Central Form XVI<br>
+                    See Rule 78(2)(a)<br>
+                    MUSTER ROLL<br>
+                    NOV 2024
+                </div>
+                <div class="header-cell">
+                    Name and Address of Contractor<br>
+                    Name and Location of work
+                </div>
+                <div class="header-cell">
+                    Security & Personnel Services Pvt. Ltd.<br>
+                    SD0274    ICICI BANK LTD - MAHARASHTRA<br>
+                    NGP0510274    ICICI BANK PIMPALGAON-4994
+                </div>
+            </div>
+    
+            <table id="attendanceTable">
+                <thead>
+                    <tr>
+                        <th>SR. NO.</th>
+                        <th>T.NUM</th>
+                        <th class="name-column">NAME OF WORKMAN</th>
+                        <th>FATHER'S HUSBUND'S NAME</th>
+                        <th>SEX</th>
+                        <th colspan="30">Dates</th>
+                        <th>PD (A)</th>
+                        <th>WO</th>
+                        <th>TOTAL (A+B=C)</th>
+                        <th>EDN+TOTAL (C+D+E)</th>
+                    </tr>
+                    <tr id="dateRow">
+                        <th colspan="5"></th>
+                    </tr>
+                </thead>
+                <tbody id="employeeRows">
+                </tbody>
+            </table>
+    
+            <div class="footer-section">
+                <div class="footer-item">
+                    Present Day(A): <span id="presentDays">0</span><br>
+                    W/OFF: <span id="weeklyOff">0</span>
+                </div>
+                <div class="footer-item">
+                    Extra Duty(B): <span id="extraDuty">0</span> 
+                    X2= <span id="extraDutyX2">0</span><br>
+                    TOTAL DUTY+WOFF: <span id="totalDutyWoff">0</span>
+                </div>
+                <div class="footer-item">
+                    TOTAL DUTY(A+B): <span id="totalDuty">0</span><br>
+                    CONTRACT DUTIES(A+B): 90
+                </div>
+                <div class="footer-item">
+                    NH: <span id="nationalHolidays">0</span>
+                    <div class="certification-box">
+                        CERTIFIED BY/APPROVED BY CLIENT<br>
+                        AUTHORIZED PRESENTATIVE:<br>
+                        NAME: ________________________<br>
+                        DESIGNATION: ________________________<br>
+                        MOB.NO. ________________________<br>
+                        REMARK: ________________________
+                    </div>
+                </div>
+            </div>
+    
+            <div class="signature-section">
+                <div>
+                    Checked by AO/AM<br><br>
+                    Name & Sign
+                </div>
+                <div>
+                    Verified by Ops Manager<br><br>
+                    Name & Sign
+                </div>
+            </div>
+        </div>
+        <input type="hidden" id="attendance-data" value="{{ attendance_data|safe }}" />
+      <br/>
+    <br>  
+  </div><br>
+  <div class="form-actions" style="text-align: center;">
+    <button type="submit" form="report_form" id="submit" class="btn btn-sm btn-primary2 btn-hover-scale" style="margin-right: 10px;">
+      Download &nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
+    </button>
+    <button type="button" id="btn_clear" class="btn btn-sm btn-secondary btn-hover-scale">
+      Clear&nbsp;<i class="fas fa-times"></i>
+    </button>
+</div>
+</form>
+{% endblock form %}
+
+{% block extra_scripts %}
+
+<script>
+    const attendance_data = {{ attendance_data.site_attendance_data.attendance_details }}
+    console.log("Attendance Data: ",attendance_data)
+    // National holidays for October 2024
+    const nationalHolidays = [
+    2,  // Gandhi Jayanti
+    24  // Dussehra
+];
+
+function initializeTable() {
+    const daysRow = document.querySelector('thead tr:last-child');
+
+    // Add date headers
+    for (let i = 1; i <= 31; i++) {
+        const th = document.createElement('th');
+        th.textContent = i.toString().padStart(2, '0');
+        daysRow.appendChild(th);
+    }
+
+    // Add summary column headers
+    const summaryHeaders = ['PD(A)', 'WO(B)', 'TOTAL(A+B=C)', 'ED(D)', 'NH(E)', 'TOTAL(C+D+E)'];
+    summaryHeaders.forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        daysRow.appendChild(th);
+    });
+}
+
+function loadEmployeeData() {
+    const tbody = document.querySelector('tbody');
+    // Dynamically generate `sr` based on the length of `attendance_data`
+    attendance_data.forEach((att, index) => {
+        const sr = index + 1; // Generate `sr` starting from 1
+        const row = document.createElement('tr');
+        // Add employee info
+        row.innerHTML = `
+            <td>${sr}</td>
+            <td>${att.employee}</td>
+            <td class="name-cell">${att.employee_name}</td>
+            <td>${att.work_type}</td>
+        `;
+        // Add attendance cells with auto-fill
+        for (let i = 1; i <= 31; i++) {
+            const td = document.createElement('td');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 3;
+            input.dataset.row = sr; // Use the generated `sr` here
+            input.dataset.day = i;
+
+            // Auto-fill based on conditions
+            if (nationalHolidays.includes(i)) {
+                input.value = 'N/H';
+                input.disabled = false;
+                input.style.color = 'black';
+            } else {
+                input.value = 'P';  // Default to Present
+                input.style.color = 'black';
+            }
+
+            input.addEventListener('input', validateAttendance);
+            input.addEventListener('change', updateSummary);
+            td.appendChild(input);
+            row.appendChild(td);
+        }
+        // Add summary cells
+        ['pd', 'wo', 'total', 'ed', 'nh', 'final'].forEach(summary => {
+            const td = document.createElement('td');
+            td.id = `${summary}-${sr}`; // Use the generated `sr` here
+            td.textContent = '0';
+            row.appendChild(td);
+        });
+        tbody.appendChild(row);
+    });
+    // Initial update of summaries
+    document.querySelectorAll('tbody tr').forEach(row => {
+        updateSummary({ target: row.querySelector('input') });
+    });
+}
+
+    function validateAttendance(event) {
+    const input = event.target;
+    let value = input.value.toUpperCase();
+
+    // Only allow A and O for manual entry
+    if (!['A', 'O', 'D', ''].includes(value) && !input.disabled) {
+        input.value = 'P';  // Reset to Present if invalid input
+        return;
+    }
+
+    // Apply red color for A and O
+    input.style.color = ['A', 'O', 'D'].includes(value) ? 'red' : 'black';
+    input.value = value;
+}
+
+function updateSummary(event) {
+    const row = event.target.dataset.row;
+    const inputs = document.querySelectorAll(`input[data-row="${row}"]`);
+
+    let present = 0;
+    let weeklyOff = 0;
+    let extraDuty = 0;
+    let nationalHoliday = 0;
+
+    inputs.forEach(input => {
+        switch (input.value) {
+            case 'P':
+                present++;
+                break;
+            case 'O':
+                weeklyOff++;
+                break;
+            case 'D':
+                extraDuty++;
+                break;
+            case 'N/H':
+                nationalHoliday++;
+                break;
+        }
+    });
+
+    // Update row totals
+    document.getElementById(`pd-${row}`).textContent = present;
+    document.getElementById(`wo-${row}`).textContent = weeklyOff;
+    document.getElementById(`total-${row}`).textContent = present + weeklyOff;
+    document.getElementById(`ed-${row}`).textContent = extraDuty;
+    document.getElementById(`nh-${row}`).textContent = nationalHoliday;
+    document.getElementById(`final-${row}`).textContent = present + weeklyOff + extraDuty + nationalHoliday;
+
+    updateGlobalSummary();
+}
+
+function updateGlobalSummary() {
+    let totalPresent = 0;
+    let totalExtraDuty = 0;
+    let totalWOff = 0;
+    let totalNH = 0;
+
+    document.querySelectorAll('[id^="pd-"]').forEach(el => {
+        totalPresent += parseInt(el.textContent) || 0;
+    });
+
+    document.querySelectorAll('[id^="ed-"]').forEach(el => {
+        totalExtraDuty += parseInt(el.textContent) || 0;
+    });
+
+    document.querySelectorAll('[id^="wo-"]').forEach(el => {
+        totalWOff += parseInt(el.textContent) || 0;
+    });
+
+    document.querySelectorAll('[id^="nh-"]').forEach(el => {
+        totalNH += parseInt(el.textContent) || 0;
+    });
+
+    document.getElementById('presentDays').textContent = totalPresent;
+    document.getElementById('extraDuty').textContent = totalExtraDuty;
+    document.getElementById('totalDuty').textContent = totalPresent + totalExtraDuty;
+    document.getElementById('woff').textContent = totalWOff;
+    document.getElementById('nh').textContent = totalNH;
+}
+
+// Initialize when document loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTable();
+    loadEmployeeData();
+});
+</script>
+
+{% endblock extra_scripts %}

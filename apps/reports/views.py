@@ -850,12 +850,12 @@ class GeneratePdf(LoginRequiredMixin, View):
             file_path = rutils.find_file(data['file_name'])
             if file_path:
                 if data["document_type"] == 'PF':
-                    uan_list= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[0]
+                    uan_list= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'], data["document_type"])[0]
                 elif data["document_type"] == 'ESIC':
-                    uan_list= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[1]
+                    uan_list= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'], data["document_type"])[1]
                 else:
-                    people_code= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[2]
-                    people_acc_no= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[3]
+                    people_code= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'], data["document_type"])[0]
+                    people_acc_no= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'], data["document_type"])[1]
                     uan_list = [people_code, people_acc_no]
                 input_pdf_path = file_path
                 output_pdf_path = rutils.trim_filename_from_path(input_pdf_path) + 'downloaded_file.pdf'
@@ -937,7 +937,7 @@ def getCustomersSites(company, customer_code):
     #     print("!!!!!!",sites)
     #     return sites
 
-def getAllUAN(company, customer_code, site_code, periods):
+def getAllUAN(company, customer_code, site_code, periods, document_type):
     # Set filters based on the presence of site_code
     filters = None
     if site_code:
@@ -945,66 +945,99 @@ def getAllUAN(company, customer_code, site_code, periods):
     else:
         filters = {'customer_code': customer_code, 'period': ['in', periods]}
     
-    # Define fields to fetch from Processed Payroll and Difference Processed Payroll
-    fields = ['emp_id', 'pf_deduction_amount', 'pf_employee_amount', 'calcesi', 'esi_employee']
-    client = getClient(company)
-    
-    # Fetch data from Processed Payroll and Difference Processed Payroll
-    processed_payroll_emp_list = get_frappe_data(company, 'Processed Payroll', filters, fields) or []
-    difference_processed_payroll_emp_list = get_frappe_data(company, 'Difference Processed Payroll', filters, fields) or []
-    
-    # Combine the two lists
-    combined_payroll_data = processed_payroll_emp_list + difference_processed_payroll_emp_list
-    emp_id_list = [row["emp_id"] for row in combined_payroll_data]
-    
-    # Fetch UAN data for the filtered employees
-    filters = {'name': ['in', emp_id_list]}
-    fields = ['uan_number', "esi_number", "employee", "bank_ac_no", 'employee_name', 'work_type']
-    uan_data = get_frappe_data(company, 'Employee', filters, fields) or []
-    
-    # Prepare a dictionary for easier access to payroll data by emp_id
-    payroll_data_map = {row["emp_id"]: row for row in combined_payroll_data}
-    
-    # Separate fields into lists
-    uan_list = []
-    esic_list = []
-    employee_list = []
-    bank_ac_no_list = []
-    name_list = []
-    designation_list = []
-    pf_deduction_amount_list = []
-    pf_employee_amount_list = []
-    calcesi_list = []
-    esi_employee_list = []
-    
-    for uan_detail in uan_data:
-        emp_id = uan_detail.get('employee')
-        payroll_data = payroll_data_map.get(emp_id, {})
+    if document_type == 'PAYROLL':
+        # Define fields to fetch from Processed Payroll and Difference Processed Payroll
+        fields = ['emp_id', 'bank_ac_no']
+        client = getClient(company)
+        # Fetch data from Processed Payroll
+        processed_payroll_emp_list = get_frappe_data(company, 'Processed Payroll', filters, fields) or []
+        # Prepare a dictionary for easier access to payroll data by emp_id
+        payroll_data_map = {row["emp_id"]: row for row in processed_payroll_emp_list}
+        # Separate fields into lists
+        employee_list = []
+        bank_ac_no_list = []
+        for payroll_detail in processed_payroll_emp_list:
+            employee_list.append(payroll_detail.get('emp_id', '').strip() if payroll_detail.get('emp_id', '') else '')
+            bank_ac_no_list.append(payroll_detail.get('bank_ac_no', '').strip() if payroll_detail.get('bank_ac_no', '') else '')
+        return (
+            employee_list,
+            bank_ac_no_list,
+        )
+    elif document_type == "ATTENDANCE":
+        if site_code:
+            filters = {'customer_code': customer_code, 'site': site_code, 'attendance_period': ['in', periods]}
+        else:
+            filters = {'customer_code': customer_code, 'attendance_period': ['in', periods]}
+        fields = ['attendance_name']
+        client = getClient(company)
+        people_attendance_emp_list = get_frappe_data(company, 'People Attendance', filters, fields) or []
+        filters = {'attendance_name': ['in', people_attendance_emp_list]}
+        fields = ['employee', 'employee_name', "work_type"]
+        client= getClient(company)
+        attendance_data= client.get_doc('People Attendance', people_attendance_emp_list[0]['attendance_name'])
+        return (attendance_data)
         
-        # Append data to respective lists
-        uan_list.append(uan_detail.get('uan_number', '').strip())
-        esic_list.append(uan_detail.get('esi_number', '').strip())
-        employee_list.append(uan_detail.get('employee', '').strip())
-        bank_ac_no_list.append(uan_detail.get('bank_ac_no', '').strip())
-        name_list.append(uan_detail.get('employee_name', '').strip())
-        designation_list.append(uan_detail.get('work_type', '').strip())
-        pf_deduction_amount_list.append(int(payroll_data.get('pf_deduction_amount', 0)))
-        pf_employee_amount_list.append(int(payroll_data.get('pf_employee_amount', 0)))
-        calcesi_list.append(int(payroll_data.get('calcesi', 0)))
-        esi_employee_list.append(int(payroll_data.get('esi_employee', 0)))
-    
-    return (
-        uan_list,
-        esic_list,
-        employee_list,
-        bank_ac_no_list,
-        name_list,
-        designation_list,
-        pf_deduction_amount_list,
-        pf_employee_amount_list,
-        calcesi_list,
-        esi_employee_list,
-    )
+    else:
+        # Define fields to fetch from Processed Payroll and Difference Processed Payroll
+        fields = ['emp_id', 'pf_deduction_amount', 'pf_employee_amount', 'calcesi', 'esi_employee']
+        client = getClient(company)
+        
+        # Fetch data from Processed Payroll and Difference Processed Payroll
+        processed_payroll_emp_list = get_frappe_data(company, 'Processed Payroll', filters, fields) or []
+        difference_processed_payroll_emp_list = get_frappe_data(company, 'Difference Processed Payroll', filters, fields) or []
+        
+        # Combine the two lists
+        combined_payroll_data = processed_payroll_emp_list + difference_processed_payroll_emp_list
+        emp_id_list = [row["emp_id"] for row in combined_payroll_data]
+        
+        # Fetch UAN data for the filtered employees
+        filters = {'name': ['in', emp_id_list]}
+        fields = ['uan_number', "esi_number", "employee", "bank_ac_no", 'employee_name', 'work_type']
+        uan_data = get_frappe_data(company, 'Employee', filters, fields) or []
+        
+        # Prepare a dictionary for easier access to payroll data by emp_id
+        payroll_data_map = {row["emp_id"]: row for row in combined_payroll_data}
+        
+        # Separate fields into lists
+        uan_list = []
+        esic_list = []
+        employee_list = []
+        bank_ac_no_list = []
+        name_list = []
+        designation_list = []
+        pf_deduction_amount_list = []
+        pf_employee_amount_list = []
+        calcesi_list = []
+        esi_employee_list = []
+        
+        for uan_detail in uan_data:
+            emp_id = uan_detail.get('employee')
+            payroll_data = payroll_data_map.get(emp_id, {})
+            
+            # Append data to respective lists
+            uan_list.append(uan_detail.get('uan_number', '').strip() if uan_detail.get('uan_number', '') else '')
+            esic_list.append(uan_detail.get('esi_number', '').strip() if uan_detail.get('esi_number', '') else '')
+            employee_list.append(uan_detail.get('employee', '').strip() if uan_detail.get('employee', '') else '')
+            bank_ac_no_list.append(uan_detail.get('bank_ac_no', '').strip() if uan_detail.get('bank_ac_no', '') else '')
+            name_list.append(uan_detail.get('employee_name', '').strip() if uan_detail.get('employee_name', '') else '')
+            designation_list.append(uan_detail.get('work_type', '').strip() if uan_detail.get('work_type', '') else '')
+            pf_deduction_amount_list.append(int(payroll_data.get('pf_deduction_amount', 0)))
+            pf_employee_amount_list.append(int(payroll_data.get('pf_employee_amount', 0)))
+            calcesi_list.append(int(payroll_data.get('calcesi', 0)))
+            esi_employee_list.append(int(payroll_data.get('esi_employee', 0)))
+        
+        return (
+            uan_list,
+            esic_list,
+            employee_list,
+            bank_ac_no_list,
+            name_list,
+            designation_list,
+            pf_deduction_amount_list,
+            pf_employee_amount_list,
+            calcesi_list,
+            esi_employee_list,
+        )
 
 
 
@@ -1024,8 +1057,19 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight, p
 
     # Function to handle text splitting
     def find_and_highlight_text(page, text):
-        """Search for text and highlight it even if it's split across lines or cells."""
+        """Search for text and highlight it if not already highlighted."""
         words = page.get_text("words")  # Extract words as bounding boxes
+        existing_highlights = page.annots()  # Get existing annotations on the page
+
+        # Helper function to check if a bounding box overlaps with existing highlights
+        def is_already_highlighted(bbox):
+            if not existing_highlights:
+                return False
+            for annot in existing_highlights:
+                if annot.rect.intersects(fitz.Rect(bbox)):
+                    return True
+            return False
+
         for i, word in enumerate(words):
             if text.startswith(word[4]):
                 combined_text = word[4]
@@ -1039,12 +1083,13 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight, p
                     j += 1
 
                 if combined_text == text:
-                    # Highlight the combined bounding boxes
-                    for box in bbox:
-                        highlight = page.add_highlight_annot(fitz.Rect(box))
-                        highlight.set_colors(stroke=orange_color)  # Set highlight color
-                        highlight.update()
-                    return True
+                    # Highlight only if not already highlighted
+                    if not any(is_already_highlighted(box) for box in bbox):
+                        for box in bbox:
+                            highlight = page.add_highlight_annot(fitz.Rect(box))
+                            highlight.set_colors(stroke=orange_color)  # Set highlight color
+                            highlight.update()
+                        return True
         return False
 
     # Check and highlight text on each page
@@ -1056,8 +1101,12 @@ def highlight_text_in_pdf(input_pdf_path, output_pdf_path, texts_to_highlight, p
                 page_has_highlight = True
 
         # Logic to determine whether to keep the page
-        if not page_required or page_has_highlight or page_num == 0:
-            pages_to_keep.append(page_num)
+        if page_required:
+            if page_has_highlight or page_num == 0:  # Always keep the first page
+                pages_to_keep.append(page_num)
+        else:
+            if page_has_highlight or page_num == 0 or page_num == document.page_count - 1:  # Keep first, last, and highlighted pages
+                pages_to_keep.append(page_num)
 
     # Create a new document with all pages to be kept
     new_document = fitz.open()
@@ -1183,15 +1232,15 @@ class GenerateLetter(LoginRequiredMixin, View):
         try:
             data = json.loads(request.body)
             person_data = {}
-            person_data["uan_list"]= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[0]
-            person_data['esic_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[1]
-            person_data['employee_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[2]
-            person_data['name_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[4]
-            person_data['designation_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[5]
-            person_data['pf_deduction_amount_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[6]
-            person_data['pf_employee_amount_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[7]
-            person_data['calcesi_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[8]
-            person_data['esi_employee_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'])[9]
+            person_data["uan_list"]= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[0]
+            person_data['esic_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[1]
+            person_data['employee_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[2]
+            person_data['name_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[4]
+            person_data['designation_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[5]
+            person_data['pf_deduction_amount_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[6]
+            person_data['pf_employee_amount_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[7]
+            person_data['calcesi_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[8]
+            person_data['esi_employee_list']= getAllUAN(data['company'], data['customer'], data['site'], data['period_from'],"PF")[9]
             from django.http import HttpResponse
             from weasyprint import HTML
             from django.template.loader import render_to_string
@@ -1202,7 +1251,8 @@ class GenerateLetter(LoginRequiredMixin, View):
                 "YearMonth": data['period_from'][0],
                 "PFCodeNo": data['pf_code_no'],
                 "ESICCodeNo": data['esic_code_no'],
-                "table_data": person_data
+                "table_data": person_data,
+                "Company": data["company"]
             })
             
             # Convert HTML to PDF
@@ -1211,6 +1261,264 @@ class GenerateLetter(LoginRequiredMixin, View):
             # Send the PDF as a downloadable response
             response = HttpResponse(pdf, content_type="application/pdf")
             response["Content-Disposition"] = "attachment; filename=letterpad.pdf"
+            return response
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        
+class GenerateAttendance(LoginRequiredMixin, View):
+    PARAMS = {
+        'template_form':"reports/generate_pdf/generateattendance.html",
+        'form':rp_forms.GeneratePDFForm,
+    }
+    def get(self, request, *args, **kwargs):
+        import uuid
+        P = self.PARAMS
+        form = P['form'](request=request)
+        cxt = {
+            'form':form,
+            'ownerid' : uuid.uuid4()
+        }
+        return render(request, P['template_form'], context=cxt)
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            site_attendance_data = {}
+            if data['company'] == 'SPS':
+                server_url = 'http://leave.spsindia.com:8007'
+            elif data['company'] == 'SFS':
+                server_url = 'http://leave.spsindia.com:8008'
+            elif data['company'] == 'TARGET':
+                server_url = 'http://leave.spsindia.com:8002'
+            else:
+                return None
+
+            import requests
+            from urllib.parse import urljoin, urlencode
+            # API endpoint
+            endpoint = "/api/method/sps.sps.api.getERPNextPostingData"
+            # Query parameters
+            if data['site']:
+                params = {
+                    "period": data['period_from'][0],
+                    "customer": data['customerName'],
+                    "site": data['site']
+                }
+            else:
+                params = {
+                    "period": data['period_from'][0],
+                    "customer": data['customerName']
+                }
+            # Construct the full URL
+            url = urljoin(server_url, endpoint) + "?" + urlencode(params)
+            # Make the GET request
+            try:
+                response = requests.get(url)
+                # Check if the request was successful (status code 200)
+                if response.status_code == 200:
+                    # Parse the response (assuming it's JSON)
+                    resp_data = response.json()
+                    output_data = {"message": {}}
+                    for key, entries in resp_data["message"].items():
+                        transformed_entry = {}
+                        employee_details = []
+                        for entry in entries:
+                            employee_details.append({
+                                "employee": entry["employee"],
+                                "employee_name": entry["employee_name"],
+                                "work_type": entry["work_type"]
+                            })   
+                            # Copy non-employee specific fields once
+                            if not transformed_entry:
+                                transformed_entry = {k: v for k, v in entry.items() if k not in ["employee", "employee_name", "work_type"]}
+                        transformed_entry["employee_details"] = employee_details
+                        output_data["message"][key] = [transformed_entry]
+
+                    site_attendance_data["site_attendance_data"]= output_data["message"]
+                    site_attendance_data["period"] = data['period_from'][0]
+                    site_attendance_data["type_form"] = data['type_form']
+                    if site_attendance_data["site_attendance_data"]:
+                        request.session['report_data'] = site_attendance_data
+                        return JsonResponse({"success": True, "message": "Report generated successfully!"})
+                    else:
+                        return JsonResponse({"success": False, "message": "No Data Found"})
+                else:
+                    # Handle errors
+                    print(f"Failed to fetch data. Status code: {response.status_code}")
+                    print(f"Response: {response.text}")
+            except requests.exceptions.RequestException as e:
+                # Handle exceptions (e.g., network issues)
+                print(f"An error occurred: {e}")
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        
+class AttendanceTemplate(LoginRequiredMixin, View):
+    PARAMS = {
+        'template_normal':"reports/generate_pdf/attendance_template_normal.html",
+        'template_form16':"reports/generate_pdf/attendance_template_form16.html",
+        'download_template_normal':"reports/generate_pdf/generate_normal_attendance_pdf.html",
+    }
+    def get(self, request, *args, **kwargs):
+        P, S = self.PARAMS, request.session
+        attendance_data = S.get('report_data', {})
+        if attendance_data:
+            if attendance_data["type_form"] == 'NORMAL FORM':
+                return render(request, P['template_normal'], {"attendance_data": attendance_data})
+            if attendance_data["type_form"] == 'FORM 16':
+                return render(request, P['template_form16'], {"attendance_data": attendance_data})
+    
+    def post(self, request, *args, **kwargs):
+        P, S = self.PARAMS, request.session
+        attendance_data = S.get('report_data', {})
+        
+        if not attendance_data:
+            return JsonResponse({"success": False, "message": "No Data Found"})
+        
+        # Get the appropriate template based on form type
+        template_name = None
+        if attendance_data["type_form"] == 'NORMAL FORM':
+            template_name = P['download_template_normal']
+        elif attendance_data["type_form"] == 'FORM 16':
+            template_name = P['template_form16']
+        elif attendance_data["type_form"] == 'FORM 26 TO 25':
+            template_name = P['template_form26TO25']
+        elif attendance_data["type_form"] == 'FORM 25 TO 24':
+            template_name = P['template_form25TO24']
+        elif attendance_data["type_form"] == 'FORM 15 TO 14':
+            template_name = P['template_form15TO14']
+            
+        if not template_name:
+            return JsonResponse({"success": False, "message": "Invalid form type"})
+        
+        # Generate PDF
+        try:
+            from django.http import FileResponse, JsonResponse
+            from django.template.loader import render_to_string
+            from weasyprint import HTML, CSS
+            import json
+            import tempfile
+
+            # Parse attendance data from frontend
+            attendance_data_frontend = json.loads(request.POST.get('complete_attendance_data', '{}'))
+            summary_data_frontend = json.loads(request.POST.get('summary_data', '{}'))
+            date_time_frontend = request.POST.get('submissionDateTime', '')
+            
+            # Transform attendance dictionary into a list for template processing
+            for key, employees in attendance_data_frontend.items():
+                for emp in employees:
+                    # Convert attendance dictionary {"day_1": "P", "day_2": "A"} → ["P", "A", ...]
+                    emp["attendance_list"] = [emp["attendance"].get(f"day_{i}", "") for i in range(1, 32)]
+            
+            # Render the template with processed data
+            html_string = render_to_string(
+                template_name,
+                {
+                    'attendance_data': attendance_data,
+                    'complete_attendance_data': attendance_data_frontend,
+                    'summary_data': summary_data_frontend,
+                    "date_time": date_time_frontend
+                },
+                request=request
+            )
+            
+            # Create a temporary file for the PDF
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as output:
+                pdf_file = output.name
+
+            # Generate PDF using WeasyPrint
+            HTML(string=html_string).write_pdf(
+                pdf_file,
+                stylesheets=[
+                    CSS(string="""
+                        @page { 
+                            margin: 1cm; 
+                            size: A4 landscape; 
+                        }
+                    """)
+                ]
+            )
+
+            # Return PDF as a downloadable file
+            response = FileResponse(open(pdf_file, 'rb'), content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="attendance_report.pdf"'
+            return response
+
+        except Exception as e:
+            print(f"PDF generation error: {str(e)}")
+            return JsonResponse({"success": False, "message": f"Error generating PDF: {str(e)}"})
+        
+class GenerateDecalartionForm(LoginRequiredMixin, View):
+    PARAMS = {
+        'template_form':"reports/generate_pdf/generate_declaration_form.html",
+        'form':rp_forms.GeneratePDFForm,
+    }
+    def get(self, request, *args, **kwargs):
+        import uuid
+        P = self.PARAMS
+        form = P['form'](request=request)
+        cxt = {
+            'form':form,
+            'ownerid' : uuid.uuid4()
+        }
+        return render(request, P['template_form'], context=cxt)
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            get_client = getClient("SPS")
+            doc_employee_detail = get_client.get_list("Employee", filters={"name":data['ticket_no']})
+            doc_payroll_detail = get_client.get_list("Processed Payroll", filters={"emp_id":data['ticket_no']})
+
+            import pandas as pd
+            # Load the Excel file
+            file_path = "/home/pankaj/Pankaj/codebase (1)/JNPT LEAVE BONUS SAL DATA AUG -DEC 2024.xls"  # Change this to your actual file path
+            df = pd.read_excel(file_path)
+
+            # Find the matching row
+            matched_row = df[df["Row Labels"] == data['ticket_no']]
+
+            # Fetch required columns
+            if not matched_row.empty:
+                row_data = matched_row[["Row Labels", "Name", "Sum of Bonus Amt", "Leave amt", "Dec 24 net pay", "MLWF", "PF AMT"]]
+            else:
+                print("No match found")
+
+            if str(doc_payroll_detail[0]["net_pay"]).endswith('.0'):
+                result = str(doc_payroll_detail[0]["net_pay"]).split('.')[0]
+            else:
+                result = str(doc_payroll_detail[0]["net_pay"])
+            # print("GET CLIENT",doc_employee_detail)
+            date_str = str(doc_employee_detail[0]["date_of_joining"])
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+            formatted_from_date = date_obj.strftime("%b-%y").upper()
+            from django.http import HttpResponse
+            from weasyprint import HTML
+            from django.template.loader import render_to_string
+            if len(doc_employee_detail) != 0 and len(doc_payroll_detail) != 0:
+                html_string = render_to_string("/reports/generate_pdf/declaration_form_template.html", {
+                "FullName": doc_employee_detail[0]["employee_name"],
+                "FatherName": doc_employee_detail[0]["father_name"],
+                "CurrentAddress": doc_employee_detail[0]["current_address"],
+                "BankACNo": doc_employee_detail[0]["bank_ac_no"],
+                "BankBranch": doc_employee_detail[0]["bank_branch"],
+                "BankIFSCCode": doc_employee_detail[0]["bank_ifsc_code"],
+                "FromDate": formatted_from_date,
+                "ToDate": "DEC-24",
+                "CompanyName": doc_employee_detail[0]["company"],
+                "NetPay": row_data["Dec 24 net pay"].values[0],
+                "Bonus": row_data["Sum of Bonus Amt"].values[0],
+                "Leave": row_data["Leave amt"].values[0],
+                "MLWF": row_data["MLWF"].values[0],
+                "PFAMT": row_data["PF AMT"].values[0] if not pd.isna(row_data["PF AMT"].values[0]) else "NILL" 
+            })
+            
+            # Convert HTML to PDF
+            pdf = HTML(string=html_string).write_pdf()
+            
+            # Send the PDF as a downloadable response
+            response = HttpResponse(pdf, content_type="application/pdf")
+            response["Content-Disposition"] = "attachment; filename=declaration_form.pdf"
             return response
 
         except json.JSONDecodeError:

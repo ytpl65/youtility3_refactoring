@@ -1951,7 +1951,7 @@ HEADER_MAPPING  = {
     ],
     'GEOFENCE': ['Code*', 'Name*', 'Site*', 'Client*','Alert to People*', 'Alert to Group*', 'Alert Text*', 'Enable', 'Radius*'],
     'GEOFENCE_PEOPLE': ['Code*', 'People Code*','Site*', 'Client*', 'Valid From*', 'Valid To*', 'Start Time*', 'End Time*'],
-    'SHIFT': ['Name*', 'Start Time*', 'End Time*', 'People Count*', 'Night Shift*', 'Site*','Client*', 'Enable*', 'Shift Data*'],
+    'SHIFT': ['Name*', 'Start Time*', 'End Time*', 'People Count*', 'Night Shift*', 'Site*','Client*', 'Enable*', 'Type*', 'Id*', 'Count*', 'Overtime*', 'Gracetime*'],
 }
 
 Example_data = {
@@ -2017,70 +2017,9 @@ Example_data = {
                         ('GEO002','P023457','SITE_B','CLIENT_B','18-12-2024','21-12-2024','10:00:00','06:00:00'),
                         ('GEO003','P023458','SITE_C','CLIENT_C','19-12-2024','22-12-2024','10:00:00','06:00:00')
                  ],
-    'SHIFT': [('General Shift','20:00:00','08:00:00','3','FALSE','SITE_A','CLIENT_A','TRUE',{
-                "gracetime": "",
-                "designation_details": [
-                    {
-                    "id": 1,
-                    "count": "2",
-                    "designation": "Roaming Patrol Officer (RPO)",
-                    "people_code": []
-                    },
-                    {
-                    "id": 2,
-                    "count": "2",
-                    "designation": "Software Developer (SD)",
-                    "people_code": []
-                    },
-                    {
-                    "id": 3,
-                    "count": "6",
-                    "designation": "Chief Accountant (CACCTS)",
-                    "people_code": []
-                    }
-                ]
-                }),
-                ('Night Shift','22:00:00','06:00:00','2','FALSE','SITE_B','CLIENT_B','FALSE',{
-                    "gracetime": "",
-                    "designation_details": [
-                        {
-                        "id": 1,
-                        "count": "2",
-                        "designation": "Roaming Patrol Officer (RPO)",
-                        "people_code": []
-                        },
-                        {
-                        "id": 2,
-                        "count": "2",
-                        "designation": "Software Developer (SD)",
-                        "people_code": []
-                        }
-                    ]
-                    }),
-                ('Test Shift','12:30:00','17:30:00','3','TRUE','SITE_C','CLIENT_C','TRUE',{
-                    "gracetime": "",
-                    "designation_details": [
-                        {
-                        "id": 1,
-                        "count": "2",
-                        "designation": "Roaming Patrol Officer (RPO)",
-                        "people_code": []
-                        },
-                        {
-                        "id": 2,
-                        "count": "2",
-                        "designation": "Software Developer (SD)",
-                        "people_code": []
-                        },
-                        {
-                        "id": 3,
-                        "count": "6",
-                        "designation": "Chief Accountant (CACCTS)",
-                        "people_code": []
-                        }
-                    ]
-                    }),
-             ],
+    'SHIFT': [('General Shift','10:00:00','18:00:00','3','FALSE','SITE_A','CLIENT_A','TRUE','HOD, RPO','1, 2','2, 1','1, 1','60, 30'),
+              ('Night Shift','20:00:00','08:00:00','3','FALSE','SITE_B','CLIENT_A','TRUE','HOD, RPO','1, 2','2, 1','1, 1','60, 60'),
+              ('General Shift','20:00:00','08:00:00','3','FALSE','SITE_A','CLIENT_A','TRUE','HOD, RPO','1, 2','2, 1','1, 1','30, 60')]
     }
 
 def excel_file_creation(R):

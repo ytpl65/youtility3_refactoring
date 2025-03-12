@@ -126,6 +126,13 @@ class GeneratePDF(BaseModel):
         ESIC      = ('ESIC', 'ESIC')
         PAYROLL   = ('PAYROLL', 'PAYROLL')
 
+    class FormType(models.TextChoices):
+        NORMALFORM = ('NORMAL FORM', 'NORMAL FORM')
+        # FORM16 = ('FORM 16', 'FORM 16')
+        # FORM26TO25 = ('FORM 26 TO 25', 'FORM 26 TO 25')
+        # FORM25TO24 = ('FORM 25 TO 24', 'FORM 25 TO 24')
+        # FORM15TO14 = ('FORM 15 TO 14', 'FORM 15 TO 14')
+
     document_type = models.CharField('Document Type', choices = DocumentType.choices, null=True, max_length = 60)    
     company = models.CharField('Company', choices = Company.choices, null=True, max_length = 60)
     additional_filter = models.CharField('Additional Filter', choices = AdditionalFilter.choices, max_length = 60)
@@ -134,6 +141,7 @@ class GeneratePDF(BaseModel):
     # number_of_period = models.CharField('Number Of Period', choices = NumberOfPeriod.choices,  max_length = 60)
     period_from = models.CharField(max_length=255, null=True, default=None, blank=True)
     # period_to = models.CharField(max_length=255, null=True, default=None, blank=True)
+    type_of_form = models.CharField('Type Of Form', choices = FormType.choices, null=True, max_length = 60)
     
     class Meta(BaseModel.Meta):
         db_table = 'generatepdf'

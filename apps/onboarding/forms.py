@@ -237,7 +237,7 @@ class BtForm(forms.ModelForm):
     
     def clean_buname(self):
         if value := self.cleaned_data.get('buname'):
-            regex = "^[a-zA-Z0-9\-_@#.\(\|\)& ]*$"
+            regex = r"^[a-zA-Z0-9\-_@#.,\(\|\)& ]*$"
             if not re.match(regex, value):
                 raise forms.ValidationError(self.error_msg['invalid_name'])
         return value
