@@ -79,7 +79,6 @@ def save_cuser_muser(instance, user, create=None):
 
 
 def save_client_tenantid(instance, user, session, client=None, bu=None):
-
     tenantid = session.get('tenantid')
     if bu is None:
         bu = session.get('bu_id')

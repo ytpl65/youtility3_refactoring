@@ -40,6 +40,7 @@ urlpatterns = [
     path('reports/', include('apps.reports.urls')),
     path('helpdesk/', include('apps.y_helpdesk.urls')),
     path('clientbilling/', include('apps.clientbilling.urls')),
+    path('employee_creation/', include('apps.employee_creation.urls')),
     #path('reminder/', include('apps.reminder.urls')),
     path('email/', include(email_urls)), 
     path('__debug__/', include(debug_toolbar.urls)), # shoul use when debug = True

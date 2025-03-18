@@ -531,12 +531,14 @@
       {# BEGIN BRAND #}
       <div class="aside-logo flex-column-auto" id="kt_aside_logo">
         {# BEGIN LOGO #}
-        <a href="{% if request.session.sitecode not in ["SPSESIC", "SPSPAYROLL", "SPSOPS", "SPSOPERATION"] %}
+        <a href="{% if request.session.sitecode not in ["SPSESIC", "SPSPAYROLL", "SPSOPS", "SPSOPERATION", "SPSHR"] %}
             {{ url('onboarding:rp_dashboard') }}
         {% elif request.session.sitecode == "SPSOPS" %}
             {{ url('reports:generateattendance') }}
          {% elif request.session.sitecode == "SPSOPERATION" %}
             {{ url('reports:generate_declaration_form') }}
+        {% elif request.session.sitecode == "SPSHR" %}
+            {{ url('employee_creation:employee_creation') }}
         {% else %}
             {{ url('reports:generatepdf') }}
         {% endif %}">
