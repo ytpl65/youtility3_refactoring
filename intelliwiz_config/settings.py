@@ -104,6 +104,7 @@ INSTALLED_APPS = [
     'apps.y_helpdesk',
     'apps.work_order_management',
     'apps.clientbilling',
+    'apps.employee_creation',
 
     # third-party apps
     'django_cleanup.apps.CleanupConfig'

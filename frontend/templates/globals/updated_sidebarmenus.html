@@ -1,6 +1,6 @@
 <div class="menu menu-column menu-title-gray-800 menu-state-title-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow text-white mb-1-gray-500"
     id="kt_aside_menu" data-kt-menu="true">
-    {% if request.session.sitecode not in ["SPSESIC", "SPSPAYROLL", "SPSOPS", "SPSOPERATION"] %}
+    {% if request.session.sitecode not in ["SPSESIC", "SPSPAYROLL", "SPSOPS", "SPSOPERATION", "SPSHR"] %}
     <!----DASHBOARD---->
     <div class="menu-item" id="DASHBOARD" style="display:none;">
         <a class="menu-link" href="{{ url('onboarding:rp_dashboard') }}">
@@ -713,23 +713,38 @@
     </div> #}
     {% endif %}
     {% else %}
-    {% if request.session.sitecode not in ["SPSOPERATION"] %}
-        {% if request.session.sitecode not in ["SPSOPS"] %}
-            <div class="menu-item" id="DASHBOARD" style="">
-                <a class="menu-link" href="/reports/generatepdf/">
-                    <span class="menu-icon">
-                        <span class="svg-icon svg-icon-2">
-                            <span class="material-symbols-outlined">
-                                picture_as_pdf
+    {% if request.session.sitecode not in ["SPSHR"] %}
+        {% if request.session.sitecode not in ["SPSOPERATION"] %}
+            {% if request.session.sitecode not in ["SPSOPS"] %}
+                <div class="menu-item" id="DASHBOARD" style="">
+                    <a class="menu-link" href="/reports/generatepdf/">
+                        <span class="menu-icon">
+                            <span class="svg-icon svg-icon-2">
+                                <span class="material-symbols-outlined">
+                                    picture_as_pdf
+                                </span>
                             </span>
                         </span>
-                    </span>
-                    <span class="menu-title">Generate PDF</span>
-                </a>
-            </div>
-            {% if request.session.sitecode in ["SPSESIC"] %}
+                        <span class="menu-title">Generate PDF</span>
+                    </a>
+                </div>
+                {% if request.session.sitecode in ["SPSESIC"] %}
+                <div class="menu-item" id="DASHBOARD" style="">
+                    <a class="menu-link" href="/reports/generateletter/">
+                        <span class="menu-icon">
+                            <span class="svg-icon svg-icon-2">
+                                <span class="material-symbols-outlined">
+                                    description
+                                </span>
+                            </span>
+                        </span>
+                        <span class="menu-title">Generate Letter</span>
+                    </a>
+                </div>
+                {% endif %}
+            {% else %}
             <div class="menu-item" id="DASHBOARD" style="">
-                <a class="menu-link" href="/reports/generateletter/">
+                <a class="menu-link" href="/reports/generateattendance/">
                     <span class="menu-icon">
                         <span class="svg-icon svg-icon-2">
                             <span class="material-symbols-outlined">
@@ -737,13 +752,13 @@
                             </span>
                         </span>
                     </span>
-                    <span class="menu-title">Generate Letter</span>
+                    <span class="menu-title">Generate Attendance</span>
                 </a>
             </div>
             {% endif %}
         {% else %}
         <div class="menu-item" id="DASHBOARD" style="">
-            <a class="menu-link" href="/reports/generateattendance/">
+            <a class="menu-link" href="/reports/generate_declaration_form/">
                 <span class="menu-icon">
                     <span class="svg-icon svg-icon-2">
                         <span class="material-symbols-outlined">
@@ -751,23 +766,43 @@
                         </span>
                     </span>
                 </span>
-                <span class="menu-title">Generate Attendance</span>
+                <span class="menu-title">Generate Declaration Form</span>
             </a>
         </div>
         {% endif %}
-    {% else %}
-    <div class="menu-item" id="DASHBOARD" style="">
-        <a class="menu-link" href="/reports/generate_declaration_form/">
+        {% else %}
+        <div data-kt-menu-trigger="click" id="EMPLOYEE" class="menu-item menu-accordion" >
+            <span class="menu-link">
             <span class="menu-icon">
+                <!--begin::Svg Icon | path: icons/duotone/Communication/Group.svg-->
                 <span class="svg-icon svg-icon-2">
-                    <span class="material-symbols-outlined">
-                        description
-                    </span>
+                <span class="material-icons">
+                    people
+                </span>
                 </span>
             </span>
-            <span class="menu-title">Generate Declaration Form</span>
-        </a>
-    </div>
-    {% endif %}
+            <span class="menu-title">Employees</span>
+            <span class="menu-arrow"></span>
+            </span>
+            <div class="menu-sub menu-sub-accordion" kt-hidden-height="116">
+            <div class="menu-item" id="RP_DOWNLOAD">
+                <a class="menu-link" href="{{ url('employee_creation:employee_creation') }}">
+                <span class="menu-bullet">
+                    <span class="bullet bullet-dot"></span>
+                </span>
+                <span class="menu-title">Create Employee</span>
+                </a>
+            </div>
+            <div class="menu-item" id="RP_SCHEDULE">
+                <a class="menu-link" href="{{ url('employee_creation:employee_list') }}">
+                <span class="menu-bullet">
+                    <span class="bullet bullet-dot"></span>
+                </span>
+                <span class="menu-title">View Employees</span>
+                </a>
+            </div>
+            </div>
+        </div>
+        {% endif %}
     {% endif %}
 </div>
