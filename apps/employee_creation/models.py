@@ -27,23 +27,25 @@ class Employee(models.Model):
     ]
 
     POST_APPLIED_FOR_CHOICES = [
-        ('guard', 'Guard'),
-        ('lady_searcher', 'Lady Searcher'),
-        ('head_guard', 'Head Guard'),
-        ('supervisor', 'Supervisor'),
-        ('assistant_security_officer', 'Assistant Security Officer'),
-        ('security_officer', 'Security Officer'),
-        ('chief_security_officer', 'Chief Security Officer'),
-        ('area_officer', 'Area Officer'),
-        ('territory_manager', 'Territory Manager'),
-        ('training_officer', 'Training Officer'),
-        ('night_rounder', 'Night Rounder'),
-        ('patrol_officer', 'Patrol Officer'),
-        ('gunman', 'Gunman'),
-        ('driver', 'Driver'),
-        ('protection_officer', 'Protection Officer'),
-        ('concierge', 'Concierge'),
-        ('cctv_operator', 'CCTV Operator'),
+        ('Security Guard', 'Security Guard'),
+        ('Lady Searcher', 'Lady Searcher'),
+        ('Head Guard', 'Head Guard'),
+        ('Supervisor', 'Supervisor'),
+        ('Assistant Security Officer', 'Assistant Security Officer'),
+        ('Security Officer', 'Security Officer'),
+        ('Chief Security Officer', 'Chief Security Officer'),
+        ('Area Officer', 'Area Officer'),
+        ('Territory Manager', 'Territory Manager'),
+        ('Training Officer', 'Training Officer'),
+        ('Night Rounder', 'Night Rounder'),
+        ('Patrol Officer', 'Patrol Officer'),
+        ('Gunman', 'Gunman'),
+        ('Driver', 'Driver'),
+        ('Protection Officer', 'Protection Officer'),
+        ('Concierge', 'Concierge'),
+        ('CCTV Operator', 'CCTV Operator'),
+        ('Staff', 'Staff'),
+        ('House Keeping', 'House Keeping'),
     ]
     
     APPROVAL_STATUS_CHOICES = [
@@ -135,9 +137,9 @@ class Employee(models.Model):
     
     # Qualification & Documents
     educational_qualification = models.TextField()
-    english_fluency = models.IntegerField(choices=[(i, i) for i in range(6)])  # 0-5 scale
+    # english_fluency = models.IntegerField(choices=[(i, i) for i in range(6)])  # 0-5 scale
     police_verification = models.CharField(max_length=10, choices=POLICE_VERIFICATION_CHOICES, default='applied')
-    previous_experience = models.TextField(blank=True, null=True)
+    # previous_experience = models.TextField(blank=True, null=True)
     aadhar_no = models.CharField(max_length=12)
     pan_card_no = models.CharField(max_length=10)
     ration_card = models.CharField(max_length=50, blank=True, null=True)
