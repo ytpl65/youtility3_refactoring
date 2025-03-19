@@ -78,6 +78,16 @@
       overflow-y: auto;
     }
 
+    .form-group 
+    #id_references-0-address,
+    #id_references-1-address,
+    #id_references-0-directions,
+    #id_references-1-directions {
+      height: 72px;
+      resize: vertical;
+      overflow-y: auto;
+    }
+
     select.form-control {
       appearance: none;
       background: #f5f5f5 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23333' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 6.344C1.875 5.768 2.32 4.8 3.104 4.8h9.792c0.784 0 1.23 0.968 0.653 1.544L8.753 11.14a0.795 0.795 0 0 1-1.506 0Z'/%3E%3C/svg%3E") no-repeat right 10px center;
@@ -248,11 +258,11 @@
     #id_marital_status,
     #id_sex,
     #id_civilian_or_ex_serviceman,
-    #id_english_fluency,
     #id_police_verification,
     #id_religion,
     #id_nationality,
-    #id_state {
+    #id_state,
+    #id_salutation {
       height: 40px;
       width: 100%;
       border-radius: 5px;
@@ -263,7 +273,6 @@
     #id_local_address,
     #id_conviction_details,
     #id_educational_qualification,
-    #id_previous_experience,
     #id_experience_details,
     #id_emergency_contact_address,
     #id_emergency_contact_directions,
@@ -383,6 +392,10 @@
     #id_email {
       text-transform: lowercase;
     }
+
+    #preview-close-btn:hover {
+      color: #dc3545;
+    }
 </style>
 {% endblock extra_css %}
 
@@ -436,6 +449,10 @@
                           <label for="photo" class="required">Profile Photo</label>
                           <img id="photoPreview" class="photo-preview" style="display:none;" />
                           <input type="file" id="photo" name="photo" class="form-control" accept="image/*">
+                        </div>
+                        <div class="form-group">
+                          <label for="{{ form.salutation.id_for_label }}" class="required">{{ form.salutation.label }}</label>
+                          {{ form.salutation }}
                         </div>  
                         <div class="form-group">
                           <label for="{{ form.post_applied_for.id_for_label }}" class="required">{{ form.post_applied_for.label }}</label>
@@ -452,6 +469,10 @@
                         <div class="form-group">
                           <label for="{{ form.surname.id_for_label }}" class="required">{{ form.surname.label }}</label>
                           {{ form.surname }}
+                        </div>
+                        <div class="form-group">
+                          <label for="{{ form.full_name.id_for_label }}" class="required">{{ form.full_name.label }}</label>
+                          {{ form.full_name }}
                         </div>
                         <div class="form-group">
                           <label for="{{ form.height.id_for_label }}" class="required">{{ form.height.label }}</label>
@@ -536,16 +557,8 @@
                           {{ form.educational_qualification }}
                         </div>
                         <div class="form-group">
-                          <label for="{{ form.english_fluency.id_for_label }}" class="required">{{ form.english_fluency.label }}</label>
-                          {{ form.english_fluency }}
-                        </div>
-                        <div class="form-group">
                           <label for="{{ form.police_verification.id_for_label }}" class="required">{{ form.police_verification.label }}</label>
                           {{ form.police_verification }}
-                        </div>
-                        <div class="form-group">
-                          <label for="{{ form.previous_experience.id_for_label }}" class="required">{{ form.previous_experience.label }}</label>
-                          {{ form.previous_experience }}
                         </div>
                         <div class="form-group">
                           <label for="{{ form.aadhar_no.id_for_label }}" class="required">{{ form.aadhar_no.label }}</label>
@@ -626,7 +639,7 @@
                           {{ form.emergency_contact_address }}
                         </div>
                         <div class="form-group">
-                          <label for="{{ form.emergency_contact_directions.id_for_label }}" class="required">{{ form.emergency_contact_directions.label }}</label>
+                          <label for="{{ form.emergency_contact_directions.id_for_label }}">{{ form.emergency_contact_directions.label }}</label>
                           {{ form.emergency_contact_directions }}
                         </div>
                     </div>
@@ -696,7 +709,7 @@
                           {{ form.hometown_phone }}
                         </div>
                         <div class="form-group">
-                          <label for="{{ form.hometown_directions.id_for_label }}" class="required">{{ form.hometown_directions.label }}</label>
+                          <label for="{{ form.hometown_directions.id_for_label }}">{{ form.hometown_directions.label }}</label>
                           {{ form.hometown_directions }}
                         </div>
                     </div>
@@ -783,7 +796,10 @@
             <!-- Preview Modal -->
             <div id="previewModal">
               <div>
-                  <h2 style="margin: 0 0 15px 0; font-size: 1.5em; color: #2c3e50;">Employee Form Preview</h2>
+                  <div style="position: relative; margin-bottom: 15px;">
+                      <h2 style="margin: 0; font-size: 1.5em; color: #2c3e50; display: inline-block;">Employee Form Preview</h2>
+                      <button type="button" id="preview-close-btn" style="position: absolute; top: 0; right: 0; padding-bottom:8px; background: none; border: none; font-size: 1.6em; cursor: pointer; color: #333;">×</button>
+                  </div>
                   <div id="previewContent"></div>
                   <div id="loader" style="display: none; text-align: center; margin: 10px 0;">Processing...</div>
                   <div class="form-navigation">
@@ -992,7 +1008,7 @@
       ];
 
       function toggleGunFields() {
-          const isGunman = postAppliedFor?.value === "gunman";
+          const isGunman = postAppliedFor?.value === "Gunman";
           gunFields.forEach(fieldId => {
               const fieldGroup = document.getElementById(fieldId)?.parentElement;
               if (fieldGroup) {
@@ -1031,127 +1047,133 @@
       }
 
       function validatePersonalDetails() {
-          let isValid = true;
-          const requiredFields = [
-              { id: "id_first_name", message: "First Name is required." },
-              { id: "id_middle_name", message: "Middle Name is required." },
-              { id: "id_surname", message: "Surname is required." },
-              { id: "id_religion", message: "Religion is required." },
-              { id: "id_nationality", message: "Nationality is required." },
-              { id: "id_birth_place", message: "Birth Place is required." },
-              { id: "id_local_address", message: "Local Address is required." },
-              { id: "id_identification_mark", message: "Identification Mark is required." },
-              { id: "id_conviction_details", message: "Conviction Details is required." },
-              { id: "id_height", message: "Height must be a positive number.", isNumber: true },
-              { id: "id_weight", message: "Weight must be a positive number.", isNumber: true },
-              { id: "id_pincode", message: "Pincode must be a positive number.", isNumber: true },
-              { id: "id_mobile", message: "Mobile number must be 10 digits.", isMobile: true },
-              { id: "date_of_birth", message: "Date of Birth is required." },
-              { id: "date_of_joining", message: "Date of Joining is required." },
-              { id: "id_sex", message: "Gender is required.", isDropdown: true },
-              { id: "id_marital_status", message: "Marital Status is required.", isDropdown: true },
-              { id: "id_post_applied_for", message: "Post Applied For is required.", isDropdown: true },
-              { id: "id_civilian_or_ex_serviceman", message: "Civilian or ex serviceman is required.", isDropdown: true },
-              { id: "photo", message: "Profile Picture is required.", isFile: true },
-          ];
-
-          const emailInput = document.getElementById("id_email");
-          const firstNameInput = document.getElementById("id_first_name");
-          const lastNameInput = document.getElementById("id_surname");
-          const mobileInput = document.getElementById("id_mobile");
-
-          if (emailInput && firstNameInput && lastNameInput && mobileInput) {
-              const emailValue = emailInput.value.trim();
-              const firstNameValue = firstNameInput.value.trim().toLowerCase();
-              const lastNameValue = lastNameInput.value.trim().toLowerCase();
-              const mobileValue = mobileInput.value.trim();
-
-              emailInput.classList.remove("error-field");
-              let existingEmailError = document.getElementById("id_email-error");
-              if (existingEmailError) existingEmailError.remove();
-
-              const expectedEmail = `${firstNameValue}.${lastNameValue}.${mobileValue}@gmail.com`;
-              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-              if (emailValue === "") {
-                  isValid = false;
-                  showError(emailInput, "Email is required.");
-              } else if (!emailRegex.test(emailValue)) {
-                  isValid = false;
-                  showError(emailInput, "Invalid email format.");
-              } else if (emailValue !== expectedEmail) {
-                  isValid = false;
-                  showError(emailInput, `Email must be in the format: ${expectedEmail}`);
-              }
-          }
-
-          requiredFields.forEach(field => {
-              const input = document.getElementById(field.id);
-              if (!input) return;
-
-              const value = input.value.trim();
-              input.classList.remove("error-field");
-              let existingError = document.getElementById(field.id + "-error");
-              if (existingError) existingError.remove();
-
-              if (field.isFile && input.files.length === 0) {
-                  isValid = false;
-                  showError(input, field.message);
-              } else if (value === "" || (field.isNumber && (isNaN(value) || value <= 0))) {
-                  isValid = false;
-                  showError(input, field.message);
-              } else if (field.isMobile && !/^\d{10}$/.test(value)) {
-                  isValid = false;
-                  showError(input, field.message);
-              } else if (field.isDropdown && value === "Select") {
-                  isValid = false;
-                  showError(input, field.message);
-              }
-          });
-
-          const gender = document.getElementById('id_sex').value;
-          const heightInput = document.getElementById('id_height');
-          const weightInput = document.getElementById('id_weight');
-          const height = parseFloat(heightInput.value);
-          const weight = parseFloat(weightInput.value);
-
-          if (gender === 'male') {
-              if (height < 160) {
-                  isValid = false;
-                  showError(heightInput, 'Height must be at least 160 cm for males.');
-              }
-              if (weight < 50) {
-                  isValid = false;
-                  showError(weightInput, 'Weight must be at least 50 kg for males.');
-              }
-          } else if (gender === 'female') {
-              if (height < 150) {
-                  isValid = false;
-                  showError(heightInput, 'Height must be at least 150 cm for females.');
-              }
-              if (weight < 40) {
-                  isValid = false;
-                  showError(weightInput, 'Weight must be at least 40 kg for females.');
-              }
-          }
-
-          return isValid;
-      }
+        let isValid = true;
+        const requiredFields = [
+            { id: "id_salutation", message: "Salutation is required." },
+            { id: "id_first_name", message: "First Name is required." },
+            { id: "id_middle_name", message: "Middle Name is required." },
+            { id: "id_surname", message: "Surname is required." },
+            { id: "id_full_name", message: "Full Name is required." },
+            { id: "id_religion", message: "Religion is required." },
+            { id: "id_nationality", message: "Nationality is required." },
+            { id: "id_birth_place", message: "Birth Place is required." },
+            { id: "id_local_address", message: "Local Address is required." },
+            { id: "id_identification_mark", message: "Identification Mark is required." },
+            { id: "id_conviction_details", message: "Conviction Details is required." },
+            { id: "id_height", message: "Height must be a positive number.", isNumber: true },
+            { id: "id_weight", message: "Weight must be a positive number.", isNumber: true },
+            { id: "id_pincode", message: "Pincode must be a positive number.", isNumber: true },
+            { id: "id_mobile", message: "Mobile number must be 10 digits.", isMobile: true },
+            { id: "date_of_birth", message: "Date of Birth is required." },
+            { id: "date_of_joining", message: "Date of Joining is required." },
+            { id: "id_sex", message: "Gender is required.", isDropdown: true },
+            { id: "id_marital_status", message: "Marital Status is required.", isDropdown: true },
+            { id: "id_post_applied_for", message: "Post Applied For is required.", isDropdown: true },
+            { id: "id_civilian_or_ex_serviceman", message: "Civilian or ex serviceman is required.", isDropdown: true },
+            { id: "photo", message: "Profile Picture is required.", isFile: true },
+        ];
+    
+        const emailInput = document.getElementById("id_email");
+        const firstNameInput = document.getElementById("id_first_name");
+        const lastNameInput = document.getElementById("id_surname");
+        const mobileInput = document.getElementById("id_mobile");
+    
+        if (emailInput && firstNameInput && lastNameInput && mobileInput) {
+            const emailValue = emailInput.value.trim();
+            const firstNameValue = firstNameInput.value.trim().toLowerCase();
+            const lastNameValue = lastNameInput.value.trim().toLowerCase();
+            const mobileValue = mobileInput.value.trim();
+    
+            emailInput.classList.remove("error-field");
+            let existingEmailError = document.getElementById("id_email-error");
+            if (existingEmailError) existingEmailError.remove();
+    
+            const expectedEmail = `${firstNameValue}.${lastNameValue}.${mobileValue}@gmail.com`;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+            if (emailValue === "") {
+                isValid = false;
+                showError(emailInput, "Email is required.");
+            } else if (!emailRegex.test(emailValue)) {
+                isValid = false;
+                showError(emailInput, "Invalid email format.");
+            } else if (emailValue !== expectedEmail) {
+                isValid = false;
+                showError(emailInput, `Email must be in the format: ${expectedEmail}`);
+            }
+        }
+    
+        requiredFields.forEach(field => {
+            const input = document.getElementById(field.id);
+            if (!input) return;
+    
+            const value = input.value.trim();
+            input.classList.remove("error-field");
+            let existingError = document.getElementById(field.id + "-error");
+            if (existingError) existingError.remove();
+    
+            if (field.isFile && input.files.length === 0) {
+                isValid = false;
+                showError(input, field.message);
+            } else if (value === "" || (field.isNumber && (isNaN(value) || value <= 0))) {
+                isValid = false;
+                showError(input, field.message);
+            } else if (field.isMobile && !/^\d{10}$/.test(value)) {
+                isValid = false;
+                showError(input, field.message);
+            } else if (field.isDropdown && value === "Select") {
+                isValid = false;
+                showError(input, field.message);
+            }
+        });
+    
+        // Check height and weight criteria only if post is not Staff, House Keeping, or Driver
+        const postAppliedFor = document.getElementById("id_post_applied_for").value;
+        const exemptPosts = ["Staff", "House Keeping", "Driver"];
+    
+        if (!exemptPosts.includes(postAppliedFor)) {
+            const gender = document.getElementById('id_sex').value;
+            const heightInput = document.getElementById('id_height');
+            const weightInput = document.getElementById('id_weight');
+            const height = parseFloat(heightInput.value);
+            const weight = parseFloat(weightInput.value);
+    
+            if (gender === 'male') {
+                if (height < 160) {
+                    isValid = false;
+                    showError(heightInput, 'Height must be at least 160 cm for males.');
+                }
+                if (weight < 50) {
+                    isValid = false;
+                    showError(weightInput, 'Weight must be at least 50 kg for males.');
+                }
+            } else if (gender === 'female') {
+                if (height < 150) {
+                    isValid = false;
+                    showError(heightInput, 'Height must be at least 150 cm for females.');
+                }
+                if (weight < 40) {
+                    isValid = false;
+                    showError(weightInput, 'Weight must be at least 40 kg for females.');
+                }
+            }
+        }
+    
+        return isValid;
+    }
 
       function validateQualificationDetails() {
           let isValid = true;
           const requiredFields = [
               { id: "id_educational_qualification", message: "Educational Qualification is required." },
-              { id: "id_english_fluency", message: "English Fluency is required.", isDropdown: true },
               { id: "id_police_verification", message: "Police Verification is required.", isDropdown: true },
-              { id: "id_previous_experience", message: "Previous Experience is required." },
               { id: "id_ration_card", message: "Ration Card is required." },
               { id: "id_aadhar_no", message: "Aadhar Number must be 12 digits.", isAadhar: true },
               { id: "id_pan_card_no", message: "PAN Card Number must be 10 characters.", isPan: true },
               { id: "id_experience_details", message: "Experience Details is required." },
           ];
 
-          if (postAppliedFor?.value === "gunman") {
+          if (postAppliedFor?.value === "Gunman") {
               requiredFields.push(
                   { id: "id_gun_license_no", message: "Gun License Number is required." },
                   { id: "id_gun_uin_no", message: "Gun UIN Number is required." },
@@ -1196,7 +1218,6 @@
               { id: "id_emergency_contact_phone", message: "Phone number must be 10 digits.", isMobile: true },
               { id: "id_emergency_contact_pin", message: "Pincode must be a 6-digit number.", isPincode: true },
               { id: "id_emergency_contact_address", message: "Address is required." },
-              { id: "id_emergency_contact_directions", message: "Directions are required." }
           ];
 
           requiredFields.forEach(field => {
@@ -1238,7 +1259,6 @@
               { id: "id_state", message: "State is required." },
               { id: "id_hometown_pin_code", message: "Pincode must be a 6-digit number.", isPincode: true },
               { id: "id_hometown_phone", message: "Phone number must be 10 digits.", isMobile: true },
-              { id: "id_hometown_directions", message: "Directions are required." }
           ];
 
           requiredFields.forEach(field => {
@@ -1287,7 +1307,6 @@
                   { selector: '[id$="-occupation"]', message: `Reference ${index + 1}: Occupation is required.`, isRequired: true },
                   { selector: '[id$="-phone"]', message: `Reference ${index + 1}: Phone must be 10 digits.`, isMobile: true, isRequired: true },
                   { selector: '[id$="-address"]', message: `Reference ${index + 1}: Address is required.`, isRequired: true },
-                  { selector: '[id$="-directions"]', message: `Reference ${index + 1}: Directions are required.`, isRequired: true },
               ];
 
               requiredFields.forEach(field => {
@@ -1328,6 +1347,18 @@
               if (isPersonalValid && isQualificationValid && isEmergencyValid && isHomeTownValid) {
                   let previewContent = '';
 
+                  // Helper function to format value
+                  const formatValue = (value, fieldId) => {
+                      if (fieldId === 'id_email') {
+                          return value; // Keep email as is (lowercase)
+                      } else if (fieldId === 'id_height' && value) {
+                          return `${value} cm`; // Append "cm" to height
+                      } else if (fieldId === 'id_weight' && value) {
+                          return `${value} kg`; // Append "kg" to weight
+                      }
+                      return value.toUpperCase(); // Convert other fields to uppercase
+                  };
+
                   previewContent += '<div class="preview-section"><h3>Personal Information</h3>';
                   const photoPreview = document.getElementById('photoPreview');
                   previewContent += photoPreview?.src
@@ -1359,16 +1390,15 @@
 
                   personalFields.forEach(field => {
                       const element = document.getElementById(field.id);
-                      previewContent += `<div class="preview-item"><label>${field.label}:</label><span>${element ? element.value : 'N/A'}</span></div>`;
+                      const value = element ? formatValue(element.value, field.id) : 'N/A';
+                      previewContent += `<div class="preview-item"><label>${field.label}:</label><span>${value}</span></div>`;
                   });
                   previewContent += '</div>';
 
                   previewContent += '<div class="preview-section"><h3>Qualification & Documents</h3>';
                   const qualFields = [
                       { id: 'id_educational_qualification', label: 'Educational Qualification' },
-                      { id: 'id_english_fluency', label: 'English Fluency' },
                       { id: 'id_police_verification', label: 'Police Verification' },
-                      { id: 'id_previous_experience', label: 'Previous Experience' },
                       { id: 'id_aadhar_no', label: 'Aadhar No' },
                       { id: 'id_pan_card_no', label: 'PAN Card No' },
                       { id: 'id_ration_card', label: 'Ration Card' },
@@ -1378,7 +1408,8 @@
 
                   qualFields.forEach(field => {
                       const element = document.getElementById(field.id);
-                      previewContent += `<div class="preview-item"><label>${field.label}:</label><span>${element ? element.value : 'N/A'}</span></div>`;
+                      const value = element ? formatValue(element.value, field.id) : 'N/A';
+                      previewContent += `<div class="preview-item"><label>${field.label}:</label><span>${value}</span></div>`;
                   });
 
                   if (postAppliedFor?.value === 'gunman') {
@@ -1392,7 +1423,8 @@
                       ];
                       gunFieldsPreview.forEach(field => {
                           const element = document.getElementById(field.id);
-                          previewContent += `<div class="preview-item"><label>${field.label}:</label><span>${element ? element.value : 'N/A'}</span></div>`;
+                          const value = element ? formatValue(element.value, field.id) : 'N/A';
+                          previewContent += `<div class="preview-item"><label>${field.label}:</label><span>${value}</span></div>`;
                       });
                   }
                   previewContent += '</div>';
@@ -1409,7 +1441,8 @@
 
                   emergencyFields.forEach(field => {
                       const element = document.getElementById(field.id);
-                      previewContent += `<div class="preview-item"><label>${field.label}:</label><span>${element ? element.value : 'N/A'}</span></div>`;
+                      const value = element ? formatValue(element.value, field.id) : 'N/A';
+                      previewContent += `<div class="preview-item"><label>${field.label}:</label><span>${value}</span></div>`;
                   });
                   previewContent += '</div>';
 
@@ -1433,7 +1466,8 @@
 
                   homeTownFields.forEach(field => {
                       const element = document.getElementById(field.id);
-                      previewContent += `<div class="preview-item"><label>${field.label}:</label><span>${element ? element.value : 'N/A'}</span></div>`;
+                      const value = element ? formatValue(element.value, field.id) : 'N/A';
+                      previewContent += `<div class="preview-item"><label>${field.label}:</label><span>${value}</span></div>`;
                   });
                   previewContent += '</div>';
 
@@ -1442,7 +1476,7 @@
                   references.forEach((ref, index) => {
                       const getValue = (fieldName) => {
                           const input = ref.querySelector(`[id$="${fieldName}"]`);
-                          return input ? input.value : 'N/A';
+                          return input ? formatValue(input.value, input.id) : 'N/A';
                       };
                       previewContent += `<div class="preview-item"><strong><u>Reference ${index + 1}</u></strong></div>`;
                       previewContent += `<div class="preview-item"><label>Name:</label><span>${getValue('-name')}</span></div>`;
@@ -1470,6 +1504,14 @@
       const previewBackBtn = document.getElementById('preview-back-btn');
       if (previewBackBtn) {
           previewBackBtn.addEventListener('click', function() {
+              const previewModal = document.getElementById('previewModal');
+              if (previewModal) previewModal.style.display = 'none';
+          });
+      }
+
+      const previewCloseBtn = document.getElementById('preview-close-btn');
+      if (previewCloseBtn) {
+          previewCloseBtn.addEventListener('click', function() {
               const previewModal = document.getElementById('previewModal');
               if (previewModal) previewModal.style.display = 'none';
           });
