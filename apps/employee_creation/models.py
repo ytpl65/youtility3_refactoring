@@ -111,12 +111,34 @@ class Employee(models.Model):
         ('puducherry', 'Puducherry'),
     ]
 
+    SALUTATION_CHOICES = [
+        ('mr', 'Mr.'),
+        ('mrs', 'Mrs.'),
+        ('ms', 'Ms.'),
+        ('miss', 'Miss'),
+        ('dr', 'Dr.'),
+        ('prof', 'Prof.'),
+        ('rev', 'Rev.'),
+        ('sir', 'Sir'),
+        ('madam', 'Madam'),
+        ('mx', 'Mx.'),
+        ('capt', 'Capt.'),
+        ('col', 'Col.'),
+        ('lt', 'Lt.'),
+        ('maj', 'Maj.'),
+        ('gen', 'Gen.'),
+        ('hon', 'Hon.'),
+        ('fr', 'Fr.'),
+    ]
+
 
     # Basic Information
+    salutation = models.CharField(max_length=50, choices=SALUTATION_CHOICES)
     post_applied_for = models.CharField(max_length=50, choices=POST_APPLIED_FOR_CHOICES)
     first_name = models.CharField(max_length=100)
     middle_name = models.CharField(max_length=100, blank=True, null=True)
     surname = models.CharField(max_length=100)
+    full_name = models.CharField(max_length=100)
     height = models.DecimalField(max_digits=5, decimal_places=2, help_text="In cm")
     weight = models.DecimalField(max_digits=5, decimal_places=2, help_text="In kg")
     religion = models.CharField(max_length=50, choices=RELIGION_CHOICES)

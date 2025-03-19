@@ -71,37 +71,36 @@ class TestAttendanceView(TestCase):
     def test_attendance_get_template(self):
         print(dict(self.client.session))
         response = self.client.get(self.url, data={'template':'true'})
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
     
     def test_attendance_get_sos_template(self):
         response = self.client.get(self.url, data={'template':'sos_template'})
-        assert response.status_code == 200
-    
+        self.assertEqual(response.status_code, 200)
+
     def test_attendance_action_sos_list_view(self):
         params = json.dumps({'from':'2023-05-01', 'to':'2023-05-30'})
         response = self.client.get(self.url, data={'action':'sos_list_view', 'params':params})
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
         
     def test_attendance_action_list_view(self):
         params = json.dumps({'from':'2023-05-01', 'to':'2023-05-30'})
         response = self.client.get(self.url, data={'action':'list', 'params':params})
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
         
     def test_attendance_action_form(self):
         response = self.client.get(self.url, data={'action':'form'})
-        assert b'Attendance' in response.content
-        assert response.status_code == 200
+        self.assertContains(response, 'Attendance')
+        self.assertEqual(response.status_code, 200)
     
     def test_attendance_form_with_instance(self):
         Bt = apps.get_model('onboarding', 'Bt')
         response = self.client.get(self.url, data={'id':self.pel.id})
-        assert b'Attendance' in response.content
-        assert response.status_code == 200
-    
+        self.assertIn(b'Attendance', response.content)
+        self.assertEqual(response.status_code, 200)
     
     def test_attendance_delete_request(self):
         response = self.client.get(self.url, data = {'action':"delete", 'id':self.pel.id})
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
 
     def test_attendance_update_instance(self):
         response = self.client.post(
@@ -113,7 +112,7 @@ class TestAttendanceView(TestCase):
                 'punchouttime':'27-Jun-2023 14:38:06'}), 'pk':self.pel.id
             },
         )
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
     
     def test_attendance_update_instance_invalid_form(self):
         response = self.client.post(
@@ -125,7 +124,7 @@ class TestAttendanceView(TestCase):
                 'punchouttime':'27-Jun-2023 14:38:06'}), 'pk':self.pel.id
             },
         )
-        assert response.status_code == 404
+        self.assertEqual(response.status_code, 404)
     
     def test_attendance_create_record(self):
         response = self.client.post(
@@ -137,7 +136,7 @@ class TestAttendanceView(TestCase):
                 'punchouttime':'27-Jun-2023 14:38:06'})
             },
         )
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
     
     def test_attendance_create_record_invalid(self):
         response = self.client.post(
@@ -150,7 +149,7 @@ class TestAttendanceView(TestCase):
             },
         )
         ic(response.json())
-        assert response.status_code == 404
+        self.assertEqual(response.status_code, 404)
         
 
 
@@ -165,4 +164,4 @@ class ConveyanceView(TestCase):
     def test_conveyance_get_template(self):
         print(dict(self.client.session))
         response = self.client.get(self.url, data={'template':'true'})
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
