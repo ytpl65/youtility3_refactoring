@@ -203,6 +203,7 @@ class Employee(models.Model):
     hometown_pin_code = models.CharField(max_length=10, blank=True, null=True)
     hometown_phone = models.CharField(max_length=15, blank=True, null=True)
     hometown_directions = models.TextField(blank=True, null=True)
+    has_experience = models.BooleanField(default=False, help_text="Check if the employee has prior experience")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -230,3 +231,17 @@ class Reference(models.Model):
     
     def __str__(self):
         return f"Reference for {self.employee}: {self.name}"
+    
+class Experience(models.Model):
+    employee = models.ForeignKey(Employee, related_name='experiences', on_delete=models.CASCADE)
+    company_name = models.CharField(max_length=100)
+    designation = models.CharField(max_length=100)
+    salary = models.DecimalField(max_digits=10, decimal_places=2, help_text="In INR")
+    address = models.TextField()
+    years_of_experience = models.DecimalField(max_digits=4, decimal_places=1, help_text="In years")
+
+    class Meta:
+        db_table = 'experiences'
+
+    def __str__(self):
+        return f"{self.designation} at {self.company_name} for {self.employee}"

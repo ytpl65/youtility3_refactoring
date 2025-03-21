@@ -1,4 +1,3 @@
-# views.py
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.http import JsonResponse
@@ -6,8 +5,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 import random
 import string
-from .models import Employee, Reference
-from .forms import EmployeeForm, ReferenceFormSet
+from .models import Employee, Reference, Experience
+from .forms import EmployeeForm, ReferenceFormSet, ExperienceFormSet
 
 otp_storage = {}
 
@@ -33,8 +32,9 @@ def employee_create(request):
             if action == 'request_otp':
                 employee_form = EmployeeForm(request.POST, request.FILES)
                 reference_formset = ReferenceFormSet(request.POST)
+                experience_formset = ExperienceFormSet(request.POST)
 
-                if employee_form.is_valid() and reference_formset.is_valid():
+                if employee_form.is_valid() and reference_formset.is_valid() and experience_formset.is_valid():
                     email = employee_form.cleaned_data['email']
                     otp = generate_otp()
                     otp_storage[email] = otp
@@ -55,7 +55,8 @@ def employee_create(request):
                         'message': 'Form validation failed',
                         'errors': {
                             'employee_errors': employee_form.errors.as_json(),
-                            'reference_errors': [form.errors.as_json() for form in reference_formset.forms]
+                            'reference_errors': [form.errors.as_json() for form in reference_formset.forms],
+                            'experience_errors': [form.errors.as_json() for form in experience_formset.forms],
                         }
                     }, status=400)
 
@@ -67,13 +68,20 @@ def employee_create(request):
                 if stored_otp and user_otp == stored_otp:
                     employee_form = EmployeeForm(request.POST, request.FILES)
                     reference_formset = ReferenceFormSet(request.POST)
+                    experience_formset = ExperienceFormSet(request.POST)
 
-                    if employee_form.is_valid() and reference_formset.is_valid():
+                    if employee_form.is_valid() and reference_formset.is_valid() and experience_formset.is_valid():
                         employee = employee_form.save()
                         references = reference_formset.save(commit=False)
                         for reference in references:
                             reference.employee = employee
                             reference.save()
+                        experiences = experience_formset.save(commit=False)
+                        for experience in experiences:
+                            experience.employee = employee
+                            experience.save()
+                        for obj in experience_formset.deleted_objects:
+                            obj.delete()
                         del otp_storage[email]
                         return JsonResponse({
                             'status': 'success',
@@ -86,7 +94,8 @@ def employee_create(request):
                             'message': 'Form validation failed after OTP verification',
                             'errors': {
                                 'employee_errors': employee_form.errors.as_json(),
-                                'reference_errors': [form.errors.as_json() for form in reference_formset.forms]
+                                'reference_errors': [form.errors.as_json() for form in reference_formset.forms],
+                                'experience_errors': [form.errors.as_json() for form in experience_formset.forms],
                             }
                         }, status=400)
                 else:
@@ -95,7 +104,6 @@ def employee_create(request):
                         'message': 'Invalid or expired OTP. Please request a new one.'
                     }, status=400)
         
-        # If not an AJAX request or invalid action, return JSON error
         return JsonResponse({
             'status': 'error',
             'message': 'Invalid request method or action.'
@@ -103,9 +111,11 @@ def employee_create(request):
 
     employee_form = EmployeeForm()
     reference_formset = ReferenceFormSet()
+    experience_formset = ExperienceFormSet()
     return render(request, 'employee_creation/employee_form.html', {
         'form': employee_form,
-        'reference_formset': reference_formset
+        'reference_formset': reference_formset,
+        'experience_formset': experience_formset,
     })
 
 def employee_list(request):

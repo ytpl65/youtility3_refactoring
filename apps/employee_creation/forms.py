@@ -1,5 +1,5 @@
 from django import forms
-from .models import Employee, Reference
+from .models import Employee, Reference, Experience
 
 class EmployeeForm(forms.ModelForm):
     class Meta:
@@ -43,7 +43,8 @@ class EmployeeForm(forms.ModelForm):
             'police_station': 'Police Station',
             'hometown_pin_code': 'Hometown Pincode',
             'hometown_phone': 'Hometown Phone No',
-            'hometown_directions': 'Hometown Directions'
+            'hometown_directions': 'Hometown Directions',
+            'has_experience': 'Has Prior Experience?'
         }
         exclude = ['created_at', 'updated_at', 'approval_status', 'remarks']
         
@@ -59,7 +60,35 @@ ReferenceFormSet = forms.inlineformset_factory(
     Employee,
     Reference,
     form=ReferenceForm,
-    extra=0,  # Show 2 reference forms
-    min_num=2,  # Require 2 references
+    extra=0,
+    min_num=2,
     validate_min=True,
+)
+
+class ExperienceForm(forms.ModelForm):
+    class Meta:
+        model = Experience
+        exclude = ('employee',)
+        labels = {
+            'company_name': 'Company Name',
+            'designation': 'Designation',
+            'salary': 'Salary (INR)',
+            'address': 'Address',
+            'years_of_experience': 'Years of Experience',
+        }
+        # Make all fields required
+        widgets = {
+            'company_name': forms.TextInput(attrs={'required': True}),
+            'designation': forms.TextInput(attrs={'required': True}),
+            'salary': forms.NumberInput(attrs={'required': True}),
+            'address': forms.Textarea(attrs={'required': True}),
+            'years_of_experience': forms.NumberInput(attrs={'required': True}),
+        }
+
+ExperienceFormSet = forms.inlineformset_factory(
+    Employee,
+    Experience,
+    form=ExperienceForm,
+    extra=1,
+    can_delete=True,
 )
