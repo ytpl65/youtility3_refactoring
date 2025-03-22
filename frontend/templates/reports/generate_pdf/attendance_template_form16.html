@@ -18,6 +18,11 @@
         font-size: 16px;
         margin: 10px 0;
     }
+    .date-time {
+        text-align: right;
+        margin-bottom: 15px;
+        font-size: 14px;
+    }
     .header-grid {
         display: grid;
         grid-template-columns: 1fr 2fr 1fr;
@@ -82,282 +87,579 @@
     }
 </style>
 {% endblock extra_css %}
-<!-- ------------------------ BEGIN PAGE BREADCUMB --------------------- -->
+
 {% block pagebreadcumb %}
 <li class="breadcrumb-item pe-3"><a href="javascript:void(0)" class="pe-3">Generate Attendance Form (FORM 16)</a></li>
 {% endblock pagebreadcumb %}
-<!-------------------------- END PAGE BREADCUMB ----------------------- -->
 
-{% block form %}    
+{% block form %}
 <form action="{{ url('reports:generateattendance') }}" method="post" class="validate">
-  <!-- ------------------------ CSRF MIDDLEWARE TOKEN ------------------ -->
-  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-  <div class="row">
-    <div class="">
-        <div class="container">
-            <div class="form-title">FORM XVI</div>
-            
-            <div class="header-grid">
-                <div class="header-cell">
-                    Central Form XVI<br>
-                    See Rule 78(2)(a)<br>
-                    MUSTER ROLL<br>
-                    NOV 2024
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    {% for att_data_key, att_data_value in attendance_data.site_attendance_data.items() %}
+        {% set outer_loop = loop.index0 %}
+        {% for single_contract_data in att_data_value %}
+        <div class="attendance-section">
+            <div class="container">
+                <div class="form-title">FORM XVI</div>
+                <div class="date-time">
+                    Date & Time: <span id="datetime-{{ outer_loop }}-{{ loop.index0 }}"></span>
                 </div>
-                <div class="header-cell">
-                    Name and Address of Contractor<br>
-                    Name and Location of work
+                
+                <div class="header-grid">
+                    <div class="header-cell">
+                        Central Form XVI<br>
+                        See Rule 78(2)(a)<br>
+                        MUSTER ROLL<br>
+                        {{ attendance_data.period|default('Mar 2025') }}
+                    </div>
+                    <div class="header-cell">
+                        Name and Address of Contractor<br>
+                        Name and Location of work
+                    </div>
+                    <div class="header-cell">
+                        {{ "Security & Personnel Services Pvt. Ltd." }}<br>
+                        {{ single_contract_data.contract_name|default('N/A') }}<br>
+                        {{ single_contract_data.bu_site_name|default('N/A') }}
+                    </div>
                 </div>
-                <div class="header-cell">
-                    Security & Personnel Services Pvt. Ltd.<br>
-                    SD0274    ICICI BANK LTD - MAHARASHTRA<br>
-                    NGP0510274    ICICI BANK PIMPALGAON-4994
-                </div>
-            </div>
-    
-            <table id="attendanceTable">
-                <thead>
-                    <tr>
-                        <th>SR. NO.</th>
-                        <th>T.NUM</th>
-                        <th class="name-column">NAME OF WORKMAN</th>
-                        <th>FATHER'S HUSBUND'S NAME</th>
-                        <th>SEX</th>
-                        <th colspan="30">Dates</th>
-                        <th>PD (A)</th>
-                        <th>WO</th>
-                        <th>TOTAL (A+B=C)</th>
-                        <th>EDN+TOTAL (C+D+E)</th>
-                    </tr>
-                    <tr id="dateRow">
-                        <th colspan="5"></th>
-                    </tr>
-                </thead>
-                <tbody id="employeeRows">
-                </tbody>
-            </table>
-    
-            <div class="footer-section">
-                <div class="footer-item">
-                    Present Day(A): <span id="presentDays">0</span><br>
-                    W/OFF: <span id="weeklyOff">0</span>
-                </div>
-                <div class="footer-item">
-                    Extra Duty(B): <span id="extraDuty">0</span> 
-                    X2= <span id="extraDutyX2">0</span><br>
-                    TOTAL DUTY+WOFF: <span id="totalDutyWoff">0</span>
-                </div>
-                <div class="footer-item">
-                    TOTAL DUTY(A+B): <span id="totalDuty">0</span><br>
-                    CONTRACT DUTIES(A+B): 90
-                </div>
-                <div class="footer-item">
-                    NH: <span id="nationalHolidays">0</span>
-                    <div class="certification-box">
+
+                <table id="attendance-table-{{ outer_loop }}-{{ loop.index0 }}">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">SR#</th>
+                            <th rowspan="2">TICKET.NO</th>
+                            <th rowspan="2" class="name-column">NAME.OF.EMPLOYEE</th>
+                            <th rowspan="2">DESIG</th>
+                            <th colspan="31">DAYS</th>
+                            <th colspan="6">SUMMARY</th>
+                        </tr>
+                        <tr id="dateRow-{{ outer_loop }}-{{ loop.index0 }}">
+                            <!-- Days and summary headers will be added by JavaScript -->
+                        </tr>
+                    </thead>
+                    <tbody id="employeeRows-{{ outer_loop }}-{{ loop.index0 }}">
+                    </tbody>
+                </table>
+
+                <div class="footer-section">
+                    <div class="footer-item">
+                        Present Day(A): <span id="presentDays-{{ outer_loop }}-{{ loop.index0 }}">0</span><br>
+                        W/OFF: <span id="weeklyOff-{{ outer_loop }}-{{ loop.index0 }}">0</span>
+                    </div>
+                    <div class="footer-item">
+                        Extra Duty(B): <span id="extraDuty-{{ outer_loop }}-{{ loop.index0 }}">0</span><br>
+                        TOTAL DUTY(A+B): <span id="totalDuty-{{ outer_loop }}-{{ loop.index0 }}">0</span>
+                    </div>
+                    <div class="footer-item">
+                        NH: <span id="nationalHolidays-{{ outer_loop }}-{{ loop.index0 }}">0</span><br>
+                        CONTRACT DUTIES(A+B): {{ single_contract_data.bu_site_total_quantity|default(0) }}
+                    </div>
+                    <div class="footer-item">
                         CERTIFIED BY/APPROVED BY CLIENT<br>
-                        AUTHORIZED PRESENTATIVE:<br>
+                        AUTHORIZED REPRESENTATIVE:<br>
                         NAME: ________________________<br>
                         DESIGNATION: ________________________<br>
                         MOB.NO. ________________________<br>
                         REMARK: ________________________
                     </div>
                 </div>
-            </div>
-    
-            <div class="signature-section">
-                <div>
-                    Checked by AO/AM<br><br>
-                    Name & Sign
+
+                <div class="signature-section">
+                    <div>
+                        Checked by AO/AM<br><br>
+                        Name & Sign
+                    </div>
+                    <div>
+                        Verified by Ops Manager<br><br>
+                        Name & Sign
+                    </div>
                 </div>
-                <div>
-                    Verified by Ops Manager<br><br>
-                    Name & Sign
-                </div>
             </div>
+            <input type="hidden" id="attendance-data-{{ outer_loop }}-{{ loop.index0 }}" value="{{ single_contract_data.employee_details|default([])|tojson|safe }}" />
         </div>
-        <input type="hidden" id="attendance-data" value="{{ attendance_data|safe }}" />
-      <br/>
-    <br>  
-  </div><br>
-  <div class="form-actions" style="text-align: center;">
-    <button type="submit" form="report_form" id="submit" class="btn btn-sm btn-primary2 btn-hover-scale" style="margin-right: 10px;">
-      Download &nbsp;<i class="fas text-white fa-cloud-upload-alt"></i>
-    </button>
-    <button type="button" id="btn_clear" class="btn btn-sm btn-secondary btn-hover-scale">
-      Clear&nbsp;<i class="fas fa-times"></i>
-    </button>
-</div>
+        {% endfor %}
+    {% endfor %}
+    <br><br>
+    <div class="form-actions" style="text-align: center;">
+        <button type="submit" id="submit" class="btn btn-sm btn-primary2 btn-hover-scale" style="margin-right: 10px;">
+            Download  <i class="fas text-white fa-cloud-upload-alt"></i>
+        </button>
+        <button type="button" id="btn_clear" class="btn btn-sm btn-secondary btn-hover-scale">
+            Clear <i class="fas fa-times"></i>
+        </button>
+    </div>
 </form>
 {% endblock form %}
 
 {% block extra_scripts %}
-
 <script>
-    const attendance_data = {{ attendance_data.site_attendance_data.attendance_details }}
-    console.log("Attendance Data: ",attendance_data)
-    // National holidays for October 2024
+    // Update date and time dynamically
+    function updateDateTime() {
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const formattedDateTime = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+
+        {% for att_data_key, att_data_value in attendance_data.site_attendance_data.items() %}
+            {% set outer_loop = loop.index0 %}
+            {% for single_contract_data in att_data_value %}
+                const span_{{ outer_loop }}_{{ loop.index0 }} = document.getElementById('datetime-{{ outer_loop }}-{{ loop.index0 }}');
+                if (span_{{ outer_loop }}_{{ loop.index0 }}) {
+                    span_{{ outer_loop }}_{{ loop.index0 }}.textContent = formattedDateTime;
+                }
+            {% endfor %}
+        {% endfor %}
+    }
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+
+    // National holidays for March 2025 (example, update as needed)
     const nationalHolidays = [
-    2,  // Gandhi Jayanti
-    24  // Dussehra
-];
+        // Add relevant holidays for March 2025, e.g., Holi or other regional holidays
+    ];
 
-function initializeTable() {
-    const daysRow = document.querySelector('thead tr:last-child');
-
-    // Add date headers
-    for (let i = 1; i <= 31; i++) {
-        const th = document.createElement('th');
-        th.textContent = i.toString().padStart(2, '0');
-        daysRow.appendChild(th);
+    // Helper functions for period calculation
+    function getMonthNumberFromString(monthStr) {
+        const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+        return monthNames.indexOf(monthStr.toLowerCase());
     }
 
-    // Add summary column headers
-    const summaryHeaders = ['PD(A)', 'WO(B)', 'TOTAL(A+B=C)', 'ED(D)', 'NH(E)', 'TOTAL(C+D+E)'];
-    summaryHeaders.forEach(header => {
-        const th = document.createElement('th');
-        th.textContent = header;
-        daysRow.appendChild(th);
-    });
-}
+    function isLeapYear(year) {
+        return ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0);
+    }
 
-function loadEmployeeData() {
-    const tbody = document.querySelector('tbody');
-    // Dynamically generate `sr` based on the length of `attendance_data`
-    attendance_data.forEach((att, index) => {
-        const sr = index + 1; // Generate `sr` starting from 1
-        const row = document.createElement('tr');
-        // Add employee info
-        row.innerHTML = `
-            <td>${sr}</td>
-            <td>${att.employee}</td>
-            <td class="name-cell">${att.employee_name}</td>
-            <td>${att.work_type}</td>
-        `;
-        // Add attendance cells with auto-fill
-        for (let i = 1; i <= 31; i++) {
-            const td = document.createElement('td');
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.maxLength = 3;
-            input.dataset.row = sr; // Use the generated `sr` here
-            input.dataset.day = i;
+    function getDaysInMonth(month, year) {
+        const daysInMonth = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        return daysInMonth[month];
+    }
 
-            // Auto-fill based on conditions
-            if (nationalHolidays.includes(i)) {
-                input.value = 'N/H';
-                input.disabled = false;
-                input.style.color = 'black';
-            } else {
-                input.value = 'P';  // Default to Present
-                input.style.color = 'black';
+    function getDaysArrayFromPeriod(periodText) {
+        let daysArray = [];
+        const standardMonthRegex = /^(\w{3})\s+(\d{4})$/i;
+        const formatARegex = /^(\w{3})\s+(\d{4})\s*-\s*A$/i;
+        const formatBRegex = /^(\w{3})\s+(\d{4})\s*-\s*B$/i;
+        const formatCRegex = /^(\w{3})\s+(\d{4})\s*-\s*C$/i;
+
+        if (standardMonthRegex.test(periodText)) {
+            const [_, monthStr, yearStr] = standardMonthRegex.exec(periodText);
+            const year = parseInt(yearStr);
+            const month = getMonthNumberFromString(monthStr);
+            const daysInMonth = getDaysInMonth(month, year);
+            for (let i = 1; i <= daysInMonth; i++) {
+                daysArray.push(i);
             }
-
-            input.addEventListener('input', validateAttendance);
-            input.addEventListener('change', updateSummary);
-            td.appendChild(input);
-            row.appendChild(td);
+        } else if (formatARegex.test(periodText)) {
+            const [_, monthStr, yearStr] = formatARegex.exec(periodText);
+            const year = parseInt(yearStr);
+            const month = getMonthNumberFromString(monthStr);
+            const prevMonth = month === 0 ? 11 : month - 1;
+            const prevYear = month === 0 ? year - 1 : year;
+            const daysInPrevMonth = getDaysInMonth(prevMonth, prevYear);
+            for (let i = 15; i <= daysInPrevMonth; i++) {
+                daysArray.push(i);
+            }
+            for (let i = 1; i <= 14; i++) {
+                daysArray.push(i);
+            }
+        } else if (formatBRegex.test(periodText)) {
+            const [_, monthStr, yearStr] = formatBRegex.exec(periodText);
+            const year = parseInt(yearStr);
+            const month = getMonthNumberFromString(monthStr);
+            const prevMonth = month === 0 ? 11 : month - 1;
+            const prevYear = month === 0 ? year - 1 : year;
+            const daysInPrevMonth = getDaysInMonth(prevMonth, prevYear);
+            for (let i = 25; i <= daysInPrevMonth; i++) {
+                daysArray.push(i);
+            }
+            for (let i = 1; i <= 24; i++) {
+                daysArray.push(i);
+            }
+        } else if (formatCRegex.test(periodText)) {
+            const [_, monthStr, yearStr] = formatCRegex.exec(periodText);
+            const year = parseInt(yearStr);
+            const month = getMonthNumberFromString(monthStr);
+            const prevMonth = month === 0 ? 11 : month - 1;
+            const prevYear = month === 0 ? year - 1 : year;
+            const daysInPrevMonth = getDaysInMonth(prevMonth, prevYear);
+            for (let i = 26; i <= daysInPrevMonth; i++) {
+                daysArray.push(i);
+            }
+            for (let i = 1; i <= 25; i++) {
+                daysArray.push(i);
+            }
+        } else {
+            for (let i = 1; i <= 31; i++) {
+                daysArray.push(i);
+            }
         }
-        // Add summary cells
-        ['pd', 'wo', 'total', 'ed', 'nh', 'final'].forEach(summary => {
-            const td = document.createElement('td');
-            td.id = `${summary}-${sr}`; // Use the generated `sr` here
-            td.textContent = '0';
-            row.appendChild(td);
+        return daysArray;
+    }
+
+    function initializeTable(tableId, daysArray) {
+        const daysRow = document.querySelector(`#${tableId} thead tr:last-child`);
+        daysRow.innerHTML = ''; // Reset header
+
+        daysArray.forEach(day => {
+            const th = document.createElement('th');
+            th.textContent = day.toString().padStart(2, '0');
+            daysRow.appendChild(th);
         });
-        tbody.appendChild(row);
-    });
-    // Initial update of summaries
-    document.querySelectorAll('tbody tr').forEach(row => {
-        updateSummary({ target: row.querySelector('input') });
-    });
-}
+
+        const summaryHeaders = ['PD(A)', 'WO(B)', 'TOTAL(A+B=C)', 'ED(D)', 'NH(E)', 'TOTAL(C+D+E)'];
+        summaryHeaders.forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            daysRow.appendChild(th);
+        });
+    }
+
+    function loadEmployeeData(tableId, employeeData, daysArray) {
+        const tbody = document.querySelector(`#${tableId} tbody`);
+        tbody.innerHTML = '';
+
+        if (!employeeData || !Array.isArray(employeeData) || employeeData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="41">No employee data available</td></tr>';
+            return;
+        }
+
+        employeeData.forEach((employee, index) => {
+            const sr = index + 1;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${sr}</td>
+                <td>${employee.employee || 'N/A'}</td>
+                <td class="name-column">${employee.employee_name || 'N/A'}</td>
+                <td>${employee.work_type || 'N/A'}</td>
+            `;
+
+            let pCount = 0;
+            daysArray.forEach((day, dayIndex) => {
+                const td = document.createElement('td');
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.maxLength = 3;
+                input.dataset.row = sr;
+                input.dataset.day = day;
+                input.dataset.dayIndex = dayIndex;
+                input.dataset.table = tableId;
+
+                if (nationalHolidays.includes(day)) {
+                    input.value = 'N/H';
+                    input.disabled = false;
+                    input.style.color = 'black';
+                } else {
+                    input.value = 'P';
+                    input.style.color = 'black';
+                    pCount++;
+                }
+
+                input.addEventListener('input', validateAttendance);
+                input.addEventListener('change', (e) => updateSummary(e, tableId));
+                td.appendChild(input);
+                row.appendChild(td);
+            });
+
+            ['pd', 'wo', 'total', 'ed', 'nh', 'final'].forEach(summary => {
+                const td = document.createElement('td');
+                td.id = `${summary}-${tableId}-${sr}`;
+                td.textContent = summary === 'pd' ? pCount : '0';
+                row.appendChild(td);
+            });
+
+            tbody.appendChild(row);
+        });
+
+        tbody.querySelectorAll('tr').forEach(row => {
+            const firstInput = row.querySelector('input');
+            if (firstInput) {
+                updateSummary({ target: firstInput }, tableId);
+            }
+        });
+    }
 
     function validateAttendance(event) {
-    const input = event.target;
-    let value = input.value.toUpperCase();
+        const input = event.target;
+        let value = input.value.toUpperCase();
 
-    // Only allow A and O for manual entry
-    if (!['A', 'O', 'D', ''].includes(value) && !input.disabled) {
-        input.value = 'P';  // Reset to Present if invalid input
-        return;
+        if (!['A', 'O', 'D', 'P', 'N/H', ''].includes(value) && !input.disabled) {
+            input.value = 'P';
+            input.style.color = 'black';
+            return;
+        }
+
+        input.style.color = ['A', 'O', 'D'].includes(value) ? 'red' : 'black';
+        input.value = value;
+
+        const row = input.dataset.row;
+        const tableId = input.dataset.table;
+        const inputs = Array.from(document.querySelectorAll(`#${tableId} input[data-row="${row}"]`))
+            .sort((a, b) => parseInt(a.dataset.dayIndex) - parseInt(b.dataset.dayIndex));
+
+        let pCount = 0;
+        let oCount = 0;
+        let error = false;
+
+        for (let i = 0; i < inputs.length; i++) {
+            const val = inputs[i].value.toUpperCase();
+            if (val === 'P' || val === 'D') {
+                pCount++;
+            } else if (val === 'O') {
+                oCount++;
+                if (oCount === 1) {
+                    if (pCount > 6) {
+                        error = true;
+                        break;
+                    }
+                } else {
+                    if (pCount !== 6) {
+                        error = true;
+                        break;
+                    }
+                }
+                pCount = 0;
+            } else {
+                pCount = 0;
+            }
+        }
+
+        if (error) {
+            alert('Error: The first "O" must be preceded by at most 6 "P"s or "D"s. All subsequent "O"s must have exactly 6 "P"s or "D"s before them.');
+            input.value = 'P';
+            input.style.color = 'black';
+        }
     }
 
-    // Apply red color for A and O
-    input.style.color = ['A', 'O', 'D'].includes(value) ? 'red' : 'black';
-    input.value = value;
-}
+    function updateSummary(event, tableId) {
+        const row = event.target.dataset.row;
+        const inputs = document.querySelectorAll(`#${tableId} input[data-row="${row}"]`);
 
-function updateSummary(event) {
-    const row = event.target.dataset.row;
-    const inputs = document.querySelectorAll(`input[data-row="${row}"]`);
+        let present = 0;
+        let weeklyOff = 0;
+        let extraDuty = 0;
+        let nationalHoliday = 0;
 
-    let present = 0;
-    let weeklyOff = 0;
-    let extraDuty = 0;
-    let nationalHoliday = 0;
+        inputs.forEach(input => {
+            switch (input.value) {
+                case 'P': present++; break;
+                case 'O': weeklyOff++; break;
+                case 'D': present++; extraDuty += 0.5; break;
+                case 'N/H': nationalHoliday++; break;
+            }
+        });
 
-    inputs.forEach(input => {
-        switch (input.value) {
-            case 'P':
-                present++;
-                break;
-            case 'O':
-                weeklyOff++;
-                break;
-            case 'D':
-                extraDuty++;
-                break;
-            case 'N/H':
-                nationalHoliday++;
-                break;
+        document.getElementById(`pd-${tableId}-${row}`).textContent = present;
+        document.getElementById(`wo-${tableId}-${row}`).textContent = weeklyOff;
+        document.getElementById(`total-${tableId}-${row}`).textContent = present + weeklyOff;
+        document.getElementById(`ed-${tableId}-${row}`).textContent = extraDuty.toFixed(1);
+        document.getElementById(`nh-${tableId}-${row}`).textContent = nationalHoliday;
+        document.getElementById(`final-${tableId}-${row}`).textContent = (present + weeklyOff + extraDuty + nationalHoliday).toFixed(1);
+
+        updateGlobalSummary(tableId);
+    }
+
+    function updateGlobalSummary(tableId) {
+        let totalPresent = 0;
+        let totalExtraDuty = 0;
+        let totalWOff = 0;
+        let totalNH = 0;
+
+        document.querySelectorAll(`#${tableId} [id^="pd-"]`).forEach(el => {
+            totalPresent += parseFloat(el.textContent) || 0;
+        });
+        document.querySelectorAll(`#${tableId} [id^="ed-"]`).forEach(el => {
+            totalExtraDuty += parseFloat(el.textContent) || 0;
+        });
+        document.querySelectorAll(`#${tableId} [id^="wo-"]`).forEach(el => {
+            totalWOff += parseFloat(el.textContent) || 0;
+        });
+        document.querySelectorAll(`#${tableId} [id^="nh-"]`).forEach(el => {
+            totalNH += parseFloat(el.textContent) || 0;
+        });
+
+        const [_, outerLoop, innerLoop] = tableId.split('-');
+        document.getElementById(`presentDays-${outerLoop}-${innerLoop}`).textContent = totalPresent;
+        document.getElementById(`weeklyOff-${outerLoop}-${innerLoop}`).textContent = totalWOff;
+        document.getElementById(`extraDuty-${outerLoop}-${innerLoop}`).textContent = totalExtraDuty.toFixed(1);
+        document.getElementById(`totalDuty-${outerLoop}-${innerLoop}`).textContent = (totalPresent + totalExtraDuty).toFixed(1);
+        document.getElementById(`nationalHolidays-${outerLoop}-${innerLoop}`).textContent = totalNH;
+    }
+
+    function isRowValid(inputs) {
+        let pCount = 0;
+        let oCount = 0;
+
+        for (let input of inputs) {
+            const val = input.value.toUpperCase();
+            if (val === 'P' || val === 'D') {
+                pCount++;
+            } else if (val === 'O') {
+                if (oCount === 0) {
+                    if (pCount > 6) {
+                        return false;
+                    }
+                } else {
+                    if (pCount !== 6) {
+                        return false;
+                    }
+                }
+                oCount++;
+                pCount = 0;
+            } else {
+                pCount = 0;
+            }
         }
+        if (pCount > 6) {
+            return false;
+        }
+        return true;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const periodText = "{{ attendance_data.period|default('Mar 2025') }}";
+        const daysArray = getDaysArrayFromPeriod(periodText);
+
+        {% for att_data_key, att_data_value in attendance_data.site_attendance_data.items() %}
+            {% set outer_loop = loop.index0 %}
+            {% for single_contract_data in att_data_value %}
+                const tableId_{{ outer_loop }}_{{ loop.index0 }} = `attendance-table-{{ outer_loop }}-{{ loop.index0 }}`;
+                const employeeDataInput_{{ outer_loop }}_{{ loop.index0 }} = document.getElementById('attendance-data-{{ outer_loop }}-{{ loop.index0 }}');
+                
+                let employeeData_{{ outer_loop }}_{{ loop.index0 }} = [];
+                if (employeeDataInput_{{ outer_loop }}_{{ loop.index0 }} && employeeDataInput_{{ outer_loop }}_{{ loop.index0 }}.value) {
+                    try {
+                        const rawValue = employeeDataInput_{{ outer_loop }}_{{ loop.index0 }}.value.trim();
+                        console.log(`Raw JSON value for ${tableId_{{ outer_loop }}_{{ loop.index0 }}}:`, rawValue);
+                        employeeData_{{ outer_loop }}_{{ loop.index0 }} = rawValue ? JSON.parse(rawValue) : [];
+                    } catch (e) {
+                        console.error(`Error parsing JSON for table ${tableId_{{ outer_loop }}_{{ loop.index0 }}}:`, e, `Raw value:`, employeeDataInput_{{ outer_loop }}_{{ loop.index0 }}.value);
+                        employeeData_{{ outer_loop }}_{{ loop.index0 }} = [];
+                    }
+                } else {
+                    console.warn(`No employee data input found for ${tableId_{{ outer_loop }}_{{ loop.index0 }}}`);
+                }
+
+                initializeTable(tableId_{{ outer_loop }}_{{ loop.index0 }}, daysArray);
+                loadEmployeeData(tableId_{{ outer_loop }}_{{ loop.index0 }}, employeeData_{{ outer_loop }}_{{ loop.index0 }}, daysArray);
+            {% endfor %}
+        {% endfor %}
+
+        document.getElementById('submit').addEventListener('click', function(event) {
+            event.preventDefault();
+
+            let hasError = false;
+            let errorMessage = "The following rows have invalid attendance sequences:\n";
+            const attendanceTables = document.querySelectorAll('[id^="attendance-table-"]');
+
+            attendanceTables.forEach((table, tableIndex) => {
+                const section = table.closest('.attendance-section');
+                const siteName = section.querySelector('.header-cell:last-child').textContent.split('\n')[2].trim();
+                const rows = table.querySelectorAll('tbody tr');
+
+                rows.forEach((row, rowIndex) => {
+                    const srNo = row.cells[0].textContent.trim();
+                    const inputs = Array.from(row.querySelectorAll('input[type="text"]'))
+                        .sort((a, b) => parseInt(a.dataset.dayIndex) - parseInt(b.dataset.dayIndex));
+
+                    if (!isRowValid(inputs)) {
+                        hasError = true;
+                        errorMessage += `Site: ${siteName}, Row SR# ${srNo}\n`;
+                    }
+                });
+            });
+
+            if (hasError) {
+                alert(errorMessage + "\nPlease correct the attendance sequences before downloading.");
+            } else {
+                const allAttendanceData = {};
+                const summarySectionData = {};
+
+                attendanceTables.forEach(table => {
+                    const tableId = table.id;
+                    const [_, contractIndex, dataIndex] = tableId.split('-').map(Number);
+                    const tableKey = `${contractIndex}-${dataIndex}`;
+                    allAttendanceData[tableKey] = [];
+
+                    const rows = table.querySelectorAll('tbody tr');
+                    rows.forEach((row, rowIndex) => {
+                        const employeeTicket = row.cells[1].textContent.trim();
+                        const employeeName = row.cells[2].textContent.trim();
+                        const designation = row.cells[3].textContent.trim();
+                        const attendanceInputs = row.querySelectorAll('input[type="text"]');
+                        const attendanceValues = {};
+
+                        attendanceInputs.forEach(input => {
+                            const day = input.dataset.day;
+                            attendanceValues[`day_${day}`] = input.value;
+                        });
+
+                        const summaries = {
+                            presentDays: row.querySelector('[id^="pd-"]').textContent,
+                            weeklyOff: row.querySelector('[id^="wo-"]').textContent,
+                            totalAB: row.querySelector('[id^="total-"]').textContent,
+                            extraDuty: row.querySelector('[id^="ed-"]').textContent,
+                            nationalHoliday: row.querySelector('[id^="nh-"]').textContent,
+                            grandTotal: row.querySelector('[id^="final-"]').textContent
+                        };
+
+                        const employeeData = {
+                            srNo: rowIndex + 1,
+                            ticketNo: employeeTicket,
+                            name: employeeName,
+                            designation: designation,
+                            attendance: attendanceValues,
+                            summary: summaries
+                        };
+
+                        allAttendanceData[tableKey].push(employeeData);
+                    });
+
+                    const summarySection = table.closest('.attendance-section').querySelector('.footer-section');
+                    summarySectionData[tableKey] = {
+                        presentDays: summarySection.querySelector(`#presentDays-${contractIndex}-${dataIndex}`).textContent,
+                        extraDuty: summarySection.querySelector(`#extraDuty-${contractIndex}-${dataIndex}`).textContent,
+                        totalDuty: summarySection.querySelector(`#totalDuty-${contractIndex}-${dataIndex}`).textContent,
+                        woff: summarySection.querySelector(`#weeklyOff-${contractIndex}-${dataIndex}`).textContent,
+                        nh: summarySection.querySelector(`#nationalHolidays-${contractIndex}-${dataIndex}`).textContent,
+                        contractDuties: summarySection.querySelector(`#totalDuty-${contractIndex}-${dataIndex}`).parentElement.textContent.match(/CONTRACT DUTIES\(A\+B\):\s*(\d+)/)?.[1] || '0'
+                    };
+                });
+
+                const form = document.querySelector('form');
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'complete_attendance_data';
+                hiddenInput.value = JSON.stringify(allAttendanceData);
+                form.appendChild(hiddenInput);
+
+                const summaryInput = document.createElement('input');
+                summaryInput.type = 'hidden';
+                summaryInput.name = 'summary_data';
+                summaryInput.value = JSON.stringify(summarySectionData);
+                form.appendChild(summaryInput);
+
+                const dateTimeInput = document.createElement('input');
+                dateTimeInput.type = 'hidden';
+                dateTimeInput.name = 'submissionDateTime';
+                dateTimeInput.value = document.getElementById('datetime-0-0')?.textContent || '';
+                form.appendChild(dateTimeInput);
+
+                const periodInput = document.createElement('input');
+                periodInput.type = 'hidden';
+                periodInput.name = 'periodFormat';
+                periodInput.value = "{{ attendance_data.period }}";
+                form.appendChild(periodInput);
+
+                form.submit();
+            }
+        });
+
+        document.getElementById('btn_clear').addEventListener('click', function() {
+            location.reload();
+        });
     });
-
-    // Update row totals
-    document.getElementById(`pd-${row}`).textContent = present;
-    document.getElementById(`wo-${row}`).textContent = weeklyOff;
-    document.getElementById(`total-${row}`).textContent = present + weeklyOff;
-    document.getElementById(`ed-${row}`).textContent = extraDuty;
-    document.getElementById(`nh-${row}`).textContent = nationalHoliday;
-    document.getElementById(`final-${row}`).textContent = present + weeklyOff + extraDuty + nationalHoliday;
-
-    updateGlobalSummary();
-}
-
-function updateGlobalSummary() {
-    let totalPresent = 0;
-    let totalExtraDuty = 0;
-    let totalWOff = 0;
-    let totalNH = 0;
-
-    document.querySelectorAll('[id^="pd-"]').forEach(el => {
-        totalPresent += parseInt(el.textContent) || 0;
-    });
-
-    document.querySelectorAll('[id^="ed-"]').forEach(el => {
-        totalExtraDuty += parseInt(el.textContent) || 0;
-    });
-
-    document.querySelectorAll('[id^="wo-"]').forEach(el => {
-        totalWOff += parseInt(el.textContent) || 0;
-    });
-
-    document.querySelectorAll('[id^="nh-"]').forEach(el => {
-        totalNH += parseInt(el.textContent) || 0;
-    });
-
-    document.getElementById('presentDays').textContent = totalPresent;
-    document.getElementById('extraDuty').textContent = totalExtraDuty;
-    document.getElementById('totalDuty').textContent = totalPresent + totalExtraDuty;
-    document.getElementById('woff').textContent = totalWOff;
-    document.getElementById('nh').textContent = totalNH;
-}
-
-// Initialize when document loads
-document.addEventListener('DOMContentLoaded', function() {
-    initializeTable();
-    loadEmployeeData();
-});
 </script>
-
 {% endblock extra_scripts %}
