@@ -252,7 +252,7 @@
         </div>
 
         <div class="note">
-            NOTE: P-PRESENT, A-ABSENT, O-WEEKLY OFF, D-EXTRA DUTY (A, O, D TO BE SHOWN IN RED) (N/H- NATION HOLIDAY)
+            NOTE: P-PRESENT, A-ABSENT, O-WEEKLY OFF, X-DOUBLE DUTY (AFTER EVERY 6P), D-EXTRA DUTY (A, O, X, D TO BE SHOWN IN RED) (N/H- NATION HOLIDAY)
         </div>
 
         <table class="attendance-table" id="attendance-table-{{ outer_loop }}-{{ loop.index0 }}">
@@ -444,7 +444,7 @@
             wsData.push(["Contract:", contractName, "", "Party Name:", partyName, "", "Site Name:", siteName]);
             wsData.push(["Party Code:", partyCode, "", "Site Code:", siteCode]);
             wsData.push([]); // Empty row
-            wsData.push(["NOTE: P-PRESENT, A-ABSENT, O-WEEKLY OFF, D-EXTRA DUTY (A, O, D TO BE SHOWN IN RED) (N/H- NATION HOLIDAY)"]);
+            wsData.push(["NOTE: P-PRESENT, A-ABSENT, O-WEEKLY OFF, X-DOUBLE DUTY (AFTER EVERY 6P), D-EXTRA DUTY (A, O, X, D TO BE SHOWN IN RED) (N/H- NATION HOLIDAY)"]);
             wsData.push([]); // Empty row
     
             // Table Headers
@@ -697,17 +697,15 @@
             const sr = index + 1;
             const row = document.createElement('tr');
             
-            // Add employee info
             row.innerHTML = `
                 <td>${sr}</td>
                 <td>${employee.employee}</td>
                 <td class="name-cell">${employee.employee_name}</td>
                 <td>${employee.work_type}</td>
             `;
-        
-            let pCount = 0; // Track initial count of 'P'
-        
-            // Add attendance cells for each day in the daysArray
+            
+            let pCount = 0;
+            
             daysArray.forEach((day, dayIndex) => {
                 const td = document.createElement('td');
                 const input = document.createElement('input');
@@ -715,9 +713,9 @@
                 input.maxLength = 3;
                 input.dataset.row = sr;
                 input.dataset.day = day;
-                input.dataset.dayIndex = dayIndex; // Store the index position for validation
+                input.dataset.dayIndex = dayIndex;
                 input.dataset.table = tableId;
-        
+            
                 if (nationalHolidays.includes(day)) {
                     input.value = 'N/H';
                     input.disabled = false;
@@ -725,27 +723,25 @@
                 } else {
                     input.value = 'P';
                     input.style.color = 'black';
-                    pCount++; // Count 'P'
+                    pCount++;
                 }
-        
+            
                 input.addEventListener('input', validateAttendance);
                 input.addEventListener('change', (e) => updateSummary(e, tableId));
                 td.appendChild(input);
                 row.appendChild(td);
             });
-        
-            // Add summary cells
+            
             ['pd', 'wo', 'total', 'ed', 'nh', 'final'].forEach(summary => {
                 const td = document.createElement('td');
                 td.id = `${summary}-${tableId}-${sr}`;
-                td.textContent = summary === 'total' ? pCount : '0'; // Set 'total' to initial P count
+                td.textContent = summary === 'total' ? pCount : '0';
                 row.appendChild(td);
             });
-        
+            
             tableBody.appendChild(row);
         });
         
-        // Initial update of summaries for all rows
         tableBody.querySelectorAll('tr').forEach(row => {
             const firstInputInRow = row.querySelector('input');
             if (firstInputInRow) {
@@ -757,61 +753,83 @@
     function validateAttendance(event) {
         const input = event.target;
         let value = input.value.toUpperCase();
-    
-        // Basic validation: Allow only 'A', 'O', 'D', 'P', 'N/H', or '' (empty)
-        if (!['A', 'O', 'D', 'P', 'N/H', ''].includes(value) && !input.disabled) {
+        
+        // Allow only 'A', 'O', 'D', 'P', 'X', 'N/H', or '' (empty)
+        if (!['A', 'O', 'D', 'P', 'X', 'N/H', ''].includes(value) && !input.disabled) {
             input.value = 'P';
             input.style.color = 'black';
             return;
         }
-    
+        
         // Set text color based on value
-        input.style.color = ['A', 'O', 'D'].includes(value) ? 'red' : 'black';
+        input.style.color = ['A', 'O', 'D', 'X'].includes(value) ? 'red' : 'black';
         input.value = value;
-    
-        // Get all inputs in the same row
+        
         const row = input.dataset.row;
         const tableId = input.dataset.table;
         const inputs = Array.from(document.querySelectorAll(`#${tableId} input[data-row="${row}"]`))
-            .sort((a, b) => parseInt(a.dataset.dayIndex) - parseInt(b.dataset.dayIndex)); // Sort by dayIndex
-    
+            .sort((a, b) => parseInt(a.dataset.dayIndex) - parseInt(b.dataset.dayIndex));
+        
         let pCount = 0;
-        let oCount = 0;
+        let oCount = 0; // Now also counts 'X' as part of the sequence
         let error = false;
+        let lastXIndex = -1;
     
         for (let i = 0; i < inputs.length; i++) {
             const val = inputs[i].value.toUpperCase();
-            
-            // Count 'D' as 'P' for consecutive P count calculation
-            if (val === 'P' || val === 'D') {
-                pCount++; // Count consecutive 'P's and 'D's
-            } else if (val === 'O') {
-                oCount++; // Track number of 'O's
-    
+        
+            if (val === 'P') {
+                pCount++;
+            } else if (val === 'O' || val === 'X') {
+                oCount++;
+                if (val === 'X') {
+                    lastXIndex = i;
+                    // 'X' must be preceded by exactly 6 'P's
+                    if (pCount !== 6) {
+                        error = true;
+                        break;
+                    }
+                    // Check if 'X' follows another 'X' or 'O' without 6 'P's between
+                    if (i > 0 && i - lastXIndex <= 6 && ['O', 'X'].includes(inputs[i-1].value.toUpperCase())) {
+                        error = true;
+                        break;
+                    }
+                } else if (val === 'O') {
+                    if (oCount === 1) {
+                        if (pCount > 6) {
+                            error = true;
+                            break;
+                        }
+                    } else {
+                        if (pCount !== 6) {
+                            error = true;
+                            break;
+                        }
+                    }
+                }
+                pCount = 0; // Reset after 'O' or 'X'
+            } else if (val === 'D') {
+                oCount++;
                 if (oCount === 1) {
-                    // First "O" should be preceded by at most 6 "P"s or "D"s
                     if (pCount > 6) {
                         error = true;
                         break;
                     }
                 } else {
-                    // Subsequent "O"s should be preceded by exactly 6 "P"s or "D"s
                     if (pCount !== 6) {
                         error = true;
                         break;
                     }
                 }
-                pCount = 0; // Reset P count after each "O"
-            } else {
-                // Reset P count for 'A', 'N/H', they don't contribute to the count
                 pCount = 0;
+            } else {
+                pCount = 0; // Reset for 'A', 'N/H'
             }
         }
-    
-        // Display error if the rule is violated
+        
         if (error) {
-            alert('Error: The first "O" must be preceded by at most 6 "P"s or "D"s. All subsequent "O"s must have exactly 6 "P"s or "D"s before them.');
-            input.value = 'P'; // Revert the input to 'P'
+            alert('Error: "X" must follow exactly 6 "P"s and cannot follow another "O" or "X" without 6 "P"s between. First "O", "X", or "D" must have at most 6 "P"s before, subsequent ones must have exactly 6.');
+            input.value = 'P';
             input.style.color = 'black';
         }
     }
@@ -819,40 +837,47 @@
     function updateSummary(event, tableId) {
         const row = event.target.dataset.row;
         const inputs = document.querySelectorAll(`#${tableId} input[data-row="${row}"]`);
-    
+        
         let present = 0;
         let weeklyOff = 0;
         let extraDuty = 0;
         let nationalHoliday = 0;
-    
+        
         inputs.forEach(input => {
-            switch (input.value) {
-                case 'P': 
-                    present++; 
+            switch (input.value.toUpperCase()) {
+                case 'P':
+                    present++;
                     break;
-                case 'O': 
-                    weeklyOff++; 
+                case 'O':
+                    weeklyOff++;
                     break;
-                case 'D': 
-                    // D counts as both present (1) and extra duty (0.5)
-                    present++; 
-                    extraDuty += 0.5; 
+                case 'X':
+                    // 'X' reduces present by 1 (since it replaces a 'P'), increases weeklyOff and extraDuty
+                    present--; // Assuming one less 'P' day
+                    weeklyOff++;
+                    extraDuty++;
                     break;
-                case 'N/H': 
-                    nationalHoliday++; 
+                case 'D':
+                    extraDuty += 0.5;
+                    weeklyOff++;
+                    break;
+                case 'N/H':
+                    nationalHoliday++;
                     break;
             }
         });
-    
-        // Update row totals - format extraDuty to 1 decimal place
+        
+        // Ensure present doesn't go negative
+        present = Math.max(0, present);
+        
         document.getElementById(`pd-${tableId}-${row}`).textContent = present;
         document.getElementById(`wo-${tableId}-${row}`).textContent = weeklyOff;
         document.getElementById(`total-${tableId}-${row}`).textContent = present + weeklyOff;
         document.getElementById(`ed-${tableId}-${row}`).textContent = extraDuty.toFixed(1);
         document.getElementById(`nh-${tableId}-${row}`).textContent = nationalHoliday;
-        document.getElementById(`final-${tableId}-${row}`).textContent = 
+        document.getElementById(`final-${tableId}-${row}`).textContent =
             (present + weeklyOff + extraDuty + nationalHoliday).toFixed(1);
-    
+        
         updateGlobalSummary(tableId);
     }
     

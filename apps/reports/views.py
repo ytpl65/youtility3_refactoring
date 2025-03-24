@@ -1436,7 +1436,7 @@ class AttendanceTemplate(LoginRequiredMixin, View):
 
             # Return PDF as a downloadable file
             response = FileResponse(open(pdf_file, 'rb'), content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="attendance_report.pdf"'
+            response['Content-Disposition'] = 'attachment; filename="Attendance_Report.pdf"'
             return response
 
         except Exception as e:
