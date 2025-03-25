@@ -325,6 +325,29 @@ Contract Details
 		$('#id_bucode').attr('readonly', true);
 		$('#id_solid').attr('readonly', true);
 
+		var $postedPeople = $('#id_posted_people');
+    
+		function updateSelectionCount() {
+			var count = $postedPeople.select2('data').length;
+			var countBadge = $('.posted-people-count');
+			
+			if (countBadge.length === 0) {
+				countBadge = $('<span class="posted-people-count ms-2 badge badge-light-primary"></span>');
+				$postedPeople.next('.select2-container').find('.select2-selection').append(countBadge);
+			}
+			
+			countBadge.text(count + ' People Posted');
+			countBadge.toggle(count > 0);
+		}
+
+		$postedPeople.select2()
+			.on('select2:select select2:unselect', function(e) {
+				updateSelectionCount();
+			});
+
+		// Initial count update
+		updateSelectionCount();
+
 		function initializeDesignationFields(savedData) {
 			if (!savedData || Object.keys(savedData).length === 0) return;
 			
