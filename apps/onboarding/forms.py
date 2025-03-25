@@ -116,7 +116,14 @@ class BtForm(forms.ModelForm):
     total_people_count = forms.IntegerField(required=False, min_value=0,label='Total People Count')
     designation = forms.ModelChoiceField(label='Desigantion',required=False,widget = s2forms.Select2Widget, queryset = obm.TypeAssist.objects.filter(tatype__tacode='DESIGNATION',enable = True))
     designation_count = forms.IntegerField(required=False, min_value=0,label='Designation Count')
-    posted_people = forms.MultipleChoiceField(label='Posted People', required=False, widget = s2forms.Select2MultipleWidget)
+    posted_people = forms.MultipleChoiceField(
+        label='Posted People', 
+        required=False, 
+        widget=s2forms.Select2MultipleWidget(attrs={
+            'data-placeholder': 'Select Posted People',
+            'class': 'posted-people-select'
+        })
+    )
     jsonData = forms.CharField(widget=forms.HiddenInput(), required=False)
     class Meta:
         model  = obm.Bt
