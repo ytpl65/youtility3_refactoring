@@ -1358,6 +1358,7 @@ class AttendanceTemplate(LoginRequiredMixin, View):
         'template_normal':"reports/generate_pdf/attendance_template_normal.html",
         'template_form16':"reports/generate_pdf/attendance_template_form16.html",
         'download_template_normal':"reports/generate_pdf/generate_normal_attendance_pdf.html",
+        'download_template_form16':"reports/generate_pdf/generate_form16_attendance_pdf.html",
     }
     def get(self, request, *args, **kwargs):
         P, S = self.PARAMS, request.session
@@ -1371,7 +1372,7 @@ class AttendanceTemplate(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         P, S = self.PARAMS, request.session
         attendance_data = S.get('report_data', {})
-        
+        print(attendance_data)
         if not attendance_data:
             return JsonResponse({"success": False, "message": "No Data Found"})
         
@@ -1381,12 +1382,6 @@ class AttendanceTemplate(LoginRequiredMixin, View):
             template_name = P['download_template_normal']
         elif attendance_data["type_form"] == 'FORM 16':
             template_name = P['template_form16']
-        elif attendance_data["type_form"] == 'FORM 26 TO 25':
-            template_name = P['template_form26TO25']
-        elif attendance_data["type_form"] == 'FORM 25 TO 24':
-            template_name = P['template_form25TO24']
-        elif attendance_data["type_form"] == 'FORM 15 TO 14':
-            template_name = P['template_form15TO14']
             
         if not template_name:
             return JsonResponse({"success": False, "message": "Invalid form type"})
@@ -1441,7 +1436,7 @@ class AttendanceTemplate(LoginRequiredMixin, View):
 
             # Return PDF as a downloadable file
             response = FileResponse(open(pdf_file, 'rb'), content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="attendance_report.pdf"'
+            response['Content-Disposition'] = 'attachment; filename="Attendance_Report.pdf"'
             return response
 
         except Exception as e:
