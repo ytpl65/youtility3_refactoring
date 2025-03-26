@@ -128,7 +128,7 @@ class GeneratePDF(BaseModel):
 
     class FormType(models.TextChoices):
         NORMALFORM = ('NORMAL FORM', 'NORMAL FORM')
-        # FORM16 = ('FORM 16', 'FORM 16')
+        FORM16 = ('FORM 16', 'FORM 16')
 
     document_type = models.CharField('Document Type', choices = DocumentType.choices, null=True, max_length = 60)    
     company = models.CharField('Company', choices = Company.choices, null=True, max_length = 60)
