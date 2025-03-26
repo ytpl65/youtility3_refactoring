@@ -1381,7 +1381,7 @@ class AttendanceTemplate(LoginRequiredMixin, View):
         if attendance_data["type_form"] == 'NORMAL FORM':
             template_name = P['download_template_normal']
         elif attendance_data["type_form"] == 'FORM 16':
-            template_name = P['template_form16']
+            template_name = P['download_template_form16']
             
         if not template_name:
             return JsonResponse({"success": False, "message": "Invalid form type"})
