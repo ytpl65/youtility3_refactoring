@@ -20,6 +20,7 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from django.core.mail import mail_admins
 import traceback
+from intelliwiz_config.settings import GOOGLE_MAP_SECRET_KEY as google_map_key
 
 log = get_task_logger('__main__')
 
@@ -493,7 +494,7 @@ def create_child_dynamic_tasks(job,  _people, jnid, _jobstatus, _jobtype, parent
 def calculate_route_details(R, job):
     data = R
     import googlemaps
-    gmaps = googlemaps.Client(key='AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0')
+    gmaps = googlemaps.Client(key=google_map_key)
     startpoint, endpoint, waypoints = get_service_requirements(data)
     directions = gmaps.directions(mode='driving', waypoints=waypoints, origin=startpoint, destination=endpoint, optimize_waypoints=True)
 

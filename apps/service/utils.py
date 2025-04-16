@@ -20,7 +20,7 @@ from background_tasks.tasks import alert_sendmail,send_email_notification_for_wp
 from intelliwiz_config.celery import app
 from apps.work_order_management.utils import save_approvers_injson,save_verifiers_injson
 from apps.schedhuler.utils import create_dynamic_job
-
+from intelliwiz_config.settings import GOOGLE_MAP_SECRET_KEY as google_map_key
 from .auth import Messages as AM
 from .types import ServiceOutputType
 from .validators import clean_record
@@ -437,7 +437,7 @@ def get_readable_addr_from_point(point):
     import googlemaps
     try:
         if hasattr(point, 'coords') and point.coords[0] not in [0.0, "0.0"]:
-            gmaps = googlemaps.Client(key='AIzaSyDVbA53nxHKUOHdyIqnVPD01aOlTitfVO0')
+            gmaps = googlemaps.Client(key=google_map_key)
             result = gmaps.reverse_geocode(point.coords[::-1])
             log.info("reverse geocoding complete, results returned")
             return result[0]['formatted_address']
