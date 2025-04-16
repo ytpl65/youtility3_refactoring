@@ -1,2 +1,1 @@
-# Youtility4 (django-3.1)
-# youtility3_refactoring
+# youtility3_refactoring(django-4.2)
