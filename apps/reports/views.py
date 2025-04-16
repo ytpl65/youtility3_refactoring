@@ -17,7 +17,7 @@ from apps.onboarding import models as on
 from apps.activity  import models as am
 from apps.peoples import utils as putils
 from apps.core import utils
-from apps.activity.forms import QsetBelongingForm
+from apps.activity.forms.question_form import QsetBelongingForm
 from apps.reports import forms as rp_forms
 import logging, subprocess, os
 from background_tasks.tasks import send_report_on_email, create_report_history
@@ -34,6 +34,8 @@ from background_tasks.tasks import create_save_report_async
 from background_tasks.report_tasks import remove_reportfile
 from celery.result import AsyncResult
 import time, base64, sys, json, os
+from apps.activity.models.job_model import Jobneed
+from apps.activity.models.question_model import QuestionSet, Question
 from frappeclient import FrappeClient
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
@@ -43,7 +45,7 @@ log = logging.getLogger('__main__')
 # Create your views here.
 
 class RetriveSiteReports(LoginRequiredMixin, View):
-    model = am.Jobneed
+    model = Jobneed
     template_path = 'reports/sitereport_list.html'
 
     def get(self, request, *args, **kwargs):
@@ -65,7 +67,7 @@ class RetriveSiteReports(LoginRequiredMixin, View):
 
 
 class RetriveIncidentReports(LoginRequiredMixin, View):
-    model = am.Jobneed
+    model = Jobneed
     template_path = 'reports/incidentreport_list.html'
 
     def get(self, request, *args, **kwargs):
@@ -85,18 +87,18 @@ class RetriveIncidentReports(LoginRequiredMixin, View):
         return response
 
 class MasterReportTemplateList(LoginRequiredMixin, View):
-    model         = am.QuestionSet
+    model         = QuestionSet
     template_path = None
     fields        = ['id', 'qsetname', 'enable']
     type          = None
 
     def get(self, request, *args, **kwargs):
-        resp, R, objects = None, request.GET, am.QuestionSet.objects.none()
+        resp, R, objects = None, request.GET, QuestionSet.objects.none()
         filtered = None
         if R.get('template'):
             return render(request, self.template_path)
         try:
-            objects = am.QuestionSet.objects.filter(
+            objects = QuestionSet.objects.filter(
                 type='SITEREPORT'
             ).values('id', 'qsetname', 'enable')
             count = objects.count()
@@ -120,7 +122,7 @@ class MasterReportForm(LoginRequiredMixin, View):
     template_path = None
     form_class    = None
     subform       = QsetBelongingForm
-    model         = am.QuestionSet
+    model         = QuestionSet
     initial       = {
         'type'  :None
     }
@@ -237,7 +239,7 @@ class MasterReportForm(LoginRequiredMixin, View):
         return JsonResponse(data = resp, status = 200)
 
 class MasterReportBelonging(LoginRequiredMixin, View):
-    model = am.QuestionSet
+    model = QuestionSet
     def get(self, request, *args, **kwargs):
         R = request.GET
         if R.get('dataSource') == 'sitereporttemplate'  and R.get('parent'):
@@ -259,7 +261,7 @@ class SiteReportTemplateForm(MasterReportForm):
     model         = MasterReportForm.model
     template_path = "reports/sitereport_tempform.html"
     form_class    = rp_forms.SiteReportTemplate
-    initial.update({'type':am.QuestionSet.Type.SITEREPORTTEMPLATE})
+    initial.update({'type':QuestionSet.Type.SITEREPORTTEMPLATE})
 
 class IncidentReportTemplateForm(MasterReportForm):
     template_path = MasterReportForm.template_path
@@ -269,7 +271,7 @@ class IncidentReportTemplateForm(MasterReportForm):
     template_path = "reports/incidentreport_tempform.html"
     form_class    = rp_forms.IncidentReportTemplate
     initial       = {
-        'type':am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
+        'type':QuestionSet.Type.INCIDENTREPORTTEMPLATE
     }
 
 
@@ -277,13 +279,13 @@ class IncidentReportTemplateForm(MasterReportForm):
 class SiteReportTemplate(MasterReportTemplateList):
     type          = MasterReportTemplateList.type
     template_path = MasterReportTemplateList.template_path
-    type          = am.QuestionSet.Type.SITEREPORTTEMPLATE
+    type          = QuestionSet.Type.SITEREPORTTEMPLATE
     template_path = 'reports/sitereport_template_list.html'
 
 class IncidentReportTemplate(MasterReportTemplateList):
     type          = MasterReportTemplateList.type
     template_path = MasterReportTemplateList.template_path
-    type          = am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
+    type          = QuestionSet.Type.INCIDENTREPORTTEMPLATE
     template_path = 'reports/incidentreport_template_list.html'
 
 
@@ -291,10 +293,10 @@ class ConfigSiteReportTemplate(LoginRequiredMixin, View):
     params = {
         'template_form': "reports/sitereport_tempform.html",
         'template_list': 'reports/sitereport_template_list.html',
-        "model":am.QuestionSet,
+        "model":QuestionSet,
         'form_class':rp_forms.SiteReportTemplate,
         "initial":{
-            'type':am.QuestionSet.Type.SITEREPORTTEMPLATE
+            'type':QuestionSet.Type.SITEREPORTTEMPLATE
         },
         'related':[],
         'fields':['id', 'qsetname', 'enable']
@@ -370,10 +372,10 @@ class ConfigIncidentReportTemplate(LoginRequiredMixin, View):
     params = {
         'template_form': "reports/incidentreport_tempform.html",
         'template_list': 'reports/incidentreport_template_list.html',
-        "model":am.QuestionSet,
+        "model":QuestionSet,
         'form_class':rp_forms.SiteReportTemplate,
         "initial":{
-            'type':am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
+            'type':QuestionSet.Type.INCIDENTREPORTTEMPLATE
         },
         'related':[],
         'fields':['id', 'qsetname', 'enable']
@@ -393,7 +395,7 @@ class ConfigIncidentReportTemplate(LoginRequiredMixin, View):
             return render(request, P['template_form'], cxt)
 
         if R.get('action') =='loadQuestions':
-            qset =  am.Question.objects.questions_of_client(request, R)
+            qset =  Question.objects.questions_of_client(request, R)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
         
         if R.get('action') == 'get_sections':
@@ -449,10 +451,10 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
     params = {
         'template_form': "reports/workpermitreport_tempform.html",
         'template_list': 'reports/workpermitreport_template_list.html',
-        "model":am.QuestionSet,
+        "model":QuestionSet,
         'form_class':rp_forms.SiteReportTemplate,
         "initial":{
-            'type':am.QuestionSet.Type.WORKPERMITTEMPLATE
+            'type':QuestionSet.Type.WORKPERMITTEMPLATE
         },
         'related':[],
         'fields':['id', 'qsetname', 'enable']
@@ -473,7 +475,7 @@ class ConfigWorkPermitReportTemplate(LoginRequiredMixin, View):
             return render(request, P['template_form'], cxt)
 
         if R.get('action') =='loadQuestions':
-            qset =  am.Question.objects.questions_of_client(request, R)
+            qset =  Question.objects.questions_of_client(request, R)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
         
         if R.get('action') == 'get_sections':
@@ -554,7 +556,7 @@ class DownloadReports(LoginRequiredMixin, View):
             )
 
         if R.get('action') == 'get_asset' and R.get('of_type'):
-            qset = am.Asset.objects.filter(
+            qset = Asset.objects.filter(
                 client_id=S['client_id'],
                 bu_id = S['bu_id'],
                 type_id=R['of_type']).values('id', 'assetname').distinct()
@@ -563,7 +565,7 @@ class DownloadReports(LoginRequiredMixin, View):
             )
 
         if R.get('action') == 'get_qset' and R.get('of_asset'):
-            qset = am.QuestionSet.objects.filter(
+            qset = QuestionSet.objects.filter(
                 client_id=S['client_id'],
                 bu_id = S['bu_id'],
                 type__in=['CHECKLIST', 'ASSETMAINTENANCE'],

@@ -9,7 +9,8 @@ from django.conf import settings
 from django.db import transaction
 from django.db.utils import IntegrityError
 
-from apps.activity.models import Asset, Jobneed, JobneedDetails
+from apps.activity.models.asset_model import Asset
+from apps.activity.models.job_model import Jobneed,JobneedDetails
 from apps.work_order_management.models import Wom
 from apps.core import utils
 from apps.core import exceptions as excp
@@ -788,7 +789,6 @@ def perform_adhocmutation(self, records, db='default', bg=False):  # sourcery sk
 def perform_uploadattachment(file,  record, biodata):
     rc, traceback, resp = 1,  'NA', 0
     recordcount, msg = None, Messages.UPLOAD_FAILED
-    # ic(file, tablename, record, type(record), biodata, type(biodata))
     
 
     file_buffer = file

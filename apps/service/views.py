@@ -135,7 +135,6 @@
 #         import json
 #         service_uploadattachment = json.loads(request.data['service_uploadattachment'])
 #         service_insert = json.loads(request.data['service_insert'])
-#         ic(service_uploadattachment, service_insert)
 #         file_buffer     = request.FILES.getlist('image')
 #         home_dir        = '/var/www/redmine.youtility.in'+'/'
 #         attachment_data = service_uploadattachment
@@ -150,14 +149,12 @@
 #         log.info(f'filepath is {iscreated}')
 #         sutils.write_file_to_dir(file_buffer, uploadfile)
 #         resp = perform_insertrecord(request.data)
-#         ic(resp.data)
 #         A['msg'] = f'Attachment {Messages.INSERT_SUCCESS}'
 #         A['errors'] = A['reason'] = None
 #         A['rc'] = 0
 #         if pelogid !=  1:
 #             if ATT := Attachment.objects.get_attachment_record(resp.data['returnid']):
 #                 if PEOPLE_ATT := PeopleEventlog.objects.get_people_attachment(pelogid):
-#                     ic(ATT.ownername_id, PEOPLE_ATT.people_id)
 #                     if PEOPLE_PIC := Attachment.objects.get_people_pic(ATT.ownername_id, PEOPLE_ATT.people_id):
 #                         default_image_path = PEOPLE_PIC.default_img_path
 #                         default_image_path = home_dir + default_image_path
@@ -167,7 +164,6 @@
 #                         A['msg'] = f"""Face Recognition {"passed" if fr_results['verified'] else 'failed'}"""
 #                         A['errors'] = A['reason'] = None
 #                         A['rc'] = 0
-#                         ic(A)
 #     except Exception as e:
 #         A['rc'], A['reason'], A['msg'] = 1, traceback.format_exc(), Messages.UPLOAD_FAILED
 #         log.error('something went wrong', exc_info = True)
@@ -179,7 +175,6 @@
 #     """
 #     @staticmethod
 #     def post(request, format = None):
-#         ic(request.data)
 #         return perform_insertrecord(request.data)
 
 
@@ -196,7 +191,6 @@
 
 #     @staticmethod
 #     def post(request, format = None):
-#         ic(request.data)
 #         return perform_template_report_insert(request.data)
 
 

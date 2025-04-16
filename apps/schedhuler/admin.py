@@ -1,15 +1,15 @@
 from import_export import resources, fields, widgets as wg
-from apps.activity.models import Job
+from apps.activity.models.job_model import Job
 from import_export.admin import ImportExportModelAdmin
 from django.db.models import Q
-from django.contrib import admin
+from apps.activity.models.asset_model import Asset
+from apps.activity.models.question_model import QuestionSet
 from apps.service.validators import (
     clean_array_string, clean_code, clean_point_field, clean_string, validate_cron
 )
 from django.core.exceptions import ValidationError
 from apps.peoples import models as pm
 from apps.onboarding import models as om
-from apps.activity import models as am
 from apps.core.widgets import BVForeignKeyWidget, BVForeignKeyWidgetUpdate, QsetFKWUpdate, TktCategoryFKWUpdate, AssetFKWUpdate, PeopleFKWUpdate, PgroupFKWUpdate
 from datetime import time
 import math
@@ -33,12 +33,12 @@ class PgroupFKW(wg.ForeignKeyWidget):
         )
 class QsetFKW(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
-        return am.QuestionSet.objects.select_related().filter(
+        return QuestionSet.objects.select_related().filter(
             Q(qsetname='NONE') | (Q(client__bucode = row['Client*']) &  Q(enable=True))
         )
 class AssetFKW(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
-        return am.Asset.objects.select_related().filter(
+        return Asset.objects.select_related().filter(
             Q(assetcode='NONE') | (Q(client__bucode = row['Client*']) & Q(enable=True))
         )
 class TktCategoryFKW(wg.ForeignKeyWidget):
@@ -49,7 +49,7 @@ class TktCategoryFKW(wg.ForeignKeyWidget):
         
 class ParentFKW(wg.ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
-        qset = am.Job.objects.select_related().filter(
+        qset = Job.objects.select_related().filter(
             (Q(client__bucode = row['Client*']) & Q(enable=True)) |
             Q(jobname='NONE'), identifier='INTERNALTOUR'
         )
@@ -61,9 +61,9 @@ class BaseJobResource(resources.ModelResource):
     SITE        = fields.Field(attribute='bu', column_name='Site*',widget=BVForeignKeyWidget(om.Bt, 'bucode'))
     NAME        = fields.Field(attribute='jobname', column_name='Name*')
     DESC        = fields.Field(attribute='jobdesc', column_name='Description*', default='')
-    QSET        = fields.Field(attribute='qset', column_name='Question Set/Checklist*', widget=QsetFKW(am.QuestionSet, 'qsetname'))
-    ASSET       = fields.Field(attribute='asset', column_name='Asset*', widget=AssetFKW(am.Asset, 'assetcode'))
-    PARENT      = fields.Field(attribute='parent', column_name='Belongs To*', widget=wg.ForeignKeyWidget(am.Job, 'jobname'), default=utils.get_or_create_none_job)
+    QSET        = fields.Field(attribute='qset', column_name='Question Set/Checklist*', widget=QsetFKW(QuestionSet, 'qsetname'))
+    ASSET       = fields.Field(attribute='asset', column_name='Asset*', widget=AssetFKW(Asset, 'assetcode'))
+    PARENT      = fields.Field(attribute='parent', column_name='Belongs To*', widget=wg.ForeignKeyWidget(Job, 'jobname'), default=utils.get_or_create_none_job)
     PDURATION   = fields.Field(attribute='planduration', column_name='Plan Duration*')
     GRACETIME   = fields.Field(attribute='gracetime', column_name='Gracetime Before*')
     EXPTIME     = fields.Field(attribute='expirytime', column_name='Gracetime After*')
@@ -94,9 +94,9 @@ class TaskResource(BaseJobResource):
         import_id_fields = ['ID']
         report_skipped = True
         fields = [
-            'CLIENT', 'SITE', 'NAME', 'DESC', 'QSET', 'PDURATION', 'GRACETIME', 'EXPTIME',
-            'CRON', 'FROMDATE', 'UPTODATE', 'SCANTYPE', 'TKTCATEGORY', 'PRIORITY', 'PEOPLE',
-            'PGROUP', 'IDF', 'STARTTIME', 'ENDTIME', 'SEQNO', 'PARENT'
+            'CLIENT', 'SITE', 'NAME', 'DESC', 'QSET', 'PDURATION', 'GRACETIME', 'EXPTIME','CRON', 'FROMDATE', 'UPTODATE', 'SCANTYPE', 'TKTCATEGORY', 'PRIORITY', 'PEOPLE','PGROUP', 'IDF', 'STARTTIME', 'ENDTIME', 'SEQNO', 'PARENT',
+            'bu','client','seqno','parent','geofence','asset','qset','pgroup','people','priority','planduration','gracetime','expirytime','cron','fromdate','uptodate','scantype','ticketcategory','identifier','seqno','enable','geojson','other_info','frequency','scantype','ticketcategory','endtime','id','tenant','cuser','muser','starttime','shift','bu','client','seqno','parent','geofence','asset',
+            'cdtz','mdtz','ctzoffset','jobname','jobdesc','lastgeneratedon','sgroup','ID','ASSET'
         ]
     
     def __init__(self, *args, **kwargs):
@@ -191,9 +191,9 @@ class TourResource(resources.ModelResource):
     SITE        = fields.Field(attribute='bu', column_name='Site*',widget=BVForeignKeyWidget(om.Bt, 'bucode'))
     NAME        = fields.Field(attribute='jobname', column_name='Name*')
     DESC        = fields.Field(attribute='jobdesc', column_name='Description*', default='')
-    QSET        = fields.Field(attribute='qset', column_name='Question Set/Checklist*', widget=QsetFKW(am.QuestionSet, 'qsetname'))
-    ASSET       = fields.Field(attribute='asset', column_name='Asset*', widget=AssetFKW(am.Asset, 'assetcode'))
-    PARENT      = fields.Field(attribute='parent', column_name='Belongs To*', widget=wg.ForeignKeyWidget(am.Job, 'jobname'), default=utils.get_or_create_none_job)
+    QSET        = fields.Field(attribute='qset', column_name='Question Set/Checklist*', widget=QsetFKW(QuestionSet, 'qsetname'))
+    ASSET       = fields.Field(attribute='asset', column_name='Asset*', widget=AssetFKW(Asset, 'assetcode'))
+    PARENT      = fields.Field(attribute='parent', column_name='Belongs To*', widget=wg.ForeignKeyWidget(Job, 'jobname'), default=utils.get_or_create_none_job)
     PDURATION   = fields.Field(attribute='planduration', column_name='Plan Duration*')
     GRACETIME   = fields.Field(attribute='gracetime', column_name='Gracetime*')
     EXPTIME     = fields.Field(attribute='expirytime', column_name='Expiry Time*')
@@ -212,14 +212,14 @@ class TourResource(resources.ModelResource):
     ID          = fields.Field(attribute='id', column_name='ID')
 
     class Meta:
-        model = am.Job
+        model = Job
         skip_unchanged = True
         import_id_fields = ['ID']
         report_skipped = True
         fields = [
             'CLIENT', 'SITE', 'NAME', 'DESC', 'QSET', 'PDURATION', 'GRACETIME', 'EXPTIME',
             'CRON', 'FROMDATE', 'UPTODATE', 'SCANTYPE', 'TKTCATEGORY', 'PRIORITY', 'PEOPLE',
-            'PGROUP', 'IDF', 'STARTTIME', 'ENDTIME', 'SEQNO', 'PARENT', 'ASSET'
+            'PGROUP', 'IDF', 'STARTTIME', 'ENDTIME', 'SEQNO', 'PARENT', 'ASSET','ID'
         ]
     
     def __init__(self, *args, **kwargs):
@@ -288,9 +288,9 @@ class TaskResourceUpdate(resources.ModelResource):
     SITE        = fields.Field(attribute='bu', column_name='Site',widget=BVForeignKeyWidgetUpdate(om.Bt, 'bucode'))
     NAME        = fields.Field(attribute='jobname', column_name='Name')
     DESC        = fields.Field(attribute='jobdesc', column_name='Description', default='')
-    QSET        = fields.Field(attribute='qset', column_name='Question Set/Checklist', widget=QsetFKWUpdate(am.QuestionSet, 'qsetname'))
-    ASSET       = fields.Field(attribute='asset', column_name='Asset', widget=AssetFKWUpdate(am.Asset, 'assetcode'))
-    PARENT      = fields.Field(attribute='parent', column_name='Belongs To', widget=wg.ForeignKeyWidget(am.Job, 'jobname'), default=utils.get_or_create_none_job)
+    QSET        = fields.Field(attribute='qset', column_name='Question Set/Checklist', widget=QsetFKWUpdate(QuestionSet, 'qsetname'))
+    ASSET       = fields.Field(attribute='asset', column_name='Asset', widget=AssetFKWUpdate(Asset, 'assetcode'))
+    PARENT      = fields.Field(attribute='parent', column_name='Belongs To', widget=wg.ForeignKeyWidget(Job, 'jobname'), default=utils.get_or_create_none_job)
     PDURATION   = fields.Field(attribute='planduration', column_name='Plan Duration')
     GRACETIME   = fields.Field(attribute='gracetime', column_name='Gracetime Before')
     EXPTIME     = fields.Field(attribute='expirytime', column_name='Gracetime After')
@@ -408,9 +408,9 @@ class TourResourceUpdate(resources.ModelResource):
     SITE        = fields.Field(attribute='bu', column_name='Site',widget=BVForeignKeyWidgetUpdate(om.Bt, 'bucode'))
     NAME        = fields.Field(attribute='jobname', column_name='Name')
     DESC        = fields.Field(attribute='jobdesc', column_name='Description', default='')
-    QSET        = fields.Field(attribute='qset', column_name='Question Set/Checklist', widget=QsetFKWUpdate(am.QuestionSet, 'qsetname'))
-    ASSET       = fields.Field(attribute='asset', column_name='Asset', widget=AssetFKWUpdate(am.Asset, 'assetcode'))
-    PARENT      = fields.Field(attribute='parent', column_name='Belongs To', widget=wg.ForeignKeyWidget(am.Job, 'jobname'), default=utils.get_or_create_none_job)
+    QSET        = fields.Field(attribute='qset', column_name='Question Set/Checklist', widget=QsetFKWUpdate(QuestionSet, 'qsetname'))
+    ASSET       = fields.Field(attribute='asset', column_name='Asset', widget=AssetFKWUpdate(Asset, 'assetcode'))
+    PARENT      = fields.Field(attribute='parent', column_name='Belongs To', widget=wg.ForeignKeyWidget(Job, 'jobname'), default=utils.get_or_create_none_job)
     PDURATION   = fields.Field(attribute='planduration', column_name='Plan Duration')
     GRACETIME   = fields.Field(attribute='gracetime', column_name='Gracetime')
     EXPTIME     = fields.Field(attribute='expirytime', column_name='Expiry Time')
@@ -428,7 +428,7 @@ class TourResourceUpdate(resources.ModelResource):
     ID          = fields.Field(attribute='id', column_name='ID*')
 
     class Meta:
-        model = am.Job
+        model = Job
         skip_unchanged = True
         import_id_fields = ['ID']
         report_skipped = True

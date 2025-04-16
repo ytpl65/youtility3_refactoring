@@ -96,7 +96,6 @@ class ConveyanceForm(forms.ModelForm):
 
     def clean(self):
         super(ConveyanceForm, self).clean()
-        ic(self.cleaned_data)
 
     def is_valid(self) -> bool:
         """Adds 'is-invalid' class to invalid fields"""

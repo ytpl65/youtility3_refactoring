@@ -123,7 +123,7 @@ class PeopleResource(resources.ModelResource):
             'ID', 'Code', 'Name', 'LoginId', 'Designation', 'Department', 'MobNo', 'Email', 'deviceid',
             'Site', 'DateOfJoin', 'date_of_release', 'DateOfBirth', 'Gender', 'PeopleType','WorkType', 'Enable',
             'Client', 'isemergencycontact', 'alertmails', 'mobilecaps', 'reportcaps', 'webcaps',
-            'portletcaps', 'blacklist', 'currentaddr', 'permanentaddr', 'Reportto', 'Password', 'userfor']
+            'portletcaps', 'blacklist', 'currentaddr', 'permanentaddr', 'Reportto', 'Password', 'userfor','BV']
 
     def __init__(self, *args, **kwargs):
         super(PeopleResource, self).__init__(*args, **kwargs)
@@ -344,7 +344,7 @@ class GroupBelongingResource(resources.ModelResource):
         skip_unchanged = True
         report_skipped = True
         import_id_fields = ['ID']
-        fields = ['GROUP', 'PEOPLE', 'CLIENT', 'BV', 'SITE']
+        fields = ['GROUP', 'PEOPLE', 'CLIENT', 'BV', 'SITE','ID']
 
     def __init__(self, *args, **kwargs):
         super(GroupBelongingResource, self).__init__(*args, **kwargs)

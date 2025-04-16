@@ -28,10 +28,25 @@ from .report_tasks import (
     remove_reportfile, save_report_to_tmp_folder)
 from io import BytesIO
 
+from celery import shared_task
+from mqtt_utils import publish_message
 
 mqlog = getLogger('message_q')
 dlog = getLogger('django')
 tlog = getLogger('tracking')
+
+
+
+@shared_task(bind=True, max_retries=5, default_retry_delay=30,name="publish_mqtt")
+def publish_mqtt(self, topic, payload):
+    try:
+        publish_message(topic, payload)
+        log.info(f"[Celery] Task completed: topic={topic}")
+    except Exception as e:
+        log.error(f"[Celery] Task failed! Will retry. Error: {e}", exc_info=True)
+        raise self.retry(exc=e)
+
+
 
 @app.task(bind=True, default_retry_delay=300, max_retries=5, name='Send Ticket email')
 def send_ticket_email(self, ticket=None, id=None):

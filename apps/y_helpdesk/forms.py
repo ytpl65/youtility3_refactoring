@@ -4,7 +4,9 @@ from .models import Ticket, EscalationMatrix
 from apps.onboarding.models import TypeAssist
 from apps.core import utils
 from apps.peoples.models import Pgroup, People
-from apps.activity.models import Location, Asset
+from apps.activity.models.location_model import Location
+from apps.activity.models.asset_model import Asset
+
 class TicketForm(forms.ModelForm):
     required_css_class = "required"
 
@@ -54,11 +56,9 @@ class TicketForm(forms.ModelForm):
     def clean(self):
         super().clean()
         cd = self.cleaned_data
-        ic(cd)
         if cd['assignedtopeople'] is None and cd['assignedtogroup'] is None:
             raise forms.ValidationError("Make Sure You Assigned Ticket Either People OR Group")
         self.cleaned_data = self.check_nones(self.cleaned_data)
-        ic(self.cleaned_data)
         
     def clean_ticketdesc(self):
         if val:= self.cleaned_data.get('ticketdesc'):

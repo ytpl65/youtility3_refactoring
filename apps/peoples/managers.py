@@ -4,7 +4,6 @@ from django.db.models import Q, F, Value as V
 from django.db.models.functions import Concat, Cast
 from django.contrib.gis.db.models.functions import  AsGeoJSON
 from django.utils.translation import gettext_lazy as _
-from icecream import ic
 import logging
 log = logging.getLogger('django')
 
@@ -257,11 +256,9 @@ class PgblngManager(models.Manager):
     def get_sitesfromgroup(self, job, force=False):
         "return sites under group with given sitegroupid"
         if not force:
-            ic(not force)
             from apps.activity.models import Job
             qset = Job.objects.get_sitecheckpoints_exttour(job)
         if force or not qset:
-            ic(force or not qset)
             qset = self.annotate(
                 bu__gpslocation = AsGeoJSON('assignsites__gpslocation'),
                 bu__buname = F('assignsites__buname'), bucode=F('assignsites__bucode'),

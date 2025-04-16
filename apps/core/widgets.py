@@ -35,7 +35,6 @@ class BVForeignKeyWidget(wg.ForeignKeyWidget):
         bu_ids = om.Bt.objects.get_whole_tree(client.id)
         qset = self.model.objects.select_related('parent', 'identifier').filter(
             id__in=bu_ids, identifier__tacode='SITE', parent__bucode=row['Client*'])
-        ic(qset)
         return qset
 
 class TypeAssistEmployeeTypeFKWUpdate(wg.ForeignKeyWidget):

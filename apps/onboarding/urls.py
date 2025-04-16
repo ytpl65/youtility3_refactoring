@@ -18,5 +18,10 @@ urlpatterns = [
     path('fileUpload/', views.FileUpload.as_view(), name="file_upload"),
     path('subscription/', views.LicenseSubscriptionView.as_view(), name="subscription"),
     path('import_update/', views.BulkImportUpdate.as_view(), name="import_update"),
-    path('contract/', views.ContractView.as_view(), name="contract")
+    path('contract/', views.ContractView.as_view(), name="contract"),
+    path('get_assignedsites/', views.GetAssignedSites.as_view(), name='get_assignedsites'),
+    path('get_allsites/', views.GetAllSites.as_view(), name='get_allsites'),
+    path('switchsite/',views.SwitchSite.as_view(), name='switchsite'),
+    path('list_of_peoples/', views.get_list_of_peoples, name="list_of_peoples"),
+
 ]

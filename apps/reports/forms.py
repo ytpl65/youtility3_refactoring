@@ -7,6 +7,9 @@ from django_select2 import forms as s2forms
 from django.db.models import Q
 from datetime import datetime, timedelta
 from django.conf import settings
+from apps.activity.models.location_model import Location
+from apps.activity.models.question_model import QuestionSet
+from apps.activity.models.asset_model import Asset
 from apps.reports.models import ScheduleReport, GeneratePDF
 from enum import Enum
 
@@ -19,7 +22,7 @@ class MasterReportTemplate(forms.ModelForm):
 
 
     class Meta:
-        model = am.QuestionSet
+        model = QuestionSet
         fields = [
             'type',  'qsetname', 'buincludes', 'site_grp_includes', 
             'site_type_includes', 'enable', 'ctzoffset']
@@ -43,7 +46,7 @@ class SiteReportTemplate(MasterReportTemplate):
         self.request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
-        self.fields['type'].initial = am.QuestionSet.Type.SITEREPORTTEMPLATE
+        self.fields['type'].initial = QuestionSet.Type.SITEREPORTTEMPLATE
         self.fields['type'].widget.attrs = {'style': 'display:none'}
         if not self.instance.id:
             self.fields['site_grp_includes'].initial = 1
@@ -55,7 +58,7 @@ class IncidentReportTemplate(MasterReportTemplate):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['type'].initial = am.QuestionSet.Type.INCIDENTREPORTTEMPLATE
+        self.fields['type'].initial = QuestionSet.Type.INCIDENTREPORTTEMPLATE
         utils.initailize_form_fields(self)
         if not self.instance.id:
             self.fields['site_grp_includes'].initial = 1
@@ -181,13 +184,13 @@ class ReportForm(forms.Form):
             enable=True).values_list('id', 'groupname'))
         self.fields['peoplegroup'].choices = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True, choices=True)
         self.fields['people'].choices = self.fields['mult_people'].choices = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True, choices=True)
-        self.fields['asset'].choices = self.fields['mult_asset'].choices = am.Asset.objects.asset_choices_for_report(self.request,sitewise=True,choices=True,identifier = 'ASSET')
-        self.fields['location'].choices = self.fields['mult_location'].choices = am.Location.objects.location_choices_for_report(self.request,sitewise=True,choices=True)
-        self.fields['checkpoint'].choices = self.fields['mult_checkpoint'].choices = am.Asset.objects.asset_choices_for_report(self.request,sitewise=True,choices=True,identifier = 'CHECKPOINT')
-        self.fields['assettype'].choices  = am.Asset.objects.asset_type_choices_for_report(self.request)
-        self.fields['location_type'].choices  = am.Location.objects.location_type_choices_for_report(self.request)
-        self.fields['assetcategory'].choices = am.Asset.objects.asset_category_choices_for_report(self.request)
-        self.fields['qset'].choices = am.QuestionSet.objects.qset_choices_for_report(self.request)
+        self.fields['asset'].choices = self.fields['mult_asset'].choices = Asset.objects.asset_choices_for_report(self.request,sitewise=True,choices=True,identifier = 'ASSET')
+        self.fields['location'].choices = self.fields['mult_location'].choices = Location.objects.location_choices_for_report(self.request,sitewise=True,choices=True)
+        self.fields['checkpoint'].choices = self.fields['mult_checkpoint'].choices = Asset.objects.asset_choices_for_report(self.request,sitewise=True,choices=True,identifier = 'CHECKPOINT')
+        self.fields['assettype'].choices  = Asset.objects.asset_type_choices_for_report(self.request)
+        self.fields['location_type'].choices  = Location.objects.location_type_choices_for_report(self.request)
+        self.fields['assetcategory'].choices = Asset.objects.asset_category_choices_for_report(self.request)
+        self.fields['qset'].choices = QuestionSet.objects.qset_choices_for_report(self.request)
         self.fields['fromdate'].initial = self.get_default_range_of_dates()[0]
         self.fields['uptodate'].initial = self.get_default_range_of_dates()[1]
         self.fields['cc'].choices = pm.People.objects.filter(isverified=True, client_id = S['client_id']).values_list('email', 'peoplename')

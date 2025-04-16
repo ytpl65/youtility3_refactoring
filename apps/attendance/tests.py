@@ -148,7 +148,6 @@ class TestAttendanceView(TestCase):
                 'punchouttime':'27-Jun-2023 14:38:06'})
             },
         )
-        ic(response.json())
         self.assertEqual(response.status_code, 404)
         
 

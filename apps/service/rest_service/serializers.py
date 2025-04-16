@@ -2,9 +2,10 @@ from rest_framework import serializers
 from apps.attendance.models import PeopleEventlog
 from apps.peoples.models import People, Pgroup, Pgbelonging
 from apps.onboarding.models import Bt, TypeAssist, Shift
-from apps.activity.models import Jobneed, Job
-from apps.activity.models import Asset, Location, Question, QuestionSet
-
+from apps.activity.models.job_model import Jobneed, Job
+from apps.activity.models.question_model import Question, QuestionSet
+from apps.activity.models.location_model import Location
+from apps.activity.models.asset_model import Asset
 
 class PeopleEventLogSerializer(serializers.ModelSerializer):
     class Meta:

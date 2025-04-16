@@ -592,8 +592,6 @@ def check_sequence_of_prevjobneed(job, current_seq):
     previousJobneedParent = am.Jobneed.objects.filter(job_id=job['id'], parent_id=1).order_by('-id')
     if previousJobneedParent.count() > 1:
         seqnos = am.Jobneed.objects.filter(parent_id = previousJobneedParent.values_list('id', flat=True)[1]).values_list('seqno', flat=True)
-        ic(utils.printsql(seqnos))
-        ic(seqnos)
         return list(seqnos) == current_seq
     return False
     

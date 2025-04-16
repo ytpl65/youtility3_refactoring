@@ -1,6 +1,6 @@
 from django.conf import settings
 from django import forms
-from apps.activity.forms import JobForm, JobNeedForm
+from apps.activity.forms.job_form import JobForm, JobNeedForm
 import apps.onboarding.utils as ob_utils    
 from apps.core import utils
 from django_select2 import forms as s2forms

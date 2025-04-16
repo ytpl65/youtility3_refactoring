@@ -10,7 +10,7 @@ from django.shortcuts import redirect, render
 from django.views import View
 from apps.core import  utils 
 from pprint import pformat
-import apps.activity.models as am
+from apps.activity.models.job_model import Job, Jobneed, JobneedDetails
 import apps.peoples.models as pm
 from datetime import datetime, time, timedelta, timezone, date
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -20,8 +20,8 @@ import logging
 from django.db.models.deletion import RestrictedError
 from django.urls import reverse
 import json
-from psycopg2.errors import UniqueViolation, NotNullViolation
-from django.contrib.gis.db.models.functions import  AsWKT, AsGeoJSON
+from psycopg2.errors import NotNullViolation
+from django.contrib.gis.db.models.functions import AsGeoJSON
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_http_methods
@@ -33,14 +33,14 @@ class Schd_I_TourFormJob(LoginRequiredMixin, View):
     template_path = 'schedhuler/schd_i_tourform_job.html'
     form_class    = scd_forms.Schd_I_TourJobForm
     subform       = scd_forms.SchdChild_I_TourJobForm
-    model         = am.Job
+    model         = Job
     initial       = {
         'starttime'   : time(00, 00, 00),
         'endtime'     : time(00, 00, 00),
         'expirytime'  : 0,
-        'identifier'  :am.Job.Identifier.INTERNALTOUR,
-        'priority'    :am.Job.Priority.LOW,
-        'scantype'    :am.Job.Scantype.QR,
+        'identifier'  :Job.Identifier.INTERNALTOUR,
+        'priority'    :Job.Priority.LOW,
+        'scantype'    :Job.Scantype.QR,
         'gracetime'   : 5,
         'fromdate'   : datetime.combine(date.today(), time(00, 00, 00)),
         'uptodate'   : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
@@ -204,14 +204,14 @@ class Update_I_TourFormJob(Schd_I_TourFormJob, View):
 
 class Retrive_I_ToursJob(LoginRequiredMixin, View):
     params = {
-        'model'        : am.Job,
+        'model'        : Job,
         'template_path': 'schedhuler/schd_i_tourlist_job.html',
         'fields'       : ['jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
                         'planduration', 'gracetime', 'expirytime', 'id'],
         'related': ['pgroup', 'people']
     }
 
-    model = am.Job
+    model = Job
     template_path = 'schedhuler/schd_i_tourlist_job.html'
     fields = ['jobname', 'people__peoplename', 'pgroup__groupname', 'fromdate', 'uptodate',
               'planduration', 'gracetime', 'expirytime', 'id']
@@ -289,7 +289,7 @@ def deleteChekpointFromTour(request):
 
 
 class Retrive_I_ToursJobneed(LoginRequiredMixin, View):
-    model = am.Jobneed
+    model = Jobneed
     template_path = 'schedhuler/i_tourlist_jobneed.html'
     fields    = ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
               'plandatetime', 'expirydatetime', 'jobstatus', 'gracetime', 'performedby__peoplename',]
@@ -348,13 +348,13 @@ class Retrive_I_ToursJobneed(LoginRequiredMixin, View):
         return {'tour_list': tour_list, 'tour_filter': filterform}
 
 class Get_I_TourJobneed(LoginRequiredMixin, View):
-    model         = am.Jobneed
+    model         = Jobneed
     template_path = 'schedhuler/i_tourform_jobneed.html'
     form_class    = scd_forms.I_TourFormJobneed
     subform       = scd_forms.Child_I_TourFormJobneed
     initial       = {
-        'identifier': am.Jobneed.Identifier.INTERNALTOUR,
-        'frequency' : am.Jobneed.Frequency.NONE
+        'identifier': Jobneed.Identifier.INTERNALTOUR,
+        'frequency' : Jobneed.Frequency.NONE
     }
 
     def get(self, request, *args, **kwargs):
@@ -411,7 +411,7 @@ def add_cp_internal_tour(request):  # jobneed
         formData = request.POST.get('formData')
         parentid = request.POST.get('parentid')
         try:
-            parent = am.Jobneed.objects.get(id = parentid)
+            parent = Jobneed.objects.get(id = parentid)
             data  = {'jobdesc' : parent.jobdesc, 'receivedonserver': parent.receivedonserver,
                     'starttime': parent.starttime, 'endtime': parent.endtime, 'gpslocation': parent.gpslocation,
                     'remarks'  : parent.remarks, 'frequency': parent.frequency, 'job': parent.job,
@@ -419,7 +419,7 @@ def add_cp_internal_tour(request):  # jobneed
                     'priority' : ""}
             form = scd_forms.ChildInternalTourForm(data = formData)
 
-        except am.Jobneed.DoesNotExist:
+        except Jobneed.DoesNotExist:
             msg = "Parent not found failed to add checkpoint!"
             resp = rp.JsonResponse({'errors': msg}, status = 404)
         except Exception:
@@ -429,18 +429,18 @@ def add_cp_internal_tour(request):  # jobneed
 
 class Schd_E_TourFormJob(LoginRequiredMixin, View):
     params = {
-        'model':am.Jobneed,
+        'model':Jobneed,
         'form_class':scd_forms.Schd_E_TourJobForm,
         'subform':scd_forms.EditAssignedSiteForm,
         'template_path':'schedhuler/schd_e_tourform_job.html',
         'initial':{
             'seqno':-1,
-            'scantype':am.Job.Scantype.QR,
-            'frequency':am.Job.Frequency.NONE,
-            'identifier':am.Job.Identifier.EXTERNALTOUR,
+            'scantype':Job.Scantype.QR,
+            'frequency':Job.Frequency.NONE,
+            'identifier':Job.Identifier.EXTERNALTOUR,
             'starttime':time(00,00,00),
             'endtime':time(00,00,00),
-            'priority':am.Job.Priority.HIGH,    
+            'priority':Job.Priority.HIGH,    
             'expirytime':0
         }
     }
@@ -565,7 +565,7 @@ class Update_E_TourFormJob(Schd_E_TourFormJob, LoginRequiredMixin, View):
 
 
 class Retrive_E_ToursJob(LoginRequiredMixin, View):
-    model = am.Job
+    model = Job
     template_path = 'schedhuler/schd_e_tourlist_job.html'
     fields = ['jobname', 'people__peoplename', 'pgroup__groupname',
               'fromdate', 'uptodate',
@@ -620,7 +620,6 @@ class Retrive_E_ToursJob(LoginRequiredMixin, View):
 @require_http_methods(["POST"])
 def run_internal_tour_scheduler(request):
     """Schedules an internal tour based on the POST request."""
-    ic(request.POST)
     job_id = request.POST.get('job_id')
     action = request.POST.get('action')
     checkpoints = json.loads(request.POST.get('checkpoints', '[]'))
@@ -660,17 +659,17 @@ def run_internal_tour_scheduler(request):
 
 def _get_job(job_id):
     """Fetch a job from the database by its ID"""
-    jobs = am.Job.objects.filter(id=job_id).select_related(
+    jobs = Job.objects.filter(id=job_id).select_related(
         "asset", "pgroup", 'sgroup', "cuser", "muser", "qset", "people").values(*utils.JobFields.fields)
     return jobs[0] if jobs else None
 
 def _handle_random_external_tour(job, checkpoints, request):
     """Handle a randomized external tour"""
-    am.Job.objects.filter(parent_id=job['id']).delete()
+    Job.objects.filter(parent_id=job['id']).delete()
     log.info("saving checkpoints started...", extra={'job': job})
     
     for checkpoint in checkpoints:
-        obj = am.Job.objects.create(**sutils.job_fields(job, checkpoint, external=True))
+        obj = Job.objects.create(**sutils.job_fields(job, checkpoint, external=True))
         putils.save_userinfo(obj, request.user, request.session, bu=checkpoint['buid'])
         log.info(f"checkpoint saved", extra={'checkpoint': obj.jobname})
     
@@ -713,13 +712,13 @@ def save_assigned_sites_for_externaltour(request):
 def save_sites_in_job(request, parentid):
     try:
         checkpoints = json.loads(request.POST.get('assignedSites'))
-        job = am.Job.objects.get(id=parentid)
+        job = Job.objects.get(id=parentid)
         for cp in checkpoints:
-            am.Job.objects.update_or_create(
+            Job.objects.update_or_create(
                 parent_id=job.id, asset_id=cp['asset'], qset_id=cp['qset'], breaktime=cp['breaktime'],
                 defaults=sutils.job_fields(job, cp, external=True))
 
-    except am.Job.DoesNotExist:
+    except Job.DoesNotExist:
         msg = 'Parent job not found failed to save assigned sites!'
         log.error(f"{msg}", exc_info=True)
         raise
@@ -731,16 +730,16 @@ def save_sites_in_job(request, parentid):
 class SchdTaskFormJob(LoginRequiredMixin, View):
     template_path = 'schedhuler/schd_taskform_job.html'
     form_class    = scd_forms.SchdTaskFormJob
-    model         = am.Job
+    model         = Job
     initial       = {
         'starttime'   : time(00, 00, 00),
         'endtime'     : time(00, 00, 00),
         'fromdate'    : datetime.combine(date.today(), time(00, 00, 00)),
         'uptodate'    : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
-        'identifier'  : am.Job.Identifier.TASK,
-        'frequency'   : am.Job.Frequency.NONE,
-        'scantype'    : am.Job.Scantype.QR,
-        'priority'    : am.Job.Priority.LOW,
+        'identifier'  : Job.Identifier.TASK,
+        'frequency'   : Job.Frequency.NONE,
+        'scantype'    : Job.Scantype.QR,
+        'priority'    : Job.Priority.LOW,
         'planduration': 5,
         'gracetime'   : 5,
         'expirytime'  : 5
@@ -814,7 +813,7 @@ class SchdTaskFormJob(LoginRequiredMixin, View):
 
 
 class RetriveSchdTasksJob(LoginRequiredMixin, View):
-    model = am.Job
+    model = Job
     template_path = 'schedhuler/schd_tasklist_job.html'
     fields = ['jobname', 'people__peoplename', 'pgroup__groupname',
               'fromdate', 'uptodate', 'qset__qsetname', 'asset__assetname',
@@ -891,7 +890,7 @@ class UpdateSchdTaskJob(SchdTaskFormJob):
         return response
 
 class RetrieveTasksJobneed(LoginRequiredMixin, View):
-    model         = am.Jobneed
+    model         = Jobneed
     template_path = 'schedhuler/tasklist_jobneed.html'
 
     fields  = [
@@ -915,7 +914,7 @@ class RetrieveTasksJobneed(LoginRequiredMixin, View):
                 *self.related).filter(
                 Q(bu_id = session['bu_id']),  ~Q(parent__jobdesc='NONE')
                 , ~Q(jobdesc='NONE') , Q(plandatetime__gte = dt)
-                ,Q(identifier = am.Jobneed.Identifier.TASK)
+                ,Q(identifier = Jobneed.Identifier.TASK)
             ).values(*self.fields).order_by('-plandatetime')
             log.info('tasks objects %s retrieved from db' % 
                      (len(objects)) if objects else "No Records!")
@@ -957,12 +956,12 @@ class RetrieveTasksJobneed(LoginRequiredMixin, View):
         return {'task_list': tour_list, 'task_filter': filterform}
 
 class GetTaskFormJobneed(LoginRequiredMixin, View):
-    model         = am.Jobneed
+    model         = Jobneed
     template_path = 'schedhuler/taskform_jobneed.html'
     form_class    = scd_forms.TaskFormJobneed
     initial       = {
-        'identifier'    : am.Jobneed.Identifier.TASK,
-        'frequency'     : am.Jobneed.Frequency.NONE
+        'identifier'    : Jobneed.Identifier.TASK,
+        'frequency'     : Jobneed.Frequency.NONE
     }
 
     def get(self, request, *args, **kwargs):
@@ -992,7 +991,7 @@ class GetTaskFormJobneed(LoginRequiredMixin, View):
 
 class JobneedTours(LoginRequiredMixin, View):
     params = {
-        'model'        : am.Jobneed,
+        'model'        : Jobneed,
         'template_path': 'schedhuler/i_tourlist_jobneed.html',
         'template_form': 'schedhuler/i_tourform_jobneed.html',
         'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id', 'ctzoffset', 'jobtype',
@@ -1003,8 +1002,8 @@ class JobneedTours(LoginRequiredMixin, View):
         'form_class':scd_forms.I_TourFormJobneed,
         'subform' : scd_forms.Child_I_TourFormJobneed,
         'initial': {
-        'identifier': am.Jobneed.Identifier.INTERNALTOUR,
-        'frequency' : am.Jobneed.Frequency.NONE
+        'identifier': Jobneed.Identifier.INTERNALTOUR,
+        'frequency' : Jobneed.Frequency.NONE
         }
     }
 
@@ -1019,7 +1018,7 @@ class JobneedTours(LoginRequiredMixin, View):
             return rp.JsonResponse(data = {'data':list(objs)})
         
         if R.get('action') == 'checklist_details' and R.get('jobneedid'):
-            objs = am.JobneedDetails.objects.get_e_tour_checklist_details(R['jobneedid'])
+            objs = JobneedDetails.objects.get_e_tour_checklist_details(R['jobneedid'])
             return rp.JsonResponse(data = {'data':list(objs)})
         
         if R.get('action') == 'get_checkpointdetails':
@@ -1031,7 +1030,7 @@ class JobneedTours(LoginRequiredMixin, View):
             return rp.JsonResponse(data = {'data':list(att)})
 
         if R.get('action') == 'getAttachmentJND' and R.get('id'):
-            att = am.JobneedDetails.objects.getAttachmentJND(R['id'])
+            att = JobneedDetails.objects.getAttachmentJND(R['id'])
             return rp.JsonResponse(data = {'data': list(att)})
         
         if R.get('id'):
@@ -1069,7 +1068,7 @@ class JobneedTours(LoginRequiredMixin, View):
 
 class JobneedExternalTours(LoginRequiredMixin, View):
     params = {
-        'model'        : am.Jobneed,
+        'model'        : Jobneed,
         'template_path': 'schedhuler/e_tourlist_jobneed.html',
         'template_form': 'schedhuler/e_tourform_jobneed.html',
         'fields'       : ['jobdesc', 'people__peoplename', 'pgroup__groupname', 'id', 'ctzoffset','bu__buname', 'bu__solid',
@@ -1079,8 +1078,8 @@ class JobneedExternalTours(LoginRequiredMixin, View):
              'job', 'qset', 'people', 'parent', 'bu'],
         'form_class': scd_forms.E_TourFormJobneed,
         'initial'   : {
-            'identifier': am.Jobneed.Identifier.EXTERNALTOUR,
-            'frequency' : am.Jobneed.Frequency.NONE
+            'identifier': Jobneed.Identifier.EXTERNALTOUR,
+            'frequency' : Jobneed.Frequency.NONE
         }
     }
 
@@ -1099,7 +1098,7 @@ class JobneedExternalTours(LoginRequiredMixin, View):
             return rp.JsonResponse(data = {'data':list(objs)})
         
         if R.get('action') == 'checklist_details' and R.get('jobneedid'):
-            objs = am.JobneedDetails.objects.get_e_tour_checklist_details(R['jobneedid'])
+            objs = JobneedDetails.objects.get_e_tour_checklist_details(R['jobneedid'])
             return rp.JsonResponse(data = {'data':list(objs)})
         
         if R.get('action') == 'getAttachmentJobneed' and R.get('id'):
@@ -1107,7 +1106,7 @@ class JobneedExternalTours(LoginRequiredMixin, View):
             return rp.JsonResponse(data = {'data':list(att)})
         
         if R.get('action') == 'getAttachmentJND' and R.get('id'):
-            att = am.JobneedDetails.objects.getAttachmentJND(R['id'])
+            att = JobneedDetails.objects.getAttachmentJND(R['id'])
             return rp.JsonResponse(data = {'data': list(att)})
         
         if R.get('id'):
@@ -1144,8 +1143,8 @@ class JobneedExternalTours(LoginRequiredMixin, View):
 
 class JobneedTasks(LoginRequiredMixin, View):
     params = {
-        'model'        : am.Jobneed,
-        'model_jnd'        : am.JobneedDetails,
+        'model'        : Jobneed,
+        'model_jnd'        : JobneedDetails,
         'template_path':  'schedhuler/tasklist_jobneed.html',
         'fields': [
                 'jobdesc', 'people__peoplename', 'pgroup__groupname', 'id',
@@ -1197,7 +1196,7 @@ class JobneedTasks(LoginRequiredMixin, View):
 
 class SchdTasks(LoginRequiredMixin, View):
     params={
-        'model'        : am.Job,
+        'model'        : Job,
         'template_path': 'schedhuler/schd_tasklist_job.html',
         'fields'       : ['jobname', 'people__peoplename', 'pgroup__groupname',
                         'fromdate', 'uptodate', 'qset__qsetname', 'asset__assetname',
@@ -1211,10 +1210,10 @@ class SchdTasks(LoginRequiredMixin, View):
                 'endtime'     : time(00, 00, 00),
                 'fromdate'   : datetime.combine(date.today(), time(00, 00, 00)),
                 'uptodate'   : datetime.combine(date.today(), time(23, 00, 00)) + timedelta(days = 2),
-                'identifier'  : am.Job.Identifier.TASK,
-                'frequency'   : am.Job.Frequency.NONE,
-                'scantype'    : am.Job.Scantype.QR,
-                'priority'    : am.Job.Priority.LOW,
+                'identifier'  : Job.Identifier.TASK,
+                'frequency'   : Job.Frequency.NONE,
+                'scantype'    : Job.Scantype.QR,
+                'priority'    : Job.Priority.LOW,
                 'planduration': 0,
                 'gracetime'   : 0,
                 'expirytime'  : 0
@@ -1320,15 +1319,15 @@ class InternalTourScheduling(LoginRequiredMixin, View):
         'template_list': 'schedhuler/schd_i_tourlist_job.html',
         'form_class'   : scd_forms.Schd_I_TourJobForm,
         'subform'      : scd_forms.SchdChild_I_TourJobForm,
-        'model'        : am.Job,
+        'model'        : Job,
         'related'      : ['pgroup', 'people', 'bu'],
         'initial'      : {
             'starttime' : time(00, 00, 00),
             'endtime'   : time(00, 00, 00),
             'expirytime': 0,
-            'identifier': am.Job.Identifier.INTERNALTOUR,
-            'priority'  : am.Job.Priority.LOW,
-            'scantype'  : am.Job.Scantype.QR,
+            'identifier': Job.Identifier.INTERNALTOUR,
+            'priority'  : Job.Priority.LOW,
+            'scantype'  : Job.Scantype.QR,
             'gracetime' : 0,
             'planduration' : 0
         },
@@ -1352,11 +1351,11 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             return rp.JsonResponse({'data':list(objs)})
         
         if R.get('action') == 'loadAssetChekpointsForSelectField':
-            objs = am.Asset.objects.get_asset_checkpoints_for_tour(request)
+            objs = Asset.objects.get_asset_checkpoints_for_tour(request)
             return rp.JsonResponse({'items':list(objs), 'total_count':len(objs)}, status = 200)
         
         if R.get('action') == 'loadQuestionSetsForSelectField':
-            objs = am.QuestionSet.objects.get_qsets_for_tour(request)
+            objs = QuestionSet.objects.get_qsets_for_tour(request)
             return rp.JsonResponse({'items':list(objs), 'total_count':len(objs)}, status = 200)
 
         if R.get('id'):
@@ -1429,8 +1428,8 @@ class InternalTourScheduling(LoginRequiredMixin, View):
             raise ex
 
     def updatecheckpoints(self, pk):
-        job = am.Job.objects.get(id=pk)
-        updated = am.Job.objects.filter(
+        job = Job.objects.get(id=pk)
+        updated = Job.objects.filter(
             parent_id=pk).update(
                 people_id=job.people_id, pgroup_id=job.pgroup_id)
         log.info("checkpoints also updated according to parent record %s"%(updated))
@@ -1440,9 +1439,8 @@ class InternalTourScheduling(LoginRequiredMixin, View):
     # def save_checpoints_for_tour(self, checkpoints, job, request):
     #     try:
     #         log.info(f"saving Checkpoints found {len(checkpoints)} [started]")
-    #         ic(checkpoints)
     #         CP = {}
-    #         job = am.Job.objects.filter(id = job.id).values()[0]
+    #         job = Job.objects.filter(id = job.id).values()[0]
     #         self.params['model'].objects.filter(parent_id = job['id']).delete()
     #         count=0
     #         for cp in checkpoints:
@@ -1451,7 +1449,7 @@ class InternalTourScheduling(LoginRequiredMixin, View):
     #             CP['assetid']    = cp[1]
     #             CP['qsetid']     = cp[3]
     #             CP['seqno']       = cp[0]
-    #             obj = am.Job.objects.create(
+    #             obj = Job.objects.create(
     #                 **sutils.job_fields(job, CP)
     #             )
     #             putils.save_userinfo(obj, request.user, request.session)
@@ -1497,15 +1495,15 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         'template_form': 'schedhuler/schd_e_tourform_job.html',
         'template_list': 'schedhuler/schd_e_tourlist_job.html',
         'form_class'   : scd_forms.Schd_E_TourJobForm,
-        'model'        : am.Job,
+        'model'        : Job,
         'related'      : ['pgroup', 'people'],
         'initial'      : {
             'seqno':-1,
-            'identifier': am.Job.Identifier.EXTERNALTOUR,
-            'scantype':am.Job.Scantype.QR,
+            'identifier': Job.Identifier.EXTERNALTOUR,
+            'scantype':Job.Scantype.QR,
             'starttime':time(00,00,00),
             'endtime':time(00,00,00),
-            'priority':am.Job.Priority.HIGH,
+            'priority':Job.Priority.HIGH,
             'expirytime':0,
             'gracetime' : 0,
             'planduration' : 0,
@@ -1538,18 +1536,18 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         # return resp to populate the sites from sitgroup 
         if R.get('action') == "get_sitesfromgroup":
             if R['id'] == 'None': return rp.JsonResponse({'data':[]}, status = 200)
-            job = am.Job.objects.filter(id = int(R['id'])).values(*utils.JobFields.fields)[0]
+            job = Job.objects.filter(id = int(R['id'])).values(*utils.JobFields.fields)[0]
             objs = pm.Pgbelonging.objects.get_sitesfromgroup(job)
             return rp.JsonResponse({'data':list(objs)}, status = 200)
 
         if R.get('action') == "forcegetfromgroup" and R.get('sgroup_id')!='None' and R.get('id')!='None':
-            job = am.Job.objects.filter(id = int(R['id'])).values(*utils.JobFields.fields)[0]
+            job = Job.objects.filter(id = int(R['id'])).values(*utils.JobFields.fields)[0]
             objs = pm.Pgbelonging.objects.get_sitesfromgroup(job, force=True)
             return rp.JsonResponse({'rows':list(objs)}, status = 200)
         
         # return resp to load checklist
         if R.get('action') == "loadChecklist":
-            qset =  am.QuestionSet.objects.load_checklist(request)
+            qset =  QuestionSet.objects.load_checklist(request)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status = 200)
         
         # return resp to delete request
@@ -1575,7 +1573,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
         formData = QueryDict(request.POST.get('formData'))
         try:
             if R.get('postType') == 'saveCheckpoint':
-                data =  am.Job.objects.handle_save_checkpoint_sitetour(request)
+                data =  Job.objects.handle_save_checkpoint_sitetour(request)
                 return rp.JsonResponse(data, status = 200, safe=False)
             if R.get('action')=='saveCheckpoints':
                 checkpoints =  json.loads(R.get('checkpoints'))
@@ -1601,7 +1599,7 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
             with transaction.atomic(using = utils.get_current_db_name()):
                 job = form.save(commit=False)
                 if request.POST.get('pk'):
-                    am.Job.objects.filter(parent_id = job.id).update(
+                    Job.objects.filter(parent_id = job.id).update(
                         qset_id = job.qset_id,
                         people_id= job.people_id,
                         pgroup_id=job.pgroup_id)
@@ -1623,13 +1621,13 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
     @staticmethod
     def saveCheckpointsinJob(R, checkpoints, P, request):
         try:
-            job = am.Job.objects.filter(id = int(R['job_id'])).values()[0]
+            job = Job.objects.filter(id = int(R['job_id'])).values()[0]
             P['model'].objects.filter(parent_id = job['id']).delete()
             count=0
             for cp in checkpoints:
                 print("CP: ",cp)
                 print("Fields",sutils.job_fields(job,cp,external=True))
-                obj = am.Job.objects.create(
+                obj = Job.objects.create(
                     **sutils.job_fields(job, cp, external=True))
                 putils.save_userinfo(obj, request.user, request.session, bu=cp['buid'])
                 count+=1
@@ -1643,8 +1641,8 @@ class ExternalTourScheduling(LoginRequiredMixin, View):
 
 class JobneednJNDEditor(LoginRequiredMixin, View):
     params = {
-        'model':am.Jobneed,
-        'jnd':am.JobneedDetails,
+        'model':Jobneed,
+        'jnd':JobneedDetails,
         'fields':['id', 'quesname', 'answertype', 'min', 'max', 'options', 'alerton',
                   'ismandatory']
     }
@@ -1667,7 +1665,7 @@ class JobneednJNDEditor(LoginRequiredMixin, View):
 
 
 class ExternalTourTracking(LoginRequiredMixin, View):
-    model = am.Jobneed
+    model = Jobneed
     template = 'schedhuler/site_tour_tracking.html'
     
     def get(self,  request, *args, **kwargs):

@@ -1,5 +1,4 @@
 # save json datafield of Bt table
-from icecream import ic
 from django.db.models import Q
 import re
 import os
@@ -22,7 +21,6 @@ logger = logging.getLogger('django')
 dbg = logging.getLogger('__main__').debug
 
 def save_json_from_bu_prefsform(bt, buprefsform):
-    ic(buprefsform.cleaned_data)
     try:
         for k, _ in bt.bupreferences.items():
             if k in (
@@ -69,8 +67,6 @@ def update_children_tree(instance, newcode, newtype, whole = False):
     """Updates tree of child bu tree's"""
     try:
         childs = Bt.objects.get_all_bu_of_client(instance.id)
-        ic(instance.id, childs)
-        ic(instance.bucode, newcode)
         if len(childs) > 1:
             childs = Bt.objects.filter(id__in = childs).order_by('id')
             print(childs)
@@ -80,14 +76,12 @@ def update_children_tree(instance, newcode, newtype, whole = False):
                 newtreepart = f'{newtype} :: {newcode}'
 
                 if oldtree == oldtreepart:
-                    ic('saved')
                     instance.butree = newtreepart
                     instance.save()
                 elif oldtree and oldtreepart != newtreepart:
                     newtree = bt.butree.replace(oldtreepart, newtreepart)
                     bt.butree = newtree
                     bt.save()
-                    ic(bt.bucode)
     except Exception:
         logger.critical(
             "update_children_tree(instance, newcode, newtype)... FAILED", exc_info = True)
@@ -187,7 +181,6 @@ def create_bv_reportting_heirarchy(instance, newcode, newtype, parent):
     if instance.id is None:
         dbg("Creating the reporting heirarchy!")
         # create bu tree
-        ic(instance.bucode, parent, newcode, newtype)
         if hasattr(instance, 'bucode')  and hasattr(parent, 'bucode'):
             if instance.bucode != "NONE" and parent.bucode == 'NONE':
                 # Root Node
@@ -526,7 +519,7 @@ def get_resource_and_dataset(request, form, mode_resource_map):
                 tf.write(chunk)
             request.session["temp_file_name"] = tf.name
     # Replace NaN with None
-    df = df.applymap(lambda x: None if pd.isna(x) else x)
+    df = df.where(~df.isna(), None)
     # Convert the DataFrame to a Dataset
     dataset = Dataset()
     dataset.headers = df.columns.tolist()

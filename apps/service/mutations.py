@@ -177,8 +177,6 @@ class InsertRecord(graphene.Mutation):
 
 class ReportMutation(graphene.Mutation):
     output = graphene.Field(ty.ServiceOutputType)
-    # msg = graphene.String()
-    # ic(output)
     class Arguments:
         records = graphene.List(graphene.String,required = True)
 

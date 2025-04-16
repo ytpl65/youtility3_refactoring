@@ -279,3 +279,5 @@ class Subscription(BaseModel, TenantAwareModel):
             models.UniqueConstraint(
                 fields=['startdate', 'enddate', 'client'], name='startdate_enddate_client_uk')
         ]
+
+

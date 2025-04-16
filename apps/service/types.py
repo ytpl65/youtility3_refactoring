@@ -1,97 +1,112 @@
-from graphene_django.types import DjangoObjectType
-from typing import List
 import graphene
-from djantic import ModelSchema
-from graphene_gis.scalars import  PointScalar
-from graphene_gis.converter import gis_converter  # noqa
-from datetime import datetime
-from apps.attendance.models import (
-    PeopleEventlog, Tracking, TestGeo
-)
-from apps.activity.models import (
-    Job, Jobneed, JobneedDetails, Asset, Question, QuestionSet, QuestionSetBelonging
-)
-from apps.onboarding.models import TypeAssist
-from apps.peoples.models import (
-    People,
-    Pgbelonging,
-    Pgroup
-)
+from graphene_django.types import DjangoObjectType
 from graphene_file_upload.scalars import Upload
+from .converters import convert_point_field, convert_linestring_field, convert_polygon_field
+from apps.activity.models.asset_model import Asset
+from apps.activity.models.job_model import Job, Jobneed, JobneedDetails
+from apps.activity.models.question_model import Question, QuestionSet, QuestionSetBelonging
+from apps.attendance.models import PeopleEventlog, TestGeo, Tracking
+from apps.onboarding.models import TypeAssist
+from apps.peoples.models import People, Pgbelonging, Pgroup
+
+from .scalars import LineStringScalar, PointScalar, PolygonScalar
+
+
+class PointFieldType(graphene.ObjectType):
+    latitude = graphene.Float(description="Latitude")
+    longitude = graphene.Float(description="Longitude")
+
+
+class LineStringPointType(graphene.ObjectType):
+    latitude = graphene.Float(description="Latitude")
+    longitude = graphene.Float(description="Longitude")
+
+
+class PolygonPointType(graphene.ObjectType):
+    latitude = graphene.Float(description="Latitude")
+    longitude = graphene.Float(description="Longitude")
+
 
 class PELogType(DjangoObjectType):
+    startlocation = PointScalar(description="Start location")
+    endlocation = PointScalar(description="End location")
+    journeypath = LineStringScalar(description="Journey path")
 
     class Meta:
         model = PeopleEventlog
+        fields = "__all__"
+        convert_choices_to_enum = False
 
-class JNDType(graphene.InputObjectType):
-    cuser__id   = graphene.Int(required = True)
-    muser__id   = graphene.Int(required = True)
-    tenant_id   = graphene.Int(required = True)
-    question_id = graphene.Int(required = True)
-    jobneed_id  = graphene.Int(required = True)
-    seqno       = graphene.Int(required = True)
-    cdtz        = graphene.String(required = True)
-    mdtz        = graphene.String(required = True)
-    answertype  = graphene.String(required = True)
-    answer      = graphene.String(required = True)
-    isavpt      = graphene.Boolean(required = True)
-    ismadatory  = graphene.Boolean(required = True)
-    alerts      = graphene.Boolean(required = True)
-    question_id = graphene.Int(required = True)
-    options     = graphene.String(required = True)
-    min         = graphene.Float(required = True)
-    max         = graphene.Float(required = True)
+    def resolve_startlocation(self, info):
+        if self.startlocation:
+            return {'latitude': self.startlocation.y, 'longitude': self.startlocation.x}
+        return None
+    
+    def resolve_endlocation(self,info):
+        if self.endlocation:
+            return {'latitude':self.endlocation.y, 'longitude':self.endlocation.x}
+        return None
+    
+    def resolve_journeypath(self,info):
+        if self.journeypath:
+            return [[{'latitude': point[1], 'longitude': point[0]} 
+                    for point in line.coords] 
+                    for line in [self.journeypath]]
+        return None
 
-    # class Meta:
-    #     model = JobneedDetails
-    #     fields = ['seqno', 'cdtz', 'mdtz', 'answertype', 'answer', 'options', 'min',
-    #               'max', 'alerton', 'ismadatory', 'alerts']
-
-class JndType(DjangoObjectType):
-    class Meta:
-        model = JobneedDetails
 
 class TrackingType(DjangoObjectType):
+    gpslocation = PointScalar(description="GPS location")
+
     class Meta:
         model = Tracking
-        fields = '__all__'
+        fields = "__all__"
+        convert_choices_to_enum = False
+
 
 class TestGeoType(DjangoObjectType):
+    point = PointScalar(description="Point")
+    line = LineStringScalar(description="Line")
+    poly = PolygonScalar(description="Polygon")
+
     class Meta:
         model = TestGeo
-        fields = '__all__'
+        fields = "__all__"
+        convert_choices_to_enum = False
+
 
 class PeopleType(DjangoObjectType):
-
     class Meta:
         model = People
-        fields = '__all__'
+        fields = "__all__"
+
 
 class VerifyClientOutput(graphene.ObjectType):
-    rc        = graphene.Int(default_value = 0)
-    msg       = graphene.String()
-    url = graphene.String(default_value = "")
-    
+    rc = graphene.Int(default_value=0,description="Response code")
+    msg = graphene.String(description="Message")
+    url = graphene.String(default_value="",description="URL")
+
+
 class BasicOutput(graphene.ObjectType):
-    rc = graphene.Int(default_value=0)
-    msg = graphene.String()
-    email = graphene.String()
-    
+    rc = graphene.Int(default_value=0,description="Response code")
+    msg = graphene.String(description="Message")
+    email = graphene.String(description="Email")
+
+
 class DowntimeResponse(graphene.ObjectType):
-    message = graphene.String()
-    startDateTime = graphene.String(default_value="")
-    endDateTime = graphene.String(default_value="")
+    message = graphene.String(description="Message")
+    startDateTime = graphene.String(default_value="",description="Start date time")
+    endDateTime = graphene.String(default_value="",description="End date time")
+
 
 class LoginResponseType(DjangoObjectType):
-    tenantid = graphene.Int()
-    shiftid = graphene.Int()
+    tenantid = graphene.Int(description="Tenant id")
+    shiftid = graphene.Int(description="Shift id")
 
     class Meta:
         model = People
-        fields = [
-            'peoplecode', 'loginid', 'peoplename', 'isadmin',
-             'email', 'mobno']
+        fields = ["peoplecode", "loginid", "peoplename", "isadmin", "email", "mobno"]
+
     @staticmethod
     def resolve_tenantid(info, *args, **kwargs):
         print("called")
@@ -101,164 +116,187 @@ class LoginResponseType(DjangoObjectType):
         print(dir(info.context.body))
         print(info.context.content_params)
 
+
 class AssetType(DjangoObjectType):
+    gpslocation = graphene.Field(PointFieldType)
+
+    def resolve_gpslocation(self, info):
+        if self.gpslocation:
+            return PointFieldType(
+                latitude=self.gpslocation.y, longitude=self.gpslocation.x
+            )
+        return None
+
     class Meta:
         model = Asset
+        fields = "__all__"  # Instead of exclude, use fields
+        convert_choices_to_enum = False
+
 
 class QuestionType(DjangoObjectType):
     class Meta:
         model = Question
 
+
 class QSetType(DjangoObjectType):
     class Meta:
         model = QuestionSet
+
 
 class QSetBlngType(DjangoObjectType):
     class Meta:
         model = QuestionSetBelonging
 
+
 class PgBlngType(DjangoObjectType):
     class Meta:
         model = Pgbelonging
+
 
 class PgroupType(DjangoObjectType):
     class Meta:
         model = Pgroup
 
 
-
 class AuthInput(graphene.InputObjectType):
-    clientcode = graphene.String(required = True)
-    loginid    = graphene.String(required = True)
-    password   = graphene.String(required = True)
-    deviceid   = graphene.String(required = True)
+    clientcode = graphene.String(required=True,description="Client code")
+    loginid = graphene.String(required=True,description="Login id")
+    password = graphene.String(required=True,description="Password")
+    deviceid = graphene.String(required=True,description="Device id")
+
 
 class AuthOutput(graphene.ObjectType):
-    isauthenticated = graphene.Boolean()
-    user            = graphene.Field(PeopleType)
-    msg             = graphene.String()
+    isauthenticated = graphene.Boolean(description="Is authenticated")
+    user = graphene.Field(PeopleType,description="User")
+    msg = graphene.String(description="Message")
 
-class TyType(DjangoObjectType): 
+
+class TyType(DjangoObjectType):
     class Meta:
         model = TypeAssist
-        fields = [
-            'id', 'tacode', 'taname'
-        ]
+        fields = ["id", "tacode", "taname"]
+
 
 class BaseReturnType:
-    user = graphene.Field(PeopleType)
-    status = graphene.Int()
-    msg = graphene.String()
+    user = graphene.Field(PeopleType,description="User")
+    status = graphene.Int(description="Status")
+    msg = graphene.String(description="Message")
+
 
 class RowInput(graphene.InputObjectType):
-    columns   = graphene.List(graphene.String)
-    values    = graphene.List(graphene.String)
-    tablename = graphene.String()
+    columns = graphene.List(graphene.String,description="Columns")
+    values = graphene.List(graphene.String,description="Values")
+    tablename = graphene.String(description="Table name")
+
 
 class RowOutput(graphene.ObjectType):
-    id = graphene.Int()
-    msg = graphene.JSONString()
-
+    id = graphene.Int(description="Id")
+    msg = graphene.JSONString(description="Message")
 
 
 class TemplateReportInput(graphene.InputObjectType):
-    questionsetid = graphene.Int(required = True)
-    tablename     = graphene.String(required = True)
-    columns       = graphene.List(graphene.String)
-    values        = graphene.List(graphene.String)
-    childs        = graphene.List(graphene.String)
+    questionsetid = graphene.Int(required=True,description="Question set id")
+    tablename = graphene.String(required=True,description="Table name")
+    columns = graphene.List(graphene.String,description="Columns")
+    values = graphene.List(graphene.String,description="Values")
+    childs = graphene.List(graphene.String,description="Childs")
 
 
 class AttachmentInput(graphene.InputObjectType):
-    file     = Upload(required = True)
-    pelogid  = graphene.Int(required = True)
-    peopleid = graphene.Int(required = True)
-    filename = graphene.String(required = True)
-    path     = graphene.String(required = True)
-
+    file = Upload(required=True,description="File")
+    pelogid = graphene.Int(required=True,description="People event log id")
+    peopleid = graphene.Int(required=True,description="People id")
+    filename = graphene.String(required=True,description="File name")
+    path = graphene.String(required=True,description="Path")
 
 
 class AdhocInputType(graphene.InputObjectType):
-    plandatetime = graphene.String(required = True)
-    jobdesc      = graphene.String(required = True)
-    bu_id        = graphene.Int(required = True)
-    people_id    = graphene.Int(required = True)
-    site_id      = graphene.Int(required = True)
-    qset_id      = graphene.Int(required = True)
-    remarks      = graphene.String(required = False)
+    plandatetime = graphene.String(required=True,description="Plan date time")
+    jobdesc = graphene.String(required=True,description="Job description")
+    bu_id = graphene.Int(required=True,description="Business unit id")
+    people_id = graphene.Int(required=True,description="People id")
+    site_id = graphene.Int(required=True,description="Site id")
+    qset_id = graphene.Int(required=True,description="Question set id")
+    remarks = graphene.String(required=False,description="Remarks")
+
 
 class TestJsonInput(graphene.InputObjectType):
-    file = Upload(required = True)
-    sevicename = graphene.String(required = True)
+    file = Upload(required=True,description="File")
+    sevicename = graphene.String(required=True,description="Service name")
+
 
 class ServiceOutputType(graphene.ObjectType):
-    rc        = graphene.Int(default_value = 0)
-    msg       = graphene.String()
-    recordcount  = graphene.Int()
-    traceback = graphene.String(default_value = 'NA')
-    uuids = graphene.List(graphene.String, default_value = ())
+    rc = graphene.Int(default_value=0,description="Response code")
+    msg = graphene.String(description="Message")
+    recordcount = graphene.Int(description="Record count")
+    traceback = graphene.String(default_value="NA",description="Trace back")
+    uuids = graphene.List(graphene.String, default_value=(),description="UUIDs")
 
 
-
-class JobSchema(ModelSchema):
-    class Config:
+class JobType(DjangoObjectType):
+    class Meta:
         model = Job
-        exclude = ['other_info']
+        exclude = ["other_info"]  # Only using exclude, removed fields='__all__'
 
-class JndSchema(ModelSchema):
-    class Config:
+
+class JobneedDetailsType(DjangoObjectType):
+    class Meta:
         model = JobneedDetails
+        fields = "__all__"
 
-class JobneedSchema(ModelSchema):
-    detals: List[JndSchema]
-    class Config:
+
+class JobneedType(DjangoObjectType):
+    details = graphene.List(JobneedDetailsType)
+
+    class Meta:
         model = Jobneed
-        exclude = ['other_info', 'receivedonserver']
+        exclude = ["other_info", "receivedonserver"]  # Only using exclude
+
+    def resolve_details(self, info):
+        return JobneedDetails.objects.filter(jobneed=self)
 
 
 class JobneedMdtzAfter(graphene.ObjectType):
-    jobneedid         = graphene.Int()
-    jobdesc           = graphene.String()
-    plandatetime      = graphene.String()
-    expirydatetime    = graphene.String()
-    receivedonserver  = graphene.String()
-    starttime         = graphene.String()
-    endtime           = graphene.String()
-    gpslocation       = PointScalar()
-    remarks           = graphene.String()
-    cdtz              = graphene.String()
-    mdtz              = graphene.String()
-    jobstatus         = graphene.String()
-    jobtype           = graphene.String()
-    pgroup_id         = graphene.Int()
-    asset_id          = graphene.Int()
-    cuser_id          = graphene.Int()
-    muser_id          = graphene.Int()
-    performedby_id    = graphene.Int()
-    bu_id             = graphene.Int()
-    job_id            = graphene.Int()
-    seqno             = graphene.Int()
-    ticketcategory_id = graphene.Int()
-    ctzoffset         = graphene.Int()
-    multifactor       = graphene.Decimal()
-    frequency         = graphene.String()
-
+    jobneedid = graphene.Int(description="Job need id")
+    jobdesc = graphene.String(description="Job description")
+    plandatetime = graphene.String(description="Plan date time")
+    expirydatetime = graphene.String(description="Expiry date time")
+    receivedonserver = graphene.String(description="Received on server")
+    starttime = graphene.String(description="Start time")
+    endtime = graphene.String(description="End time")
+    gpslocation = PointScalar(description="GPS location")
+    remarks = graphene.String(description="Remarks")
+    cdtz = graphene.String(description="Created date time")
+    mdtz = graphene.String(description="Modified date time")
+    jobstatus = graphene.String(description="Job status")
+    jobtype = graphene.String(description="Job type")
+    pgroup_id = graphene.Int(description="People group id")
+    asset_id = graphene.Int(description="Asset id")
+    cuser_id = graphene.Int(description="Created user id")
+    muser_id = graphene.Int(description="Modified user id")
+    performedby_id = graphene.Int(description="Performed by id")
+    bu_id = graphene.Int(description="Business unit id")
+    job_id = graphene.Int(description="Job id")
+    seqno = graphene.Int(description="Sequence number")
+    ticketcategory_id = graphene.Int(description="Ticket category id")
+    ctzoffset = graphene.Int(description="Client timezone offset")
+    multifactor = graphene.Decimal(description="Multi factor")
+    frequency = graphene.String(description="Frequency")
 
 
 class SelectOutputType(graphene.ObjectType):
-    nrows   = graphene.Int()
-    ncols    = graphene.Int()
-    msg     = graphene.String()
-    rc      = graphene.Int(default_value = 0)
-    records = graphene.JSONString()
+    nrows = graphene.Int(description="Number of rows")
+    ncols = graphene.Int(description="Number of columns")
+    msg = graphene.String(description="Message")
+    rc = graphene.Int(default_value=0,description="Response code")
+    records = graphene.JSONString(description="Records")
+
 
 class UploadAttType(graphene.InputObjectType):
-    record = graphene.JSONString(required = True)
-    tablname = graphene.String(required = True)
-    file = Upload() 
-
+    record = graphene.JSONString(required=True,description="Record")
+    tablname = graphene.String(required=True,description="Table name")
+    file = Upload(description="File")
 
 
 class GetPdfUrl(graphene.ObjectType):
-    url = graphene.String()
-    
+    url = graphene.String(description="URL")

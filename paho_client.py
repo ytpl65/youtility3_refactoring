@@ -83,7 +83,7 @@ class MqttClient:
     def on_connect(self, client, userdata, flags, rc, props):
         log.info("Hello %s",rc)
         if rc == 'Success':
-            print("Connected to MQTT Broker!")
+            log.info("Connected to MQTT Broker!")
             client.subscribe(GRAPHQL_MUTATION, qos=1)
             client.subscribe(MUTATION_STATUS, qos=1)
             client.subscribe(TESTMQ)
@@ -172,7 +172,7 @@ class MqttClient:
             raise e
 
     def on_disconnect(self, client, userdata, disconnect_flags, rc, props):
-        print("Disconnected from MQTT broker", userdata)
+        log.info("Disconnected from MQTT broker")
 
     def loop_forever(self):
         # Connect to MQTT broker
@@ -181,12 +181,10 @@ class MqttClient:
     
     def publish_message(self,topic,message):
         result_code, mid = self.client.publish(topic, message,qos=0)
-        print(result_code)
-        print(mid)
         if result_code == mqtt.MQTT_ERR_SUCCESS:
-            print(f"Message sent to topic `{topic}`: {message}")
+            log.info("Message sent Successfully")
         else:
-            print(f"Failed to send message to topic `{topic}`, result code: {result_code}")
+            log.info("Failed to send message to topic ")
 
 
 if __name__ == "__main__":

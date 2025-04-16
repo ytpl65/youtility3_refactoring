@@ -15,8 +15,12 @@ from apps.reminder.models import Reminder
 import random
 import traceback as tb
 from intelliwiz_config.celery import app
+from django.db import IntegrityError
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from django.core.mail import mail_admins
+import traceback
+
 log = get_task_logger('__main__')
 
 def create_dynamic_job(jobids=None):
@@ -63,56 +67,74 @@ def create_dynamic_job(jobids=None):
         return {"errors":"Something Went Wrong!"}
     
     
+def filter_jobs(jobids=None):
+    from django.utils import timezone
+    current_date = timezone.now()
+    query = am.Job.objects.filter(
+        ~Q(jobname='NONE'),
+        ~Q(cron='* * * * *'),
+        ~Q(asset__runningstatus=am.Asset.RunningStatus.SCRAPPED),
+        parent_id=1,
+        enable=True,
+        other_info__isdynamic=False,
+        uptodate__gte=current_date
+    ).select_related(
+        "asset", "pgroup", "cuser", "muser", "qset", "people",
+    ).values(*utils.JobFields.fields)
+    return list(query)
 
 
+def process_job(job):
+    startdtz, enddtz = calculate_startdtz_enddtz(job)
+    DT, is_cron, resp = get_datetime_list(job['cron'], startdtz, enddtz, {})
+    if not is_cron:
+        log.warning(f"Invalid cron expression for job {job['id']}: {job['cron']}")
+        return {'msg': f"Invalid cron expression for job {job['id']}: {job['cron']}"}
+    if not DT and is_cron:
+        return {'msg': f" Jobs are scheduled for job with id: {job['id']} between {startdtz} and {enddtz} "}
+
+    status, resp = insert_into_jn_and_jnd(job, DT, {})
+    resp = []
+    return resp
 
 @shared_task(name="create_job()")
-def create_job(jobids = None):
-    startdtz = enddtz = msg = resp = None
-    result = {'story':[]}
+def create_job(jobids=None):
+    import time
+    result = {'story': []}
+    start_time = time.time()
+    try:
+        jobs = filter_jobs(jobids)
+        log.info(f"Total jobs: {len(jobs)}")
+        for job in jobs:
+            try:
+                with transaction.atomic(using=utils.get_current_db_name()):
+                    try:
+                        resp = process_job(job)
+                        result['story'].append(resp)
+                    except Exception as e:
+                        log.error(f"Job {job['id']} failed inside atomic block", exc_info=True)
+                        mail_admins(
+                            subject=f"[ALERT] Job {job['id']} failed in atomic block",
+                            message=f"Job ID: {job['id']} failed.\n\nTraceback:\n{traceback.format_exc()}",
+                            fail_silently=True  # Optional: Set to False if you want to raise if email sending fails
+                        )
+                        result['story'].append({'msg': f"Job {job['id']} failed inside atomic block"})
+            except Exception as e:
+                log.error(f"Failed to process job {job['id']}", exc_info=True)
+                mail_admins(
+                    subject=f"[ALERT] Job {job['id']} failed in atomic block",
+                    message=f"Job ID: {job['id']} failed.\n\nTraceback:\n{traceback.format_exc()}",
+                    fail_silently=True  # Optional: Set to False if you want to raise if email sending fails
+                )
+                result['story'].append({'msg': f"Failed to process job {job['id']}"})
+    except Exception as e:
+        log.critical("Something went wrong!", exc_info=True)
+        raise
+    end_time = time.time()
+    print(f"Time taken: {end_time - start_time}")
+    log.info(f"Time Taken: {end_time - start_time}")
+    return result
 
-    from django.utils.timezone import get_current_timezone
-    with transaction.atomic(using = utils.get_current_db_name()):
-        try:
-            jobs = am.Job.objects.filter(
-                ~Q(jobname='NONE'),
-                ~Q(cron='* * * * *'),
-                ~Q(asset__runningstatus = am.Asset.RunningStatus.SCRAPPED),
-                parent_id = 1,
-                enable = True,
-                other_info__isdynamic=False,
-            ).select_related(
-                "asset", "pgroup",
-                "cuser", "muser", "qset", "people",
-            ).values(*utils.JobFields.fields)
-            if jobids:
-                jobs = jobs.filter(id__in = jobids)
-            
-
-
-            if not jobs:
-                msg = "No jobs found schedhuling terminated"
-                resp = {'msg':f"{msg}"}
-                log.warning(f"{msg}", exc_info = True)
-            total_jobs = len(jobs)
-
-            if total_jobs > 0 or jobs is not None:
-                log.info("\nprocessing jobs started found:= '%s' jobs", (len(jobs)))
-                for idx, job in enumerate(jobs):
-                    startdtz, enddtz = calculate_startdtz_enddtz(job)
-                    log.debug(f"Jobs to be schedhuled from startdatetime {startdtz} to enddatetime {enddtz}")
-
-                    DT, is_cron, resp = get_datetime_list(job['cron'], startdtz, enddtz, resp)
-                    if not DT: 
-                        resp =  {'msg':"Please check your Valid From and Valid To dates"}
-                        continue
-                    log.debug(
-                        "Jobneed will going to create for all this datetimes\n %s", (pformat(get_readable_dates(DT))))
-                    status, resp = insert_into_jn_and_jnd(job, DT, resp)
-                    result['story'].append(resp)
-        except Exception as e:
-            log.critical("something went wrong!", exc_info=True)
-    return resp, result
 
 def calculate_startdtz_enddtz(job):
     """
@@ -130,12 +152,13 @@ def calculate_startdtz_enddtz(job):
     vfrom        = job['fromdate'].replace(microsecond = 0, tzinfo = tz)  + timedelta(minutes = ctzoffset)
     vupto        = job['uptodate'].replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
     ldtz         = job['lastgeneratedon'].replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
-    current_date= datetime.utcnow().replace(tzinfo=timezone.utc).replace(microsecond=0)
-    current_date= current_date.replace(tzinfo = tz) + timedelta(minutes= ctzoffset)
+
+    current_date = datetime.now(timezone.utc).replace(microsecond=0)
+    current_date = current_date.astimezone(tz) + timedelta(minutes=ctzoffset)
+
 
     if mdtz > cdtz:
         ldtz = current_date
-        # delete all old record
         delete_old_jobs(job['id'])
     startdtz = vfrom
 
@@ -144,6 +167,7 @@ def calculate_startdtz_enddtz(job):
     if startdtz < current_date:
         startdtz = current_date
         ldtz     = current_date
+
     enddtz = ((current_date + timedelta(days = 2)) - ldtz) + ldtz
     if vupto < enddtz:
         enddtz = vupto
@@ -209,7 +233,6 @@ def insert_into_jn_and_jnd(job, DT, resp):
             crontype = job['identifier']
             jobstatus = 'ASSIGNED'
             jobtype = 'SCHEDULE'
-            #assignee = job.pgroup.groupname if job['people_id'] == 1 else job.people.peoplename
             jobdesc = f'{job["jobname"]}'
             asset = am.Asset.objects.get(id = job['asset_id'])
             multiplication_factor = asset.asset_json['multifactor']
@@ -257,7 +280,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
 
         log.info("insert_into_jn_and_jnd() [ End ]")
     return status, resp
-    
+
 def insert_into_jn_dynamic_for_parent(job, params):
     defaults={
             'ctzoffset'        : job['ctzoffset'],
@@ -323,21 +346,22 @@ def insert_into_jn_for_parent(job, params):
             'pgroup_id' : job['pgroup_id'],
             'parent' : params['NONE_JN'],
         }
-    obj, iscreated = am.Jobneed.objects.get_or_create(
-        defaults=defaults,
-        job_id         = job['id'],
-        jobtype        = params['jobtype'],
-        plandatetime = params['pdtz'],
-        expirydatetime = params['edtz'],
-        parent = params['NONE_JN'],
-    )
-    log.info("{}".format("record is created" if iscreated else "record is not created"))
-    return obj
-
-
+    try:
+        obj, iscreated = am.Jobneed.objects.get_or_create(
+            defaults=defaults,
+            job_id=job['id'],
+            jobtype=params['jobtype'],
+            plandatetime=params['pdtz'],
+            expirydatetime=params['edtz'],
+            parent=params['NONE_JN'],
+        )
+        log.info(f"Job {job['id']}: {'record created' if iscreated else 'record already exists'}")
+        return obj
+    except Exception as e:
+        log.error(f"Failed to insert job {job['id']}: {str(e)}", exc_info=True)
+        raise
     
 def insert_update_jobneeddetails(jnid, job, parent=False):
-    # sourcery skip: use-contextlib-suppress
     log.info("insert_update_jobneeddetails() [START]")
     from django.utils.timezone import get_current_timezone
     tz = get_current_timezone()
@@ -346,7 +370,12 @@ def insert_update_jobneeddetails(jnid, job, parent=False):
     except am.JobneedDetails.DoesNotExist:
         pass
     try:
-        qsb = utils.get_or_create_none_qsetblng() if parent else am.QuestionSetBelonging.objects.select_related('question').filter(qset_id=job['qset_id']).order_by('seqno').values_list(named=True)
+        if parent:
+            qsb = utils.get_or_create_none_qsetblng()
+            log.info(f"It is parent record so creating none qsetbelonging record")
+        else:
+            log.info(f"qset_id {job['qset_id']} job_id {job['id']} jobname {job['jobname']} job_created_on {job['cdtz']} job_modified_on {job['mdtz']}" )
+            qsb = am.QuestionSetBelonging.objects.select_related('question').filter(qset_id=job['qset_id']).order_by('seqno').values_list(named=True)
         if qsb:
             log.info(f'Checklist found with {len(qsb) if isinstance(qsb, QuerySet) else 1} questions in it.')
             insert_into_jnd(qsb, job, jnid, parent)
@@ -375,7 +404,6 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
                   'm_factor':None, 'idx':None, 'NONE_P':NONE_P, 'parent_other_info':parent_other_info}
         L = list(R)
         if job['other_info']['is_randomized'] in ['True', True] and len(R) > 1:
-            #randomize data if it is random tour job
             random.shuffle(L)
             R = calculate_route_details(L, job)
             tour_freq = int(job['other_info']['tour_frequency'])
@@ -386,8 +414,6 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
         prev_edtz = _pdtz
         brektime_idx = len(R)//tour_freq
         for idx, r in enumerate(R):
-            log.info(f"create_child_tasks() [{idx}] child job:= {r['jobname']} | job:= {r['id']} | cron:= {r['cron']}")
-
             asset = am.Asset.objects.get(id = r['asset_id'])
             params['m_factor'] = asset.asset_json['multifactor']
             jobdescription = f"{r['asset__assetname']} - {r['jobname']}" 
@@ -574,7 +600,6 @@ def delete_old_jobs(job_id, ppm=False):
 
     # Set the old date to 1970-01-01 00:00:00 UTC.
     old_date = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-
     # Update jobneeddetails
     jobneed_ids = am.Jobneed.objects.filter(plandatetime__gt=dtimezone.now(), job_id__in=job_ids).values_list('id', flat=True)
     jnd_count = am.JobneedDetails.objects.filter(jobneed_id__in=jobneed_ids).update(cdtz=old_date, mdtz=old_date)
@@ -819,16 +844,25 @@ def delete_from_jobneed(parentjob, checkpointId, checklistId):
         raise
 
 def update_lastgeneratedon(job, pdtz):
+    """
+    Updates the 'lastgeneratedon' field for the specified job.
+    """
     try:
-        log.info('update_lastgeneratedon [start]')
-        if rec := am.Job.objects.filter(id = job['id']).update(
-            lastgeneratedon = pdtz
-        ):
-            log.info(f"after lastgenreatedon:={pdtz}")
-        log.info('update_lastgeneratedon [end]')
-    except Exception:
-        log.critical("update_lastgeneratedon() raised error", exc_info=True)
-        raise
+        log.info(f"update_lastgeneratedon [start] for job_id={job['id']} with pdtz={pdtz}")
+        
+        # Perform the update
+        updated = am.Job.objects.filter(id=job['id']).update(lastgeneratedon=pdtz)
+        
+        if updated:
+            log.info(f"update_lastgeneratedon [success] updated lastgeneratedon to {pdtz} for job_id={job['id']}")
+        else:
+            log.warning(f"update_lastgeneratedon [warning] no job found with id={job['id']}")
+        
+        log.info(f"update_lastgeneratedon [end] for job_id={job['id']}")
+    
+    except Exception as e:
+        log.critical(f"update_lastgeneratedon [error] failed to update job_id={job['id']} with pdtz={pdtz}: {str(e)}", exc_info=True)
+        raise RuntimeError(f"Failed to update lastgeneratedon for job_id={job['id']}") from e
     
 def get_readable_dates(dt_list):
     if (isinstance(dt_list, list)):

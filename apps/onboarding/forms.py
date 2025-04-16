@@ -6,7 +6,6 @@ from django.db.models.query_utils import Q
 from django.utils.translation import gettext_lazy as _
 from apps.core import utils
 # from thirdparty apps and packages
-from icecream import ic
 from django_select2 import forms as s2forms
 from django.conf import settings
 import json
@@ -76,7 +75,6 @@ class TypeAssistForm(SuperTypeAssistForm):
         S = self.request.session
         super().__init__(*args, **kwargs)
         self.fields['enable'].initial = True
-        # ic(obm.TypeAssist.objects.filter(enable = True, client_id__in =  [S['client_id'], 1]))
         self.fields['tatype'].queryset = obm.TypeAssist.objects.filter((Q(cuser__is_superuser = True) | Q(client_id__in =  [S['client_id'], 1])), enable=True )
         utils.initailize_form_fields(self)
 
@@ -87,7 +85,6 @@ class TypeAssistForm(SuperTypeAssistForm):
     
     def clean(self):
         super().clean()
-        ic(self.cleaned_data['tatype'])
 
     def clean_tacode(self):
         super().clean_tacode()
@@ -159,7 +156,6 @@ class BtForm(forms.ModelForm):
         """Initializes form"""
         self.client = kwargs.pop('client', False)
         self.request = kwargs.pop('request', False)
-        ic(self.request)
         S = self.request.session
         super().__init__(*args, **kwargs)
         if self.client:
@@ -433,16 +429,12 @@ class ClentForm(BuPrefForm):
         super().__init__(*args, **kwargs)
         utils.initailize_form_fields(self)
         web, mob, portlet, report = create_caps_choices_for_clientform()
-        ic(web)
-        ic(mob)
-        ic(report)
         self.fields['webcapability'].choices = web
         self.fields['mobilecapability'].choices = mob
         self.fields['reportcapability'].choices = report
         self.fields['portletcapability'].choices = portlet
     
     def clean(self):
-        ic("called")
         cleaned_data = super().clean()
         if not cleaned_data.get('mobilecapability') and not cleaned_data.get('webcapability'):
             msg = "Please select atleast one capability"
@@ -450,7 +442,6 @@ class ClentForm(BuPrefForm):
             self.add_error("webcapability", msg)
         #if usereliver is checked then reliveronpeoplecount should be greater than 0
         if cleaned_data.get('usereliver') and cleaned_data.get('reliveronpeoplecount') <= 0:
-            ic(cleaned_data.get('usereliver'), cleaned_data.get('reliveronpeoplecount'))
             self.add_error('reliveronpeoplecount', "Reliver on people count should be greater than 0")
             
     
@@ -499,9 +490,16 @@ class ImportForm(forms.Form):
         ('SHIFT', 'Shift'),
         ('BULKIMPORTIMAGE','Bulk Import Image')
     ]
-    importfile = forms.FileField(required = True, label='Import File', max_length = 50, allow_empty_file = False)
+    table = forms.ChoiceField(
+        choices=TABLECHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    importfile = forms.FileField(
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control'})
+    )
+    #importfile = forms.FileField(required = True, label='Import File', max_length = 50, allow_empty_file = False)
     ctzoffset = forms.IntegerField()
-    table = forms.ChoiceField(required = True, choices = TABLECHOICES, label='Select Type of Data', initial='TYPEASSISTS', widget=s2forms.Select2Widget)
+    #table = forms.ChoiceField(required = True, choices = TABLECHOICES, label='Select Type of Data', initial='TYPEASSISTS', widget=s2forms.Select2Widget)
 
     def __init__(self, *args, **kwargs):
         """Initializes form"""

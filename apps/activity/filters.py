@@ -1,5 +1,5 @@
 import django_filters
-import apps.activity.models as am
+from apps.activity.models.question_model import Question,QuestionSet
 
 class QuestionFilter(django_filters.FilterSet):
     quesname   = django_filters.CharFilter(field_name='quesname', lookup_expr='icontains', label='Name')
@@ -8,7 +8,7 @@ class QuestionFilter(django_filters.FilterSet):
     isworkflow = django_filters.CharFilter(field_name='isworkflow', lookup_expr='icontains', label='Is WorkFlow')
 
     class Meta:
-        model = am.Question
+        model = Question
         fields = ['quesname', 'answertype', 'unit', 'isworkflow']
 
 
@@ -16,7 +16,7 @@ class MasterQsetFilter(django_filters.FilterSet):
     qsetname   = django_filters.CharFilter(field_name='qsetname', lookup_expr='icontains', label='Name')
 
     class Meta:
-        model = am.QuestionSet
+        model = QuestionSet
         fields = ['qsetname']
 
 class MasterAssetFilter(django_filters.FilterSet):
@@ -28,5 +28,5 @@ class MasterAssetFilter(django_filters.FilterSet):
     gpslocation = django_filters.CharFilter(field_name='gpslocation', lookup_expr='icontains', label='GPS Location')
 
     class Meta:
-        model = am.Question
+        model = Question
         fields = ['assetcode', 'assetname', 'parent', 'runningstatus', 'enable', 'gpslocation']

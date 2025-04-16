@@ -11,20 +11,23 @@ from django.db.utils import IntegrityError
 from django.conf import settings
 from django.db import transaction
 from django.http.request import QueryDict
-from icecream import ic
 from .models import Shift,  TypeAssist, Bt, GeofenceMaster, Device, Subscription
 from apps.peoples.utils import save_userinfo
 from apps.core import utils
+from apps.activity.models.asset_model import Asset
+from apps.activity.models.job_model import Job,Jobneed
+from apps.peoples.models import Pgbelonging
+from apps.attendance.models import PeopleEventlog
 import apps.onboarding.forms as obforms
 import apps.peoples.utils as putils
 import apps.onboarding.utils as obutils
 from apps.peoples import admin as people_admin
 from apps.onboarding import admin as ob_admin
-from apps.activity import admin as av_admin
+from apps.activity.admin.asset_admin import AssetResource,AssetResourceUpdate
+from apps.activity.admin.location_admin import LocationResource,LocationResourceUpdate
+from apps.activity.admin.question_admin import QuestionResource,QuestionResourceUpdate,QuestionSetResource,QuestionSetResourceUpdate,QuestionSetBelongingResource,QuestionSetBelongingResourceUpdate
 from apps.schedhuler import admin as sc_admin
 from django.db import IntegrityError
-import apps.activity.models as am
-import apps.attendance.models as atm
 from apps.y_helpdesk.models import Ticket
 from apps.work_order_management.models import Wom
 from apps.work_order_management.admin import VendorResource, VendorResourceUpdate
@@ -32,13 +35,15 @@ from django.core.exceptions import ObjectDoesNotExist
 from pprint import pformat
 import uuid
 import json
-import requests
 from tablib import Dataset
-
+from django.apps import apps
 from apps.onboarding.utils import is_bulk_image_data_correct,save_image_and_image_path,extract_file_id,get_file_metadata, polygon_to_address
 
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
-logger = logging.getLogger('django')
+
+logger = logging.getLogger("django")
+log = logger
+from apps.core.exceptions import IntegrityConstraintError
 
 def get_caps(request):  # sourcery skip: extract-method
     logger.info('get_caps requested')
@@ -410,7 +415,7 @@ class GeoFence(LoginRequiredMixin, View):
             return rp.JsonResponse(data={'data': data_list})
 
         if request.GET.get('perform') == 'editAssignedpeople':
-            resp = am.Job.objects.handle_geofencepostdata(request)
+            resp = Job.objects.handle_geofencepostdata(request)
             return rp.JsonResponse(resp, status=200)
 
         if R.get('action') == 'loadPeoples':
@@ -418,7 +423,7 @@ class GeoFence(LoginRequiredMixin, View):
             return rp.JsonResponse(data={'items': list(objs)})
 
         if R.get('action') == "getAssignedPeople" and R.get('id'):
-            objs = am.Job.objects.get_people_assigned_to_geofence(R['id'])
+            objs = Job.objects.get_people_assigned_to_geofence(R['id'])
             return rp.JsonResponse(data={'data': list(objs)})
 
         if R.get('action', None) == 'form':
@@ -515,15 +520,15 @@ MODEL_RESOURCE_MAP = {
     # 'MODELNAME'         : 'RESOURCE(ADMIN CLASS for the model which is used to validate and give error messages for importing data )'
     'TYPEASSIST'          : ob_admin.TaResource,
     'BU'                  : ob_admin.BtResource,
-    'QUESTION'            : av_admin.QuestionResource,
-    'LOCATION'            : av_admin.LocationResource,
+    'QUESTION'            : QuestionResource,
+    'LOCATION'            : LocationResource,
     'PEOPLE'              : people_admin.PeopleResource,
     'GROUP'               : people_admin.GroupResource,
     'GROUPBELONGING'      : people_admin.GroupBelongingResource,
-    'ASSET'               : av_admin.AssetResource,
+    'ASSET'               : AssetResource,
     'VENDOR'              : VendorResource,
-    'QUESTIONSET'         : av_admin.QuestionSetResource,
-    'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResource,
+    'QUESTIONSET'         : QuestionSetResource,
+    'QUESTIONSETBELONGING': QuestionSetBelongingResource,
     'SCHEDULEDTASKS'      : sc_admin.TaskResource,
     'SCHEDULEDTOURS'      : sc_admin.TourResource,
     'GEOFENCE'            : ob_admin.GeofenceResource,
@@ -535,15 +540,15 @@ MODEL_RESOURCE_MAP_UPDATE = {
     # 'MODELNAME'         : 'RESOURCE(ADMIN CLASS for the model which is used to validate and give error messages for importing data )'
     'TYPEASSIST'          : ob_admin.TaResourceUpdate,
     'BU'                  : ob_admin.BtResourceUpdate,
-    'QUESTION'            : av_admin.QuestionResourceUpdate,
-    'LOCATION'            : av_admin.LocationResourceUpdate,
+    'QUESTION'            : QuestionResourceUpdate,
+    'LOCATION'            : LocationResourceUpdate,
     'PEOPLE'              : people_admin.PeopleResourceUpdate,
     'GROUP'               : people_admin.GroupResourceUpdate,
     'GROUPBELONGING'      : people_admin.GroupBelongingResourceUpdate,
-    'ASSET'               : av_admin.AssetResourceUpdate,
+    'ASSET'               : AssetResourceUpdate,
     'VENDOR'              : VendorResourceUpdate,
-    'QUESTIONSET'         : av_admin.QuestionSetResourceUpdate,
-    'QUESTIONSETBELONGING': av_admin.QuestionSetBelongingResourceUpdate,
+    'QUESTIONSET'         : QuestionSetResourceUpdate,
+    'QUESTIONSETBELONGING': QuestionSetBelongingResourceUpdate,
     'SCHEDULEDTASKS'      : sc_admin.TaskResourceUpdate,
     'SCHEDULEDTOURS'      : sc_admin.TourResourceUpdate,
 }
@@ -686,9 +691,9 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
         try:
             os.remove(filename)
         except FileNotFoundError:
-            print(f"The file {filename} does not exist.")
+            log.info(f"The file {filename} does not exist.")
         except Exception as e:
-            print(f"An error occurred while trying to remove the file {filename}: {str(e)}")
+            log.info(f"An error occurred while trying to remove the file {filename}: {str(e)}")
 
 
 class Client(LoginRequiredMixin, View):
@@ -866,7 +871,6 @@ class BtView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         try:
-            ic(request.POST)
             data = QueryDict(request.POST['formData'])
             pk = request.POST.get('pk', None)
             if pk:
@@ -883,7 +887,6 @@ class BtView(LoginRequiredMixin, View):
                 resp = self.handle_valid_form(form, request, create,designations_count,obj)
             else:
                 cxt = {'errors': form.errors}
-                ic(len(form.errors), form.errors.get('gpslocation'))
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
             logger.critical("BU saving error!", exc_info=True)
@@ -895,11 +898,10 @@ class BtView(LoginRequiredMixin, View):
         from apps.core.utils import handle_intergrity_error
         try:
             bu = form.save(commit=False)
-            ic(form.cleaned_data)
             if create == False:
-                bu.bupreferences['posted_people'] = obj.bupreferences['posted_people']
-                bu.bupreferences['contract_designcount'] = obj.bupreferences['contract_designcount']
-                bu.bupreferences['total_people_count'] = obj.bupreferences['total_people_count']
+                bu.bupreferences['posted_people'] = obj.bupreferences.get('posted_people',[])
+                bu.bupreferences['contract_designcount'] = obj.bupreferences.get('contract_designcount',{})
+                bu.bupreferences['total_people_count'] = obj.bupreferences.get('total_people_count',0)
             bu.gpslocation = form.cleaned_data['gpslocation']
             bu.bupreferences['permissibledistance'] = form.cleaned_data['permissibledistance']
             bu.bupreferences['controlroom'] = form.cleaned_data['controlroom']
@@ -917,11 +919,11 @@ class BtView(LoginRequiredMixin, View):
 class DashboardView(LoginRequiredMixin, View):
     P = {
         "RP": "dashboard/RP_d/rp_dashboard.html",
-        "pel_model": atm.PeopleEventlog,
-        "jn_model": am.Jobneed,
+        "pel_model": PeopleEventlog,
+        "jn_model": Jobneed,
         "wp_model": Wom
     }
-
+    
     def get(self, request, *args, **kwargs):
         P, R = self.P, request.GET
         try:
@@ -936,9 +938,9 @@ class DashboardView(LoginRequiredMixin, View):
     def get_all_dashboard_counts(self, request, P):
         R, S = request.GET, request.session
         if R['from'] and R['upto']:
-            ppmtask_arr = am.Jobneed.objects.get_ppmchart_data(request)
-            task_arr = am.Jobneed.objects.get_taskchart_data(request)
-            tour_arr = am.Jobneed.objects.get_tourchart_data(request)
+            ppmtask_arr = Jobneed.objects.get_ppmchart_data(request)
+            task_arr = Jobneed.objects.get_taskchart_data(request)
+            tour_arr = Jobneed.objects.get_tourchart_data(request)
 
             return {
                 'counts': dict(
@@ -986,9 +988,9 @@ class DashboardView(LoginRequiredMixin, View):
         }
     
     def other_chart_data(self, request):
-        asset_chart_arr, asset_chart_total = am.Asset.objects.get_assetchart_data(
+        asset_chart_arr, asset_chart_total = Asset.objects.get_assetchart_data(
                 request)
-        alert_chart_arr, alert_chart_total = am.Jobneed.objects.get_alertchart_data(
+        alert_chart_arr, alert_chart_total = Jobneed.objects.get_alertchart_data(
             request)
         ticket_chart_arr, ticket_chart_total = Ticket.objects.get_ticket_stats_for_dashboard(
             request)
@@ -1121,9 +1123,9 @@ class BulkImportUpdate(LoginRequiredMixin,ParameterMixin, View):
         try:
             os.remove(filename)
         except FileNotFoundError:
-            print(f"The file {filename} does not exist.")
+            log.info(f"The file {filename} does not exist.")
         except Exception as e:
-            print(f"An error occurred while trying to remove the file {filename}: {str(e)}")
+            log.info(f"An error occurred while trying to remove the file {filename}: {str(e)}")
 
 
 class ContractView(LoginRequiredMixin,View):
@@ -1172,7 +1174,6 @@ class ContractView(LoginRequiredMixin,View):
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         try:
-            ic(request.POST)
             data = QueryDict(request.POST['formData'])
             pk = request.POST.get('pk', None)
             if pk:
@@ -1190,7 +1191,6 @@ class ContractView(LoginRequiredMixin,View):
                 print(' the response in the form valid', resp)
             else:
                 cxt = {'errors': form.errors}
-                ic(len(form.errors), form.errors.get('gpslocation'))
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:
             logger.critical("BU saving error!", exc_info=True)
@@ -1231,3 +1231,68 @@ class ContractView(LoginRequiredMixin,View):
             return rp.JsonResponse({'pk': bu.id}, status=200)
         except IntegrityError:
             return handle_intergrity_error("Bu")
+
+
+
+class GetAllSites(LoginRequiredMixin, View):
+   
+    def get(self, request):
+        try:
+            qset = Bt.objects.get_all_sites_of_client(request.session['client_id'])
+            sites = qset.values('id', 'bucode','buname')
+            return rp.JsonResponse(list(sites), status=200)
+        except Exception as e:
+            logger.error("get_allsites() exception: %s", e)
+        return rp.JsonResponse({'error':"Invalid Request"}, status=404)
+
+class GetAssignedSites(LoginRequiredMixin, View):
+    def get(self, request):
+        try:
+            if data := Pgbelonging.objects.get_assigned_sites_to_people(request.user.id):
+                sites    = Bt.objects.filter(id__in = data).values('id', 'bucode','buname')
+                return rp.JsonResponse(list(sites), status=200, safe=False)
+        except Exception as e:
+            logger.error("get_assignedsites() exception: %s", e)
+        return rp.JsonResponse({'error':"Invalid Request"}, status=404)
+
+class SwitchSite(LoginRequiredMixin, View):
+    def post(self, request):
+        req_buid= request.POST["buid"]
+        resp = {}
+        if req_buid !=" ":
+            sites = Bt.objects.filter(id=req_buid).values('id', 'bucode','buname', 'enable')[:1]
+            if len(sites) > 0:
+                if sites[0]['enable'] == True:
+                    request.session['bu_id']  = sites[0]['id']
+                    request.session['sitecode'] = sites[0]['bucode']
+                    request.session['sitename'] = sites[0]['buname']
+                    resp["rc"] = 0
+                    resp['message'] = "successfully switched to site."
+                    log.info('successfully switched to site')
+                else:
+                    resp["rc"] = 1
+                    resp['errMsg'] = "Inactive Site"
+                    log.info('Inactive Site')
+            else:
+                    resp["rc"] = 1
+                    resp['errMsg'] = "unable to find site."
+                    log.info('unable to find site.')
+        else:  
+            resp["rc"] = 1
+            resp['errMsg'] = "unable to find site."
+            log.info('unable to find site.')
+        return rp.JsonResponse(resp, status=200)
+
+
+def get_list_of_peoples(request):
+    if request.method == 'POST':
+        return
+    Model = apps.get_model('activity', request.GET['model'])
+    obj = Model.objects.get(id=request.GET['id'])
+    Pgbelonging = apps.get_model('peoples', 'Pgbelonging')
+    data = Pgbelonging.objects.filter(
+        Q(assignsites_id = 1) | Q(assignsites__isnull=True),
+        pgroup_id = obj.pgroup_id
+    ).values('people__peoplecode', 'people__peoplename', 'id') or Pgbelonging.objects.none()
+    return rp.JsonResponse({'data':list(data)}, status=200)
+

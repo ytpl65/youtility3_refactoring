@@ -65,8 +65,8 @@ class VendorResource(resources.ModelResource):
         import_id_fields = ['ID']
         report_skipped = True
         fields = [
-            'CODE', 'NAME', 'GPS', 'CLIENT', 'BV', 'EMAIL',
-            'MOB', 'ENABLE', 'ADDRESS', 'SHOWTOALLSITES']
+            'CODE', 'NAME', 'GPS', 'Client', 'BV', 'EMAIL',
+            'MOB', 'ENABLE', 'ADDRESS', 'SHOWTOALLSITES','ID','Type']
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -153,8 +153,8 @@ class VendorResourceUpdate(resources.ModelResource):
         import_id_fields = ['ID']
         report_skipped = True
         fields = [
-            'ID','CODE', 'NAME', 'GPS', 'CLIENT', 'BV', 'EMAIL',
-            'MOB', 'ENABLE', 'ADDRESS', 'SHOWTOALLSITES']
+            'ID','CODE', 'NAME', 'GPS', 'Client', 'BV', 'EMAIL',
+            'MOB', 'ENABLE', 'ADDRESS', 'SHOWTOALLSITES','Type']
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

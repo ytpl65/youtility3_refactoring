@@ -1,6 +1,9 @@
 import graphene
 from apps.core import utils
-from apps.activity.models import JobneedDetails, Question, QuestionSet, QuestionSetBelonging, Location, Attachment, Jobneed
+from apps.activity.models.job_model import Jobneed, JobneedDetails
+from apps.activity.models.question_model import QuestionSetBelonging, QuestionSet, Question
+from apps.activity.models.attachment_model import Attachment
+from apps.activity.models.location_model import Location
 from apps.work_order_management.models import Vendor, Approver, Wom
 from apps.y_helpdesk.models import Ticket
 from apps.onboarding.models import GeofenceMaster, DownTimeHistory,Shift
@@ -19,163 +22,37 @@ from .types import (VerifyClientOutput, DowntimeResponse,GetPdfUrl,
 TypeAssist, SelectOutputType, BasicOutput)
 
 class Query(graphene.ObjectType):
-    questionsetData = None
-    tadata = graphene.Field(SelectOutputType, keys = graphene.List(graphene.String, required = True))
-    
-    get_assetdetails = graphene.Field(SelectOutputType,
-                                      mdtz = graphene.String(required = True),
-                                      ctzoffset = graphene.Int(required = True),
-                                      buid = graphene.Int(required = True),)
-
-    get_jobneedmodifiedafter = graphene.Field(SelectOutputType,
-                                             peopleid = graphene.Int(required = True),
-                                             buid = graphene.Int(required = True),
-                                             clientid = graphene.Int(required = True))
-    
-    get_externaltourmodifiedafter = graphene.Field(SelectOutputType,
-                                             peopleid = graphene.Int(required = True),
-                                             buid = graphene.Int(required = True),
-                                             clientid = graphene.Int(required = True))
-
-    get_jndmodifiedafter = graphene.Field(SelectOutputType,
-                                         ctzoffset = graphene.Int(required = True),
-                                         jobneedids = graphene.String(required = True))
-
-    get_typeassistmodifiedafter = graphene.Field(SelectOutputType,
-                                                mdtz = graphene.String(required = True),
-                                                ctzoffset = graphene.Int(required = True),
-                                                clientid = graphene.Int(required = True))
     
     get_locations = graphene.Field(SelectOutputType,
                                                 mdtz = graphene.String(required = True),
                                                 ctzoffset = graphene.Int(required = True),
                                                 buid = graphene.Int(required = True))
 
-    get_peoplemodifiedafter = graphene.Field(SelectOutputType,
-                                            mdtz = graphene.String(required = True),
-                                            ctzoffset = graphene.Int(required = True),
-                                            buid = graphene.Int(required = True),)
 
     get_groupsmodifiedafter = graphene.Field(SelectOutputType, 
                                             mdtz = graphene.String(required = True),
                                             ctzoffset = graphene.Int(required = True),
                                             buid = graphene.Int(required = True))
 
-    get_questionsmodifiedafter = graphene.Field(SelectOutputType, 
-                                               mdtz = graphene.String(required = True),
-                                               ctzoffset = graphene.Int(required = True), 
-                                               clientid=graphene.Int(required=True))
 
-    get_people_event_log_punch_ins = graphene.Field(SelectOutputType,
-                                                    datefor = graphene.String(required=True),
-                                                    buid = graphene.Int(required=True),
-                                                    peopleid = graphene.Int(required=True))
-
-    get_qsetmodifiedafter = graphene.Field(SelectOutputType,
-                                          mdtz = graphene.String(required = True),
-                                          ctzoffset = graphene.Int(required = True),
-                                          buid = graphene.Int(required = True),
-                                          clientid = graphene.Int(required=True),
-                                          peopleid = graphene.Int(required=True))
-
-    get_qsetbelongingmodifiedafter = graphene.Field(SelectOutputType,
-                                          mdtz = graphene.String(required = True),
-                                          ctzoffset = graphene.Int(required = True),
-                                          buid = graphene.Int(required = True))
-
-    get_pgbelongingmodifiedafter = graphene.Field(SelectOutputType,
-                                          mdtz = graphene.String(required = True),
-                                          ctzoffset = graphene.Int(required = True),
-                                          buid = graphene.Int(required = True),
-                                          peopleid = graphene.Int(required = True))
 
     get_gfs_for_siteids = graphene.Field(SelectOutputType,
                                  siteids = graphene.List(graphene.Int))
     
-    get_pdf_url = graphene.Field(
-            GetPdfUrl,
-            wom_uuid=graphene.String(required=True),
-            peopleid=graphene.Int(required=True),
-        )
-
+    
     get_shifts = graphene.Field(SelectOutputType,
         mdtz = graphene.String(required=True),
         buid = graphene.Int(required = True),
         clientid = graphene.Int(required = True))
     
-    
-    get_approvers = graphene.Field(
-        SelectOutputType,
-        buid = graphene.Int(required = True),
-        clientid = graphene.Int(required = True),
-    )
 
-    # get_peopleeventlog_history = graphene.Field(
-    #     SelectOutputType,
-    #     fromdate = graphene.String(required=True),
-    #     todate = graphene.String(required=True),
-    #                                         ctzoffset=graphene.Int(required=True),
-    #                                         peopleid=graphene.Int(required=True),
-    #                                         buid=graphene.Int(required=True),
-    #                                         clientid=graphene.Int(required=True),
-    #                                         peventtypeid=graphene.Int(required=True),
-            
-    #                                         )
-    get_peopleeventlog_history = graphene.Field(
-        SelectOutputType,
-        mdtz = graphene.String(required=True),
-                                            ctzoffset=graphene.Int(required=True),
-                                            peopleid=graphene.Int(required=True),
-                                            buid=graphene.Int(required=True),
-                                            clientid=graphene.Int(required=True),
-                                            peventtypeid=graphene.Int(required=True),
-            
-                                            )
     getsitelist  = graphene.Field(SelectOutputType,
                                  clientid = graphene.Int(required = True),
                                  peopleid = graphene.Int(required = True))
-    
-    get_tickets = graphene.Field(SelectOutputType,
-                                 peopleid = graphene.Int(required=True),
-                                 ctzoffset = graphene.Int(required=True),
-                                 buid = graphene.Int(),
-                                 clientid = graphene.Int(),
-                                 mdtz = graphene.String(required=True))
-    
-    get_attachments = graphene.Field(SelectOutputType, 
-                                     owner = graphene.String(required=True))
+
 
     verifyclient = graphene.Field(VerifyClientOutput, clientcode = graphene.String(required = True))
 
-    checkquery = graphene.Field(VerifyClientOutput)
-    
-    get_vendors = graphene.Field(SelectOutputType,
-                                 clientid = graphene.Int(required=True),
-                                 mdtz = graphene.String(required=True),
-                                 buid = graphene.Int(required=True),
-                                 ctzoffset = graphene.Int(required=True))
-    
-    get_wom_records = graphene.Field(SelectOutputType,
-                                workpermit = graphene.String(required=True),
-                                peopleid = graphene.Int(required=True),
-                                 buid = graphene.Int(),
-                                 parentid = graphene.Int(),
-                                 clientid = graphene.Int(),
-                                 fromdate = graphene.String(required=True),
-                                todate = graphene.String(required=True),
-                                     )
-
-    approve_workpermit = graphene.Field(SelectOutputType,
-                                wom_uuid = graphene.String(required=True),
-                                peopleid = graphene.Int(required=True),
-                                identifier= graphene.String(required=True)
-                                        )
-    reject_workpermit = graphene.Field(SelectOutputType,
-                                wom_uuid = graphene.String(required=True),
-                                peopleid = graphene.Int(required=True),
-                                identifier= graphene.String(required=True)
-                                        )
-    
     send_email_verification_link = graphene.Field(BasicOutput,
                                 clientcode = graphene.String(required=True),
                                 loginid = graphene.String(required=True)
@@ -190,23 +67,6 @@ class Query(graphene.ObjectType):
                                  ctzoffset = graphene.Int(required=True))
     
 
-    def resolve_get_pdf_url(self, info, wom_uuid, peopleid):
-        import os 
-        from intelliwiz_config import settings
-        from urllib.parse import urljoin
-        
-        from apps.work_order_management.utils import save_pdf_to_tmp_location, get_report_object
-        wom = Wom.objects.get(uuid=wom_uuid)
-        permit_name = QuestionSet.objects.get(id=wom.qset.id).qsetname
-        permit_no = wom.other_data['wp_seqno']
-        client_id = wom.client.id
-        report_obj = get_report_object(permit_name)
-        report = report_obj(filename=permit_name, client_id=client_id, returnfile=True, formdata={'id': wom.id}, request=None)
-        report_pdf_object = report.execute()
-        pdf_path = save_pdf_to_tmp_location(report_pdf_object, report_name=permit_name, report_number=permit_no)
-        file_url = urljoin(settings.MEDIA_URL, pdf_path.split('/')[-1])
-        full_url = os.path.join(settings.MEDIA_ROOT, file_url)
-        return GetPdfUrl(url=full_url)
     
     @staticmethod
     def resolve_send_email_verification_link(self, info, clientcode, loginid):
@@ -222,153 +82,7 @@ class Query(graphene.ObjectType):
             rc, msg = 1, "Failed"
             log.critical("something went wrong", exc_info=True)
         return BasicOutput(rc=rc, msg=msg, email = user.email)
-    
-    @staticmethod
-    def resolve_tadata(self, info, keys, **kwargs):
-        log.info('\n\nrequest for typeassist data...')
-        data = TypeAssist.objects.values(*keys)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'{count} objects returned...')
-        return SelectOutputType(nrows = count, ncols = len(keys), records = records,msg = msg)
-    
-    @staticmethod
-    def resolve_approve_workpermit(self, info, wom_uuid, peopleid,identifier):
-        from background_tasks.tasks import send_email_notification_for_workpermit_approval,send_email_notification_for_vendor_and_security_after_approval
-        from apps.work_order_management.models import Wom
-        from apps.work_order_management.views import WorkPermit
-        from apps.onboarding.models import Bt
-        from apps.work_order_management.utils import save_pdf_to_tmp_location
-        log.info("request for change wom status")
-        log.info(f"inputs are {wom_uuid = } {peopleid = } {identifier = }")
-        wom = Wom.objects.get(uuid=wom_uuid)
-        sitename = Bt.objects.get(id=wom.bu_id).buname
-        workpermit_status = wom.workstatus
-        wp_approvers = wom.other_data['wp_approvers']
-        approvers = [approver['name'] for approver in wp_approvers]
-        approvers_code = [approver['peoplecode'] for approver in wp_approvers]
-        vendor_name = Vendor.objects.get(id=wom.vendor.id).name
-        client_id = wom.client.id
-        permit_name = QuestionSet.objects.get(id=wom.qset.id).qsetname
-        report_object = WorkPermit.get_report_object(wom,permit_name)
-        report = report_object(filename=permit_name,client_id=wom.client_id,returnfile=True,formdata = {'id':wom.id},request=None)
-        report_pdf_object = report.execute()
-        permit_no = wom.other_data['wp_seqno']
-        pdf_path = save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=wom.other_data['wp_seqno'])
-        try:
-            if identifier == 'APPROVER':
-                p = People.objects.filter(id = peopleid).first()
-                if is_all_approved := check_all_approved(wom_uuid, p.peoplecode):
-                        log.info(f'Is all approved in side of if: {is_all_approved}')
-                        updated = Wom.objects.filter(uuid=wom_uuid).update(workpermit=Wom.WorkPermitStatus.APPROVED.value)
-                log.info(f'Is all approved outside if: {is_all_approved}')
-                if is_all_approved:
-                    # Sending Email to Vendor and Security pending
-                    workpermit_status = 'APPROVED'
-                    Wom.objects.filter(id=wom.id).update(workstatus=Wom.Workstatus.INPROGRESS.value)
-                    permit_name = QuestionSet.objects.get(id=wom.qset.id).qsetname
-                    report_object = WorkPermit.get_report_object(wom,permit_name)
-                    report = report_object(filename=permit_name,client_id=wom.client_id,returnfile=True,formdata = {'id':wom.id},request=None)
-                    report_pdf_object = report.execute()
-                    pdf_path = save_pdf_to_tmp_location(report_pdf_object,report_name=permit_name,report_number=wom.other_data['wp_seqno'])
-                    send_email_notification_for_vendor_and_security_after_approval.delay(wom.id,sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no)
-                    pass
-                rc, msg = 0, "success"
-            else:
-                p = People.objects.filter(id = peopleid).first()
-                if is_all_verified := check_all_verified(wom_uuid, p.peoplecode):
-                        updated = Wom.objects.filter(uuid=wom_uuid).update(verifiers_status=Wom.WorkPermitStatus.APPROVED.value)
-                if is_all_verified:
-                    send_email_notification_for_workpermit_approval.delay(wom.id,approvers,approvers_code,sitename,workpermit_status,permit_name,pdf_path,vendor_name,client_id)
-                    #Sending Email to Approver
-                rc, msg = 0, "success"
-        except Exception as e:
-            log.critical("something went wrong!", exc_info=True)
-            rc, msg = 1, "failed"
-        return BasicOutput(rc=rc, msg=msg)
-    
-    @staticmethod
-    def resolve_reject_workpermit(self, info, wom_uuid, peopleid):
-        try:
-            p = People.objects.filter(id=peopleid).first()
-            #w = Wom.objects.filter(id=id).first()
-            Wom.objects.filter(uuid=wom_uuid).update(workpermit=Wom.WorkPermitStatus.REJECTED.value)
-            reject_workpermit(wom_uuid, p.peoplecode)
-            rc, msg = 0, "success"
-        except Exception as e:
-            log.critical("something went wrong", exc_info=True)
-            rc, msg = 1, "failed"
-        return BasicOutput(rc=rc, msg=msg)
         
-        
-    @staticmethod
-    def resolve_get_tickets(self, info, peopleid, ctzoffset, buid, clientid, mdtz):
-        log.info('request for get_tickets')
-        data = Ticket.objects.get_tickets_for_mob(peopleid, buid, clientid, mdtz, ctzoffset)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'{count} objects returned...')
-        return SelectOutputType(nrows = count,  records = records,msg = msg)
-    
-    @staticmethod
-    def resolve_checkquery(self, info):
-        msg="vaishu is bitch"
-        return VerifyClientOutput(msg = msg)
-    
-    def resolve_get_attachments(self, info, owner):
-        log.info("request for attachments")
-        data = Attachment.objects.get_attachements_for_mob(owner)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'{count} objects returned...')
-        return SelectOutputType(nrows = count,  records = records,msg = msg)
-    
-    @staticmethod
-    def resolve_tabyid(self, info, id):
-        log.info('\n\nrequest for typeassist data...')
-        ta = TypeAssist.objects.raw("select * from typeassist where id = %s", [id])
-        return ta[0] if ta else None
-
-    @staticmethod
-    def resolve_get_assetdetails(self, info, mdtz, ctzoffset, buid):
-        mdtz = utils.getawaredatetime(mdtz, ctzoffset)
-        log.info(f'\n\nrequest for assetdetails data...inputs: mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
-        return get_assetdetails(mdtz, buid)
-
-    @staticmethod
-    def resolve_get_jobneedmodifiedafter(self, info, peopleid, buid, clientid):
-        try:
-            log.info(f'\n\nrequest for jobneed-modified-after inputs: peopleid:{peopleid}, buid:{buid}, clientid:{clientid}')
-            data = Jobneed.objects.get_job_needs(peopleid, buid, clientid)
-            records, count, msg = utils.get_select_output(data)
-            log.info(f'{count} objects returned...')
-            return SelectOutputType(nrows = count,  records = records,msg = msg)
-        except Exception as e:
-            log.error("something went wrong", exc_info=True)
-    
-    @staticmethod
-    def resolve_get_externaltourmodifiedafter(self, info, peopleid, buid, clientid):
-        log.info(f'\n\nrequest for exttour-jobneed-modified-after inputs : peopleid:{peopleid}, buid:{buid}, clientid:{clientid}')
-        #return get_externaltouremodifiedafter(peopleid, buid, clientid)
-        data = Jobneed.objects.get_external_tour_job_needs(peopleid, buid, clientid)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'{count} objects returned...')
-        return SelectOutputType(nrows = count,  records = records,msg = msg)
-
-
-    @staticmethod
-    def resolve_get_jndmodifiedafter(self, info, ctzoffset, jobneedids):
-        log.info(f'\n\nrequest for jndmodifiedafter inputs : ctzoffset:{ctzoffset}, jobneedids:{jobneedids}')
-        data = JobneedDetails.objects.get_jndmodifiedafter(jobneedids)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'{count} objects returned...')
-        return SelectOutputType(nrows = count, records = records,msg = msg)
-
-    @staticmethod
-    def resolve_get_typeassistmodifiedafter(self, info, mdtz, ctzoffset, clientid):
-        log.info(f'\n\nrequest for typeassist-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, clientid:{clientid}')
-        mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
-        data = TypeAssist.objects.get_typeassist_modified_after(mdtzinput, clientid)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'{count} objects returned...')
-        return SelectOutputType(nrows = count, records = records,msg = msg)
     
     @staticmethod
     def resolve_get_locations(self, info, mdtz, ctzoffset, buid):
@@ -379,14 +93,6 @@ class Query(graphene.ObjectType):
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
-    @staticmethod
-    def resolve_get_peoplemodifiedafter(self, info, mdtz, ctzoffset, buid):
-        log.info(f'\n\nrequest for people-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
-        mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
-        data = People.objects.get_people_modified_after(mdtzinput, buid)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'{count} objects returned...')
-        return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
     def resolve_get_groupsmodifiedafter(self, info, mdtz, ctzoffset, buid):
@@ -397,54 +103,6 @@ class Query(graphene.ObjectType):
         log.info(f'{count} objects returned...')
         return SelectOutputType(nrows = count, records = records,msg = msg)
 
-    @staticmethod
-    def resolve_get_questionsmodifiedafter(self, info, mdtz, ctzoffset, clientid):
-        log.info(f'\n\nrequest for questions-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset} clientid {clientid}')
-        mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
-        data =  Question.objects.get_questions_modified_after(mdtz, clientid)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'{count} objects returned...')
-        return SelectOutputType(nrows = count, records = records,msg = msg)
-
-    @staticmethod
-    def resolve_get_qsetmodifiedafter(self, info, mdtz, ctzoffset, buid, clientid, peopleid):
-        try:
-            log.info(f'\n\nrequest for qset-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid} , clientid: {clientid} , peopleid: {peopleid}')
-            mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
-            data = QuestionSet.objects.get_qset_modified_after(mdtzinput, buid, clientid, peopleid)
-            records, count, msg = utils.get_select_output(data)
-            Query.questionsetData = records
-            log.info(f'{count} gset modified objects returned...')
-            return SelectOutputType(nrows = count, records = records,msg = msg)
-        except Exception as e:
-            log.error("something went wrong", exc_info=True)
-
-
-    @staticmethod
-    def resolve_get_qsetbelongingmodifiedafter(self, info, mdtz, ctzoffset, buid):
-        try:
-            log.info(f'\n\nrequest for qsetbelonging-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}')
-            qset_id = []
-                
-            log.info(f'Question set Ids {qset_id}')
-            mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
-            data = QuestionSetBelonging.objects.get_modified_after(mdtzinput, buid)
-            records, count, msg = utils.get_select_output(data)
-            log.info(f'{count} qsetbelonging objects returned...')
-            return SelectOutputType(nrows = count, records = records,msg = msg)
-        except Exception as e:
-            log.error("something went wrong", exc_info=True)
-    
-
-    @staticmethod
-    def resolve_get_pgbelongingmodifiedafter(self, info, mdtz, ctzoffset, buid, peopleid):
-        log.info(f'\n\nrequest for pgbelonging-modified-after inputs : mdtz:{mdtz}, ctzoffset:{ctzoffset}, buid:{buid}, peopleid:{peopleid}')
-        mdtzinput = utils.getawaredatetime(mdtz, ctzoffset)
-        data = Pgbelonging.objects.get_modified_after(mdtzinput, peopleid, buid)
-        print(pformat(data))
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'{count} objects returned...')
-        return SelectOutputType(nrows = count, records = records,msg = msg)
 
     @staticmethod
     def resolve_get_gfs_for_siteids(self, info, siteids):
@@ -477,36 +135,7 @@ class Query(graphene.ObjectType):
         except Exception as ex:
             log.critical("something went wrong!", exc_info=True)
             return VerifyClientOutput(msg='INVALID', url=None, rc=1)
-        
-        
-    
-    def resolve_get_peopleeventlog_history(self, info, mdtz, peopleid, buid, clientid, ctzoffset, peventtypeid):
-        log.info(f'\n\nrequest for getgeofence inputs : {peopleid = } {buid = } { clientid = }')
-        data = PeopleEventlog.objects.get_peopleeventlog_history(mdtz, peopleid, buid, clientid, ctzoffset, peventtypeid)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'total {count} objects returned')
-        return SelectOutputType(nrows = count, records = records,msg = msg)
-        
-    def resolve_get_vendors(self, info, clientid, mdtz, buid, ctzoffset):
-        log.info(f'\n\nrequest for get_vendors inputs :{clientid = } {mdtz = } {buid = } {ctzoffset = }')
-        data = Vendor.objects.get_vendors_for_mobile(info.context, clientid, mdtz, buid, ctzoffset)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'total {count} objects returned')
-        return SelectOutputType(nrows = count, records = records,msg = msg)
-    
-    def resolve_get_people_event_log_punch_ins(self, info, datefor,  buid, peopleid):
-        log.info(f'request get_people_event_log_punch_ins inputs are : {datefor = }  {buid = } {peopleid = }')
-        data = PeopleEventlog.objects.get_people_event_log_punch_ins(datefor,  buid, peopleid)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'total {count} objects returned')
-        return SelectOutputType(nrows = count, records = records,msg = msg)
-    
-    def resolve_get_approvers(self, info, buid, clientid):
-        log.info(f'request get_approvers inputs are : {buid = } {clientid = }')
-        data = Approver.objects.get_approver_list_for_mobile(buid, clientid)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'total {count} objects returned')
-        return SelectOutputType(nrows = count, records = records,msg = msg)
+
     
     def resolve_get_shifts(self,info,buid,clientid,mdtz):
         log.info(f'request get shifts input are: {buid} {clientid}')
@@ -516,12 +145,6 @@ class Query(graphene.ObjectType):
         log.info(f'total {count} objects returned')
         return SelectOutputType(nrows = count, records = records,msg = msg)
     
-    def resolve_get_wom_records(self, info, fromdate, todate, peopleid, workpermit, buid, clientid, parentid):
-        log.info(f'request get_approvers inputs are : {buid = } {clientid = } {peopleid = } {parentid = } {workpermit = } {fromdate = } {todate = }')
-        data = Wom.objects.get_wom_records_for_mobile(fromdate, todate, peopleid, workpermit, buid, clientid, parentid)
-        records, count, msg = utils.get_select_output(data)
-        log.info(f'total {count} objects returned')
-        return SelectOutputType(nrows = count, records = records,msg = msg)
     
     def resolve_get_superadmin_message(self, info, client_id):
         log.info(f'resolve_get_superadmin_message {client_id = }')
@@ -570,8 +193,6 @@ def get_db_rows(sql, args=None):
         log.error("Failed to fetch data", exc_info=True)
         # Optionally re-raise or handle the error appropriately
 
-def get_jobneedmodifiedafter(peopleid, siteid, clientid):
-    return get_db_rows("select * from fun_getjobneed(%s, %s, %s)", args=[peopleid, siteid, clientid])
 
 def get_externaltouremodifiedafter(peopleid, siteid, clientid):
     return get_db_rows("select * from fun_getexttourjobneed(%s, %s, %s)", args=[peopleid, siteid, clientid])

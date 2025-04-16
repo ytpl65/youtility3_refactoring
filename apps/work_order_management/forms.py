@@ -45,7 +45,6 @@ class VendorForm(forms.ModelForm):
         utils.initailize_form_fields(self)
     
     def clean(self):
-        ic(self.request)
         super().clean()
         self.cleaned_data['gpslocation'] = self.data.get('gpslocation')
         if self.cleaned_data.get('gpslocation'):

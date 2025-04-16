@@ -1,15 +1,27 @@
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from apps.peoples.models import People
+from apps.peoples.serializers import PeopleSerializer
+import json
 
-# @receiver(post_save, sender=People)
-# def on_create_or_update_people_update_ticket_user(sender, instance, created, **kwargs):
-#     tkt = rest2.Rt(url=settings.RT_URL, http_auth=requests.auth.HTTPBasicAuth(settings.RT_USERNAME, settings.RT_PASS))
-#     user_kwargs = {
-#         'Name':instance.loginid,
-#         'RealName':instance.peoplename,
-#         'EmailAddress':instance.email,
-#         'MobilePhone':instance.mobno,
+from background_tasks.tasks import publish_mqtt
+TOPIC = "redmine_to_noc"
 
-#     }
-#     if tkt.user_exists(instance.loginid, privileged=False):
-#         tkt.edit_user(instance.loginid, **user_kwargs)
-#     else:
-#         tkt.create_user(user_name=user_kwargs.pop('Name'), email_address=user_kwargs.pop('EmailAddress'), **user_kwargs)
+
+def build_payload(instance, model_name, created):
+    serializer_cls = {
+        "People": PeopleSerializer
+    }[model_name]
+    serializer = serializer_cls(instance)
+    return json.dumps({
+        "operation": "CREATE" if created else "UPDATE",
+        "app": "Peoples",
+        "models": model_name,
+        "payload": serializer.data
+    })
+
+
+@receiver(post_save, sender=People)
+def people_post_save(sender, instance, created, **kwargs):
+    payload = build_payload(instance, "People", created)
+    publish_mqtt.delay(TOPIC, payload)

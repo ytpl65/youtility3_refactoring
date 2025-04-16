@@ -14,7 +14,8 @@ import re
 from math import isnan
 from apps.core.widgets import EnabledTypeAssistWidget
 from apps.onboarding.utils import bulk_create_geofence
-import apps.activity.models as am
+from apps.activity.models.job_model import Job
+
 class BaseResource(resources.ModelResource):
     CLIENT = fields.Field(
         column_name='Client*',
@@ -93,7 +94,7 @@ class TaResource(resources.ModelResource):
         skip_unchanged = True
         import_id_fields = ['ID']
         report_skipped = True
-        fields = ('NAME', 'CODE', 'TYPE', 'CLIENT')
+        fields = ('NAME', 'CODE', 'TYPE', 'CLIENT','ID')
 
         
     def __init__(self, *args, **kwargs):
@@ -199,7 +200,7 @@ class BtResource(resources.ModelResource):
         fields = (
             'Name', 'Code', 'BuType', 'SOLID', 
             'Enable', 'GPS', 'ID','Address', 'State',
-            'City', 'Country','Identifier', 'BelongsTo')
+            'City', 'Country','Identifier', 'BelongsTo','Sitemanager')
 
     def __init__(self, *args, **kwargs):
         super(BtResource, self).__init__(*args, **kwargs)
@@ -446,7 +447,7 @@ class BtResourceUpdate(resources.ModelResource):
         report_skipped = True
         fields = (
             'ID', 'Name', 'Code', 'BuType', 'SOLID', 'Enable', 'GPS', 'Address', 
-            'State', 'City', 'Country', 'Identifier', 'BelongsTo')
+            'State', 'City', 'Country', 'Identifier', 'BelongsTo','Sitemanager')
 
     def __init__(self, *args, **kwargs):
         super(BtResourceUpdate, self).__init__(*args, **kwargs)
@@ -552,7 +553,7 @@ class GeofenceResource(resources.ModelResource):
         skip_unchanged = True
         import_id_fields = ['ID']
         report_skipped = True
-        fields = ('Name', 'Code', 'AlertToPeople', 'AlertToGroup', 'Enable', 'AlertText', 'Site', 'BV')
+        fields = ('Name', 'Code', 'AlertToPeople', 'AlertToGroup', 'Enable', 'AlertText', 'Site', 'BV', 'Client', 'ID')
 
     def __init__(self, *args, **kwargs):
         super(GeofenceResource, self).__init__(*args, **kwargs)
@@ -633,11 +634,11 @@ class GeofencePeopleResource(resources.ModelResource):
     EndTime = fields.Field(column_name="End Time*", attribute="endtime")
 
     class Meta:
-        model = am.Job
+        model = Job
         skip_unchanged = True
         import_id_fields = ["ID"]
         report_skipped = True
-        fields = ("Code", "PeopleCode", "ValidFrom", "ValidTo", "StartTime", "EndTime")
+        fields = ("Code", "PeopleCode", "ValidFrom", "ValidTo", "StartTime", "EndTime", "Site", "Client", "ID","BV",)
 
     def __init__(self, *args, **kwargs):
         super(GeofencePeopleResource, self).__init__(*args, **kwargs)
@@ -707,7 +708,7 @@ class GeofencePeopleResource(resources.ModelResource):
         self._geofencecode = row['Code*']
         self._geofencename =  get_geofence_name[0]['gfname']
 
-        if am.Job.objects.select_related('geofence','client','people').filter(
+        if Job.objects.select_related('geofence','client','people').filter(
             geofence__gfcode=row['Code*'], 
             client__bucode=row['Client*'],
             identifier='GEOFENCE',
@@ -759,7 +760,7 @@ class ShiftResource(resources.ModelResource):
         skip_unchanged = True
         import_id_fields = ['ID']
         report_skipped = True
-        fields = ('Name', 'StartTime', 'EndTime', 'PeopleCount', 'Enable', 'NightShift', 'ShiftData','Site', 'BV')
+        fields = ('Name', 'StartTime', 'EndTime', 'PeopleCount', 'Enable', 'NightShift', 'ShiftData','Site', 'BV','Client','ID')
 
     def __init__(self, *args, **kwargs):
         super(ShiftResource, self).__init__(*args, **kwargs)

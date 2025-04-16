@@ -81,7 +81,6 @@ def insert_questions_to_qsetblng(assigned_questions, model, fields, request):
     from django.db import transaction
     try:
         with transaction.atomic():
-            ic(assigned_questions)
             for ques in assigned_questions:
                 log.info(f"""{" " * 8} saving question {ques[1]} for QuestionSet {fields['qsetname']} [started]""")
 

@@ -29,7 +29,6 @@ from apps.work_order_management.models  import Wom, Vendor
 from apps.work_order_management import models as wom
 from apps.tenants.models import Tenant
 from apps.core import exceptions as excp
-from icecream import ic
 from django.db import transaction
 from django.db.models import RestrictedError
 from apps.work_order_management.models import Approver
@@ -290,6 +289,7 @@ def local_to_utc(data, offset, mobile_web):
             raise
         else:
             return data
+        
     elif isinstance(data, list):
         try:
             newdata = []
@@ -1093,9 +1093,7 @@ def create_tenant_with_alias(db):
 
 def get_record_from_input(input):
 
-    ic(input.values)
     values = ast.literal_eval(json.dumps(input.values))
-    ic(values)
     return dict(zip(input.columns, values))
 
 # import face_recognition
@@ -1140,7 +1138,6 @@ def get_qobjs_dir_fields_start_length(R):
 
     for order in orderby:
         if order:
-            ic(f'columns[{order}][data]')
             key = R[f'columns[{order}][data]']
             dir = f"-{key}" if R['order[0][dir]'] == 'desc' else f"{key}"
         else:
@@ -1279,7 +1276,6 @@ def verify_peoplename(peoplename):
 
 def get_home_dir():
     from django.conf import settings
-    ic(settings.MEDIA_ROOT)
     return settings.MEDIA_ROOT
 
 
@@ -1327,7 +1323,6 @@ def upload(request, vendor=False):
     logger.info(f"{fileurl = }")
     try:
         if not os.path.exists(fileurl):
-            ic(fileurl)
             with open(fileurl, 'wb') as temp_file:
                 temp_file.write(request.FILES['img'].read())
                 temp_file.close()

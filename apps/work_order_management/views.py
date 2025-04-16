@@ -5,7 +5,7 @@ from django.views.generic.base import View
 from .forms import VendorForm, WorkOrderForm, WorkPermitForm, ApproverForm,SlaForm
 from .models import Vendor, Wom, WomDetails, Approver
 from apps.peoples.models import People
-from apps.activity.models import QuestionSetBelonging, QuestionSet
+from apps.activity.models.question_model import QuestionSetBelonging, QuestionSet
 from background_tasks.tasks import send_email_notification_for_sla_vendor,send_email_notification_for_vendor_and_security_of_wp_cancellation,send_email_notification_for_vendor_and_security_for_rwp,send_email_notification_for_vendor_and_security_after_approval,send_email_notification_for_wp_verifier,send_email_notification_for_workpermit_approval
 from django.http import Http404, QueryDict, response as rp, HttpResponse
 from apps.core  import utils
@@ -82,7 +82,6 @@ class VendorView(LoginRequiredMixin, View):
             if form.is_valid():
                 resp = self.handle_valid_form(form,  request, create)
             else:
-                ic(form.cleaned_data, form.data, form.errors)
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)
         except Exception:

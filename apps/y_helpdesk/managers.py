@@ -54,7 +54,7 @@ class TicketManager(models.Manager):
     
         
     def get_tickets_for_mob(self, peopleid, buid, clientid, mdtz, ctzoffset):
-        from apps.activity.models import Attachment
+        from apps.activity.models.attachment_model import Attachment
         
         if not isinstance(mdtz, datetime):
             mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S") - timedelta(minutes=ctzoffset)

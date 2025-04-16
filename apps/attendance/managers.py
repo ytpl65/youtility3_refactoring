@@ -1,16 +1,13 @@
 from datetime import timedelta, datetime, date
-from django.utils import timezone
 from django.db import models
 from django.contrib.gis.db.models.functions import AsGeoJSON, AsWKT
 from apps.core import utils
-from apps.activity.models import Attachment, Jobneed,Job
+from apps.activity.models.attachment_model import Attachment
+from apps.activity.models.job_model import Job
 from apps.onboarding.models import Shift
 from apps.onboarding.models import GeofenceMaster
-from django.db.models import Case, When, Value as V, CharField, F
-from django.db.models.functions import Cast
+from django.db.models import F
 from itertools import chain
-from django.utils.dateparse import parse_date
-from django.utils.dateparse import parse_date
 import json
 import logging
 log = logging.getLogger('__main__')
@@ -24,7 +21,7 @@ class PELManager(models.Manager):
             ~Q(people_id = -1), peventtype__tacode = 'AUDIT',
             people_id = peopleid, datefor__gte = datetime.date() - timedelta(days = 7))
         return qset or self.none()
-
+        
     def get_people_attachment(self, pelogid, db = None):
         return self.raw(
             """
@@ -200,7 +197,6 @@ class PELManager(models.Manager):
                     'people__peoplename', 'people__peoplecode', 'distance', 'duration', 'transportmodes')
         for obj in qset:
             if(obj['path']):
-                ic(obj['path']) 
                 geodict = json.loads(obj['path'])
                 coords = [{'lat':lat, 'lng':lng} for lng, lat in geodict['coordinates']]
                 waypoints = utils.orderedRandom(coords[1:-1], k=25)
@@ -268,21 +264,6 @@ class PELManager(models.Manager):
         ).exclude(id=1).count()
         return data
     
-    # def get_peopleeventlog_history(self, fromdate, todate, people_id, bu_id, client_id, ctzoffset, peventtypeid):
-    #     qset = self.filter(
-    #         datefor__gte = fromdate,
-    #         datefor__lte = todate,
-    #         people_id = people_id,
-    #         bu_id = bu_id,
-    #         client_id = client_id,
-    #         peventtype_id__in = [peventtypeid]
-    #     ).select_related('people', 'bu', 'client', 'verifiedby', 'peventtype', 'geofence', 'shift').order_by('-datefor').values(
-    #         'uuid', 'people_id', 'client_id', 'bu_id','shift_id', 'verifiedby_id', 'geofence_id', 'id','peventtype_id',
-    #         'punchintime', 'punchouttime', 'datefor', 'distance',
-    #         'duration', 'expamt', 'accuracy', 'deviceid', 'startlocation', 'endlocation', 'ctzoffset',
-    #         'remarks', 'facerecognitionin', 'facerecognitionout', 'otherlocation', 'reference'
-    #     )
-    #     return qset or self.none()
 
     def get_peopleeventlog_history(self, mdtz,people_id, bu_id, client_id, ctzoffset, peventtypeid):
         qset = self.filter(
@@ -335,7 +316,7 @@ class PELManager(models.Manager):
     
     def get_people_event_log_punch_ins(self, datefor, buid, peopleid):
         type = ['MARK', 'MARKATTENDANCE'] if peopleid == -1 else ['SELF', 'SELFATTENDANCE']
-        given_date = parse_date(datefor)
+        given_date = datefor
         previous_date = given_date - timedelta(days=1) 
         qset = self.filter(
             datefor__range = (previous_date, given_date),

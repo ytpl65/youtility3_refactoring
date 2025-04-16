@@ -145,7 +145,9 @@ class Vendor(BaseModel, TenantAwareModel):
     bu          = models.ForeignKey("onboarding.Bt", verbose_name = _("Site"), on_delete = models.RESTRICT, null = True, blank = True, related_name='vendor_bus')
     show_to_all_sites = models.BooleanField(_("Applicable to all sites"), default=False)
     description = models.TextField(_("Description"), max_length=500, null=True, blank=True)
+    
     objects = VendorManager()
+    
     class Meta(BaseModel.Meta):
         db_table = "vendor"
         verbose_name = "vendor company"

@@ -1,6 +1,14 @@
 import graphene
 import graphql_jwt
 from graphql_jwt.decorators import login_required
+from apps.service.queries.ticket_queries import TicketQueries
+from apps.service.queries.question_queries import QuestionQueries
+from apps.service.queries.job_queries import JobQueries
+from apps.service.queries.typeassist_queries import TypeAssistQueries
+from apps.service.queries.workpermit_queries import WorkPermitQueries
+from apps.service.queries.people_queries import PeopleQueries
+from apps.service.queries.asset_queries import AssetQueries
+from apps.service.queries.bt_queries import BtQueries
 from graphene_django.debug import DjangoDebug
 from .mutations import (
   InsertRecord, AdhocMutation,
@@ -14,8 +22,6 @@ from .types import (
 from apps.attendance.models import (
     PeopleEventlog, Tracking, TestGeo
 )
-from .querys import Query as ApiQuery
-
 class Mutation(graphene.ObjectType):
     token_auth        = LoginUser.Field()
     logout_user       = LogoutUser.Field()
@@ -28,7 +34,9 @@ class Mutation(graphene.ObjectType):
     insert_json       = InsertJsonMutation.Field()
     refresh_token = graphql_jwt.Refresh.Field()
 
-class Query(ApiQuery,  graphene.ObjectType):
+
+
+class Query(TicketQueries, QuestionQueries, JobQueries, TypeAssistQueries, WorkPermitQueries, PeopleQueries, AssetQueries, BtQueries, graphene.ObjectType):
     PELog_by_id = graphene.Field(PELogType, id = graphene.Int())
     trackings   = graphene.List(TrackingType)
     testcases   = graphene.List(TestGeoType)
@@ -48,7 +56,6 @@ class Query(ApiQuery,  graphene.ObjectType):
 
     @login_required
     def resolve_viewer(self, info, **kwargs):
-        ic("resolve_viewer is called$")
         return  "validtoken" if info.context.user.is_authenticated else "tokenexpired"
 
 

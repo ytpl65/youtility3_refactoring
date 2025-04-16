@@ -22,7 +22,6 @@ def LoginUser(response, request):
         People.objects.filter(
             id = response['user'].id).update(
                 deviceid = response['authinput'].deviceid)
-        ic(request.user)
 
 def LogOutUser(response, request):
     if response['isauthenticated']:
@@ -30,7 +29,6 @@ def LogOutUser(response, request):
             id = response['user'].id).update(
                 deviceid = -1
             )
-        ic(request.user)
 
 def check_user_site(user):
     return user.bu_id not in [1, None, 'NONE', 'None']

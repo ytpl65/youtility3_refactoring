@@ -8,7 +8,9 @@ from datetime import datetime, timedelta
 import json
 from apps.peoples.models import People
 from django.apps import apps
+from django.utils.timezone import make_aware
 import logging
+import pytz
 logger = logging.getLogger('__main__')
 log = logger
 
@@ -29,6 +31,8 @@ class VendorManager(models.Manager):
     def get_vendors_for_mobile(self, request, clientid, mdtz, buid, ctzoffset):
         if not isinstance(mdtz, datetime):
             mdtz = datetime.strptime(mdtz, "%Y-%m-%d %H:%M:%S")
+        mdtz = make_aware(mdtz, timezone=pytz.UTC)
+        
         mdtz = mdtz - timedelta(minutes=ctzoffset)
             
         qset = self.filter(

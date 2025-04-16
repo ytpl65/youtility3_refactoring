@@ -8,6 +8,8 @@ logger = logging.getLogger('__main__')
 
 dbg = logging.getLogger('__main__').debug
 
+logger = logging.getLogger("__main__")
+log = logger
 
 def save_jsonform(peoplepref_form, p):
     try:
@@ -218,7 +220,6 @@ def create_caps_choices_for_peopleform(client):
         if not noc:
             noc = Capability.objects.filter(cfor=Capability.Cfor.NOC, enable=True).values_list('capscode', 'capsname')
             cache.set('noccaps', report, 30)
-    print("NOC: ",noc)
     return web, mob, portlet, report, noc
 
 
@@ -292,14 +293,11 @@ def get_choice(li, queryset=False):
 
 
 def get_cap_choices_for_clientform(caps, cfor):
-    # sourcery skip: merge-list-append
     choices, temp = [], []
     logger.debug('collecting caps choices for client form...')
     for i in range(1, len(caps)):
         if caps[i].cfor == 'WEB':
-            # ic(caps[i].capscode, caps[i].depth, caps[i].path, caps[i].parent_id)
             if caps[i].depth in [3, 2]:
-                # print(caps[i].depth)
                 if caps[i-1].depth == 3 and caps[i].depth == 2 and caps[i-1].cfor == cfor:
                     choices.append(get_choice(temp))
                     temp = []
@@ -342,7 +340,6 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
         or save choices in session'''
     from apps.peoples.models import Capability
     from apps.core.raw_queries import get_query
-    from icecream import ic
     caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
     # for cap in caps:
     # print(f'Code {cap.capscode} Depth {cap.depth}')
@@ -376,9 +373,7 @@ def save_user_paswd(user):
 
 
 def display_user_session_info(session):
-    from icecream import ic
-    from pprint import pformat
-    print('Following user data saved in sesion\n')
+    log.info('Following user data saved in sesion\n')
     
 
 
@@ -394,8 +389,6 @@ def save_pgroupbelonging(pg, request):
     from apps.onboarding.models import Bt
     peoples = request.POST.getlist('peoples[]')
     S = request.session
-    #delete old grouop info
-    # ic(pm.Pgbelonging.objects.filter(pgroup = pg).delete())
     if peoples:
         try:
             for i, item in enumerate(peoples):

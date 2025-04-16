@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from apps.activity.models import Job,Jobneed,JobneedDetails,Question,QuestionSet,QuestionSetBelonging
+from apps.activity.models.job_model import Job,Jobneed,JobneedDetails
+from apps.activity.models.question_model import Question,QuestionSet,QuestionSetBelonging
 from datetime import datetime,time
 
 class CustomTimeField(serializers.Field):

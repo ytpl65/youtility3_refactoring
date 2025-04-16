@@ -6,7 +6,6 @@ from .forms import TicketForm, EscalationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 from django.http import response as rp
-from apps.activity.models import Location
 from apps.core import utils
 from django.db import transaction
 from django.http.request import QueryDict
@@ -36,7 +35,6 @@ class EscalationMatrix(LoginRequiredMixin, View):
         
         if R.get('action') == 'loadGroups':
             qset = pm.Pgroup.objects.getGroupsForEscForm(request)
-            ic(qset)
             return rp.JsonResponse({'items':list(qset), 'total_count':len(qset)}, status=200)
         
         if R.get('template') == 'true':
@@ -127,7 +125,6 @@ class TicketView(LoginRequiredMixin, View):
         try:
             ticket = form.save(commit=False)
             ticket.uuid = request.POST.get('uuid')
-            ic(request.POST.get('uuid'))
             bu = ticket.bu_id if request.POST.get('pk') else None
             ticket = putils.save_userinfo(ticket, request.user, request.session, bu=bu)
             utils.store_ticket_history(ticket, request)
@@ -137,8 +134,7 @@ class TicketView(LoginRequiredMixin, View):
         
 
 class PostingOrderView(LoginRequiredMixin, View):
-    from apps.activity.models import Jobneed
-    from apps.activity.models import JobneedDetails
+    from apps.activity.models.job_model import Jobneed,JobneedDetails
     params = {
         'template_list':'y_helpdesk/posting_order_list.html',
         'model':Jobneed,

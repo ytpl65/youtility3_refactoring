@@ -793,11 +793,11 @@
   function changeSiteReq(){
     var session = "{{ request.session.bu_id }}";
     if ("{{ request.session }}".toUpperCase() == "TRUE"){
-      let url = "{{ url('activity:get_allsites') }}"
+      let url = "{{ url('onboarding:get_allsites') }}"
       getSites(url)
     }
     else{
-      let url = "{{ url('activity:get_assignedsites') }}"
+      let url = "{{ url('onboarding:get_assignedsites') }}"
       getSites(url)
     }
     $('#popup_switch_site').modal('show');
@@ -823,7 +823,7 @@
       e.preventDefault();
       var form = $(this);
 
-      const params = {url:"{{ url('activity:switchsite') }}"}
+      const params = {url:"{{ url('onboarding:switchsite') }}"}
       const payLoad = {buid:$("#id_assignesite").val(), csrfmiddlewaretoken:'{{ csrf_token }}'}
       fire_ajax_form_post(params, payLoad)
       .done((response, status, xhr) => {

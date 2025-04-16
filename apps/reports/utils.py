@@ -5,7 +5,7 @@ from django.template.loader import render_to_string
 from django_weasyprint.views import WeasyTemplateResponseMixin
 import pandas as pd
 from django.http import HttpResponse
-from apps.activity.models import Attachment
+from apps.activity.models.attachment_model import Attachment
 from django.contrib.staticfiles import finders
 from django.conf import settings
 from django.shortcuts import render

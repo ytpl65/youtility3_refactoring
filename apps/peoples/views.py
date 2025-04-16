@@ -11,7 +11,6 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import response as rp
 from django.shortcuts import redirect, render
 from django.views import View
-from icecream import ic
 import logging
 from apps.onboarding.models import TypeAssist, Bt
 from apps.peoples.filters import CapabilityFilter

@@ -48,6 +48,7 @@ def verified_callback(user):
 
 
 EMAIL_TOKEN_LIFE = 60**2
+EMAIL_MAIL_TOKEN_LIFE = 60**2
 EMAIL_VERIFIED_CALLBACK = verified_callback
 EMAIL_FROM_ADDRESS = env('EMAIL_FROM_ADDRESS')
 EMAIL_MAIL_SUBJECT = 'Confirm your email'
@@ -64,7 +65,7 @@ ENCRYPT_KEY = env('ENCRYPT_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True    
 
-ALLOWED_HOSTS = ['.localhost', 'demo.youtility.in', 'redmine.youtility.in', '192.168.1.254' , '127.0.0.1','192.168.1.33','192.168.1.107','103.253.200.161']
+ALLOWED_HOSTS = ['.localhost', 'sg.youtility.in','127.0.0.1:8000','127.0.0.1']
 
 # Application definition
 
@@ -284,8 +285,6 @@ LANGUAGE_CODE = 'en-us'
 
 USE_I18N = True
 
-USE_L10N = False
-
 USE_TZ = True
 TIME_ZONE = 'UTC'
 # Static files (CSS, JavaScript, Images)
@@ -359,8 +358,9 @@ GRAPHQL_JWT = {
     "JWT_LONG_RUNNING_REFRESH_TOKEN": True,
 }
 
-ADMINS = [('wed_dev', "naveen.sargam@youtility.in")]
+ADMINS = [('wed_dev', "satyam.warghat@youtility.in"),('wed_dev', "pankaj.pal@youtility.in"),('wed_dev', "manohar.lagishetty@youtility.in"),('business_manger',"namrata.shahid@youtility.in"),('business_manager',"ashish.mhashilkar@youtility.in")]
 username = getpass.getuser()
+username = 'satyam'
 LOGGER_PATH = f'/home/{username}'
 
 import logging.config
