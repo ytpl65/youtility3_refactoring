@@ -9,6 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import response as rp
 from django.shortcuts import redirect, render
 from django.views import View
+from django.http import response as rp
 import logging
 from apps.onboarding.models import  Bt
 from apps.peoples.filters import CapabilityFilter
@@ -281,11 +282,30 @@ class PeopleView(LoginRequiredMixin, View):
 
         # return cap_list data
         if R.get("action", None) == "list" or R.get("search_term"):
-
-            objs = self.params["model"].objects.people_list_view(
+            draw = int(request.GET.get("draw", 1))
+            start = int(request.GET.get("start", 0))
+            length = int(request.GET.get("length", 10))
+            search_value = request.GET.get("search[value]", "").strip()
+            
+            queryset = self.params["model"].objects.people_list_view(
                 request, self.params["fields"], self.params["related"]
             )
-            return rp.JsonResponse(data={"data": list(objs)}, status=200)
+            if search_value:
+                queryset = queryset.filter(
+                    Q(peoplename__icontains=search_value) |
+                    Q(peoplecode__icontains=search_value) |
+                    Q(department__taname__icontains=search_value) |
+                    Q(bu__buname__icontains=search_value)
+                )
+            total = queryset.count()
+            paginated = queryset[start:start + length]
+            data = list(paginated)        
+            return rp.JsonResponse({
+                "draw": draw,
+                "recordsTotal": total,
+                "recordsFiltered": total,
+                "data": data,
+            }, status=200)
 
         if (
             R.get("action", None) == "qrdownload"

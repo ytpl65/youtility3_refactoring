@@ -47,13 +47,14 @@ Buisiness View
 			ajax:{
 				url: '{{ url("onboarding:bu") }}?action=list',
 			},
+			serverSide:true,
 			deferRender: true,
+			responsive:true,
+			pageLength:250,
+			lengthMenu: [250,500,750,1000],
 			language: {
 				searchPlaceholder: "Search keyword"
 			},
-			responsive:true,
-			pageLength:500,
-			lengthMenu: [250,500,750,1000],
 			columns     : [
                 { "data": "id", className:'noVis' },
                 { "data": "bucode" },
@@ -79,7 +80,7 @@ Buisiness View
 				
 				{targets:5,data:"enable",render:function(data,type,row,meta){
 					if(data === true){return '<i class="bi bi-check-circle-fill text-success"></i> Active';}
-					else if(data === false){return '<i class="bi bi-check-circle-fill text-success"></i> Inactive';}
+					else if(data === false){return '<i class="bi bi-check-circle-fill text-danger"></i> Inactive';}
 					else{return data.toString();}
 					}
 					}
@@ -112,7 +113,7 @@ Buisiness View
                 ),
                 dataTablesColumnVisibilityConfig(),
 				{
-					text     : `Add New &nbsp;<i class='fas fs-6 fa-plus'></i></a>`,
+					text     : `Add New &nbsp;<i class='fas fs-6 fa-plus'></i>`,
 					className: "btn btn-sm btn-light-primary border border-primary add_new_bu",
 					//action for add_new_button 
 					action: function(e, dt, node, config){

@@ -11,6 +11,13 @@ import pytz
 
 logger = logging.getLogger('django')
 
+def serialize_obj(obj):
+    from django.contrib.gis.geos import Point
+    data = dict(obj)
+    gps = data.get('gpslocation')
+    if isinstance(gps, Point):
+        data['gpslocation'] = [gps.y, gps.x]  # latitude, longitude
+    return data
 
 def get_assetincludes_choices(request):
     S = request.session

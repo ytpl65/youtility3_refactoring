@@ -819,13 +819,29 @@ class BtView(LoginRequiredMixin, View):
             return render(request, self.params['template_list'])
         # then load the table with objects for table_view
         if R.get('action', None) == 'list':
+            start = int(R.get('start', 0))
+            length = int(R.get('length', 10))
+            search = R.get('search[value]', '').strip()
+
             buids = self.params['model'].objects.get_whole_tree(
                 request.session['client_id'])
             objs = self.params['model'].objects.select_related(
                 *self.params['related']).filter(
                     id__in=buids
             ).exclude(identifier__tacode='CLIENT').values(*self.params['fields']).order_by('buname')
-            return rp.JsonResponse(data={'data': list(objs)})
+
+            if search:
+                objs = objs.filter(Q(buname__icontains=search) | Q(bucode__icontains=search))
+
+            total = objs.count()
+            paginated = objs[start:start + length]
+
+            return rp.JsonResponse({
+                "draw": int(R.get('draw', 1)),
+                "recordsTotal": total,
+                "recordsFiltered": total,
+                "data": list(paginated)
+            })
 
         elif R.get('action', None) == 'form':
 

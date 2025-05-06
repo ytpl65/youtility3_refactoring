@@ -55,12 +55,17 @@ People
                     return `<a href="${downloadUrl}" class="qr-download-link">QR Download</a>`
 				}
 				}	
-			],
+			],													
 			order:[[1, 'asc'], [3, 'asc']],
+			serverSide:true,
 			deferRender:true,
 			responsive:true,
 			lengthMenu: [250,500,750,1000],
-            pageLength: 500,
+            pageLength: 250,
+			language: {
+				searchPlaceholder: "Search keyword"
+			},
+			
 			dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
 			columnDefs:[
