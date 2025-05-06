@@ -3,254 +3,348 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE = edge">
-    <meta name="viewport" content="width = device-width, initial-scale = 1.0">
-    <title>Login</title>
-    <!-- BEGIN PAGEL LEVEL FONTS & ICONS START -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Youtility - Login</title>
+    <!-- Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- END PAGEL LEVEL FONTS & ICONS END -->
-    <link href="{{ static('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
-    <link href="{{ static('assets/css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
+    <!-- Favicon -->
     <link rel="shortcut icon" type="image/jpg" href="{{ static('assets/media/images/favicon.ico') }}" />
     <style>
-        html {
-            justify-content: center;
-            display: flex;
-            margin-top: 5%;
-            background-color: none;
+        :root {
+            --primary-color: #01569a;
+            --hover-color: #0277bd;
+            --success-color: #47ad44;
+            --light-bg: #f5f9fc;
+            --border-color: #e0e6ed;
+            --text-color: #3f4254;
+            --light-text: #7e8299;
+            --shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(135deg, #f5f9fc 0%, #e1eefb 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-color);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 450px;
+            width: 100%;
+            padding: 20px;
         }
 
         #loginbody {
-            justify-content: center;
-            background-color: rgba(255, 253, 253, 0.87);
-            border: 1px solid #eaeced;
-            width: 450px;
-            height: 420px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            /*border: 1px solid #eaeced;*/
-            border-radius: 5px;
-            font-family: 'Poppins', sans-serif;
-            /*box-shadow: 0 0 25px rgba(0, 0, 0, 0.25);
-            transition: box-shadow .4s ease;*/
+            transition: all 0.3s ease;
         }
 
-
-        #id_username,
-        #id_password,
-        ::placeholder {
-            font-size: 14px;
-            padding-left: 10px;
+        #loginbody::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-color), var(--hover-color));
         }
 
+        .site_logo {
+            text-align: center;
+            margin-bottom: 25px;
+        }
 
+        .site_logo img {
+            width: 180px;
+            height: auto;
+            transition: transform 0.3s ease;
+        }
 
-        #id_username,
-        #id_password {
-            margin: 2%;
-            height: 45px;
-            box-sizing: border-box;
-            border-radius: 5px;
-            border-style: solid;
-            border-width: 1px;
-            border-color: #9da3a6;
+        .site_logo img:hover {
+            transform: scale(1.05);
+        }
+
+        form {
+            width: 100%;
         }
 
         .fields {
             width: 100%;
-            padding: 0;
-
         }
 
-        form {
-            margin: 0;
-            padding: 10px;
-        }
-
-        .signinbtn {
-            box-sizing: border-box;
-            width: 100%;
-            min-height: 24px;
-            padding: 13px;
-            background-color: #01569a;
-            color: #fff;
-            box-shadow: none;
-            border-radius: 6px !important;
-            border: none;
-            cursor: pointer;
-            transition: background-color .5s ease;
-            padding-inline: 2%
-        }
-
-        .signinbtn:hover {
-            background-color: #47ad44;
-        }
-
-        .sign_in {
-            padding: 11px;
-            width: 100%;
-            margin-top: 18px;
-            border: none;
-            text-decoration: none;
-            transition: background-color .4s ease-out;
-            -webkit-box-shadow: none;
-            -moz-box-shadow: none;
-            box-shadow: none;
-            padding: 0
-        }
-
-        .signinbtn {
-            text-align: center;
-            text-align-last: center;
-            padding-bottom: 10px;
-            font-size: 16px;
-            height: 44px;
-        }
-
-        .site_logo img {
-            width: 185px;
-            height: 148px;
-            border-radius: 6px;
-            margin-bottom: -53px;
+        .input-group {
             position: relative;
-            top: -20px
+            margin-bottom: 20px;
         }
 
-        .loginerr {
-            background: none;
-            border: none;
-            padding: 0;
-            margin: 0;
+        #id_username,
+        #id_password {
+            width: 100%;
+            height: 50px;
+            background-color: var(--light-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 14px;
+            color: var(--text-color);
+            transition: all 0.3s ease;
         }
 
-        .loginerr>p {
-            margin: 0;
-            padding: 0;
-            font-size: small;
+        #id_username:focus,
+        #id_password:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(1, 86, 154, 0.1);
+            outline: none;
         }
 
-        .copyright {
-            text-align: center;
-            margin: 0 auto 30px 0;
-            padding: 10px;
-            color: #7a8ca5;
-            font-size: 13px;
-            text-decoration: none;
-            margin: 0;
-            margin-top: 5px;
-
-        }
-
-        #loginbody>form:nth-child(2) {
-            width: 395px;
+        ::placeholder {
+            color: var(--light-text);
         }
 
         #eye {
-            float: right;
-            margin-top: -35px;
-            position: relative;
-            z-index: 11;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
             cursor: pointer;
-            align-content: end;
-            display: flex;
-            justify-content: end;
-            margin-right: 20px;
-            color: #979491;
+            color: var(--light-text);
+            transition: color 0.3s ease;
+        }
+
+        #eye:hover {
+            color: var(--primary-color);
+        }
+
+        .sign_in {
+            width: 100%;
+            margin-top: 25px;
+        }
+
+        .signinbtn {
+            width: 100%;
+            height: 50px;
+            background: linear-gradient(90deg, var(--primary-color), var(--hover-color));
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(1, 86, 154, 0.2);
+        }
+
+        .signinbtn:hover {
+            background: linear-gradient(90deg, var(--hover-color), var(--primary-color));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(1, 86, 154, 0.3);
+        }
+
+        .signinbtn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(1, 86, 154, 0.2);
         }
 
         .alert.alert-danger.loginerr {
-            background-color: #ffe0e0;
-            border: 1px solid;
-            padding: 2%;
-            text-transform: capitalize;
-            margin-inline: 2%;
+            background-color: #ffe8e8;
+            border: 1px solid #ffcad0;
+            color: #d63031;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .copyright {
+            margin-top: 20px;
+            color: var(--light-text);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        /* Ripple effect on login button */
+        .signinbtn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .signinbtn:after {
+            content: "";
+            display: block;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform .5s, opacity 1s;
+        }
+
+        .signinbtn:active:after {
+            transform: scale(0, 0);
+            opacity: .3;
+            transition: 0s;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            #loginbody {
+                padding: 20px;
+            }
+
+            .site_logo img {
+                width: 150px;
+            }
+        }
+
+        /* Animation for alerts */
+        @keyframes slideIn {
+            0% {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .alert {
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        /* Decorative background elements */
+        .bg-shape {
+            position: fixed;
+            z-index: -1;
+        }
+
+        .bg-shape-1 {
+            top: 50px;
+            right: 10%;
+            width: 300px;
+            height: 300px;
+            background-color: rgba(1, 86, 154, 0.03);
+            border-radius: 50%;
+        }
+
+        .bg-shape-2 {
+            bottom: 50px;
+            left: 10%;
+            width: 200px;
+            height: 200px;
+            background-color: rgba(71, 173, 68, 0.03);
+            border-radius: 50%;
         }
     </style>
-
 </head>
 
 <body>
-    <!------------------------------------------------- BEGIN BODY ----------------------------------------------------->
-    <div class="login_body d-flex flex-column flex-sm-column" id="loginbody">
-        <div class="site_logo"><img class="dlogo" src="{{static('assets/media/logos/ytpl_transparent.png')}}" alt="">
-        </div>
-        <!----------------------------- BEGIN FORM ------------------------------>
-        <form action="" method='post' class="col-12 col-sm-6 col-md-4">
-            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-            <input type="hidden" name="timezone" id="timezone">
+    <!-- Decorative background shapes -->
+    <div class="bg-shape bg-shape-1"></div>
+    <div class="bg-shape bg-shape-2"></div>
 
-            <!------------BEGIN NON FIELD ERRORS -------------------->
-            {% if loginform.non_field_errors() %}
-            {% for error in loginform.non_field_errors() %}
-            <div class="alert alert-danger loginerr">{{error}}</div>
-            {% endfor %}
-            {% endif %}
-            <!------------END NON FIELD ERRORS -------------------->
-
-            {% if messages %}
-            {% for msg in messages %}
-            <div class="{% if msg.tags %}{{ msg.tags }}{% endif %} alert-dismissible fade show" role="alert">
-                <strong>Message!</strong> {{msg}}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="container">
+        <div class="login_body" id="loginbody">
+            <div class="site_logo">
+                <img class="dlogo" src="{{static('assets/media/logos/ytpl_transparent.png')}}" alt="Youtility Technologies Logo">
             </div>
-            
-            {% endfor %}
-            {% endif %}
 
-            <div class="fields d-flex flex-column m-0">
-                {% for field in loginform %}
-                {% for error in field.errors %}
-                <!--FOR FIELDS ERROR IN FORM-->
+            <form action="" method='post'>
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                <input type="hidden" name="timezone" id="timezone">
+
+                {% if loginform.non_field_errors() %}
+                {% for error in loginform.non_field_errors() %}
                 <div class="alert alert-danger loginerr">{{error}}</div>
                 {% endfor %}
-                <!--FIELDS IN FORM-->
-
-                {{ field }}
-                {% if loop.index == 2 %}
-                <span class="svg-icon svg-icon-2" id="p-viewer">
-                    <span class="material-icons h-19px" id="eye" style="vertical-align: middle; font-size: 19px;">
-                        visibility
-                    </span></span>
                 {% endif %}
-                {% endfor %}
-                <!--------------------- BEGIN SIGN IN BUTTON --------------->
-                <div class="sign_in">
-                    <input class="signinbtn" type="submit" value="LOG IN" />
-                </div>
-                <!--------------------- END SIGN IN BUTTON --------------->
-            </div>
-        </form>
-        <!----------------------------- END FORM ------------------------------>
-        <div class="copyright"> <span id="copyRightYear">{{ current_year }}</span> © Youtility Technologies Pvt. Ltd. </div>
-    </div>
-    <!-------------------------------------------- END BODY ---------------------------------------------------------------->
 
-    <script src="{{ static('assets/plugins/global/plugins.bundle.js') }}"></script>
-    <script src="{{ static('assets/js/scripts.bundle.js') }}"></script>
+                {% if messages %}
+                {% for msg in messages %}
+                <div class="{% if msg.tags %}{{ msg.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    <strong>Message!</strong> {{msg}}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                <div class="fields">
+                    {% for field in loginform %}
+                    {% for error in field.errors %}
+                    <div class="alert alert-danger loginerr">{{error}}</div>
+                    {% endfor %}
+
+                    <div class="input-group">
+                        {{ field }}
+                        {% if loop.index == 2 %}
+                        <span class="material-icons" id="eye">visibility</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    <div class="sign_in">
+                        <button class="signinbtn" type="submit">LOG IN</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="copyright">{{ current_year }} © Youtility Technologies Pvt. Ltd.</div>
+        </div>
+    </div>
+
     <script>
+        // Toggle password visibility
         const togglePassword = document.querySelector('#eye');
         const password = document.querySelector('#id_password');
 
-        togglePassword.addEventListener('click', function (e) {
-            // toggle the type attribute
+        togglePassword.addEventListener('click', function(e) {
+            // Toggle the type attribute
             const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
             password.setAttribute('type', type);
-            // toggle the eye / eye slash icon
-            var x = document.getElementById("eye");
-            if (x.innerHTML === "visibility") {
-                x.innerHTML = "visibility_off";
-            } else {
-                x.innerHTML = "visibility";
-            }
+            
+            // Toggle the eye icon
+            this.textContent = type === 'password' ? 'visibility' : 'visibility_off';
         });
-        $(document).ready(() => {
-            $("#timezone").val(-new Date().getTimezoneOffset())
-        })
-    
-    </script>
 
+        // Set timezone
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('timezone').value = -new Date().getTimezoneOffset();
+        });
+    </script>
 </body>
 
 </html>
