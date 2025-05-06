@@ -16,11 +16,6 @@ import apps.onboarding.forms as obf
 import apps.peoples.utils as putils
 from apps.core import utils
 from apps.activity.utils import get_asset_jsonform
-from apps.core.exceptions import IntegrityConstraintError
-
-logger = logging.getLogger("__main__")
-log = logger
-
 
 class AssetView(LoginRequiredMixin,View):
     P = {
@@ -65,7 +60,7 @@ class AssetView(LoginRequiredMixin,View):
         
         # return form with instance
         elif R.get('id', None):
-            from .utils import get_asset_jsonform
+            from apps.activity.utils import get_asset_jsonform
             asset = utils.get_model_obj(R['id'], request, P)
             cxt = {'assetform': P['form'](instance = asset, request=request),
                    'assetextrasform': get_asset_jsonform(asset, request),
@@ -98,7 +93,6 @@ class AssetView(LoginRequiredMixin,View):
 
     @staticmethod
     def handle_valid_form(form, jsonform, request ,create):
-        logger.info('asset form is valid')
         from apps.core.utils import handle_intergrity_error
         
         try:
@@ -108,7 +102,6 @@ class AssetView(LoginRequiredMixin,View):
             if av_utils.save_assetjsonform(jsonform, asset):
                 asset = putils.save_userinfo(
                     asset, request.user, request.session, create = create)
-                logger.info("asset form saved")
             data = {'pk':asset.id}
             return rp.JsonResponse(data, status = 200)
         except IntegrityError:
@@ -392,14 +385,12 @@ class Checkpoint(LoginRequiredMixin, View):
         return resp
 
     def handle_valid_form(self, form, request, create):
-        logger.info('checkpoint form is valid')
         P = self.params
         try:
             cp = form.save(commit=False)
             cp.gpslocation = form.cleaned_data['gpslocation']
             putils.save_userinfo(
                 cp, request.user, request.session, create = create)
-            logger.info("checkpoint form saved")
             data = {'msg': f"{cp.assetcode}",
             'row': Asset.objects.get_checkpointlistview(request, P['related'], P['fields'], id=cp.id)}
             return rp.JsonResponse(data, status = 200)

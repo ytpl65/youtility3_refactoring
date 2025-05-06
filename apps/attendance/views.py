@@ -16,7 +16,6 @@ from apps.service.utils import save_linestring_and_update_pelrecord
 import logging
 from apps.core import utils
 logger = logging.getLogger('django')
-log = logging.getLogger('__main__')
 # Create your views here.
 
 class Attendance(LoginRequiredMixin, View):
@@ -98,7 +97,6 @@ class Attendance(LoginRequiredMixin, View):
                 return rp.JsonResponse({"geofence_coords": coordinates_list}, status=200)
 
             except Exception as e:
-                print(f"Error: {e}")
                 return rp.JsonResponse({"error": str(e)}, status=500)
 
 

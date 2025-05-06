@@ -67,7 +67,6 @@ class QuestionForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         data = cleaned_data
-        print(data.get('alerton'), data.get('min'), "********88888")
         alertabove = alertbelow = None
         if(data.get('answertype') not in ['NUMERIC', 'RATING', 'CHECKBOX', 'DROPDOWN']):
             cleaned_data['min'] = cleaned_data['max'] = None
@@ -205,8 +204,6 @@ class QsetBelongingForm(forms.ModelForm):
             cleaned_data['alerton'] = alerton
 
     def clean_alerton(self):
-        print("alertbelow", self.cleaned_data.get('alertbelow'))
-        print("alertabove", self.cleaned_data.get('alertabove'))
         val = self.cleaned_data.get('alerton')
         if val:
             return ac_utils.validate_alerton(forms, val)

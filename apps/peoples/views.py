@@ -2,30 +2,27 @@ from django.db.utils import IntegrityError
 from django.db import transaction
 from django.forms import model_to_dict
 from django.http.request import QueryDict
-from django.db.models import Q, RestrictedError
+from django.db.models import Q
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import EmptyResultSet
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import response as rp
 from django.shortcuts import redirect, render
 from django.views import View
 import logging
-from apps.onboarding.models import TypeAssist, Bt
+from apps.onboarding.models import  Bt
 from apps.peoples.filters import CapabilityFilter
 from apps.core import utils
 import apps.peoples.filters as pft
-import apps.peoples.forms as pf  # people forms
-import apps.peoples.models as pm  # people models
-import apps.onboarding.forms as obf  # onboarding-modes
-from .models import Capability, Pgbelonging, Pgroup, People
+import apps.peoples.forms as pf  
+import apps.peoples.models as pm  
+import apps.onboarding.forms as obf 
+from .models import Pgbelonging, Pgroup, People
 from .utils import save_userinfo, save_pgroupbelonging
 import apps.peoples.utils as putils
 from django.contrib import messages
-from .forms import CapabilityForm, PgroupForm, PeopleForm, PeopleExtrasForm, LoginForm
+from .forms import PeopleForm, PeopleExtrasForm, LoginForm
 from django_email_verification import send_email
-from django.views.decorators.cache import never_cache
 
 logger = logging.getLogger("django")
 
@@ -326,7 +323,6 @@ class PeopleView(LoginRequiredMixin, View):
                 "ta_form": obf.TypeAssistForm(auto_id=False, request=request),
                 "msg": "update people requested",
             }
-            # print("++++++++++++++++", cxt["ta_form"])
             resp = render(request, self.params["template_form"], context=cxt)
         return resp
 
@@ -363,7 +359,6 @@ class PeopleView(LoginRequiredMixin, View):
             people = form.save()
             if request.FILES.get("peopleimg"):
                 people.peopleimg = request.FILES["peopleimg"]
-                print(request.FILES.get("peopleimg"))
             if not people.password:
                 people.set_password(form.cleaned_data["peoplecode"])
             if putils.save_jsonform(jsonform, people):
@@ -552,7 +547,6 @@ class SiteGroup(LoginRequiredMixin, View):
                 "sitegrpform": self.params["form_class"](request=request, instance=obj),
                 "assignedsites": sites,
             }
-            print("Sites", sites)
             resp = render(request, self.params["template_form"], context=cxt)
             return resp
 

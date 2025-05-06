@@ -6,10 +6,9 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.views.generic.base import View
 from django.contrib import messages
-from django.http import JsonResponse, QueryDict, response as rp, FileResponse, HttpResponseRedirect, HttpResponse
+from django.http import JsonResponse, QueryDict, response as rp, FileResponse,HttpResponse
 from io import BytesIO
 from django.template.loader import render_to_string
-from django.templatetags.static import static
 from weasyprint import HTML, CSS
 from weasyprint.text.fonts import FontConfiguration
 from django.urls import reverse
@@ -19,7 +18,7 @@ from apps.peoples import utils as putils
 from apps.core import utils
 from apps.activity.forms.question_form import QsetBelongingForm
 from apps.reports import forms as rp_forms
-import logging, subprocess, os
+import subprocess, os
 from background_tasks.tasks import send_report_on_email, create_report_history
 from django.contrib import messages as msg
 from django.apps import apps
@@ -33,15 +32,20 @@ from django.db import IntegrityError
 from background_tasks.tasks import create_save_report_async
 from background_tasks.report_tasks import remove_reportfile
 from celery.result import AsyncResult
-import time, base64, sys, json, os
+import json, os
 from apps.activity.models.job_model import Jobneed
 from apps.activity.models.question_model import QuestionSet, Question
 from frappeclient import FrappeClient
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
 from dateutil import parser
-import fitz  # PyMuPDF
-log = logging.getLogger('__main__')
+import logging
+
+
+log       = logging.getLogger('django')
+debug_log = logging.getLogger('debug_logger')
+error_log = logging.getLogger('error_logger')
+
 # Create your views here.
 
 class RetriveSiteReports(LoginRequiredMixin, View):
@@ -103,17 +107,14 @@ class MasterReportTemplateList(LoginRequiredMixin, View):
             ).values('id', 'qsetname', 'enable')
             count = objects.count()
             if count:
-                log.info('Site report template objects %s retrieved from db', (count or "No Records!"))
                 objects, filtered = utils.get_paginated_results(R, objects, count, self.fields,
                 [], self.model)
             filtered = count
-            log.info('Results paginated'if count else "")
             resp = rp.JsonResponse(data = {
                 'draw':R['draw'], 'recordsTotal':count, 'data' : list(objects), 
                 'recordsFiltered': filtered
             }, status = 200)
         except Exception:
-            log.critical('something went wrong', exc_info = True)
             return redirect('/dashboard')
         return resp
 
@@ -134,7 +135,6 @@ class MasterReportForm(LoginRequiredMixin, View):
         if R.get('template'):
             # return empty form if no id
             if not R.get('id'):
-                log.info("create a %s form requested", self.viewname)
                 cxt = {'reporttemp_form': self.form_class(request = request, initial = self.initial),
                        'qsetbng':self.subform()}
                 return render(request, self.template_path, context = cxt)
@@ -158,7 +158,6 @@ class MasterReportForm(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         """Handles creation of Pgroup instance."""
-        log.info('%s form submitted', self.viewname)
         R, create = QueryDict(request.POST), True
         utils.PD(post = R)
         response = None
@@ -168,12 +167,10 @@ class MasterReportForm(LoginRequiredMixin, View):
             form = self.form_class(
                 request = request, instance = obj, data = request.POST)
             create = False
-            log.info("retrieved existing %s template:= '%s'", obj.qsetname, obj.id)
 
         # process new data for creation
         else:
             form = self.form_class(data = request.POST, request = request, initial = self.initial)
-            log.info("new %s submitted following is the form-data:\n%s\n", self.viewname, pformat(form.data))
 
         # check for validation
         try:
@@ -201,7 +198,7 @@ class MasterReportForm(LoginRequiredMixin, View):
             report.parent_id  = -1
             report.save()
             report = putils.save_userinfo(report, request.user, request.session, create = create)
-            log.debug("report saved:%s", (report.qsetname))
+            debug_log.debug("report saved:%s", (report.qsetname))
         except Exception as ex:
             log.critical("%s form is failed to process", self.viewname, exc_info = True)
             resp = rp.JsonResponse(
@@ -357,8 +354,6 @@ class ConfigSiteReportTemplate(LoginRequiredMixin, View):
     @staticmethod
     def handle_valid_form(form, request, data):
         try:
-            print("Request", request.POST)
-            print("Data", data)
             with transaction.atomic(using=utils.get_current_db_name()):
                 template = form.save()
                 template.parent_id = data.get('parent_id', 1)
@@ -825,7 +820,7 @@ class ScheduleEmailReport(LoginRequiredMixin, View):
                 cxt = {'errors': form.errors}
                 return utils.handle_invalid_form(request, self.P, cxt)
         except IntegrityError as e: 
-            log.info("Integrity error occured")
+            error_log.error(f"Integrity error occured {e}")
             cxt = {'errors': "Scheduled report with these criteria is already exist"}
             return utils.handle_invalid_form(request, self.P, cxt)
         
@@ -934,10 +929,7 @@ def getCustomersSites(company, customer_code):
     fields= ['name', 'bu_name']
     frappe_data = get_frappe_data(company, 'Business Unit', filters, fields)
     return frappe_data
-    # if client:
-    #     sites = client.get_list('Salary Payroll Period', filters=filters, fields=fields)
-    #     print("!!!!!!",sites)
-    #     return sites
+
 
 def getAllUAN(company, customer_code, site_code, periods, document_type):
     # Set filters based on the presence of site_code
@@ -1347,11 +1339,11 @@ class GenerateAttendance(LoginRequiredMixin, View):
                         return JsonResponse({"success": False, "message": "No Data Found"})
                 else:
                     # Handle errors
-                    print(f"Failed to fetch data. Status code: {response.status_code}")
-                    print(f"Response: {response.text}")
+                    error_log.error(f"Failed to fetch data. Status code: {response.status_code}")
+                    error_log.error(f"Response: {response.text}")
             except requests.exceptions.RequestException as e:
                 # Handle exceptions (e.g., network issues)
-                print(f"An error occurred: {e}")
+                error_log.error(f"An error occurred: {e}")
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
         
@@ -1374,7 +1366,6 @@ class AttendanceTemplate(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         P, S = self.PARAMS, request.session
         attendance_data = S.get('report_data', {})
-        print(attendance_data)
         if not attendance_data:
             return JsonResponse({"success": False, "message": "No Data Found"})
         
@@ -1442,7 +1433,6 @@ class AttendanceTemplate(LoginRequiredMixin, View):
             return response
 
         except Exception as e:
-            print(f"PDF generation error: {str(e)}")
             return JsonResponse({"success": False, "message": f"Error generating PDF: {str(e)}"})
         
 class GenerateDecalartionForm(LoginRequiredMixin, View):
@@ -1478,14 +1468,10 @@ class GenerateDecalartionForm(LoginRequiredMixin, View):
             # Fetch required columns
             if not matched_row.empty:
                 row_data = matched_row[["Row Labels", "Name", "Sum of Bonus Amt", "Leave amt", "Dec 24 net pay", "MLWF", "PF AMT"]]
-            else:
-                print("No match found")
-
             if str(doc_payroll_detail[0]["net_pay"]).endswith('.0'):
                 result = str(doc_payroll_detail[0]["net_pay"]).split('.')[0]
             else:
                 result = str(doc_payroll_detail[0]["net_pay"])
-            # print("GET CLIENT",doc_employee_detail)
             date_str = str(doc_employee_detail[0]["date_of_joining"])
             date_obj = datetime.strptime(date_str, "%Y-%m-%d")
             formatted_from_date = date_obj.strftime("%b-%y").upper()

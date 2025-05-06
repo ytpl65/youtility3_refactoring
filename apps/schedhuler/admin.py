@@ -14,7 +14,8 @@ from apps.core.widgets import BVForeignKeyWidget, BVForeignKeyWidgetUpdate, Qset
 from datetime import time
 import math
 from apps.core import utils
-
+import logging
+logger = logging.getLogger('django')
 def default_ta():
     return utils.get_or_create_none_typeassist()[0]
 
@@ -53,7 +54,7 @@ class ParentFKW(wg.ForeignKeyWidget):
             (Q(client__bucode = row['Client*']) & Q(enable=True)) |
             Q(jobname='NONE'), identifier='INTERNALTOUR'
         )
-        print("possible job rows",qset.values_list("jobname", flat=True).order_by('-cdtz'))
+        logger.info("possible job rows",qset.values_list("jobname", flat=True).order_by('-cdtz'))
         return qset
 
 class BaseJobResource(resources.ModelResource):

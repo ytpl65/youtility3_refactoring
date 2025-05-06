@@ -24,25 +24,3 @@ def peopleeventlog_post_save(sender, instance, created, **kwargs):
     payload = build_payload(instance, "PeopleEventlog", created)
     publish_mqtt.delay(TOPIC, payload)
 
-# @receiver(post_save,sender=PeopleEventlog)
-# def peopleeventlog_post_save(sender,instance,created,**kwargs):
-#     print('I am here in Attendance Signals')
-#     from paho_client import MqttClient,REDMINE_TO_NOC
-#     client = MqttClient()
-#     client.client.connect('localhost',1883,60)
-
-#     operation = 'CREATE' if created else 'UPDATE'
-#     serializer = PeopleEventlogSerializer(instance)
-
-#     data = {
-#         'operation':operation,
-#         'app':'attendance',
-#         'models':"PeopleEventlog",
-#         'payload':serializer.data
-#     }
-
-#     payload = json.dumps(data)
-#     client.publish_message(REDMINE_TO_NOC,payload)
-#     client.client.disconnect()
-
-

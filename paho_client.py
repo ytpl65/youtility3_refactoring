@@ -91,7 +91,6 @@ class MqttClient:
             client.subscribe(GRAPHQL_ATTACHMENT, qos=1)
         else:
             fail = f"Failed to connect, return code {rc}"
-            print(fail)
 
     def on_message(self, client, userdata, msg):
         try:
@@ -116,7 +115,6 @@ class MqttClient:
                 # Process the received message
                 payload = msg.payload.decode("utf-8")
                 original_message = unzip_string(payload)
-                print("Original Message: ",original_message)
                 # process graphql mutations received on this topic GRAPHQL_MUTATION
                 result = process_graphql_mutation_async.delay(original_message)
                 post_data = json.loads(original_message)
@@ -179,12 +177,12 @@ class MqttClient:
         self.client.connect(BROKER_ADDRESS, BROKER_PORT)
         self.client.loop_forever()
     
-    def publish_message(self,topic,message):
-        result_code, mid = self.client.publish(topic, message,qos=0)
-        if result_code == mqtt.MQTT_ERR_SUCCESS:
-            log.info("Message sent Successfully")
-        else:
-            log.info("Failed to send message to topic ")
+    # def publish_message(self,topic,message):
+    #     result_code, mid = self.client.publish(topic, message,qos=0)
+    #     if result_code == mqtt.MQTT_ERR_SUCCESS:
+    #         log.info("Message sent Successfully")
+    #     else:
+    #         log.info("Failed to send message to topic ")
 
 
 if __name__ == "__main__":

@@ -5,7 +5,10 @@ import apps.onboarding.utils as ob_utils
 from apps.core import utils
 from django_select2 import forms as s2forms
 from django.db.models import Q
-import apps.activity.models as am
+from apps.activity.models.job_model import Job,Jobneed,JobneedDetails
+from apps.activity.models.asset_model import Asset
+from apps.activity.models.location_model import Location
+from apps.activity.models.question_model import QuestionSet
 import apps.peoples.models as pm
 import apps.onboarding.models as ob
 from django.utils import timezone as dtimezone
@@ -157,8 +160,8 @@ class SchdChild_I_TourJobForm(JobForm): # job
         self.fields['seqno'].widget.attrs = {'readonly':True}
         
         #filters for dropdown fields
-        self.fields['qset'].queryset = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['CHECKLIST', 'QUESTIONSET'])
-        self.fields['asset'].queryset = am.Asset.objects.filter(identifier__in = ['CHECKPOINT', "ASSET"], client_id = self.request.session['client_id'], enable=True)
+        self.fields['qset'].queryset = QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['CHECKLIST', 'QUESTIONSET'])
+        self.fields['asset'].queryset = Asset.objects.filter(identifier__in = ['CHECKPOINT', "ASSET"], client_id = self.request.session['client_id'], enable=True)
         utils.initailize_form_fields(self)
 
 
@@ -228,8 +231,8 @@ class Child_I_TourFormJobneed(JobNeedForm):# jobneed
         S = self.request.session
         super().__init__(*args, **kwargs)
         #filters for dropdown fields
-        self.fields['qset'].queryset = am.QuestionSet.objects.filter_for_dd_qset_field(self.request, ['CHECKLIST'], sitewise=True)
-        self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['CHECKPOINT', 'ASSET'], sitewise=True)
+        self.fields['qset'].queryset = QuestionSet.objects.filter_for_dd_qset_field(self.request, ['CHECKLIST'], sitewise=True)
+        self.fields['asset'].queryset = Asset.objects.filter_for_dd_asset_field(self.request, ['CHECKPOINT', 'ASSET'], sitewise=True)
         utils.initailize_form_fields(self)
 
 
@@ -242,8 +245,8 @@ class TaskFormJobneed(I_TourFormJobneed):
         self.fields['jobdesc'].required = True
         utils.initailize_form_fields(self)
         if not self.instance.id:
-            self.fields['asset'].queryset = am.Asset.objects.filter(identifier__in = ['Asset', 'Smartplace'])
-            self.fields['qset'].queryset = am.QuestionSet.objects.filter(type = ['QUESTIONSET'])
+            self.fields['asset'].queryset = Asset.objects.filter(identifier__in = ['Asset', 'Smartplace'])
+            self.fields['qset'].queryset = QuestionSet.objects.filter(type = ['QUESTIONSET'])
 
 
 
@@ -297,7 +300,7 @@ class Schd_E_TourJobForm(JobForm):
         self.fields['seqno'].widget.attrs      = {"style": "display:none"}
         
         #filters for dropdown fields
-        self.fields['qset'].queryset  = am.QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['RPCHECKLIST'])
+        self.fields['qset'].queryset  = QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['RPCHECKLIST'])
         self.fields['ticketcategory'].queryset  = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request)
         self.fields['sgroup'].queryset  = pm.Pgroup.objects.filter(identifier__tacode="SITEGROUP", bu_id__in = S['assignedsites'], enable=True)
         self.fields['people'].queryset  = pm.People.objects.filter_for_dd_people_field(self.request)
@@ -347,7 +350,7 @@ class EditAssignedSiteForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(EditAssignedSiteForm, self).__init__(*args, **kwargs)
-        self.fields['checklist'].choices = am.QuestionSet.objects.all().values_list('id', 'qsetname')
+        self.fields['checklist'].choices = QuestionSet.objects.all().values_list('id', 'qsetname')
         utils.initailize_form_fields(self)
 
 class SchdTaskFormJob(JobForm):
@@ -388,8 +391,8 @@ class SchdTaskFormJob(JobForm):
         
         #filters for dropdown fields
         self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
-        self.fields['qset'].queryset = am.QuestionSet.objects.filter_for_dd_qset_field(self.request, ['CHECKLIST'], sitewise=True)
-        self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, identifiers =["ASSET", 'CHECKPOINT'], sitewise=True)
+        self.fields['qset'].queryset = QuestionSet.objects.filter_for_dd_qset_field(self.request, ['CHECKLIST'], sitewise=True)
+        self.fields['asset'].queryset = Asset.objects.filter_for_dd_asset_field(self.request, identifiers =["ASSET", 'CHECKPOINT'], sitewise=True)
         self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
         self.fields['people'].queryset = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True)
         utils.initailize_form_fields(self)
@@ -468,8 +471,8 @@ class TicketForm(JobNeedForm):
         self.fields['ticketcategory'].queryset     = ob.TypeAssist.objects.filter(tatype__tacode="TICKETCATEGORY", client_id = S['client_id'], bu_id = S['bu_id'], enable=True)
         self.fields['assignedtopeople'].queryset = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True)
         self.fields['assignedtogroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
-        self.fields['location'].queryset = am.Location.objects.filter_for_dd_location_field(self.request, sitewise=True)
-        self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET', 'CHECKPOINT'], sitewise=True)
+        self.fields['location'].queryset = Location.objects.filter_for_dd_location_field(self.request, sitewise=True)
+        self.fields['asset'].queryset = Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET', 'CHECKPOINT'], sitewise=True)
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:

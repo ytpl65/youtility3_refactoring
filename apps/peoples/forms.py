@@ -180,7 +180,6 @@ class PeopleForm(forms.ModelForm):
             if dob == doj:
                 raise forms.ValidationError(self.error_msg['invalid_dates'])
             if dob >= doj:
-                print(dob, doj)
                 raise forms.ValidationError(self.error_msg['dob_should_less_doj'])
             if dob >= dor:
                 raise forms.ValidationError(self.error_msg['dob_should_less_dor'])
@@ -264,8 +263,7 @@ class PgroupForm(forms.ModelForm):
 
     def clean_peoples(self):
         if val := self.request.POST.get('peoples'):
-            print(val)
-    
+            pass    
     def clean_groupname(self):
         if value := self.cleaned_data.get('groupname'):
             regex = "^[a-zA-Z0-9\-_@#\[\]\(\|\)\{\} ]*$"

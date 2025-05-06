@@ -11,9 +11,10 @@ from django.apps import apps
 from django.utils.timezone import make_aware
 import logging
 import pytz
-logger = logging.getLogger('__main__')
-log = logger
 
+logger       = logging.getLogger('django')
+debug_logger = logging.getLogger('debug_logger')
+error_logger = logging.getLogger('error_logger')
 class VendorManager(models.Manager):
     use_in_migrations = True
     
@@ -25,7 +26,6 @@ class VendorManager(models.Manager):
             client_id = S['client_id'],
             enable=True
         ).values(*fields).order_by('name')
-        print("Qobjs",qobjs)
         return qobjs or self.none()
     
     def get_vendors_for_mobile(self, request, clientid, mdtz, buid, ctzoffset):
@@ -52,27 +52,7 @@ class ApproverManager(models.Manager):
         qobjs =  self.select_related(*related).filter(
            ( Q(bu_id = S['bu_id']) | Q( bu_id__in = S['assignedsites'])) | (Q(forallsites = True) & Q(client_id = S['client_id']))
         ).values(*fields)
-
-        print("Objs: ",qobjs)
         return qobjs or self.none()
-
-    
-    
-    # def get_approver_options_wp(self, request):
-    #     S = request.session
-    #     qset = self.annotate(
-    #         text = F('people__peoplename'),
-    #     ).filter(approverfor__contains = ['WORKPERMIT'], bu_id = S['bu_id'],identifier='APPROVER',sites__icontains = [S['bu_id']]).values('id', 'text')
-    #     return qset or self.none()
-    
-    # def get_verifier_options_wp(self,request):
-    #     S = request.session
-    #     print("BU Id",S['bu_id'])
-    #     qset = self.annotate(
-    #         text = F('people__peoplename'),
-    #     ).filter(approverfor__contains = ['WORKPERMIT'], bu_id = S['bu_id'],identifier='VERIFIER',sites__contains = [S['bu_id']]).values('id', 'text')
-    #     print("Verifier: ",qset)
-    #     return qset or self.none()
     
     def get_approver_options_wp(self, request):
         S = request.session
@@ -92,8 +72,6 @@ class ApproverManager(models.Manager):
             approverfor__contains=['WORKPERMIT'],
             identifier='APPROVER'
         ).values('id', 'text')
-        
-        print("Qset Approver", qset)
         return qset or self.none()
     
     def get_verifier_options_wp(self,request):
@@ -133,7 +111,7 @@ class ApproverManager(models.Manager):
             for obj in qset:
                 obj['approverfor'] = ','.join(obj['approverfor'] or "")
                 obj['sites'] = ','.join(obj['sites'] or "")
-        log.info(f"Qset : {qset}")
+        logger.info(f"Qset : {qset}")
         return qset or self.none()
 
 
@@ -242,7 +220,6 @@ class WorkOrderManager(models.Manager):
 # Testing
     def get_wp_answers(self, womid):
         childwoms = self.filter(parent_id = womid).order_by('seqno')
-        print("Child Woms: ",childwoms)
         logger.info(f"{childwoms = }")
         wp_details = []
         for childwom in childwoms:
@@ -407,7 +384,6 @@ class WorkOrderManager(models.Manager):
                 parent_id=parentid,
                 identifier='WP'
             ).values(*fields).order_by('-cdtz')
-        print(str(qset.query))
         return qset or self.none()
     
     
@@ -470,7 +446,6 @@ class WorkOrderManager(models.Manager):
             else:
                 average_score = sum(ans)/len(ans)
             all_average_score.append(round(average_score,1))
-            print("Average Score and Section Weight",average_score,section_weight)
             score = average_score * section_weight
             overall_score.append(score)
             sq = {

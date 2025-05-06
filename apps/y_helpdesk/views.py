@@ -141,13 +141,11 @@ class PostingOrderView(LoginRequiredMixin, View):
     }
     def get(self, request, *args, **kwargs):  
         R, P = request.GET, self.params
-        print("R: ",R)
         if R.get('template') == 'true':
             return render(request, P['template_list'])
         
         if R.get('action') == 'list':
             objs = P['model'].objects.get_posting_order_listview(request)
-            print("Objs: ",objs)
             return rp.JsonResponse({'data':list(objs)}, status=200) 
                 
 class UniformView(LoginRequiredMixin, View):

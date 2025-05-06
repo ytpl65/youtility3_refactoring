@@ -132,7 +132,6 @@ def create_job(jobids=None):
         log.critical("Something went wrong!", exc_info=True)
         raise
     end_time = time.time()
-    print(f"Time taken: {end_time - start_time}")
     log.info(f"Time Taken: {end_time - start_time}")
     return result
 

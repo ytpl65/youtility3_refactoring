@@ -6,6 +6,4 @@ urlpatterns = [
     path('attendance/', views.Attendance.as_view(), name='attendance_view'),
     path('travel_expense/', views.Conveyance.as_view(), name='conveyance'),
     path('geofencetracking/', views.GeofenceTracking.as_view(), name='geofencetracking'),
-    #path('markAttendance/', views.face_recognition, name='markAttendance'),# 
-    #path('opencam/', views.face_recognition2, name='webcam')
 ]

@@ -62,6 +62,8 @@ EMAIL_MULTI_USER = True  # optional (defaults to False)
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
 ENCRYPT_KEY = env('ENCRYPT_KEY')
+
+SUPERADMIN_PASSWORD = env('SUPERADMIN_PASSWORD')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True    
 
@@ -373,6 +375,9 @@ LOGGING_CONFIG_ = {
             '()': 'colorlog.ColoredFormatter',
             'format': '%(log_color)s %(asctime)s  %(levelname)-10s  from method: %(funcName)-32s  << %(message)s >>'
         },
+        'plain': {
+        'format': '%(asctime)s  %(levelname)-10s  from method: %(funcName)-32s  << %(message)s >>'
+    },
     }, 
     'handlers': {
         'default': { 
@@ -386,41 +391,55 @@ LOGGING_CONFIG_ = {
             'filename':f'{LOGGER_PATH}/youtility4_logs/youtility4.log',
             'maxBytes': 15728640,
             'backupCount': 10,
+            'formatter': 'plain',
+        },
+        'debuglogs':{
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename':f'{LOGGER_PATH}/youtility4_logs/debug.log',
+            'maxBytes': 15728640,
+            'backupCount': 10,
+            'formatter': 'plain',
         },
         'serviceLogs':{
             'class': 'logging.handlers.RotatingFileHandler',
             'filename':f'{LOGGER_PATH}/youtility4_logs/mobileservice.log',
             'maxBytes': 15728640,
             'backupCount': 10,
+            'formatter': 'plain',
         },
         'tracking_logs':{
             'class': 'logging.handlers.RotatingFileHandler',
             'filename':f'{LOGGER_PATH}/youtility4_logs/tracking.log',
             'maxBytes': 15728640,
             'backupCount': 10,
+            'formatter': 'plain',
         },
         'message_qlogs':{
             'class': 'logging.handlers.RotatingFileHandler',
             'filename':f'{LOGGER_PATH}/youtility4_logs/message_q.log',
             'maxBytes': 15728640,
             'backupCount': 10,
+            'formatter': 'plain',
         },
         'reportslog':{
             'class': 'logging.handlers.RotatingFileHandler',
             'filename':f'{LOGGER_PATH}/youtility4_logs/reports.log',
             'maxBytes': 15728640,
             'backupCount': 10,
+            'formatter': 'plain',
         },
         'mail_admins': {
             'level': 'CRITICAL',
             'class': 'django.utils.log.AdminEmailHandler',
             'include_html': True,
+            'formatter': 'plain',
         },
         'error_file_handler':{
             'class': 'logging.handlers.RotatingFileHandler',
             'filename':f'{LOGGER_PATH}/youtility4_logs/errors.log',
             'maxBytes': 15728640,
             'backupCount': 10,
+            'formatter': 'plain',
         }
     },
     'loggers': { 
@@ -434,8 +453,8 @@ LOGGING_CONFIG_ = {
             'level': 'INFO',
             'propagate': False
         },
-        '__main__': {  # if __name__ == '__main__'
-            'handlers': ['default', 'filelogs'],
+        'debug_logger': {
+            'handlers': ['default', 'debuglogs'],
             'level': 'DEBUG',
             'propagate': False
         },
@@ -470,7 +489,6 @@ LOGGING_CONFIG_ = {
 def check_and_correct_path(path):
     if os.path.exists(path):
         if os.path.isdir(path):
-            print(f"Path {path} is a directory, expected a file. Correcting...")
             os.rmdir(path)  # Only works if the directory is empty
             # You might need more complex handling if the directory is not empty
 

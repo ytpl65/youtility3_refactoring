@@ -14,19 +14,16 @@ import psycopg2.errors as pg_errs
 from django.template.loader import render_to_string
 from apps.work_order_management.utils import check_all_approved,reject_workpermit,save_approvers_injson,check_all_verified,save_verifiers_injson,save_workpermit_name_injson,reject_workpermit_verifier
 import logging
-import os
 from django.utils import timezone
-from apps.reports import utils as rutils
 from apps.work_order_management import utils as wom_utils
 # from apps.reports.report_designs.workpermit import GeneralWorkPermit
 from apps.reports.report_designs.service_level_agreement import ServiceLevelAgreement
-from apps.onboarding.models import TypeAssist,Bt
+from apps.onboarding.models import Bt
 import json
 from apps.work_order_management.utils import save_pdf_to_tmp_location,get_approvers_code,get_verifiers_code,check_if_valid_approver,check_if_valid_verifier
 from dateutil.relativedelta import relativedelta
 
-logger = logging.getLogger('__main__')
-log = logger
+logger = logging.getLogger('django')
 # Create your views here.
 
 # Create your views here.
@@ -98,7 +95,6 @@ class VendorView(LoginRequiredMixin, View):
             logger.info("question form saved")
             data = {'msg': f"{vendor.name}",
             'row': Vendor.objects.values(*self.params['fields']).get(id = vendor.id)}
-            logger.debug(data)
             return rp.JsonResponse(data, status = 200)
         except (IntegrityError, pg_errs.UniqueViolation):
             return utils.handle_intergrity_error('Question')
@@ -204,7 +200,6 @@ class WorkOrderView(LoginRequiredMixin, View):
             logger.info("workorder form saved")
             data = {'msg': f"{workorder.id}",
             'row': Wom.objects.values(*self.params['fields']).get(id = workorder.id), 'pk':workorder.id}
-            logger.debug(data)
 
             return rp.JsonResponse(data, status = 200)
         except (IntegrityError, pg_errs.UniqueViolation):
@@ -226,7 +221,7 @@ class ReplyWorkOrder(View):
                 wo = Wom.objects.get(id = R['womid'])
                 if wo.workstatus == Wom.Workstatus.COMPLETED: return HttpResponse("The work order are already submitted!")
                 wo.workstatus = Wom.Workstatus.INPROGRESS
-                log.info("work order accepted by vendor")
+                logger.info("work order accepted by vendor")
                 wo.starttime = timezone.now()
                 wo.save()
                 cxt = {'accepted':True, 'wo':wo}
@@ -237,7 +232,7 @@ class ReplyWorkOrder(View):
                 if wo.workstatus == Wom.Workstatus.COMPLETED: return HttpResponse("The work order are already submitted!")
                 wo.isdenied = True
                 wo.workstatus = Wom.Workstatus.CANCELLED
-                log.info(f'work order cancelled/denied by vendor')
+                logger.info(f'work order cancelled/denied by vendor')
                 wo.save()
                 cxt = {'declined':True, 'wo':wo}
                 return render(request, self.params['template'], context=cxt)
@@ -245,7 +240,7 @@ class ReplyWorkOrder(View):
             if R['action'] == 'request_for_submit_wod':
                 #check for work is already inprogress
                 wo = Wom.objects.get(id = R['womid'])
-                log.info(f'wo status {wo.workstatus}')
+                logger.info(f'wo status {wo.workstatus}')
                 if wo.workstatus == Wom.Workstatus.INPROGRESS:
                     questions = QuestionSetBelonging.objects.filter(qset_id = wo.qset_id).select_related('question')
                     cxt = {'qsetname':wo.qset.qsetname, 'qsb':questions, 'womid':wo.id}
@@ -272,18 +267,17 @@ class ReplyWorkOrder(View):
                     return render(request, self.params['template'])
             if R.get('action') == 'save_work_order_details':
                 self.save_work_order_details(R, wo, request)
-                log.info('form saved successfully')
+                logger.info('form saved successfully')
                 return render(request, self.params['template_emailform'], {'wod_saved':True})
         except self.params['model'].DoesNotExist as e:
             return HttpResponse("The page you are looking for is not found")
     
     def save_work_order_details(self, R, wo, request):
-        log.info(f'form post data {R}')
+        logger.info(f'form post data {R}')
         post_data = R.copy()
         post_data.update(request.FILES)
-        log.info(f'postData = {post_data}')
+        logger.info(f'postData = {post_data}')
         for k, v in post_data.items():
-            log.debug(f'form name, value {k}, {v}')
             if k not in ['ctzoffset', 'womid', 'action', 'csrfmiddlewaretoken'] and '_' in k:
                 qsb_id = k.split('_')[0]
                 qsb_obj = QuestionSetBelonging.objects.filter(id = qsb_id).select_related('question').first()
@@ -317,10 +311,10 @@ class ReplyWorkOrder(View):
                     k = f'{qsb_id}-{qsb_obj.answertype}'
                     isuploaded, filename, filepath = utils.upload_vendor_file(request.FILES[k], womid = wo.id)
                     att = self.create_att_record(request.FILES[k], filename, filepath, wod)
-                    log.info(f'Is file uploaded {isuploaded} and attachment is created {att.id}')
+                    logger.info(f'Is file uploaded {isuploaded} and attachment is created {att.id}')
         wo.workstatus = Wom.Workstatus.COMPLETED
         wo.endtime = timezone.now()
-        log.info('work order status changed to completed')
+        logger.info('work order status changed to completed')
         wo.save()
         
     
@@ -389,7 +383,7 @@ class WorkPermit(LoginRequiredMixin, View):
                         workpermit_status = Wom.WorkPermitStatus.PENDING
                         approvers_name = [approver['name'] for approver in wp_approvers]
                         approvers_code = [approver['peoplecode'] for approver in wp_approvers]
-                        log.info(f"Sending Email to Approver {approvers_name} to approve the work permit")
+                        logger.info(f"Sending Email to Approver {approvers_name} to approve the work permit")
                         send_email_notification_for_workpermit_approval.delay(wom_id,approvers_name,approvers_code,sitename,workpermit_status,permit_name,pdf_path,vendor_name,client_id)
             return rp.JsonResponse(data={'data': 'Verified'}, status=200)
 
@@ -412,14 +406,13 @@ class WorkPermit(LoginRequiredMixin, View):
                     pdf_path = wom_utils.save_pdf_to_tmp_location(workpermit_attachment,report_name=permit_name,report_number=permit_no)
                     workpermit_status = 'APPROVED'
                     Wom.objects.filter(id=R['womid']).update(workstatus=Wom.Workstatus.INPROGRESS.value)
-                    print("permit Name in approve_wp",permit_name)
                     send_email_notification_for_vendor_and_security_after_approval.delay(R['womid'],sitename,workpermit_status,vendor_name,pdf_path,permit_name,permit_no)
             return rp.JsonResponse(data={'status': 'Approved'}, status=200)
 
 
         if R.get('action') == "verifier_reject_wp" and R.get("womid"):
 
-            log.info("Rejected Request:%s",R)
+            logger.info("Rejected Request:%s",R)
             wom = Wom.objects.get(id = R['womid'])
             wom.verifiers_status = Wom.WorkPermitVerifierStatus.REJECTED.value
             wom.workstatus = Wom.Workstatus.CANCELLED.value
@@ -469,7 +462,7 @@ class WorkPermit(LoginRequiredMixin, View):
             return self.send_report(R, request)
         
         if 'id' in R:   
-            log.info("In this view")
+            logger.info("In this view")
             # get work permit questionnaire
             from apps.work_order_management.models import Approver
             obj = utils.get_model_obj(int(R['id']), request, P)
@@ -478,7 +471,6 @@ class WorkPermit(LoginRequiredMixin, View):
             remarks  = Wom.objects.get(id=R['id']).remarks
             logged_in_user = request.user.peoplecode
             people_id = request.session.get('people_id')
-            print("Logged In User",logged_in_user)
             approvers_other_data = obj.other_data['wp_approvers']
             verifiers_other_data = obj.other_data['wp_verifiers']
             approvers_code = get_approvers_code(approvers_other_data)
@@ -489,7 +481,6 @@ class WorkPermit(LoginRequiredMixin, View):
                 identifier = Approver.objects.get(people_id=people_id, approverfor='{WORKPERMIT}').identifier
             except Approver.DoesNotExist:
                 identifier = None
-            print("Identifer: ",identifier)
             cxt = {'wpform': P['form'](request=request, instance=obj), 'ownerid': obj.uuid, 'wp_details': wp_answers}
             cxt['remarks'] ='None' if remarks is None else remarks
             cxt['logged_in_user']=logged_in_user
@@ -497,10 +488,9 @@ class WorkPermit(LoginRequiredMixin, View):
             cxt['is_valid_approver'] = is_valid_approver
             cxt['is_valid_verifier'] = is_valid_verifier
             if obj.workpermit == Wom.WorkPermitStatus.APPROVED and obj.workstatus != Wom.Workstatus.COMPLETED and ( identifier !='APPROVER' and identifier !='VERIFIER'):
-                print("Here I am")
                 qset_id = obj.qset.id
                 rwp_details = Wom.objects.get_return_wp_details(qset_id)
-                log.info(f"return work permit details are as follows: {rwp_details}")
+                logger.info(f"return work permit details are as follows: {rwp_details}")
                 cxt['rwp_details'] = [rwp_details]
                 cxt['work_status'] = work_status
                 
@@ -511,9 +501,9 @@ class WorkPermit(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
         try:
-            log.info("R: %s",R)
+            logger.info("R: %s",R)
             if R.get('action') == 'submit_return_workpermit':
-                log.info("submitting return work permit")
+                logger.info("submitting return work permit")
                 wom = Wom.objects.get(id = R['wom_id'])
                 return_wp_formdata = QueryDict(request.POST['return_work_permit_formdata']).copy()
                 rwp_seqno =Wom.objects.filter(parent_id=R['wom_id']).count() + 1
@@ -609,10 +599,10 @@ class WorkPermit(LoginRequiredMixin, View):
         if childwom := Wom.objects.filter(
             parent_id=wom.id, qset_id=qset.id, seqno=rwp_seqno or qset.seqno
         ).first():
-            log.info(f"wom already exist with qset_id {qset_id} so returning it")
+            logger.info(f"wom already exist with qset_id {qset_id} so returning it")
             return childwom
         else:
-            log.info(f'creating wom for qset_id {qset_id}')
+            logger.info(f'creating wom for qset_id {qset_id}')
             return Wom.objects.create(
                 parent_id      = wom.id,
                 description    = qset.qsetname,
@@ -640,11 +630,10 @@ class WorkPermit(LoginRequiredMixin, View):
             )
     
     def create_workpermit_details(self, R, wom,  request, formdata, rwp_seqno=None):
-        log.info(f'creating wp_details started {R}')
+        logger.info(f'creating wp_details started {R}')
         S = request.session
         
         for k,v in formdata.items():
-            log.debug(f'form name, value {k}, {v}')
             if k not in ['ctzoffset', 'wom_id', 'action', 'csrfmiddlewaretoken'] and '_' in k:
                 ids = k.split('_')
                 qsb_id = ids[0]
@@ -697,7 +686,7 @@ class WorkPermit(LoginRequiredMixin, View):
                 WomDetails.objects.create(
                     **data
                 )
-                log.info(f"wom detail is created for the for the child wom: {childwom.description}")
+                logger.info(f"wom detail is created for the for the child wom: {childwom.description}")
 
     
     def getReportFormatBasedOnWorkpermitType(self, R):
@@ -733,7 +722,7 @@ class VerifierReplyWorkPermit(View):
             if wom.workpermit != 'REJECTED':
                 wp = Wom.objects.filter(id = R['womid']).first()
                 p = People.objects.filter(id = R['peopleid']).first()
-                log.info("R:%s",R)
+                logger.info("R:%s",R)
                 
                 if is_all_verified := check_all_verified(wp.uuid, p.peoplecode):
                     if Wom.WorkPermitVerifierStatus.APPROVED != Wom.objects.get(id=R['womid']).workpermit:
@@ -754,7 +743,7 @@ class VerifierReplyWorkPermit(View):
                             workpermit_status = Wom.WorkPermitStatus.PENDING
                             approvers_name = [approver['name'] for approver in wp_approvers]
                             approvers_code = [approver['peoplecode'] for approver in wp_approvers]
-                            log.info(f"Sending Email to Approver {approvers_name} to approve the work permit")
+                            logger.info(f"Sending Email to Approver {approvers_name} to approve the work permit")
                             send_email_notification_for_workpermit_approval.delay(wom_id,approvers_name,approvers_code,sitename,workpermit_status,permit_name,pdf_path,vendor_name,client_id)
                     else:
                         return render(request,P['email_template'],context={'alreadyverified':True})
@@ -769,7 +758,7 @@ class VerifierReplyWorkPermit(View):
             return render(request,P['email_template'],context=cxt)
 
         elif R.get('action') == "rejected" and R.get("womid") and R.get('peopleid'):
-            log.info("Rejected Request:%s",R)
+            logger.info("Rejected Request:%s",R)
             wom = Wom.objects.get(id = R['womid'])
             if wom.workpermit == Wom.WorkPermitStatus.APPROVED:
                 return render(request,P['email_template'],context={'alreadyverified':True})
@@ -793,8 +782,8 @@ class VerifierReplyWorkPermit(View):
     
     def post(self,request, *args, **kwargs):
         R,P = request.POST,self.P
-        log.info("R:%s",R)
-        log.info("P:%s",P)
+        logger.info("R:%s",R)
+        logger.info("P:%s",P)
         remarks = R.get('reason')
         people_code = R.get('peoplecode')
         seqno = R.get('workpermit_seqno')
@@ -822,7 +811,7 @@ class ReplyWorkPermit(View):
             wom = Wom.objects.get(id = R['womid'])
             wp = Wom.objects.filter(id = R['womid']).first()
             p = People.objects.filter(id = R['peopleid']).first()
-            log.info("R:%s",R)
+            logger.info("R:%s",R)
             if is_all_approved := check_all_approved(wp.uuid, p.peoplecode):
                 if Wom.WorkPermitStatus.APPROVED != Wom.objects.get(id = R['womid']).workpermit:
                     Wom.objects.filter(id = R['womid']).update(workpermit = Wom.WorkPermitStatus.APPROVED.value)
@@ -830,7 +819,7 @@ class ReplyWorkPermit(View):
                         wom_id = R['womid']
                         wom = Wom.objects.get(id = wom_id)
                         sitename = Bt.objects.get(id=wom.bu_id).buname
-                        log.info("Inside of the if sitename %s",sitename)
+                        logger.info("Inside of the if sitename %s",sitename)
                         permit_name = wom.other_data['wp_name']
                         permit_no   = wom.other_data['wp_seqno']
                         worpermit_status = 'APPROVED'
@@ -845,11 +834,11 @@ class ReplyWorkPermit(View):
                 else:
                     return render(request, P['email_template'], context={'alreadyapproved':True})
             cxt = {'status': Wom.WorkPermitStatus.APPROVED.value, 'action_acknowledged':True, 'seqno':wp.other_data['wp_seqno']}
-            log.info("work permit accepted through email")
+            logger.info("work permit accepted through email")
             return render(request, P['email_template'], context=cxt)
         
         elif R.get('action') == "rejected" and R.get('womid')  and R.get('peopleid'):
-            log.info("work permit rejected")
+            logger.info("work permit rejected")
             wp = Wom.objects.filter(id = R['womid']).first()
             if wp.workpermit == Wom.WorkPermitStatus.APPROVED:
                 return render(request, P['email_template'], context={'alreadyapproved':True})
@@ -860,7 +849,7 @@ class ReplyWorkPermit(View):
             wp.save()
             reject_workpermit(wp.uuid, p.peoplecode)
             cxt = {'status': Wom.WorkPermitStatus.REJECTED.value, 'action_acknowledged':True, 'seqno':wp.other_data['wp_seqno']}
-            log.info('work permit rejected through email')
+            logger.info('work permit rejected through email')
             return render(request, P['email_template'], context=cxt)
         
         
@@ -874,37 +863,37 @@ class ReplySla(View):
         R,P = request.GET, self.P
         S = request.session
         if R.get('action') == 'accepted' and R.get('womid') and R.get('peopleid'):
-            log.info("Service level agreement report accepted")
-            log.info("R:%s",R)
-            log.info("Workpermit value",Wom.objects.get(uuid = R['womid']).workpermit)
+            logger.info("Service level agreement report accepted")
+            logger.info("R:%s",R)
+            logger.info("Workpermit value",Wom.objects.get(uuid = R['womid']).workpermit)
             p = People.objects.filter(id = R['peopleid']).first()
             if is_all_approved := check_all_approved(R['womid'], p.peoplecode):
-                log.info("Inside of the if")
+                logger.info("Inside of the if")
                 if Wom.WorkPermitStatus.APPROVED.value != Wom.objects.get(uuid = R['womid']).workpermit:
                     Wom.objects.filter(uuid = R['womid']).update(workpermit = Wom.WorkPermitStatus.APPROVED.value)
-                    log.info("Inside of the second if")
+                    logger.info("Inside of the second if")
                     if is_all_approved:
-                        log.info("Inside of the third if")
+                        logger.info("Inside of the third if")
                         wom_id = R['womid']
                         wom = Wom.objects.get(uuid = wom_id)
                         sitename = Bt.objects.get(id=wom.bu_id).buname
                         id = wom.id
                         sla_report_obj = ServiceLevelAgreement(returnfile=True,filename='Vendor Performance Report', formdata={'id':id,'bu__buname':sitename,'submit_button_flow':'true','filename':'Service Level Agreement','workpermit':wom.workpermit})
-                        log.info("sla_report_obj",sla_report_obj)
+                        logger.info("sla_report_obj",sla_report_obj)
                         workpermit_attachment = sla_report_obj.execute()
                         report_path = save_pdf_to_tmp_location(workpermit_attachment,report_name='Vendor Performance Report',report_number=wom.other_data['wp_seqno'])
-                        log.info("workpermit_attachment",report_path)
+                        logger.info("workpermit_attachment",report_path)
                         send_email_notification_for_sla_vendor.delay(R['womid'],report_path,sitename)
                 else:
-                    log.info("Else case")
+                    logger.info("Else case")
                     return render(request, P['email_template'], context={'alreadyapproved':True})
             cxt = {
                 'status': Wom.WorkPermitStatus.APPROVED.value,
                 'action_acknowledged':True,
                 'seqno':Wom.objects.get(uuid = R['womid']).other_data['wp_seqno']
             }
-            log.info("is approved",is_all_approved)
-            log.info("Service level agreement report accepted through email")
+            logger.info("is approved",is_all_approved)
+            logger.info("Service level agreement report accepted through email")
             return render(request, P['email_template'], context=cxt)
         
         elif R.get('action') == 'rejected' and R.get('womid') and R.get('peopleid'):
@@ -916,7 +905,7 @@ class ReplySla(View):
             wp.save()
             reject_workpermit(wp.uuid, p.peoplecode)
             cxt = {'status': Wom.WorkPermitStatus.REJECTED.value, 'action_acknowledged':True, 'seqno':wp.other_data['wp_seqno']}
-            log.info('work permit rejected through email')
+            logger.info('work permit rejected through email')
             return render(request, P['email_template'], context=cxt)
 
 
@@ -945,13 +934,6 @@ class ApproverView(LoginRequiredMixin, View):
             cxt = {'approver_form': P['form_class'](request = request),
                    'msg': "create approver requested"}
             resp = utils.render_form(request, P, cxt)
-
-        # elif R.get('action',None) == 'verifier_approver':
-        #     existing_verifier = Approver.objects.filter(identifier = 'VERIFIER',client_id = S['client_id']).values('people_id')
-        #     existing_approver = Approver.objects.filter(identifier = 'APPROVER',client_id = S['client_id']).values('people_id')
-        #     print('approvers',existing_approver)
-        #     print('verifiers',existing_verifier)
-        #     pass 
 
         # handle delete request
         elif R.get('action', None) == "delete" and R.get('id', None):
@@ -994,7 +976,6 @@ class ApproverView(LoginRequiredMixin, View):
             logger.info("approver form saved")
             data = {'msg': f"{approver.people.peoplename}",
             'row': Approver.objects.values(*self.params['fields']).get(id = approver.id)}
-            logger.debug(data)
             return rp.JsonResponse(data, status = 200)
         except (IntegrityError, pg_errs.UniqueViolation):
             return utils.handle_intergrity_error('Question')
@@ -1030,7 +1011,6 @@ class SLA_View(LoginRequiredMixin, View):
         
         if action == 'list':
             objs = self.params['model'].objects.get_slalist(request)
-            print("OBJS",objs)
             return rp.JsonResponse(data = {'data':list(objs)},safe = False)
         
         if action == 'approver_list':
@@ -1101,13 +1081,11 @@ class SLA_View(LoginRequiredMixin, View):
             return render(request, P['template_form'], context=context)
 
     def get_month_name(self,month):
-        print("Month: ----> ",month)
         if month == -1:
             return ''
         return self.MONTH_CHOICES.get(month)
     
     def get_month_number(self,month_name):
-        print(month_name)
         for number, name in self.MONTH_CHOICES.items():
             if name.lower() == month_name.lower():
                 return int(number)
@@ -1122,7 +1100,6 @@ class SLA_View(LoginRequiredMixin, View):
         R, P = request.POST, self.params
         try:
             if pk := R.get('pk', None):
-                print("Data: ",R)
                 data = QueryDict(R['formData']).copy()
                 wp = utils.get_model_obj(pk, request, P)
                 form = self.params['form'](
@@ -1131,7 +1108,6 @@ class SLA_View(LoginRequiredMixin, View):
             else:
                 data = QueryDict(R['formData']).copy()
                 data['month'] = wom_utils.get_month_number(self.MONTH_CHOICES,request.POST.get('month_name'))
-                print("Data: ",data)
                 form = self.params['form'](data, request = request)
                 create=True
             if form.is_valid():

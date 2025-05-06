@@ -58,11 +58,11 @@ def make_square(path1, path2):
         img2 = correct_image_orientation(img2)
         img2.save(path2)
     except FileNotFoundError:
-        print("Error: One or both of the provided file paths do not exist.")
+        log.error("Error: One or both of the provided file paths do not exist.")
     except IOError:
-        print("Error: One or both of the provided files are not images.")
+        log.error("Error: One or both of the provided files are not images.")
     except Exception as e:
-        print("Error: An unknown error occurred. while performing make_square(path1, path2)", e)
+        log.error("Error: An unknown error occurred. while performing make_square(path1, path2)", e)
 
 
 

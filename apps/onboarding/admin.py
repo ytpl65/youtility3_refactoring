@@ -728,7 +728,6 @@ class GeofencePeopleResource(resources.ModelResource):
         instance.identifier = 'GEOFENCE'
         instance.jobname = self._geofencecode + "-" + self._peoplename + " ("+ self._peoplecode +")"
         instance.jobdesc = self._geofencecode + "-" + self._geofencename + "-" + self._peoplename + " ("+ self._peoplecode +")"
-        print("instance",instance)
         utils.save_common_stuff(self.request, instance)
 
 class ShiftResource(resources.ModelResource):

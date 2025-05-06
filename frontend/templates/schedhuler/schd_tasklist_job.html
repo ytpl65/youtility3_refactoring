@@ -58,9 +58,9 @@ Scheduled Tasks
             ajax:{
                 url: "{{ url('schedhuler:jobschdtasks') }}?action=list"
             },
-			{# scrollY: 300,
+			scrollY: 300,
             scrollCollapse: true,
-            scrollX:true, #}
+            scrollX:true,
             deferRender: true,
             lengthMenu: [250,500,750,1000],
             pageLength: 500,
@@ -131,7 +131,7 @@ Scheduled Tasks
         
         })
 
-        initializeListOfPeoplesModal(ajaxData, "{{ url('activity:list_of_peoples') }}")
+        initializeListOfPeoplesModal(ajaxData, "{{ url('onboarding:list_of_peoples') }}")
     })
 
 </script>

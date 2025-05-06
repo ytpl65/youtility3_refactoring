@@ -12,10 +12,7 @@ from apps.activity.forms.location_form import LocationForm
 import apps.peoples.utils as putils
 from apps.core import utils
 
-logger = logging.getLogger("__main__")
-log = logger
-
-
+logger = logging.getLogger('django')
 
     
 class LocationView(LoginRequiredMixin, View):

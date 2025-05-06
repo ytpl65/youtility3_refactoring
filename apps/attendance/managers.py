@@ -10,12 +10,11 @@ from django.db.models import F
 from itertools import chain
 import json
 import logging
-log = logging.getLogger('__main__')
-
+logger = logging.getLogger('django')
 Q = models.Q
 class PELManager(models.Manager):
     use_in_migrations = True
-
+    
     def get_current_month_sitevisitorlog(self, peopleid):
         qset = self.select_related('bu', 'peventtype').filter(
             ~Q(people_id = -1), peventtype__tacode = 'AUDIT',
@@ -90,18 +89,18 @@ class PELManager(models.Manager):
 
     def update_fr_results(self, result, uuid, peopleid, db):
     
-        log.info('update_fr_results started results:%s'
+        logger.info('update_fr_results started results:%s'
                  , result)
         
         if obj := self.filter(uuid=uuid).using(db):
-            log.info('retrived obj punchintime: %s and punchoutime: %s and start location:%s and end location %s and peopleid %s', obj[0].punchintime, obj[0].punchouttime,obj[0].startlocation, obj[0].endlocation, peopleid)
+            logger.info('retrived obj punchintime: %s and punchoutime: %s and start location:%s and end location %s and peopleid %s', obj[0].punchintime, obj[0].punchouttime,obj[0].startlocation, obj[0].endlocation, peopleid)
             extras = obj[0].peventlogextras
-            log.info(f'theh extrsa logs {extras}')
+            logger.info(f'theh extrsa logs {extras}')
             if obj[0].punchintime and extras['distance_in'] is None:
                 extras['verified_in'] = bool(result['verified'])
                 extras['distance_in'] = result['distance']
             elif obj[0].punchouttime and extras['distance_out'] is None:
-                log.info('no punchintime found')
+                logger.info('no punchintime found')
                 extras['verified_out'] = bool(result['verified'])
                 extras['distance_out'] = result['distance']
 
@@ -118,13 +117,13 @@ class PELManager(models.Manager):
                         start_location_arr = self.get_lat_long(start_location)
                         longitude,latitude = start_location_arr[0],start_location_arr[1]
                         isStartLocationInGeofence = self.is_point_in_geofence(latitude,longitude,geofence_data)
-                        log.info(f'Is Start Location Inside of the geofence: {isStartLocationInGeofence}')
+                        logger.info(f'Is Start Location Inside of the geofence: {isStartLocationInGeofence}')
 
                     if end_location:
                         end_location_arr = self.get_lat_long(end_location)
                         longitude,latitude = end_location_arr[0],end_location_arr[1]
                         isEndLocationInGeofence = self.is_point_in_geofence(latitude,longitude,geofence_data)
-                        log.info(f'Is End Location Inside of the geofence: {isEndLocationInGeofence}')
+                        logger.info(f'Is End Location Inside of the geofence: {isEndLocationInGeofence}')
                     
                     if start_location:
                         obj[0].peventlogextras['isStartLocationInGeofence'] = isStartLocationInGeofence
@@ -132,19 +131,19 @@ class PELManager(models.Manager):
                     if end_location:
                         obj[0].peventlogextras['isEndLocationInGeofence'] = isEndLocationInGeofence
             if obj[0].punchintime and obj[0].shift_id == 1:
-                log.info(f'records punchintime {obj[0].punchintime}')
+                logger.info(f'records punchintime {obj[0].punchintime}')
                 punchintime = obj[0].punchintime
                 # log_starttime = datetime.fromisoformat(punchintime)
                 client_id = obj[0].client_id
                 site_id = obj[0].bu_id
                 all_shifts_under_site = Shift.objects.filter(client_id = client_id,bu_id = site_id)
-                log.info(f'records of shift in the site where person marked attendance {all_shifts_under_site}')
+                logger.info(f'records of shift in the site where person marked attendance {all_shifts_under_site}')
                 updated_shift_id = utils.find_closest_shift(punchintime,all_shifts_under_site)
-                log.info(f'the updated shift_id {updated_shift_id}')
+                logger.info(f'the updated shift_id {updated_shift_id}')
                 # Update the shift_id for obj[0]
                 obj[0].shift_id = updated_shift_id
                 obj[0].save(update_fields=['shift_id'])
-                log.info(f'Successfully updated shift_id to {updated_shift_id} for obj[0]')
+                logger.info(f'Successfully updated shift_id to {updated_shift_id} for obj[0]')
             obj[0].peventlogextras = extras
             obj[0].facerecognitionin = extras['verified_in']
             obj[0].facerecognitionout = extras['verified_out']
@@ -295,7 +294,7 @@ class PELManager(models.Manager):
         )
     
     def fetch_attachments(self, uuids):
-        from apps.activity.models import Attachment
+        from apps.activity.models.attachment_model import Attachment
         attachments = Attachment.objects.get_attforuuids(uuids).values('owner', 'filepath', 'filename')
         return {att['owner']: att for att in attachments}
 

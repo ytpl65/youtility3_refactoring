@@ -3,8 +3,6 @@ from apps.core.utils import runrawsql, get_timezone
 from apps.core.report_queries import get_query
 from apps.onboarding.models import Bt
 from django.conf import settings
-import logging
-log = logging.getLogger('__main__')
 
 class PeopleAttendanceSummaryReport(BaseReportsExport):
     report_title = "People Attendance Summary"

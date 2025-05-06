@@ -16,11 +16,8 @@ from apps.onboarding.utils import is_point_in_geofence, polygon_to_address
 from apps.service.utils import get_model_or_form
 import time
 from requests.exceptions import RequestException
-logger = logging.getLogger("__main__")
-log = logger
 
-
-
+logger = logging.getLogger('django')
 def get_address(lat, lon):
     if lat == 0.0 and lon == 0.0:
         return "Invalid coordinates"
@@ -55,7 +52,6 @@ class Attachments(LoginRequiredMixin, View):
                 model.objects.filter(uuid = R['ownerid']).update(
                     attachmentcount = P['model'].objects.filter(owner = R['ownerid']).count()
                 )
-                log.info('attachment count updated')
             return rp.JsonResponse({'result':res}, status=200)
         
         if R.get('action') == 'get_attachments_of_owner' and R.get('owner'):
@@ -72,7 +68,6 @@ class Attachments(LoginRequiredMixin, View):
     
     def post(self, request, *args, **kwargs):
         R, P = request.POST, self.params
-        print("R",R)
         if 'img' in request.FILES:
             isUploaded, filename, filepath = utils.upload(request)
             filepath = filepath.replace(settings.MEDIA_ROOT, "")
@@ -82,7 +77,6 @@ class Attachments(LoginRequiredMixin, View):
                     if data['ownername'].lower() in ['ticket' ,'jobneed', 'jobneeddetails', 'wom']:
                         model = get_model_or_form(data['ownername'].lower())
                         model.objects.filter(uuid = R['ownerid']).update(attachmentcount = data['attcount'])
-                        log.info('attachment count updated')
                 return rp.JsonResponse(data, status = 200, safe=False)
         return rp.JsonResponse({'error':"Invalid Request"}, status=404)
 

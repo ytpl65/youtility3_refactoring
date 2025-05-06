@@ -59,8 +59,6 @@ def upload_peopleimg(instance, filename):
         filepath = join(basedir, client, foldertype, full_filename)
         filepath = str(filepath).lower()
         fullpath = filepath
-
-        print("Full path",fullpath)
     except Exception:
         logger.critical(
             'upload_peopleimg(instance, filename)... FAILED', exc_info = True)

@@ -21,11 +21,9 @@ from django.db.models.functions import Cast, Concat
 import apps.peoples.models as pm
 from apps.core import utils
 
-logger = logging.getLogger("__main__")
 from django.conf import settings
 
-log = logger
-
+log = logging.getLogger('django')
 
 class JobManager(models.Manager):
     use_in_migrations: True
@@ -593,7 +591,6 @@ class JobneedManager(models.Manager):
             identifier = 'EXTERNALTOUR',
             job__enable=True
         ).order_by('seqno').values(*fields)
-        # print('External Tour',qset)
         return qset or self.none()
     
     def getAttachmentJobneed(self, id):

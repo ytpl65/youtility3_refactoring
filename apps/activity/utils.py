@@ -6,9 +6,11 @@ import apps.peoples.utils as putils
 import json
 import re
 import logging
-log = logging.getLogger("__main__")
 from datetime import datetime
 import pytz
+
+logger = logging.getLogger('django')
+
 
 def get_assetincludes_choices(request):
     S = request.session
@@ -82,8 +84,6 @@ def insert_questions_to_qsetblng(assigned_questions, model, fields, request):
     try:
         with transaction.atomic():
             for ques in assigned_questions:
-                log.info(f"""{" " * 8} saving question {ques[1]} for QuestionSet {fields['qsetname']} [started]""")
-
                 qsetbng, created = model.objects.update_or_create(
                     question_id = ques[2], qset_id = fields['qset'], client_id = fields['client'],
                     defaults = { 
@@ -100,12 +100,10 @@ def insert_questions_to_qsetblng(assigned_questions, model, fields, request):
                     "qset_id"   : fields['qset']}
                 )
                 qsetbng.save()
-                log.debug(f"{qsetbng.cuser}, {qsetbng.muser}, {qsetbng.cdtz}, {qsetbng.mdtz}")
                 putils.save_userinfo(qsetbng, request.user, request.session)
-                log.debug(f"""{" " * 8} {created} question {ques[1]} for QuestionSet {fields['qsetname']} [ended]""")
 
     except Exception:
-        log.critical("something went wrong", exc_info = True)
+        logger.critical("something went wrong", exc_info = True)
         raise
 
 def get_assignedsitedata(request):
@@ -120,7 +118,7 @@ def get_assignedsitedata(request):
         bu_list.append(request.user.bu_id)
         print("xxx", data.query ,bu_list)
     except Exception as e:
-        log.critical("get_assignedsitedata() exception: %s", exc_info=True)
+        logger.critical("get_assignedsitedata() exception: %s", exc_info=True)
         bu_list.append(request.user.bu_id)  
     return bu_list
 
@@ -208,7 +206,7 @@ def sendTicketMail(ticketid, oper):
         ticketdata = av.Ticket.objects.send_ticket_mail(ticketid)
         # print("ticketdata", ticketdata)
         records = [{'cdtz': record.createdon, 'ticketlog': record.ticketlog, 'modifiedon': record.modifiedon, 'status': record.status, 'ticketdesc': record.ticketdesc, 'ticketno': record.ticketno, 'creatoremail': record.creatoremail, 'modifiermail': record.modifiermail, 'modifiername': record.modifiername, 'peopleemail': record.peopleemail, 'pgroupemail': record.pgroupemail, 'tescalationtemplate': record.tescalationtemplate, 'priority': record.priority, 'peoplename': record.peoplename, 'next_escalation': record.next_escalation, 'creatorid': record.creatorid, 'modifierid': record.modifierid, 'assignedtopeople_id': record.assignedtopeople_id, 'assignedtogroup_id': record.assignedtogroup_id, 'groupname': record.groupname, 'buname': record.buname, 'level': record.level, 'comments':record.comments} for record in ticketdata]
-        sendEscalationTicketMail(records, oper, 'WEB')
+        #sendEscalationTicketMail(records, oper, 'WEB')
     except Exception as e:
         logger.critical("sendTicketMail() exception: %s", e)
         
@@ -303,24 +301,24 @@ def list_viewdata(request, model, fields, kwargs):
 
 def save_assetjsonform(jsonform, asset):
     try:
-        log.info('saving jsonform ...')
+        logger.info('saving jsonform ...')
         for k in ['supplier', 'meter', 'invoice_no', 'invoice_date', 'is_nonengg_asset',
                      'service', 'sfdate', 'stdate', 'yom', 'msn', 'bill_val', 'ismeter',
                      'bill_date', 'purchase_date', 'inst_date', 'po_number', 'far_asset_id']:
             asset.asset_json[k] = jsonform.cleaned_data.get(k)
     except Exception:
-        log.critical(
+        logger.critical(
             'save_jsonform(jsonform, p)... FAILED', exc_info=True)
         raise
     else:
-        log.info('jsonform saved DONE ... ')
+        logger.info('jsonform saved DONE ... ')
         return True
     
     
 def get_asset_jsonform(people, request):
     try:
-        log.info('people prefform (json form) retrieving...')
-        from .forms import AssetExtrasForm
+        logger.info('people prefform (json form) retrieving...')
+        from apps.activity.forms.asset_form import AssetExtrasForm
         d = {
             k: v
             for k, v in people.asset_json.items()
@@ -333,10 +331,10 @@ def get_asset_jsonform(people, request):
         }
 
     except Exception:
-        log.critical('get_asset_jsonform(people)... FAILED', exc_info=True)
+        logger.critical('get_asset_jsonform(people)... FAILED', exc_info=True)
         raise
     else:
-        log.info('people prefform (json form) retrieved... DONE')
+        logger.info('people prefform (json form) retrieved... DONE')
         return AssetExtrasForm(data=d, request=request)
     
 import qrcode

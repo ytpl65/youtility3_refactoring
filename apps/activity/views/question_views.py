@@ -19,9 +19,7 @@ import apps.activity.utils as av_utils
 import apps.peoples.utils as putils
 from apps.core import utils
 
-
-logger = logging.getLogger("__main__")
-log = logger
+logger = logging.getLogger('django')
 
 
 # Create your views here.
@@ -99,7 +97,6 @@ class Question(LoginRequiredMixin, View):
             logger.info("question form saved")
             data = {'msg': f"{ques.quesname}",
             'row': Question.objects.values(*self.params['fields']).get(id = ques.id)}
-            logger.debug(data)
             return rp.JsonResponse(data, status = 200)
         except (IntegrityError, pg_errs.UniqueViolation):
             return utils.handle_intergrity_error('Question')
@@ -140,27 +137,22 @@ class QuestionSet(LoginRequiredMixin, View):
             resp = utils.render_form_for_delete(request, self.params, False)
 
         elif R.get('id', None):
-            log.info('detail view requested')
+            logger.info('detail view requested')
             obj = utils.get_model_obj(int(R['id']), request, self.params)
             cxt = {'checklistform': self.params['form_class'](request = request, instance = obj)}
             resp = render(request, self.params['template_form'], context = cxt)
-            log.debug(resp)
         return resp
     
     def post(self, request, *args, **kwargs):
         resp, create = None, True
         try:
-            logger.debug(pformat(request.POST))
             data = QueryDict(request.POST['formData'])
             if pk := request.POST.get('pk', None):
-                logger.debug("form is with instance")
                 msg = 'checklist'
                 form = utils.get_instance_for_update(
                     data, self.params, msg, int(pk), {'request':request})
-                logger.debug(pformat(form.data, width = 41, compact = True))
                 create = False
             else:
-                logger.debug("form is without instance")
                 form = self.params['form_class'](data, request = request)
             if form.is_valid():
                 resp = self.handle_valid_form(form, request, create)
@@ -211,9 +203,6 @@ class QuestionSet(LoginRequiredMixin, View):
         try:
             logger.info("saving QuestoinSet Belonging [started]")
             logger.info(f'{" " * 4} saving QuestoinSet Belonging found {len(assigned_questions)} questions')
-
-            logger.debug(
-                f"\nassigned_questoins, {pformat(assigned_questions, depth = 1, width = 60)}, qset {fields['qset']}")
             av_utils.insert_questions_to_qsetblng(
                 assigned_questions, QuestionSetBelonging, fields, request)
             logger.info("saving QuestionSet Belongin [Ended]")

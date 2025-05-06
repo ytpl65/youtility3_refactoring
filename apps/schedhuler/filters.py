@@ -1,5 +1,5 @@
 import django_filters as dfs
-import apps.activity.models as am
+from apps.activity.models.job_model import Job,Jobneed
 from django.db.models import Q
 import django_filters.widgets as wg
 import django_select2.forms as s2forms
@@ -10,7 +10,7 @@ def assigned_to_qs(queryset, name, value):
 ###################### JOB FILTER #########################
 class JobFilter(dfs.FilterSet):
     class Meta:
-        model  = am.Job
+        model  = Job
         fields = [
             'jobname',    'jobdesc',      'fromdate',       'uptodate',  'cron',
             'identifier', 'planduration', 'gracetime',       'expirytime', 'parent',
@@ -22,7 +22,7 @@ class JobFilter(dfs.FilterSet):
 
 class JobneedFilter(dfs.FilterSet):
     class Meta:
-        model = am.Jobneed
+        model = Jobneed
         fields = [
             'identifier', 'frequency',    'parent',         'jobdesc',   'asset', 'ticketcategory',
             'qset',     'people',     'pgroup',        'priority',  'scantype',
@@ -73,7 +73,7 @@ class InternalTourFilter(dfs.FilterSet):
     expirydatetime = dfs.DateTimeFilter(field_name='expirydatetime', label="Exp. Datetime")
 
     class Meta:
-        model = am.Jobneed
+        model = Jobneed
         fields = [ 'plandatetime', 'jobdesc', 'jobstatus', 'assignedto', 'gracetime', 'performedby', 'expirydatetime']
 
     def __init__(self, *args, **kwargs):

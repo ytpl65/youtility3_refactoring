@@ -12,11 +12,11 @@ from tablib import Dataset
 import logging
 import psycopg2
 from psycopg2 import sql
-
+from intelliwiz_config.settings import SUPERADMIN_PASSWORD
 log = logging.getLogger(__name__)
 
 MAX_RETRY = 5
-DEFAULT_PASSWORD = 'superadmin@2022#'
+
 
 def create_dummy_client_and_site():
     client_type = TypeAssist.objects.get(tatype__tacode = 'BVIDENTIFIER', tacode='CLIENT')
@@ -80,9 +80,9 @@ def create_superuser(client, site):
         is_staff=True, is_superuser=True,
         isadmin=True, client=client, bu=site
     )
-    user.set_password(DEFAULT_PASSWORD)
+    user.set_password(SUPERADMIN_PASSWORD)
     user.save()
-    log.info(f"Superuser created successfully with loginid: {user.loginid} and password: {DEFAULT_PASSWORD}")
+    log.info(f"Superuser created successfully with loginid: {user.loginid} and password: {SUPERADMIN_PASSWORD}")
 
 class Command(BaseCommand):
     help = 'This command creates None entries, a dummy Client and Site, a superuser, and inserts default entries in TypeAssist.'

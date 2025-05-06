@@ -168,7 +168,6 @@ class QuestionResource(resources.ModelResource):
     def handle_nan_values(self, row):
         values = ["Min", "Max", "Alert Below", "Alert Above"]
         for val in values:
-            print("Val: ",val, row[val])
             value = row.get(val)
             if value is None or value == "NONE":  # Allow "NONE" and None values
                 row[val] = None
@@ -398,7 +397,6 @@ class QuestionSetResource(resources.ModelResource):
             )
 
     def before_save_instance(self, instance, using_transactions, dry_run=False):
-        print('entered in save instance before')
         utils.save_common_stuff(self.request, instance, self.is_superuser)
 
 

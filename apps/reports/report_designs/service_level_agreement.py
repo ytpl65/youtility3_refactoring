@@ -1,17 +1,9 @@
 from apps.reports.utils import BaseReportsExport
-from apps.reports.utils import BaseReportsExport
-from apps.core.utils import runrawsql, get_timezone
-from apps.core.report_queries import get_query
-from apps.onboarding.models import Bt
-from apps.work_order_management.models import Wom,Vendor
+from apps.work_order_management.models import Wom
 from apps.work_order_management.utils import get_last_12_months_sla_reports,get_sla_report_approvers,get_month_number
 from django.conf import settings
-from django.http.response import JsonResponse
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
-import logging
-logger = logging.getLogger('__main__')
-log = logger
+
 
 
 class ServiceLevelAgreement(BaseReportsExport):
@@ -53,10 +45,8 @@ class ServiceLevelAgreement(BaseReportsExport):
         vendor_description = wom_details[0][5]
         workpermit_status = wom_details[0][6]
         month_number = get_month_number(monthly_choices,month_name)
-        log.info(f'Month Name: {month_name}')
         sla_last_three_month_report = get_last_12_months_sla_reports(vendor_id=vendor_id,bu_id=site_id,month_number=month_number)
         month_year = f"{month_name} {year}"
-        print("Month Year: ",month_year)
         wom = Wom.objects.filter(parent_id=self.formdata.get('id')).order_by('-id')[1]
         wom_details = WomDetails.objects.filter(wom_id=wom.id)
         if wom_details[0].qset.qsetname=='KPI As Per Agreement':
@@ -67,8 +57,6 @@ class ServiceLevelAgreement(BaseReportsExport):
             response_time = '-'
             resolution_time = '-'
             uptime_score = '-'
-        print("Remarks: ",remarks)
-        print("Average Score: ",all_average_score)
         self.context = {
                 'question_answer': question_ans,
                 'sla_answer_data': sla_answers_data,

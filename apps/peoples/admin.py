@@ -1,5 +1,4 @@
 import apps.core.utils as utils
-from apps.onboarding.admin import BaseFieldSet2
 from apps.onboarding import models as om
 from apps.peoples import models as pm
 from import_export import widgets as wg
@@ -14,13 +13,10 @@ from .models import People,  Pgroup, Pgbelonging, Capability
 from django.core.exceptions import ValidationError
 from apps.service.validators import clean_string, clean_point_field, clean_array_string
 from django.contrib import admin
-import logging
 import re, math
 
-log = logging.getLogger('__main__')
 
 def save_people_passwd(user):
-    log.info('Password is created by system... DONE')
     paswd = f'{user.loginid}' if not user.password else user.password
     user.set_password(paswd)
  

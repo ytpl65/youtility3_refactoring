@@ -8,8 +8,6 @@ from django.db.models import Value as V
 from django.db.models.functions import Concat
 from apps.core import utils
 
-logger = logging.getLogger("__main__")
-log = logger
 
 
 class AssetManager(models.Manager):

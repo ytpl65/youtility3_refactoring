@@ -5,8 +5,6 @@ from django.http import response as rp
 from apps.activity.models.deviceevent_log_model import DeviceEventlog
 from django.shortcuts import render
 from django.views.generic.base import View
-logger = logging.getLogger("__main__")
-log = logger
 
 class MobileUserLog(LoginRequiredMixin, View):
     params = {

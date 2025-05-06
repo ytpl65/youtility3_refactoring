@@ -23,7 +23,7 @@ class AssetForm(forms.ModelForm):
         'invalid_assetcode3' : "[Invalid code] Code should not endwith '.' "
     }
     enable = forms.BooleanField(required=False, initial=True, label='Enable')
-    status_field = forms.ChoiceField(choices=Asset.RunningStatus.choices, label = 'Duration of Selected Status', required=False, widget=s2forms.Select2Widget)
+    status_field = forms.ChoiceField(choices=Asset.RunningStatus.choices, label = 'Duration of Selected Status', required=False)
     
     class Meta:
         model = Asset
@@ -39,15 +39,6 @@ class AssetForm(forms.ModelForm):
             'parent':'Belongs To', 'gpslocation':'GPS', 'location':'Location'
         }
         widgets={
-            'brand'        : s2forms.Select2Widget,
-            'unit'         : s2forms.Select2Widget,
-            'category'     : s2forms.Select2Widget,
-            'subcategory'  : s2forms.Select2Widget,
-            'servprov'     : s2forms.Select2Widget,
-            'runningstatus': s2forms.Select2Widget,
-            'type'         : s2forms.Select2Widget,
-            'parent'       : s2forms.Select2Widget,
-            'location'     : s2forms.Select2Widget,
             'identifier':forms.TextInput(attrs={'style':"display:none;"})
         }
     
@@ -149,10 +140,10 @@ class AssetExtrasForm(forms.Form):
     ismeter =    forms.BooleanField(initial=False, required=False, label='Meter')
     is_nonengg_asset =    forms.BooleanField(initial=False, required=False, label='Non Engg. Asset')
     supplier      = forms.CharField(max_length=55, label='Supplier', required=False)
-    meter         = forms.ChoiceField(widget=s2forms.Select2Widget, label='Meter', required=False)
+    meter         = forms.ChoiceField(label='Meter', required=False)
     invoice_no    = forms.CharField( max_length=55, required=False, label='Invoice No')
     invoice_date  = forms.DateField(required=False, label='Invoice Date')
-    service       = forms.ChoiceField(widget=s2forms.Select2Widget, label='Service', required=False)
+    service       = forms.ChoiceField(label='Service', required=False)
     sfdate        = forms.DateField(label='Service From Date', required=False)
     stdate        = forms.DateField(label='Service To Date', required=False)
     yom           = forms.IntegerField(min_value=1980, max_value=utils.get_current_year(), label='Year of Manufactured', required=False)
@@ -221,19 +212,16 @@ class  MasterAssetForm(forms.ModelForm):
                   'capacity', 'unit', 'brand', 'ctzoffset']
 
         widgets = {
-            'runningstatus': s2forms.Select2Widget,
-            'type'         : s2forms.Select2Widget,
-            'parent'       : s2forms.Select2Widget,
             'assetcode'    : forms.TextInput(attrs={'style': 'text-transform:uppercase;', 'placeholder': 'Enter text without space & special characters'})
         }
-
+    
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         self.fields['identifier'].initial = 'ASSET'
         self.fields['identifier'].widget.attrs = {"style": "display:none;"}
-        utils.initailize_form_fields(self)
+        #utils.initailize_form_fields(self)
         
     
     def clean_assetname(self):
@@ -309,10 +297,6 @@ class CheckpointForm(forms.ModelForm):
         fields = ['assetcode', 'assetname', 'runningstatus', 'parent',
             'iscritical', 'enable', 'identifier', 'ctzoffset', 'type', 'location']
         widgets = {
-            'location':s2forms.Select2Widget,
-            'type':s2forms.Select2Widget,
-            'parent':s2forms.Select2Widget,
-            'runningstatus':s2forms.Select2Widget
         }
         labels = {'location':'Location', 'parent':'Belongs To'}
         

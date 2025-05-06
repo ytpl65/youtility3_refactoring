@@ -11,7 +11,6 @@ from django.contrib.gis.db.models import PointField
 from django.contrib.postgres.fields import ArrayField
 from django.db.models import Q
 from django.utils import timezone
-import uuid
 # Create your models here.
 
 
@@ -161,7 +160,6 @@ class TypeAssist(BaseModel, TenantAwareModel):
         return reverse("onboarding:ta_update", kwargs={"pk": self.pk})
 
     def get_all_children(self):
-        print("------------>",self.pk)
         if self.pk is None:
             return []  
         children = [self]

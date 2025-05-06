@@ -1,8 +1,6 @@
 from apps.core.utils import get_email_addresses, send_email
 from .models import Wom
-from celery.utils.log import get_task_logger
 from datetime import timedelta
-log = get_task_logger('mobile_service_log')
 from django.template.loader import render_to_string 
 from django.conf import settings
 from apps.peoples.models import People
@@ -14,10 +12,8 @@ from django.http import response as rp
 from background_tasks.tasks import send_email_notification_for_sla_report
 import logging
 import getpass
-logger = logging.getLogger('__main__')
-log = logger
+logger = logging.getLogger('django')
 import os
-# from apps.reports.report_designs.workpermit import GeneralWorkPermit
 def check_attachments_if_any(wo):
     from apps.activity.models import Attachment
     return Attachment.objects.get_att_given_owner(wo.uuid)
@@ -32,7 +28,7 @@ def notify_wo_creation(id):
         
         emails = get_email_addresses(people_ids=peopleids)
         emails += [wo.vendor.email]
-        log.info(f'Email Addresses of recipents are {emails=}')
+        logger.info(f'Email Addresses of recipents are {emails=}')
         subject = f'New work order #{wo.id} from {wo.client.buname}'
         context = {
             'workorderid'   : id,
@@ -59,44 +55,41 @@ def notify_wo_creation(id):
         wo.save()
         return wo
     else:
-        log.info('object not found')
+        logger.info('object not found')
         
 def check_all_verified(womuuid,usercode):
     w = Wom.objects.filter(uuid = womuuid).first()
     all_verified = True
-    log.info(f"{usercode}, {womuuid}")
+    logger.info(f"{usercode}, {womuuid}")
     for verifier in w.other_data['wp_verifiers']:
-        log.info(f"Verifier {verifier}")
+        logger.info(f"Verifier {verifier}")
         if verifier['peoplecode'] == usercode:
             verifier['status'] = 'APPROVED'
-            log.info(f"verifier {verifier['name']} has approved with status code {verifier['status']}")
+            logger.info(f"verifier {verifier['name']} has approved with status code {verifier['status']}")
         if verifier['status'] != 'APPROVED':
             all_verified = False
     w.save()
-    log.info(f"all approved status is {all_verified}")
+    logger.info(f"all approved status is {all_verified}")
     return all_verified
         
 def check_all_approved(womuuid, usercode):
-    print("Here I am ")
     w = Wom.objects.filter(uuid = womuuid).first()
     all_approved = True
-    log.info(f"{usercode}, {womuuid}")
+    logger.info(f"{usercode}, {womuuid}")
     for approver in w.other_data['wp_approvers']:
-        log.info(f"Approver {approver}")
+        logger.info(f"Approver {approver}")
         if approver['peoplecode'] == usercode:
             approver['status'] = 'APPROVED'
-            log.info(f"approver {approver['name']} has approved with status code {approver['status']}")
+            logger.info(f"approver {approver['name']} has approved with status code {approver['status']}")
         if approver['status'] != 'APPROVED':
             all_approved = False
     w.save()
-    log.info(f"all approved status is {all_approved}")
+    logger.info(f"all approved status is {all_approved}")
     return all_approved
     
 def reject_workpermit(womuuid, usercode):
     w = Wom.objects.filter(uuid = womuuid).first()
     for approver in w.other_data['wp_verifiers']:
-        print("User Code",usercode)
-        print("Approver Code ",approver['peoplecode'])
         if approver['peoplecode'] == usercode:
             approver['status'] = 'REJECTED'
     w.save()
@@ -105,32 +98,30 @@ def reject_workpermit(womuuid, usercode):
 def reject_workpermit_verifier(womuuid, usercode):
     w = Wom.objects.filter(uuid = womuuid).first()
     for verifier in w.other_data['wp_verifiers']:
-        print("Verifier: data ",verifier)
         if verifier['peoplecode'] == usercode:
             verifier['status'] = 'REJECTED'
     for approver in w.other_data['wp_approvers']:
-        print(approver)
         approver['status'] = 'PENDING'
     w.save()
     
 def save_approvers_injson(wp):
-    log.info("saving approvers started")
+    logger.info("saving approvers started")
     wp_approvers = [
         {'name': People.objects.get(peoplecode=approver).peoplename, 'status': 'PENDING','identifier':'APPROVER','peoplecode':approver} for approver in wp.approvers
     ]
     wp.other_data['wp_approvers'] = wp_approvers
     wp.save()
-    log.info("saving approvers ended")
+    logger.info("saving approvers ended")
     return wp
 
 def save_verifiers_injson(wp):
-    log.info("saving verifiers started")
+    logger.info("saving verifiers started")
     wp_verifiers = [
         {'name': People.objects.get(peoplecode=verifier).peoplename, 'status':'PENDING','identifier':'VERIFIER','peoplecode':verifier} for verifier in wp.verifiers
     ]
     wp.other_data['wp_verifiers'] = wp_verifiers
     wp.save()
-    log.info("saving verifiers ended")
+    logger.info("saving verifiers ended")
     return wp
 
 def save_workpermit_name_injson(wp,permit_name):
@@ -160,7 +151,6 @@ def handle_valid_form(form, R, request, create):
     from urllib.parse import parse_qs
     S = request.session
     sla = form.save(commit=False)
-    print("R:  ",R)
     month = request.POST.get('month_name','')
     sla.other_data['month'] = month
     sla.uuid = request.POST.get('uuid')
@@ -172,16 +162,13 @@ def handle_valid_form(form, R, request, create):
     sla.other_data['overall_score'] = overall_score
     create_sla_details(request.POST, sla, request, formdata)
     sitename = S.get('sitename')
-    print("SLA ID",sla.id)
     wom_parent = Wom.objects.get(id=sla.id)
     wom = Wom.objects.filter(parent_id=sla.id).order_by('-id')[1]
     uptime_score = WomDetails.objects.filter(wom_id=wom.id)[2].answer
     wom_parent.other_data['uptime_score'] = uptime_score
     wom.other_data['section_weightage']=0
     wom_parent.save()
-    print("WOm Record: ",wom.description,wom.other_data)
     send_email_notification_for_sla_report.delay(sla.id,sitename)
-    print("sla:", sla)
     return rp.JsonResponse({'pk':sla.id})
 
 
@@ -196,11 +183,8 @@ def create_sla_details(R,wom,request,formdata):
             'KPI As Per Agreement':0,
             'REMARKS':0,
         }
-        log.info(f'creating sla_details started {R}')
-        S = request.session
-        overall_score = 0
+        logger.info(f'creating sla_details started {R}')
         for k,v in formdata.items():
-            log.debug(f'form name, value {k}, {v}')
             if k not in ['ctzoffset', 'wom_id', 'action', 'csrfmiddlewaretoken'] and '_' in k:
                 ids = k.split('_')
                 qsb_id = ids[0]
@@ -241,7 +225,7 @@ def create_sla_details(R,wom,request,formdata):
                 WomDetails.objects.create(
                     **data
                 )
-                log.info(f"wom detail is created for the for the child wom: {childwom.description}")
+                logger.info(f"wom detail is created for the for the child wom: {childwom.description}")
 
 
 def create_child_wom(wom, qset_id):
@@ -251,10 +235,10 @@ def create_child_wom(wom, qset_id):
         qset_id = qset.id,
         seqno = qset.seqno
     ).first():
-        log.info(f"wom already exist with qset_id {qset_id} so returning it")
+        logger.info(f"wom already exist with qset_id {qset_id} so returning it")
         return childwom
     else:
-        log.info(f'creating wom for qset_id {qset_id}')
+        logger.info(f'creating wom for qset_id {qset_id}')
         SECTION_WEIGHTAGE = {
             'WORK SAFETY': 0.2,
             'SERVICE DELIVERY':0.2,
@@ -266,13 +250,11 @@ def create_child_wom(wom, qset_id):
             'REMARKS':0,
         }
         qs = QuestionSet.objects.get(id=qset_id).qsetname
-        print("QS: ",qs)
         if qs in SECTION_WEIGHTAGE:
 
             section_weightage = SECTION_WEIGHTAGE[qs]
-            print("QS and Section weightage: ",qs,section_weightage)
             wom.other_data['section_weightage'] = section_weightage
-            log.info(f"section and question %s %s",section_weightage,qs)
+            logger.info(f"section and question %s %s",section_weightage,qs)
         return Wom.objects.create(
                 parent_id      = wom.id,
                 description    = qset.qsetname,
@@ -307,9 +289,7 @@ def get_overall_score(id):
 
 def get_pdf_path():
     user_name = getpass.getuser()
-    print("User Name: ",user_name)
     tmp_pdf_location = f'/var/tmp/youtility4_media/'
-    print(tmp_pdf_location)
     if not os.path.exists(tmp_pdf_location):
         os.makedirs(tmp_pdf_location)
     return tmp_pdf_location
@@ -349,7 +329,7 @@ def get_month_number(MONTH_CHOICES,month_name):
  
 
 def get_last_12_months_sla_reports(vendor_id, bu_id,month_number):
-    log.info(f'Month Number: {month_number}')
+    logger.info(f'Month Number: {month_number}')
     sla_reports = {}
     # Get the last 3 months' approved records, excluding the current month
     current_month = datetime.now().month
@@ -377,7 +357,6 @@ def get_last_12_months_sla_reports(vendor_id, bu_id,month_number):
                 year-=2
             else:
                 year -= 1
-        print("Month Value: ",month)
         month_name = months[month - 1]
         year_ = str(year)[2:]
         month_year = f"{month_name}'{year_}"
@@ -403,7 +382,6 @@ def get_last_12_months_sla_reports(vendor_id, bu_id,month_number):
             sla_reports[month_year] = [report.other_data['overall_score'],report.other_data.get('uptime_score','N/A')]
         else:
             sla_reports[month_year] = ['N/A','N/A']
-    print("SLA Reports: ",sla_reports)
     return sla_reports
 
 

@@ -54,12 +54,12 @@ class MqttClient:
     # MQTT client callback functions
     def on_connect(self, client, userdata, flags, rc, props):
         if rc == 0:
-            print("Connected to MQTT Broker!")
+            log.info("Connected to MQTT Broker!")
             client.subscribe(MUTATION_TOPIC)
             client.subscribe(MUTATION_STATUS_TOPIC)
         else:
             fail=f"Failed to connect, return code {rc}"
-            print(fail)
+            log.info(fail)
 
     def on_message(self, client, userdata, msg):
         # Process the received message
@@ -71,7 +71,7 @@ class MqttClient:
             # process graphql mutations received on this topic
             result = process_graphql_mutation_async.delay(payload)
             post_data = json.loads(payload)
-            print(f"{post_data.keys()}")
+            log.info(f"{post_data.keys()}")
             uuids, service_name = post_data.get('uuids', []), post_data.get('serviceName', "")
             response = json.dumps(
                 {'task_id':result.task_id, 'status':result.state,
@@ -95,7 +95,7 @@ class MqttClient:
 
 
     def on_disconnect(self, client, userdata, disconnect_flags, rc, props):
-        print("Disconnected from MQTT broker", userdata)
+        log.info("Disconnected from MQTT broker", userdata)
 
     def loop_forever(self):
         # Connect to MQTT broker

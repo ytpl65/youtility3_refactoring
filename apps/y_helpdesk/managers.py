@@ -6,8 +6,7 @@ from django.db.models.functions import Cast
 from apps.onboarding.models import TypeAssist
 from apps.peoples.models import Pgbelonging
 import logging
-logger = logging.getLogger('__main__')
-log = logger
+
 
 class TicketManager(models.Manager):
     use_in_migrations = True

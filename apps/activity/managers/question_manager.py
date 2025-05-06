@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 from django.db import models
 from django.db.models import (
@@ -16,10 +15,6 @@ from django.db.models.functions import Concat
 
 import apps.peoples.models as pm
 from apps.core import utils
-
-logger = logging.getLogger("__main__")
-log = logger
-
 
 
 class QuestionSetManager(models.Manager):
@@ -158,7 +153,7 @@ class QuestionSetManager(models.Manager):
         return qset or self.none()
     
     def filter_for_dd_qset_field(self, request, type, choices=False, sitewise=False):
-        from apps.activity.models import QuestionSetBelonging
+        from apps.activity.models.question_model import QuestionSetBelonging
         has_questions = QuestionSetBelonging.objects.filter(qset=OuterRef('pk')).values('pk')
         S = request.session
         qset = self.annotate(
@@ -297,7 +292,6 @@ class QsetBlngManager(models.Manager):
         elif R['answertype'] == 'NUMERIC' and (R['alertbelow'] or R['alertabove']):
             r['alerton'] = f"<{R['alertbelow']}, >{R['alertabove']}"
 
-        print("Question Post Data", R)
         questionset_data = QuestionSet.objects.get(id=R['parent_id'])
         buincludes = questionset_data.buincludes
         PostData = {'qset_id':R['parent_id'], 'answertype':R['answertype'], 'min':r.get('min', '0.0'), 'max':r.get('max', '0.0'),

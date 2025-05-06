@@ -5,7 +5,6 @@ from apps.work_order_management.models import Wom
 @receiver(pre_save, sender=Wom)
 def set_serial_no(sender, instance, **kwargs):
     if instance.id is None:  # Ensure the object is new and doesn't already exist in the database
-        print("Instance: ",instance, instance.identifier)
         if instance.description == 'THIS SECTION TO BE COMPLETED ON RETURN OF PERMIT':
             return
         if instance.identifier == 'SLA':
@@ -27,7 +26,6 @@ def set_serial_no(sender, instance, **kwargs):
         else:
             latest_record = None  # Fallback for unexpected cases (optional)
 
-        print("Latest Record: ", latest_record)
         if latest_record is None:
             # This is the first record for the client
             instance.other_data['wp_seqno'] = 1

@@ -140,7 +140,6 @@ class Query(graphene.ObjectType):
     def resolve_get_shifts(self,info,buid,clientid,mdtz):
         log.info(f'request get shifts input are: {buid} {clientid}')
         data = Shift.objects.get_shift_data(buid,clientid,mdtz)
-        print("Data: ",data,type(data))
         records, count, msg = utils.get_select_output(data)
         log.info(f'total {count} objects returned')
         return SelectOutputType(nrows = count, records = records,msg = msg)

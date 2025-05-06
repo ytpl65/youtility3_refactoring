@@ -1,17 +1,10 @@
 import json
-import logging
 from datetime import datetime
 from django.contrib.gis.db.models.functions import AsGeoJSON
 from django.db import models
 from django.db.models import CharField,F,Q
 from django.db.models import Value as V
 from django.db.models.functions import Concat
-
-logger = logging.getLogger("__main__")
-
-log = logger
-
-
 
 class LocationManager(models.Manager):
     use_in_migrations = True

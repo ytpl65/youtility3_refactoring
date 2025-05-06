@@ -13,9 +13,7 @@ import apps.activity.models as am
 import apps.peoples.utils as putils
 from apps.core import utils
 
-logger = logging.getLogger("__main__")
-log = logger
-
+logger = logging.getLogger('django')
     
 class PPMView(LoginRequiredMixin, View):
     P = {

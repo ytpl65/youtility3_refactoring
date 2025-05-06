@@ -107,15 +107,6 @@ class LoginResponseType(DjangoObjectType):
         model = People
         fields = ["peoplecode", "loginid", "peoplename", "isadmin", "email", "mobno"]
 
-    @staticmethod
-    def resolve_tenantid(info, *args, **kwargs):
-        print("called")
-        print(dir(info.context))
-        print(dict(info.context.GET))
-        print(dict(info.context.POST))
-        print(dir(info.context.body))
-        print(info.context.content_params)
-
 
 class AssetType(DjangoObjectType):
     gpslocation = graphene.Field(PointFieldType)

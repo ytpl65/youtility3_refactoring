@@ -590,24 +590,6 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
     def post(self, request, *args, **kwargs):
         R = request.POST
         form = self.form(R, request.FILES)
-        # print("R: ",R)
-        # print("Here I am : ")
-        # if R['table'] == 'BULKIMPORTIMAGE':
-        #     if 'action' in R and R['action'] == 'confirmImport':
-        #         print("Inserting", R['google_drive_link'])
-        #         drive_link = R['google_drive_link']
-        #         total_image =  save_image_and_image_path(drive_link)
-        #         return rp.JsonResponse({'totalrows': total_image}, status=200)
-        #     else:
-        #         boolean_var, image_data = self.upload_bulk_image_format(R)
-        #         print(image_data)
-        #         print(boolean_var)
-        #         context = {
-        #             'boolean_var':boolean_var,
-        #             'image_data':image_data,
-        #             'google_drive_link':R['google_drive_link']
-        #         }
-        #         return render(request,'onboarding/import_image_data.html',context=context)
         if R['table'] == 'BULKIMPORTIMAGE':
             if 'action' in R and R['action'] == 'confirmImport':
                 try:
@@ -656,7 +638,6 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
         is_coorect, correct_image_data, incorrect_image_data = is_bulk_image_data_correct(images_bulk_data['files'])
         if not is_coorect:
             return False,incorrect_image_data
-        print("Uploading")
         return True,correct_image_data
         
 
@@ -669,8 +650,6 @@ class BulkImportData(LoginRequiredMixin,ParameterMixin, View):
         else:
             file = request.FILES['importfile']
             dataset = Dataset().load(file)
-            # print('dataset',dataset)
-            #save to temp storage
             import tempfile
             with tempfile.NamedTemporaryFile(delete=False) as tf:
                 for chunk in file.chunks():
@@ -1088,7 +1067,6 @@ class BulkImportUpdate(LoginRequiredMixin,ParameterMixin, View):
         is_coorect, correct_image_data, incorrect_image_data = is_bulk_image_data_correct(images_bulk_data['files'])
         if not is_coorect:
             return False,incorrect_image_data
-        print("Uploading")
         return True,correct_image_data
         
 
@@ -1101,8 +1079,6 @@ class BulkImportUpdate(LoginRequiredMixin,ParameterMixin, View):
         else:
             file = request.FILES['importfile']
             dataset = Dataset().load(file)
-            # print('dataset',dataset)
-            #save to temp storage
             import tempfile
             with tempfile.NamedTemporaryFile(delete=False) as tf:
                 for chunk in file.chunks():
@@ -1152,15 +1128,12 @@ class ContractView(LoginRequiredMixin,View):
             return rp.JsonResponse(data={'data': list(objs)})
         
         elif R.get('action',None) == 'form':
-            print( ' entered in the action form')
             cxt = {'buform':self.params['form_class'](request=request),
                    'ta_form':obforms.TypeAssistForm(auto_id=False,request=request),
                    'msg':"create_bu_requested"}
-            print('The data in the context of the form',cxt)
             return render(request, self.params['template_form'], context=cxt)
         
         elif R.get('id', None):
-            print(' enter in the views id ')
             obj = utils.get_model_obj(int(R['id']) , request , self.params )
             # designation_data = obj.bupreferences.get('contract_designcount', {})
             initial = {'controlroom': obj.bupreferences.get('controlroom'),
@@ -1188,7 +1161,6 @@ class ContractView(LoginRequiredMixin,View):
             if form.is_valid():
                 designations_count = request.POST['jsonData']
                 resp = self.handle_valid_form(form, request, create,designations_count,obj)
-                print(' the response in the form valid', resp)
             else:
                 cxt = {'errors': form.errors}
                 resp = utils.handle_invalid_form(request, self.params, cxt)

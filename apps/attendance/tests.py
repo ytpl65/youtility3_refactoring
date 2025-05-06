@@ -69,7 +69,6 @@ class TestAttendanceView(TestCase):
 
         
     def test_attendance_get_template(self):
-        print(dict(self.client.session))
         response = self.client.get(self.url, data={'template':'true'})
         self.assertEqual(response.status_code, 200)
     
@@ -161,6 +160,5 @@ class ConveyanceView(TestCase):
         self.url = reverse('attendance:conveyance')
     
     def test_conveyance_get_template(self):
-        print(dict(self.client.session))
         response = self.client.get(self.url, data={'template':'true'})
         self.assertEqual(response.status_code, 200)

@@ -497,6 +497,7 @@ class ImportForm(forms.Form):
     importfile = forms.FileField(
         widget=forms.ClearableFileInput(attrs={'class': 'form-control'})
     )
+
     #importfile = forms.FileField(required = True, label='Import File', max_length = 50, allow_empty_file = False)
     ctzoffset = forms.IntegerField()
     #table = forms.ChoiceField(required = True, choices = TABLECHOICES, label='Select Type of Data', initial='TYPEASSISTS', widget=s2forms.Select2Widget)

@@ -32,7 +32,7 @@ class AttendanceForm(forms.ModelForm):
             'peventtype'  : s2forms.Select2Widget,
             
         }
-
+    
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
@@ -65,7 +65,7 @@ class ConveyanceForm(forms.ModelForm):
         required = True,
         widget = s2forms.Select2MultipleWidget,
         label='Transport Modes')
-
+    
     class Meta:
         model = atdm.PeopleEventlog
         fields = ['people', 'transportmodes', 'expamt', 'duration', 'ctzoffset',

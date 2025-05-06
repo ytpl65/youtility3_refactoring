@@ -4,12 +4,10 @@ from apps.tenants.models import Tenant
 from apps.peoples import utils as putils
 from apps.core import utils
 from django.core.cache import cache
-logger = logging.getLogger('__main__')
 
-dbg = logging.getLogger('__main__').debug
-
-logger = logging.getLogger("__main__")
-log = logger
+logger = logging.getLogger('django')
+error_logger = logging.getLogger('error_logger')
+debug_logger = logging.getLogger('debug_logger')
 
 def save_jsonform(peoplepref_form, p):
     try:
@@ -68,7 +66,7 @@ def get_people_prefform(people,  request):
 def save_cuser_muser(instance, user, create=None):
     from django.utils import timezone
     #instance is already created
-    logger.debug(f"while saving cuser and muser {instance.muser = } {instance.cuser = } {instance.mdtz = } {instance.cdtz = }")
+    debug_logger.debug(f"while saving cuser and muser {instance.muser = } {instance.cuser = } {instance.mdtz = } {instance.cdtz = }")
     if instance.cuser is not None:
         logger.info("instance is already created")
         instance.muser = user
@@ -142,7 +140,7 @@ def validate_mobileno(val):
             raise forms.ValidationError(
                 "User with this mobile no doesn't exist")
     except Exception:
-        logger.error('validate_mobileno(val)... FAILED', exc_info=True)
+        error_logger.error('validate_mobileno(val)... FAILED', exc_info=True)
         raise
 
 
@@ -224,7 +222,7 @@ def create_caps_choices_for_peopleform(client):
 
 
 def save_caps_inside_session_for_people_client(people, caps, session, client):
-    logger.debug(
+    debug_logger.debug(
         'saving capabilities info inside session for people and client...')
     #if client and people:
     #    session['people_mobcaps'] = make_choices(client.bu_preferences['mobilecapability'], fromclient=True) 
@@ -246,7 +244,7 @@ def save_caps_inside_session_for_people_client(people, caps, session, client):
         client.bupreferences['reportcapability'], caps)
     session['client_portletcaps'] = make_choices(
         client.bupreferences['portletcapability'], caps)
-    logger.debug(
+    debug_logger.debug(
         'capabilities info saved in session for people and client... DONE')
 
 
@@ -259,17 +257,15 @@ def make_choices(caps_assigned, caps, fromclient=False):
                 tmp.append(caps[i])
             if tmp and caps[i].depth == 2 and caps[i-1].depth == 3:
                 choice, menucode = get_choice(tmp, queryset=True)
-                print(choice, menucode)
                 parent_menus.append(menucode)
                 choices.append(choice)
                 tmp = []
             if i == (len(caps)-1) and choices:
                 choice, menucode = get_choice(tmp, queryset=True)
-                print(choice, menucode)
                 parent_menus.append(menucode)
                 choices.append(choice)
     if choices:
-        logger.debug('choices are made and returned... DONE')
+        debug_logger.debug('choices are made and returned... DONE')
     return choices, parent_menus
 
 
@@ -294,7 +290,7 @@ def get_choice(li, queryset=False):
 
 def get_cap_choices_for_clientform(caps, cfor):
     choices, temp = [], []
-    logger.debug('collecting caps choices for client form...')
+    debug_logger.debug('collecting caps choices for client form...')
     for i in range(1, len(caps)):
         if caps[i].cfor == 'WEB':
             if caps[i].depth in [3, 2]:
@@ -308,12 +304,11 @@ def get_cap_choices_for_clientform(caps, cfor):
                     if i == len(caps)-1 and choices:
                         choices.append(get_choice(temp))
     if choices:
-        logger.debug('caps collected and returned... DONE')
+        debug_logger.debug('caps collected and returned... DONE')
     return choices
 
 
 def make_choices(caps_assigned, caps):
-    print(caps_assigned)
     choices, tmp = [], []
     logger.info('making choices started ...')
     for i in range(1, len(caps)):
@@ -321,15 +316,13 @@ def make_choices(caps_assigned, caps):
             tmp.append(caps[i])
         if tmp and caps[i].depth == 2 and caps[i-1].depth == 3:
             choice = get_choice(tmp, queryset=True)
-            # print(f'tmp {tmp} choice {choice}')
             choices.append(choice)
             tmp = []
         if i == (len(caps)-1) and choices and tmp:
             choice = get_choice(tmp, queryset=True)
-            # print(f'tmp {tmp} choice {choice}')
             choices.append(choice)
     if choices:
-        logger.debug('choices are made and returned... DONE')
+        debug_logger.debug('choices are made and returned... DONE')
     return choices
 
 # call this method in session to save data inside session
@@ -341,8 +334,7 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
     from apps.peoples.models import Capability
     from apps.core.raw_queries import get_query
     caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
-    # for cap in caps:
-    # print(f'Code {cap.capscode} Depth {cap.depth}')
+
     if cfor == Capability.Cfor.MOB:
         return Capability.objects.select_related(
             'parent').filter(cfor=cfor, enable=True).values_list('capscode', 'capsname')
@@ -351,12 +343,12 @@ def get_caps_choices(client=None, cfor=None,  session=None, people=None):
         return Capability.objects.select_related(
             'parent').filter(cfor=cfor, enable=True).values_list('capscode', 'capsname')
     if caps:
-        logger.debug('got caps from cache...')
+        debug_logger.debug('got caps from cache...')
     if not caps:
-        logger.debug('got caps from db...')
+        debug_logger.debug('got caps from db...')
         caps = Capability.objects.raw(get_query('get_web_caps_for_client'))
         cache.set('caps', caps, 1*60)
-        logger.debug('results are stored in cache... DONE')
+        debug_logger.debug('results are stored in cache... DONE')
 
     if cfor:
         # return choices for client form
@@ -373,7 +365,7 @@ def save_user_paswd(user):
 
 
 def display_user_session_info(session):
-    log.info('Following user data saved in sesion\n')
+    logger.info('Following user data saved in sesion\n')
     
 
 
@@ -385,7 +377,7 @@ def get_choices_for_peoplevsgrp(request):
 
 
 def save_pgroupbelonging(pg, request):
-    dbg("saving pgbelonging for pgroup %s", (pg))
+    debug_logger.debug("saving pgbelonging for pgroup %s", (pg))
     from apps.onboarding.models import Bt
     peoples = request.POST.getlist('peoples[]')
     S = request.session
@@ -404,9 +396,9 @@ def save_pgroupbelonging(pg, request):
                     request.session['wizard_data']['pgbids'].append(pgb.id)
                 save_cuser_muser(pgb, request.user)
         except Exception:
-            dbg("saving pgbelonging for pgroup %s FAILED", (pg))
+            debug_logger.debug("saving pgbelonging for pgroup %s FAILED", (pg))
             logger.critical("somthing went wrong", exc_info=True)
             raise
         else:
-            dbg("saving pgbelonging for pgroup %s DONE", (pg))
+            debug_logger.debug("saving pgbelonging for pgroup %s DONE", (pg))
 

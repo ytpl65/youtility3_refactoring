@@ -1,10 +1,7 @@
-import logging
 from datetime import datetime, timedelta, timezone
 from django.db import models
 from apps.core import utils
 
-logger = logging.getLogger("__main__")
-log = logger
 
 
 

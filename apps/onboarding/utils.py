@@ -18,7 +18,8 @@ from django.contrib.gis.geos import Point, Polygon
 
 
 logger = logging.getLogger('django')
-dbg = logging.getLogger('__main__').debug
+error_logger = logging.getLogger('error_logger')
+debug_logger = logging.getLogger('debug_logger')
 
 def save_json_from_bu_prefsform(bt, buprefsform):
     try:
@@ -69,7 +70,6 @@ def update_children_tree(instance, newcode, newtype, whole = False):
         childs = Bt.objects.get_all_bu_of_client(instance.id)
         if len(childs) > 1:
             childs = Bt.objects.filter(id__in = childs).order_by('id')
-            print(childs)
             for bt in childs:
                 oldtree = instance.butree
                 oldtreepart = f'{instance.identifier.tacode} :: {instance.bucode}'
@@ -103,7 +103,7 @@ def get_webcaps_choices():  # sourcery skip: merge-list-append
     from ..core.raw_queries import get_query
     parent_menus = Capability.objects.raw(get_query('get_web_caps_for_client'))
     for i in parent_menus:
-        print(f'depth: {i.depth} tacode {i.tacode} path {i.path}')
+        logger.info(f'depth: {i.depth} tacode {i.tacode} path {i.path}')
     choices, temp = [], []
     for i in range(1, len(parent_menus)):
         if parent_menus[i-1].depth == 3 and parent_menus[i].depth == 2:
@@ -179,26 +179,26 @@ def create_bt_tree(bucode, indentifier, instance, parent = None):
 
 def create_bv_reportting_heirarchy(instance, newcode, newtype, parent):
     if instance.id is None:
-        dbg("Creating the reporting heirarchy!")
+        debug_logger.debug("Creating the reporting heirarchy!")
         # create bu tree
         if hasattr(instance, 'bucode')  and hasattr(parent, 'bucode'):
             if instance.bucode != "NONE" and parent.bucode == 'NONE':
                 # Root Node
-                dbg("Creating heirarchy of the Root Node")
+                debug_logger.debug("Creating heirarchy of the Root Node")
                 instance.butree = f'{newtype.tacode} :: {newcode}'
             elif instance.butree != f'{parent.butree} > {newtype.tacode} :: {newcode}':
                 # Non Root Node
-                dbg("Creating heirarchy of branch Node")
+                debug_logger.debug("Creating heirarchy of branch Node")
                 instance.butree += f"{parent.butree} > {newtype.tacode} :: {newcode}"
 
     else:
-        dbg("Updating the reporting heirarchy!")
+        debug_logger.debug("Updating the reporting heirarchy!")
         # update bu tree
         if instance.bucode not in(None, 'NONE') and hasattr(instance.parent, 'bucode') and instance.parent.bucode in (None, 'NONE'):
-            dbg("Updating heirarchy of the Root Node")
+            debug_logger.debug("Updating heirarchy of the Root Node")
             update_children_tree(instance, newcode, newtype.tacode)
         else:
-            dbg("Updating heirarchy of branch Node")
+            debug_logger.debug("Updating heirarchy of branch Node")
             update_children_tree(instance, newcode, newtype.tacode)
 
 def create_tenant(buname, bucode):
@@ -245,19 +245,15 @@ def create_default_admin_for_client(client):
 
 
 
-api_key = 'AIzaSyCeionNj4VHSf5RFzvu2VYNYB7Zh1H7MX4'
-
 def extract_file_id(drive_link):
     """Extract the file ID from the Google Drive link."""
     match = re.search(r'/folders/([a-zA-Z0-9-_]+)',drive_link)
-    print(match)
     if match:
         return match.group(1)
     else:
         raise ValueError("Invalid Google Drive file link.")
 
 def get_file_metadata(file_id):
-    print(file_id)
     """Get metadata for a specific Google Drive file."""
     url = f"https://www.googleapis.com/drive/v3/files?q='{file_id}'+in+parents&key={api_key}&fields=files(id,name,mimeType,size)"
     response = requests.get(url)
@@ -301,7 +297,6 @@ def is_bulk_image_data_correct(data):
     incorrect_image_data = []
     correct_image_data = []
     for image_data in data:
-        print("Image Data: ",image_data)
         image_name = image_data.get('name','')
         image_size = convert_image_size_to_kb(image_data.get('size',0))
         image_data['size'] = image_size
@@ -348,9 +343,9 @@ def download_image_from_drive(file_id, destination_path):
         with open(destination_path, 'wb') as image_file:
             for chunk in response.iter_content(chunk_size=1024):
                 image_file.write(chunk)
-        print(f"Image downloaded and saved to {destination_path}")
+        logger.info(f"Image downloaded and saved to {destination_path}")
     except requests.exceptions.RequestException as e:
-        print(f"An error occurred while downloading the image: {e}")
+        logger.info(f"An error occurred while downloading the image: {e}")
 
 import concurrent.futures
 from functools import partial
@@ -378,7 +373,7 @@ class BulkImageUploader:
                     image_file.write(chunk)
             return True, destination_path
         except Exception as e:
-            logger.error(f"Error downloading image {image_data['name']}: {str(e)}")
+            error_logger.error(f"Error downloading image {image_data['name']}: {str(e)}")
             return False, str(e)
 
     def save_image_to_db(self, people_obj, image_path: str) -> bool:
@@ -388,7 +383,7 @@ class BulkImageUploader:
             people_obj.save(update_fields=['peopleimg'])
             return True
         except Exception as e:
-            logger.error(f"Error saving to database for {people_obj.peoplecode}: {str(e)}")
+            error_logger.error(f"Error saving to database for {people_obj.peoplecode}: {str(e)}")
             return False
 
     def process_single_image(self, image_data: Dict, base_path: str, people_obj) -> Dict:
@@ -457,7 +452,7 @@ def save_image_and_image_path(drive_link: str, media_root: str) -> Tuple[int, Li
         return successful_uploads, results
     
     except Exception as e:
-        logger.error(f"Error in bulk image upload: {str(e)}")
+        error_logger.error(f"Error in bulk image upload: {str(e)}")
         raise
 
 
@@ -473,7 +468,7 @@ def save_correct_image(correct_image_data):
             db_image_path = "/".join(file_path.split('/')[4:])
             save_image_in_db(db_image_path, image_name)
         except Exception as e:
-            print(f"Failed to save Image {image_name}: {e}")
+            error_logger.error(f"Failed to save Image {image_name}: {e}")
 
 
 def save_image_in_db(image_path, image_name):
@@ -496,7 +491,7 @@ def download_image(image_id,image_name):
         file_path = get_upload_file_path(image_name)
         with open(file_path, 'wb') as file:
             file.write(response.content)
-        print(f"File Downloaded and saved to location {file_path}")
+        logger.info(f"File Downloaded and saved to location {file_path}")
         return file_path
     else:
         raise Exception("Failed to download Image")
@@ -713,9 +708,9 @@ def bulk_create_geofence(gpslocation, radius):
         return final_geofence  # Replace `_geofence` with your model's field
 
     except ValidationError as ve:
-        print("Validation Error:", ve)
+        logger.info("Validation Error:", ve)
     except Exception as e:
-        print("Error processing geometry:", e)
+        logger.info("Error processing geometry:", e)
 
 
 def get_designation_choices_asper_contract(designation_choices,contract_design_count):

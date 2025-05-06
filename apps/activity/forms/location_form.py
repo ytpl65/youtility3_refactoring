@@ -7,6 +7,7 @@ from django.http import QueryDict
 import re
 import apps.activity.models as am
 from apps.activity.models.location_model import Location
+
 import apps.onboarding.models as om
 from apps.core import utils
 
@@ -30,11 +31,18 @@ class LocationForm(forms.ModelForm):
         labels = {
             'loccode':'Code', 'locname':'Name', 'parent':'Belongs To', 
         }
-        widgets = {
-            'type':s2forms.Select2Widget,
-            'locstatus':s2forms.Select2Widget,
-            'parent':s2forms.Select2Widget
-        }
+
+        # widgets = {
+        #     'type':s2forms.Select2Widget(attrs={'class':'form-control'}),
+        #     'locstatus':s2forms.Select2Widget(attrs={'class':'form-control'}),
+        #     'parent':s2forms.Select2Widget(attrs={'class':'form-control'})
+        # }
+
+        # locastatus = forms.CharField(
+        #     widget=forms.Select(
+        #         attrs={'class':'form-control'}
+        #     )
+        # )
     
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', False)
@@ -42,7 +50,7 @@ class LocationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['loccode'].widget.attrs = {'style':"text-transform:uppercase"}
         #filters for dropdown fields
-        self.fields['parent'].queryset = am.Location.objects.filter(client_id = S['client_id'], bu_id = S['bu_id'])
+        self.fields['parent'].queryset = Location.objects.filter(client_id = S['client_id'], bu_id = S['bu_id'])
         self.fields['type'].queryset = om.TypeAssist.objects.filter(client_id = S['client_id'], tatype__tacode = 'LOCATIONTYPE')
         utils.initailize_form_fields(self)
         

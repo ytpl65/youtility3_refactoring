@@ -8,11 +8,8 @@ from django.db.models import Value as V
 from django.db.models.functions import Cast, Concat
 from apps.core import utils
 
-logger = logging.getLogger("__main__")
 from django.conf import settings
-
-log = logger
-
+log = logging.getLogger('django')
 
 class AttachmentManager(models.Manager):
     use_in_migrations = True
@@ -73,7 +70,6 @@ class AttachmentManager(models.Manager):
 
         #get attachments of IN and OUT of attendance
         attqset = self.filter(owner = attduuid, attachmenttype = 'ATTACHMENT', ownername__tacode='PEOPLEEVENTLOG').values('id', 'filename', 'filepath', 'cdtz', 'cuser__peoplename').order_by('cdtz') or self.none()
-        log.info(attqset)
 
         #get eventlog of IN and OUT of attendance
         eventlogqset = PeopleEventlog.objects.filter(
@@ -84,12 +80,10 @@ class AttachmentManager(models.Manager):
                 startgps = AsGeoJSON('startlocation'),
                 endgps = AsGeoJSON('endlocation'),).values(
                     'peventlogextras', 'startgps', 'endgps','createdby', 'datefor', 'site', 'people_id', 'people__uuid').order_by('cdtz') or PeopleEventlog.objects.none()
-        log.info(eventlogqset)
         #default image of people
         defaultimgqset = People.objects.filter(
             id=eventlogqset[0]['people_id']).values(
                 'id', 'peopleimg', 'cdtz', 'cuser__peoplename', 'mdtz', 'muser__peoplename', 'ctzoffset') if eventlogqset else self.none()
-        log.info(defaultimgqset)
 
         return {'attachment_in_out': list(attqset), 'eventlog_in_out': list(eventlogqset), 'default_people_data': list(defaultimgqset)}
     

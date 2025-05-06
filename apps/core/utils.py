@@ -21,7 +21,11 @@ from django.template.loader import render_to_string
 from rest_framework.utils.encoders import JSONEncoder
 from django.conf import settings
 
-import apps.activity.models as am
+from apps.activity.models.location_model import Location
+from apps.activity.models.asset_model import Asset
+from apps.activity.models.job_model import Job,Jobneed
+from apps.activity.models.question_model import Question,QuestionSet,QuestionSetBelonging
+
 import apps.onboarding.models as ob
 import apps.peoples.utils as putils
 from apps.peoples import models as pm
@@ -37,8 +41,9 @@ from django.contrib.gis.db.models.functions import AsGeoJSON
 from django.db.models.functions import Cast, Concat, Substr, StrIndex, TruncSecond
 from django.core.exceptions import ValidationError
 
-logger = logging.getLogger('__main__')
-dbg = logging.getLogger('__main__').debug
+logger = logging.getLogger('django')
+error_logger = logging.getLogger('error_logger')
+debug_logger = logging.getLogger('debug_logger')
 
 def get_current_year():
     return datetime.now().year
@@ -91,7 +96,7 @@ def render_form(request, params, cxt):
 
 def handle_DoesNotExist(request):
     data = {'errors': 'Unable to edit object not found'}
-    logger.error("%s", data['error'], exc_info=True)
+    error_logger.error("%s", data['error'], exc_info=True)
     msg.error(request, data['error'], 'alert-danger')
     return rp.JsonResponse(data, status=404)
 
@@ -332,7 +337,7 @@ def get_or_create_none_pgroup():
 
 
 def get_or_create_none_location():
-    obj, _ = am.Location.objects.get_or_create(
+    obj, _ = Location.objects.get_or_create(
         loccode= "NONE", locname = 'NONE',
         defaults={
             'locstatus':'SCRAPPED'
@@ -438,7 +443,7 @@ def save_user_session(request, people, ctzoffset=None):
         request.session['is_wp_approver'] = is_wp_approver
         request.session['is_sla_approver'] = is_sla_approver
     except ObjectDoesNotExist:
-        logger.error('object not found...', exc_info=True)
+        error_logger.error('object not found...', exc_info=True)
         raise
     except Exception:
         logger.critical(
@@ -466,7 +471,7 @@ def update_timeline_data(ids, request, update=False):
 
 def process_wizard_form(request, wizard_data, update=False, instance=None):
     logger.info('processing wizard started...', )
-    dbg('wizard_Data submitted by the view \n%s', wizard_data)
+    debug_logger.debug('wizard_Data submitted by the view \n%s', wizard_data)
     wiz_session, resp = request.session['wizard_data'], None
     if not wizard_data['last_form']:
         logger.info('wizard its NOT last form')
@@ -498,7 +503,7 @@ def update_wizard_form(wizard_data, wiz_session, request):
     else:
         request.session['wizard_data'].update(wiz_session)
         resp = scts.redirect(wizard_data['current_url'])
-    dbg(f"response from update_wizard_form {resp}")
+    debug_logger.debug(f"response from update_wizard_form {resp}")
     return resp
 
 
@@ -512,7 +517,7 @@ def handle_other_exception(request, form, form_name, template, jsonform="", json
 
 
 def handle_does_not_exist(request, url):
-    logger.error('Object does not exist', exc_info=True)
+    error_logger.error('Object does not exist', exc_info=True)
     msg.error(request, "Object does not exist",
               "alert-danger")
     return scts.redirect(url)
@@ -543,7 +548,7 @@ def delete_object(request, model, lookup, ids, temp,
         logger.info('Object deleted')
         res = scts.redirect(url)
     except model.DoesNotExist:
-        logger.error('Unable to delete, object does not exist')
+        error_logger.error('Unable to delete, object does not exist')
         msg.error(request, 'Client does not exist', "alert alert-danger")
         res = scts.redirect(url)
     except RestrictedError:
@@ -716,7 +721,6 @@ def tenant_db_from_request(request):
 
 def get_client_from_hostname(request):
     hostname = hostname_from_request(request)
-    print(hostname)
     return hostname.split('.')[0]
 
 
@@ -727,7 +731,7 @@ def get_or_create_none_tenant():
 def get_or_create_none_job():
     from datetime import datetime, timezone
     date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo=timezone.utc)
-    obj, _ = am.Job.objects.get_or_create(
+    obj, _ = Job.objects.get_or_create(
         jobname= 'NONE',    jobdesc= 'NONE',
         defaults={
             'fromdate': date,      'uptodate': date,
@@ -753,7 +757,7 @@ def get_or_create_none_gf():
 def get_or_create_none_jobneed():
     from datetime import datetime, timezone
     date = datetime(1970, 1, 1, 00, 00, 00).replace(tzinfo=timezone.utc)
-    obj, _ = am.Jobneed.objects.get_or_create(
+    obj, _ = Jobneed.objects.get_or_create(
         jobdesc= "NONE",  scantype= "NONE", seqno= -1,
         defaults={
             'plandatetime': date,
@@ -777,7 +781,7 @@ def get_or_create_none_wom():
 
 
 def get_or_create_none_qset():
-    obj, _ = am.QuestionSet.objects.get_or_create(
+    obj, _ = QuestionSet.objects.get_or_create(
         qsetname = "NONE",
         defaults={}
     )
@@ -785,7 +789,7 @@ def get_or_create_none_qset():
 
 
 def get_or_create_none_question():
-    obj, _ = am.Question.objects.get_or_create(
+    obj, _ = Question.objects.get_or_create(
         quesname = "NONE", 
         defaults={}
     )
@@ -794,7 +798,7 @@ def get_or_create_none_question():
 
 def get_or_create_none_qsetblng():
     'A None qsetblng with seqno -1'
-    obj, _ = am.QuestionSetBelonging.objects.get_or_create(
+    obj, _ = QuestionSetBelonging.objects.get_or_create(
        answertype = 'NONE', 
         ismandatory =  False, seqno = -1,
     defaults={
@@ -806,7 +810,7 @@ def get_or_create_none_qsetblng():
 
 
 def get_or_create_none_asset():
-    obj, _ = am.Asset.objects.get_or_create(
+    obj, _ = Asset.objects.get_or_create(
         assetcode = "NONE", assetname = 'NONE',
         identifier = 'NONE',
         defaults={'iscritical': False}
@@ -848,7 +852,7 @@ def create_none_entries(self):
         get_or_create_none_wom()
         logger.debug("NONE entries are successfully inserted...")
     except Exception as e:
-        logger.error('create none entries', exc_info=True)
+        error_logger.error('create none entries', exc_info=True)
         raise
 
 
@@ -856,12 +860,12 @@ def create_super_admin(db):
     try:
         set_db_for_router(db)
     except ValueError:
-        print("Database with this alias not exist operation can't be performed")
+        logger.info("Database with this alias not exist operation can't be performed")
     else:
-        print(f"Creating SuperUser for {db}")
+        logger.info(f"Creating SuperUser for {db}")
         from apps.peoples.models import People
-        print("please provide required fields in this order single space separated\n")
-        print("loginid  password  peoplecode  peoplename  dateofbirth  dateofjoin  email")
+        logger.info("please provide required fields in this order single space separated\n")
+        logger.info("loginid  password  peoplecode  peoplename  dateofbirth  dateofjoin  email")
         inputs = input().split(" ")
         if len(inputs) == 7:
             user = People.objects.create_superuser(
@@ -873,7 +877,7 @@ def create_super_admin(db):
                 dateofjoin=inputs[5],
                 email=inputs[6],
             )
-            print(
+            logger.info(
                 f"Operation Successfull!\n Superuser with this loginid {user.loginid} is created")
         else:
             raise ValueError("Please provide all fields!")
@@ -890,7 +894,6 @@ def set_db_for_router(db):
     from django.conf import settings
     dbs = settings.DATABASES
     if db not in dbs:
-        print('raised')
         raise excp.NoDbError("Database with this alias not exist!")
     setattr(THREAD_LOCAL, "DB", db)
 
@@ -1113,9 +1116,9 @@ def alert_email(pk, event):
 def printsql(objs):
     from django.core.exceptions import EmptyResultSet
     try:
-        print('SQL QUERY:\n', objs.query.__str__())
+        logger.info('SQL QUERY:\n', objs.query.__str__())
     except EmptyResultSet:
-        print("NO SQL")
+        logger.info("NO SQL")
 
 
 def get_select_output(objs):
@@ -1313,7 +1316,7 @@ def upload(request, vendor=False):
         
     else:
         fullpath = f'{home_dir}/master/{S["clientcode"]}_{S["client_id"]}/{foldertype}/'
-    print("Full Path of saving image",fullpath)
+    logger.info("Full Path of saving image",fullpath)
     logger.info(f'{fullpath = }')
 
     
@@ -2241,7 +2244,7 @@ def get_type_data(type_name, S):
         class JsonSubstring(Func):
             function = 'SUBSTRING'
             template = "%(function)s(%(expressions)s from '\\[(.+)\\]')"
-        objs = am.Location.objects.select_related('parent', 'type', 'bu').filter(
+        objs = Location.objects.select_related('parent', 'type', 'bu').filter(
             ~Q(loccode='NONE'),
             bu_id__in = site_ids,
             client_id = S['client_id']
@@ -2263,7 +2266,7 @@ def get_type_data(type_name, S):
         class JsonSubstring(Func):
             function = 'SUBSTRING'
             template = "%(function)s(%(expressions)s from '\\[(.+)\\]')"
-        objs = am.Asset.objects.select_related('parent', 'type', 'bu', 'category', 'subcategory', 'brand', 'unit', 'servprov').filter(
+        objs = Asset.objects.select_related('parent', 'type', 'bu', 'category', 'subcategory', 'brand', 'unit', 'servprov').filter(
             ~Q(assetcode='NONE'),
             bu_id__in = site_ids,
             client_id = S['client_id'],
@@ -2373,7 +2376,7 @@ def get_type_data(type_name, S):
                      'blacklist', 'alertmails')
         return list(objs)
     if type_name == 'QUESTION':
-        objs = am.Question.objects.select_related('unit', 'category', 'client').filter(
+        objs = Question.objects.select_related('unit', 'category', 'client').filter(
                 client_id = S['client_id'],
             ).annotate(
                 alert_above=Case(
@@ -2399,7 +2402,7 @@ def get_type_data(type_name, S):
                           'alerton', 'enable', 'isavpt', 'avpttype', 'client__bucode', 'unit__tacode', 'category__tacode')
         return list(objs)
     if type_name == 'QUESTIONSET':
-        objs = am.QuestionSet.objects.filter(
+        objs = QuestionSet.objects.filter(
             Q(type='RPCHECKLIST') & Q(bu_id__in=S['assignedsites']) |
             (Q(parent_id=1) & ~Q(qsetname='NONE') & 
             Q(bu_id__in = site_ids) & Q(client_id=S['client_id']))
@@ -2437,7 +2440,7 @@ def get_type_data(type_name, S):
                 site_type_ids.update(str(type_id) for type_id in obj['site_type_includes'] if str(type_id).isdigit())
 
         # Fetch asset codes
-        asset_codes = am.Asset.objects.filter(id__in=asset_ids).values_list('id', 'assetcode')
+        asset_codes = Asset.objects.filter(id__in=asset_ids).values_list('id', 'assetcode')
         asset_code_map = {str(asset_id): code for asset_id, code in asset_codes}
 
         # Fetch BU codes
@@ -2488,7 +2491,7 @@ def get_type_data(type_name, S):
         output = [tuple(obj[field] for field in fields) for obj in objs_list]
         return output
     if type_name == 'QUESTIONSETBELONGING':
-        objs = am.QuestionSetBelonging.objects.select_related('qset', 'question', 'client', 'bu').filter(
+        objs = QuestionSetBelonging.objects.select_related('qset', 'question', 'client', 'bu').filter(
                 bu_id__in = site_ids,
                 client_id = S['client_id'],
             ).annotate(
@@ -2526,7 +2529,7 @@ def get_type_data(type_name, S):
             ).values_list('id', 'pgroup__groupname', 'people__peoplecode', 'assignsites__bucode', 'client__bucode', 'bu__bucode')
         return list(objs)
     if type_name == 'SCHEDULEDTASKS':
-        objs = am.Job.objects.annotate(
+        objs = Job.objects.annotate(
             assignedto = Case(
                 When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), Value(' [PEOPLE]'))),
                 When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), Value(' [GROUP]'))),
@@ -2548,7 +2551,7 @@ def get_type_data(type_name, S):
                  'formatted_endtime', 'parent__jobname')
         return list(objs)
     if type_name == 'SCHEDULEDTOURS':
-        objs = am.Job.objects.select_related('pgroup', 'people', 'asset', 'bu', 'qset', 'ticketcategory').annotate(
+        objs = Job.objects.select_related('pgroup', 'people', 'asset', 'bu', 'qset', 'ticketcategory').annotate(
                 assignedto = Case(
                 When(Q(pgroup_id=1) | Q(pgroup_id__isnull =  True), then=Concat(F('people__peoplename'), Value(' [PEOPLE]'))),
                 When(Q(people_id=1) | Q(people_id__isnull =  True), then=Concat(F('pgroup__groupname'), Value(' [GROUP]'))),
@@ -2589,7 +2592,7 @@ def find_closest_shift(log_starttime, shifts):
 
         shift_start_time = datetime.strptime(match.group(1), "%H:%M:%S").time()
 
-        # Combine the shift's start time with the log's date, and make it offset-aware
+        # Combine the shift's start time with the logger's date, and make it offset-aware
         shift_datetime = datetime.combine(log_starttime.date(), shift_start_time, tzinfo=timezone.utc)
 
         # Calculate the time difference
