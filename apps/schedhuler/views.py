@@ -1018,8 +1018,27 @@ class JobneedTours(LoginRequiredMixin, View):
 
         # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
+            start = int(R.get('start', 0))
+            length = int(R.get('length', 10))
+            search = R.get('search[value]', '').strip()
+
             objs = P['model'].objects.get_internaltourlist_jobneed(request, P['related'], P['fields'])
-            return rp.JsonResponse(data = {'data':list(objs)})
+
+            if search:
+                objs = objs.filter(
+                    Q(bu__buname=search) |
+                    Q(bu__bucode=search) |
+                    Q(jobdesc__contains = search)
+                )
+            total = objs.count()
+            paginated = objs[start:start+length]
+            return rp.JsonResponse({
+                "draw": int(R.get('draw', 1)),
+                "recordsTotal": total,
+                "recordsFiltered": total,
+                "data": list(paginated)
+            })
+            # return rp.JsonResponse(data = {'data':list(objs)})
         
         if R.get('action') == 'checklist_details' and R.get('jobneedid'):
             objs = JobneedDetails.objects.get_e_tour_checklist_details(R['jobneedid'])
@@ -1170,9 +1189,33 @@ class JobneedTasks(LoginRequiredMixin, View):
 
         # then load the table with objects for table_view
         if R.get('action', None) == 'list' or R.get('search_term'):
+            draw = int(request.GET.get("draw", 1))
+            start = int(request.GET.get("start", 0))
+            length = int(request.GET.get("length", 10))
+            search_value = request.GET.get("search[value]", "").strip()
+
+
             objs = P['model'].objects.get_task_list_jobneed(
                 P['related'], P['fields'], request)
-            return rp.JsonResponse(data = {'data':list(objs)})
+            
+            if search_value:
+                objs = objs.filter(
+                    Q(jobdesc__icontains=search_value)|
+                    Q(jobstatus__icontains=search_value)|
+                    Q(bu__buname__icontains = search_value)|
+                    Q(bu__bucode__icontains = search_value)|
+                    Q(qset__qsetname__icontains = search_value)|
+                    Q(asset__assetname__icontains = search_value)
+                )
+            total = objs.count()
+            paginated = objs[start:start+length]
+            data = list(paginated)
+            return rp.JsonResponse({
+                "draw": draw,
+                "recordsTotal": total,
+                "recordsFiltered": total,
+                "data": data,
+            }, status=200)
         
         if R.get('action') == 'getAttachmentJND':
             att =  P['model_jnd'].objects.getAttachmentJND(R['id'])

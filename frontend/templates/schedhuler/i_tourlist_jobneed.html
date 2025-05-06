@@ -92,7 +92,17 @@ Tour List
             language: { search: "", searchPlaceholder:"Serch keywords..." },    
 			deferRender: true,
             lengthMenu: [250,500,750,1000],
-            pageLength: 500,
+            pageLength: 250,
+            serverSide:true,
+            initComplete:function(){
+                const input = $(`${table_id}_filter input`);
+                input.off();
+                input.on('keypress',function(e){
+                    if (e.which === 13) {
+                        table.search(this.value).draw();
+                    }
+                }) 
+            },
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'<'customfields'>f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
 			 <'col-sm-6'l> <'col-sm-6'p><'col-sm-12 d-flex justify-content-center'i>>`,
             responsive:true,
