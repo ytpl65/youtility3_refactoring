@@ -1021,6 +1021,9 @@ class JobneedTours(LoginRequiredMixin, View):
             start = int(R.get('start', 0))
             length = int(R.get('length', 10))
             search = R.get('search[value]', '').strip()
+            order_col = request.GET.get('order[0][column]')
+            order_dir = request.GET.get('order[0][dir]')
+            column_name = request.GET.get(f'columns[{order_col}][data]')
 
             objs = P['model'].objects.get_internaltourlist_jobneed(request, P['related'], P['fields'])
 
@@ -1030,6 +1033,11 @@ class JobneedTours(LoginRequiredMixin, View):
                     Q(bu__bucode=search) |
                     Q(jobdesc__contains = search)
                 )
+
+            if column_name:
+                order_prefix = '' if order_dir == 'asc' else '-'
+                objs = objs.order_by(f'{order_prefix}{column_name}')
+
             total = objs.count()
             paginated = objs[start:start+length]
             return rp.JsonResponse({
@@ -1194,6 +1202,9 @@ class JobneedTasks(LoginRequiredMixin, View):
             length = int(request.GET.get("length", 10))
             search_value = request.GET.get("search[value]", "").strip()
 
+            order_col = request.GET.get('order[0][column]')
+            order_dir = request.GET.get('order[0][dir]')
+            column_name = request.GET.get(f'columns[{order_col}][data]')
 
             objs = P['model'].objects.get_task_list_jobneed(
                 P['related'], P['fields'], request)
@@ -1207,6 +1218,10 @@ class JobneedTasks(LoginRequiredMixin, View):
                     Q(qset__qsetname__icontains = search_value)|
                     Q(asset__assetname__icontains = search_value)
                 )
+            if column_name:
+                order_prefix = '' if order_dir == 'asc' else '-'
+                objs = objs.order_by(f'{order_prefix}{column_name}')
+
             total = objs.count()
             paginated = objs[start:start+length]
             data = list(paginated)

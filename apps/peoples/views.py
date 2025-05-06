@@ -287,18 +287,27 @@ class PeopleView(LoginRequiredMixin, View):
             length = int(request.GET.get("length", 10))
             search_value = request.GET.get("search[value]", "").strip()
             
-            queryset = self.params["model"].objects.people_list_view(
+            order_col = request.GET.get('order[0][column]')
+            order_dir = request.GET.get('order[0][dir]')
+            column_name = request.GET.get(f'columns[{order_col}][data]')
+
+            objs = self.params["model"].objects.people_list_view(
                 request, self.params["fields"], self.params["related"]
             )
             if search_value:
-                queryset = queryset.filter(
+                objs = objs.filter(
                     Q(peoplename__icontains=search_value) |
                     Q(peoplecode__icontains=search_value) |
                     Q(department__taname__icontains=search_value) |
                     Q(bu__buname__icontains=search_value)
                 )
-            total = queryset.count()
-            paginated = queryset[start:start + length]
+
+            if column_name:
+                order_prefix = '' if order_dir == 'asc' else '-'
+                objs = objs.order_by(f'{order_prefix}{column_name}')
+
+            total = objs.count()
+            paginated = objs[start:start + length]
             data = list(paginated)        
             return rp.JsonResponse({
                 "draw": draw,

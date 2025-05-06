@@ -55,6 +55,15 @@ Buisiness View
 			language: {
 				searchPlaceholder: "Search keyword"
 			},
+			initComplete:function(){
+                const input = $(`#bt_table_filter input`);
+                input.off();
+                input.on('keypress',function(e){
+                    if (e.which === 13) {
+                        table.search(this.value).draw();
+                    }
+                }) 
+            },
 			columns     : [
                 { "data": "id", className:'noVis' },
                 { "data": "bucode" },

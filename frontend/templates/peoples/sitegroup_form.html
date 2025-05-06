@@ -232,7 +232,16 @@ Site Group Form
         $("#id_ctzoffset").val(-new Date().getTimezoneOffset())
 
         //This function in js file resposible to render the map. 
-        d2InitializeMap()
+        function waitForGoogleMaps(callback) {
+            if (window.google && google.maps && google.maps.DirectionsRenderer) {
+                callback();
+            } else {
+                setTimeout(() => waitForGoogleMaps(callback), 100);
+            }
+        }
+        
+        waitForGoogleMaps(d2InitializeMap);
+
 
         tabAllsites = $("#all_sites").DataTable({
             ajax:{

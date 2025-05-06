@@ -8,7 +8,8 @@ from django.urls import reverse
 
 
 import apps.peoples.models as pm  # people-models
-import apps.activity.models as am
+from apps.activity.models.location_model import Location
+from apps.activity.models.question_model import QuestionSet
 import apps.onboarding.models as om  # onboarding-models
 from django_select2 import forms as s2forms
 from apps.core import utils
@@ -131,20 +132,20 @@ class PeopleForm(forms.ModelForm):
         }
 
         widgets = {
-            'mobno'       : forms.TextInput(attrs={'placeholder': 'Eg:- +91XXXXXXXXXX, +44XXXXXXXXX'}),
-            'peoplename'  : forms.TextInput(attrs={'placeholder': 'Enter people name'}),
-            'loginid'     : forms.TextInput(attrs={'placeholder': 'Enter text not including any spaces'}),
-            'dateofbirth' : forms.DateInput,
-            'dateofjoin'  : forms.DateInput,
-            'dateofreport': forms.DateInput,
-            'peopletype'  : s2forms.Select2Widget,
-            'gender'      : s2forms.Select2Widget,
-            'department'  : s2forms.Select2Widget,
-            'designation' : s2forms.Select2Widget,
-            'reportto'    : s2forms.Select2Widget,
-            'bu'          : s2forms.Select2Widget,
+            # 'mobno'       : forms.TextInput(attrs={'placeholder': 'Eg:- +91XXXXXXXXXX, +44XXXXXXXXX'}),
+            # 'peoplename'  : forms.TextInput(attrs={'placeholder': 'Enter people name'}),
+            # 'loginid'     : forms.TextInput(attrs={'placeholder': 'Enter text not including any spaces'}),
+            # 'dateofbirth' : forms.DateInput,
+            # 'dateofjoin'  : forms.DateInput,
+            # 'dateofreport': forms.DateInput,
+            # 'peopletype'  : s2forms.Select2Widget(attrs={'class': 'form-control'}),
+            # 'gender'      : s2forms.Select2Widget(attrs={'class': 'form-control'}),
+            # 'department'  : s2forms.Select2Widget(attrs={'class': 'form-control'}),
+            # 'designation' : s2forms.Select2Widget(attrs={'class': 'form-control'}),
+            # 'reportto'    : s2forms.Select2Widget(attrs={'class': 'form-control'}),
+            # 'bu'          : s2forms.Select2Widget(attrs={'class': 'form-control'}),
         }
-
+    
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
@@ -162,7 +163,7 @@ class PeopleForm(forms.ModelForm):
         self.fields['designation'].queryset = om.TypeAssist.objects.filter(tatype__tacode="DESIGNATION", client_id = S['client_id'], enable=True)
         buids = pm.Pgbelonging.objects.get_assigned_sites_to_people(self.request.user.id)
         self.fields['bu'].queryset = om.Bt.objects.filter(id__in = buids)# add query for isadmin
-        self.fields['location'].queryset = am.Location.objects.filter(client_id = S['client_id'], enable=True)
+        self.fields['location'].queryset = Location.objects.filter(client_id = S['client_id'], enable=True)
         utils.initailize_form_fields(self)
 
     def is_valid(self) -> bool:
@@ -381,10 +382,10 @@ class PeopleExtrasForm(forms.Form):
     
     andriodversion            = forms.CharField(max_length = 2, required = False, label='Andriod Version')
     appversion                = forms.CharField(max_length = 8, required = False, label='App Version')
-    mobilecapability          = forms.MultipleChoiceField(required = False, label = labels['mob'], widget = s2forms.Select2MultipleWidget)
-    portletcapability         = forms.MultipleChoiceField(required = False, label = labels['port'], widget = s2forms.Select2MultipleWidget)
-    reportcapability          = forms.MultipleChoiceField(required = False, label = labels['report'], widget = s2forms.Select2MultipleWidget)
-    webcapability             = forms.MultipleChoiceField(required = False, label = labels['web'], widget = s2forms.Select2MultipleWidget)
+    mobilecapability          = forms.MultipleChoiceField(required = False, label = labels['mob'])
+    portletcapability         = forms.MultipleChoiceField(required = False, label = labels['port'])
+    reportcapability          = forms.MultipleChoiceField(required = False, label = labels['report'])
+    webcapability             = forms.MultipleChoiceField(required = False, label = labels['web'])
     noccapability             = forms.MultipleChoiceField(required=False,label=labels['noc'],widget=s2forms.Select2MultipleWidget)
     loacationtracking         = forms.BooleanField(initial = False, required = False)
     capturemlog               = forms.BooleanField(initial = False, required = False)
@@ -394,20 +395,30 @@ class PeopleExtrasForm(forms.Form):
     blacklist                 = forms.BooleanField(initial = False, required = False)
     alertmails                = forms.BooleanField(initial=False , label='Alert Mails', required=False)
     isemergencycontact        = forms.BooleanField(initial=False , label='Emergency Contact', required=False)
-    assignsitegroup           = forms.MultipleChoiceField(required = False, label="Site Group", widget = s2forms.Select2MultipleWidget)
-    tempincludes              = forms.MultipleChoiceField(required = False, label="Template", widget = s2forms.Select2MultipleWidget)
+    assignsitegroup           = forms.MultipleChoiceField(required = False, label="Site Group")
+    tempincludes              = forms.MultipleChoiceField(required = False, label="Template")
     mlogsendsto               = forms.CharField(max_length = 25, required = False)
     currentaddress            = forms.CharField(required = False, widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
     permanentaddress          = forms.CharField(required = False,  widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
-    userfor                   = forms.ChoiceField(required = True, choices = USERFOR_CHOICES, label = 'User For', widget=s2forms.Select2Widget)
+    userfor                   = forms.ChoiceField(required = True, choices = USERFOR_CHOICES, label = 'User For')
 
-    
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         S = self.request.session
         super().__init__(*args, **kwargs)
+        self.fields['mobilecapability'].widget = s2forms.Select2MultipleWidget(attrs={'class': 'form-select form-select-solid', 'data-placeholder': 'Select an option', 'data-theme': 'bootstrap5'})
+        self.fields['tempincludes'].widget = s2forms.Select2MultipleWidget(attrs={'class': 'form-select form-select-solid', 'data-placeholder': 'Select an option', 'data-theme': 'bootstrap5'})
+        self.fields['assignsitegroup'].widget = s2forms.Select2MultipleWidget(attrs={'class': 'form-select form-select-solid', 'data-placeholder': 'Select an option', 'data-theme': 'bootstrap5'})
+        self.fields['portletcapability'].widget = s2forms.Select2MultipleWidget(attrs={'class': 'form-select form-select-solid', 'data-placeholder': 'Select an option', 'data-theme': 'bootstrap5'})
+        self.fields['reportcapability'].widget = s2forms.Select2MultipleWidget(attrs={'class': 'form-select form-select-solid', 'data-placeholder': 'Select an option', 'data-theme': 'bootstrap5'})
+        self.fields['noccapability'].widget = s2forms.Select2MultipleWidget(attrs={'class': 'form-select form-select-solid', 'data-placeholder': 'Select an option', 'data-theme': 'bootstrap5'})
+        self.fields['assignsitegroup'].widget = s2forms.Select2MultipleWidget(attrs={'class': 'form-select form-select-solid', 'data-placeholder': 'Select an option', 'data-theme': 'bootstrap5'})
+        self.fields['webcapability'].widget = s2forms.Select2MultipleWidget(attrs={'class': 'form-select form-select-solid', 'data-placeholder': 'Select an option', 'data-theme': 'bootstrap5'})
+        
+        # self.fields['userfor'].widget = s2forms.Select2Widget(attrs={'class': 'form-select form-select-solid', 'data-placeholder': 'Select an option', 'data-theme': 'bootstrap5'})
         self.fields['assignsitegroup'].choices = pm.Pgroup.objects.get_assignedsitegroup_forclient(S['client_id'], self.request)
-        self.fields['tempincludes'].choices = am.QuestionSet.objects.filter(type = 'SITEREPORT', bu_id__in = S['assignedsites']).values_list('id', 'qsetname')
+        self.fields['tempincludes'].choices = QuestionSet.objects.filter(type = 'SITEREPORT', bu_id__in = S['assignedsites']).values_list('id', 'qsetname')
         web, mob, portlet, report, noc = create_caps_choices_for_peopleform(self.request.user.client)
         if not (S['is_superadmin']):
             self.fields['webcapability'].choices     = S['client_webcaps'] or  web

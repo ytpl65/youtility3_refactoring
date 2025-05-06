@@ -823,6 +823,10 @@ class BtView(LoginRequiredMixin, View):
             length = int(R.get('length', 10))
             search = R.get('search[value]', '').strip()
 
+            order_col = request.GET.get('order[0][column]')
+            order_dir = request.GET.get('order[0][dir]')
+            column_name = request.GET.get(f'columns[{order_col}][data]')
+
             buids = self.params['model'].objects.get_whole_tree(
                 request.session['client_id'])
             objs = self.params['model'].objects.select_related(
@@ -832,6 +836,10 @@ class BtView(LoginRequiredMixin, View):
 
             if search:
                 objs = objs.filter(Q(buname__icontains=search) | Q(bucode__icontains=search))
+
+            if column_name:
+                order_prefix = '' if order_dir == 'asc' else '-'
+                objs = objs.order_by(f'{order_prefix}{column_name}')
 
             total = objs.count()
             paginated = objs[start:start + length]

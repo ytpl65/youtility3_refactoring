@@ -419,8 +419,10 @@ People
         <div class="col-md-2">
 
             <!--begin::Image input-->
-            <div class="image-input image-input-empty" data-kt-image-input="true"
-style="background-image: url({% if peopleform.instance.peopleimg.name.endswith('blank.png') %} '{{static('assets/media/images/blank.png')}}' {% else %} {{ peopleform.instance.peopleimg.url }} {% endif %})">
+            <div class="image-input image-input-empty"
+            data-kt-image-input="true"
+            style="background-image: url('{% if peopleform.instance.peopleimg and 'blank.png' in peopleform.instance.peopleimg.name %}{{ static('assets/media/images/blank.png') }}{% else %}{{ peopleform.instance.peopleimg.url }}{% endif %}')">
+       
                 <!--begin::Image preview wrapper-->
                 <div class="image-input-wrapper w-125px h-125px"></div>
                 <!--end::Image preview wrapper-->
