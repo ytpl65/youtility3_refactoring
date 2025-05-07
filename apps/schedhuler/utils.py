@@ -23,9 +23,8 @@ from celery.utils.log import get_task_logger
 from django.core.mail import mail_admins
 import traceback
 from intelliwiz_config.settings import GOOGLE_MAP_SECRET_KEY as google_map_key
-
+import logging
 log = get_task_logger('__main__')
-
 def create_dynamic_job(jobids=None):
     try:
         # check if dynamic job already exist with the passed jobid
@@ -165,15 +164,17 @@ def calculate_startdtz_enddtz(job):
     log.info(f"calculating startdtz, enddtz for job:= [{job['id']}]")
     tz = timezone(timedelta(minutes = int(job['ctzoffset'])))
     ctzoffset = job['ctzoffset']
-
+    log.info(f"Inside of the Calculate Start and End timezone")
     cdtz         = job['cdtz'].replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
     mdtz         = job['mdtz'].replace(microsecond = 0, tzinfo = tz)  + timedelta(minutes = ctzoffset)
     vfrom        = job['fromdate'].replace(microsecond = 0, tzinfo = tz)  + timedelta(minutes = ctzoffset)
     vupto        = job['uptodate'].replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
     ldtz         = job['lastgeneratedon'].replace(microsecond = 0, tzinfo = tz) + timedelta(minutes = ctzoffset)
 
+
+
     current_date = datetime.now(timezone.utc).replace(microsecond=0)
-    current_date = current_date.astimezone(tz) + timedelta(minutes=ctzoffset)
+    current_date = current_date.astimezone(tz)
 
 
     if mdtz > cdtz:
@@ -252,25 +253,30 @@ def insert_into_jn_and_jnd(job, DT, resp):
             crontype = job['identifier']
             jobstatus = 'ASSIGNED'
             jobtype = 'SCHEDULE'
+            #assignee = job.pgroup.groupname if job['people_id'] == 1 else job.people.peoplename
             jobdesc = f'{job["jobname"]}'
             asset = Asset.objects.get(id = job['asset_id'])
             multiplication_factor = asset.asset_json['multifactor']
             mins = pdtz = edtz = people = jnid = None
             parent = people = -1
 
-            mins = job['planduration'] + job['expirytime'] + job['gracetime']
+            #mins = job['planduration'] + job['expirytime'] + job['gracetime']
             people = job['people_id']
-            params   = {
-                'jobstatus':jobstatus, 'jobtype':jobtype, 'route_name':job['sgroup__groupname'],
-                'm_factor':multiplication_factor, 'people':people, 'qset_id':job['qset_id'],
-                'NONE_P':NONE_P, 'jobdesc':jobdesc, 'NONE_JN':NONE_JN, 'sgroup_id':job['sgroup_id']}
             UTC_DT = utils.to_utc(DT)
             for dt in UTC_DT:
                 dt = dt.strftime("%Y-%m-%d %H:%M")
                 dt = datetime.strptime(dt, '%Y-%m-%d %H:%M').replace(tzinfo = timezone.utc)
-                pdtz = params['pdtz'] = dt
-                edtz = params['edtz'] = dt + timedelta(minutes = mins)
-                log.debug(f'pdtz:={pdtz} edtz:={edtz}')
+                log.info(f'Gracetime:= {job["gracetime"]}, expirytime:= {job["expirytime"]}, planduration:= {job["planduration"]}')
+                params   = {
+                'jobstatus':jobstatus, 'jobtype':jobtype, 'route_name':job['sgroup__groupname'],
+                'm_factor':multiplication_factor, 'people':people, 'qset_id':job['qset_id'],
+                'NONE_P':NONE_P, 'jobdesc':jobdesc, 'NONE_JN':NONE_JN, 'sgroup_id':job['sgroup_id'],
+                'pdtz':None, 'edtz':None}
+
+                pdtz = params['pdtz'] = dt - timedelta(minutes=job['gracetime'])
+                edtz = params['edtz'] = dt + timedelta(minutes=job['planduration'] + job['expirytime'])
+                log.info(f'pdtz:={pdtz} edtz:={edtz}')
+                log.info(f'Params: {params}')
                 jn = insert_into_jn_for_parent(job, params)
                 isparent = crontype in (Job.Identifier.INTERNALTOUR.value, Job.Identifier.EXTERNALTOUR.value)
                 insert_update_jobneeddetails(jn.id, job, parent = isparent)
@@ -378,7 +384,6 @@ def insert_into_jn_for_parent(job, params):
         return obj
     except Exception as e:
         log.error(f"Failed to insert job {job['id']}: {str(e)}", exc_info=True)
-        raise
     
 def insert_update_jobneeddetails(jnid, job, parent=False):
     log.info("insert_update_jobneeddetails() [START]")
@@ -607,33 +612,25 @@ def get_service_requirements(R):
             )
         return startp, endp, waypoints
 
-
-
 def delete_old_jobs(job_id, ppm=False):
     """
-    Delete old jobs and related data based on the given job ID.
+    Permanently delete JobneedDetails, Jobneed, and optionally child Jobs for the given job_id.
     """
-    # Get a list of related job IDs and include the given ID if ppm is True.
-    job_ids = Job.objects.filter(parent_id=job_id).values_list('id', flat=True)
-    job_ids = [job_id] + list(job_ids)
+    # Get a list of related job IDs (children) and include the given ID
+    job_ids = list(Job.objects.filter(parent_id=job_id).values_list('id', flat=True))
+    job_ids = [job_id] + job_ids
 
-    # Set the old date to 1970-01-01 00:00:00 UTC.
-    old_date = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-    # Update jobneeddetails
-    jobneed_ids = Jobneed.objects.filter(plandatetime__gt=dtimezone.now(), job_id__in=job_ids).values_list('id', flat=True)
-    jnd_count = JobneedDetails.objects.filter(jobneed_id__in=jobneed_ids).update(cdtz=old_date, mdtz=old_date)
+    # Filter jobneeds to be deleted (planned for future only)
+    jobneeds_to_delete = Jobneed.objects.filter(job_id__in=job_ids, plandatetime__gt=dtimezone.now())
+    jobneed_ids = list(jobneeds_to_delete.values_list('id', flat=True))
 
-    # Update jobneeds
-    jn_count = Jobneed.objects.filter(
-        job_id__in=job_ids, plandatetime__gt=dtimezone.now()).update(
-            cdtz=old_date, mdtz=old_date, plandatetime=old_date, expirydatetime=old_date)
+    # Delete jobneed details first (FK dependent)
+    jnd_count, _ = JobneedDetails.objects.filter(jobneed_id__in=jobneed_ids).delete()
 
-    # Update job
-    Job.objects.filter(id=job_id).update(cdtz=F('mdtz'))
+    # Then delete jobneeds
+    jn_count, _ = jobneeds_to_delete.delete()
 
-    # Log the results
-    log.info('Deleted %s jobneedetails and %s jobneeds for job ID %s', jnd_count, jn_count, job_id)
-
+    log.info('Deleted %s JobneedDetails and %s Jobneeds for job ID %s', jnd_count, jn_count, job_id)
 
 def del_ppm_reminder(jobid):
     log.info('del_ppm_reminder start +')

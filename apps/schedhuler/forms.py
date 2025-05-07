@@ -139,12 +139,21 @@ class Schd_I_TourJobForm(JobForm):
         return -1
     
     def clean_cronstrue(self):
-        if self.cleaned_data.get('cron') and not self.cleaned_data.get('isdynamic'):
-            val = self.cleaned_data.get('cron')
-            if val.startswith("*"):
-                raise forms.ValidationError(f"Warning: Scheduling every minute is not allowed!")
-            return val
+        val = self.cleaned_data.get('cron')
+        if not val:
+            raise forms.ValidationError("Invalid Cron")
 
+        parts = val.strip().split()
+        if len(parts) != 5:
+            raise forms.ValidationError("Invalid Cron format: must have 5 fields")
+
+        minute_field = parts[0]
+
+        # Block if minute is exactly "*" (every minute)
+        if minute_field == "*":
+            raise forms.ValidationError("Warning: Scheduling every minute is not allowed!")
+
+        return val
 
 class SchdChild_I_TourJobForm(JobForm): # job
     timeInChoices = [('MIN', 'Min'),('HRS', 'Hours')]
@@ -330,13 +339,21 @@ class Schd_E_TourJobForm(JobForm):
         
         
     def clean_cronstrue(self):
-        if val := self.cleaned_data.get('cron'):
-            if val.startswith("*"):
-                raise forms.ValidationError(f"Warning: Scheduling every minute is not allowed!")
-            return val
-        raise forms.ValidationError("Invalid Cron")
+        val = self.cleaned_data.get('cron')
+        if not val:
+            raise forms.ValidationError("Invalid Cron")
 
+        parts = val.strip().split()
+        if len(parts) != 5:
+            raise forms.ValidationError("Invalid Cron format: must have 5 fields")
 
+        minute_field = parts[0]
+
+        # Block if minute is exactly "*" (every minute)
+        if minute_field == "*":
+            raise forms.ValidationError("Warning: Scheduling every minute is not allowed!")
+
+        return val
 
 
 class EditAssignedSiteForm(forms.Form):
@@ -357,9 +374,9 @@ class SchdTaskFormJob(JobForm):
     timeInChoices      = [('MINS', 'Min'),('HRS', 'Hour'), ('DAYS', 'Day')]
     required_css_class = "required"
 
-    planduration_type  = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
-    gracetime_type     = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
-    expirytime_type    = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
+    planduration_type  = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}))
+    gracetime_type     = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}))
+    expirytime_type    = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}))
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
 
     class Meta(JobForm.Meta):
@@ -369,9 +386,9 @@ class SchdTaskFormJob(JobForm):
             'starttime'     : forms.TextInput(attrs={'style': 'display:none;'}),
             'endtime'       : forms.TextInput(attrs={'style': 'display:none;'}),
             'frequency'     : forms.TextInput(attrs={'style': 'display:none;'}),
-            'ticketcategory': s2forms.Select2Widget,
-            'scantype'      : s2forms.Select2Widget,
-            'priority'      : s2forms.Select2Widget,
+            'ticketcategory': s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'scantype'      : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'priority'      : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
         })
 
     def __init__(self, *args, **kwargs):
@@ -429,11 +446,21 @@ class SchdTaskFormJob(JobForm):
         return cd      
     
     def clean_cronstrue(self):
-        if val := self.cleaned_data.get('cron'):
-            if val.startswith("*"):
-                raise forms.ValidationError(f"Warning: Scheduling every minute is not allowed!")
-            return val
-        raise forms.ValidationError("Invalid Cron")
+        val = self.cleaned_data.get('cron')
+        if not val:
+            raise forms.ValidationError("Invalid Cron")
+
+        parts = val.strip().split()
+        if len(parts) != 5:
+            raise forms.ValidationError("Invalid Cron format: must have 5 fields")
+
+        minute_field = parts[0]
+
+        # Block if minute is exactly "*" (every minute)
+        if minute_field == "*":
+            raise forms.ValidationError("Warning: Scheduling every minute is not allowed!")
+
+        return val
 
 
 
