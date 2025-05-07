@@ -2,7 +2,9 @@ from django.db.models import Q, F, Subquery
 from django.core.exceptions import EmptyResultSet
 from django.db import transaction, DatabaseError
 from django.http import response as rp
-import apps.activity.models as am
+from apps.activity.models.job_model import Job,Jobneed,JobneedDetails
+from apps.activity.models.asset_model import Asset
+from apps.activity.models.question_model import QuestionSetBelonging
 from apps.y_helpdesk.models import Ticket, EscalationMatrix
 from logging import getLogger
 from pprint import pformat
@@ -28,16 +30,16 @@ def create_dynamic_job(jobids=None):
     try:
         # check if dynamic job already exist with the passed jobid
         
-        is_job_modified = am.Job.objects.filter(id__in = jobids, mdtz__gt = F('cdtz')).first() # the job is modified
-        dynamic_jobneed_exist = am.Jobneed.objects.filter(parent_id=1,jobstatus='ASSIGNED',job_id__in = jobids).exists() #dynamic job exist
+        is_job_modified = Job.objects.filter(id__in = jobids, mdtz__gt = F('cdtz')).first() # the job is modified
+        dynamic_jobneed_exist = Jobneed.objects.filter(parent_id=1,jobstatus='ASSIGNED',job_id__in = jobids).exists() #dynamic job exist
         
         log.info(f"is_job_modified: {is_job_modified} and dynamic_jobneed_exist: {dynamic_jobneed_exist}")
         if not is_job_modified and dynamic_jobneed_exist:
             pass
         else:
-            jobs = am.Job.objects.filter(
+            jobs = Job.objects.filter(
                 ~Q(jobname='NONE'),
-                ~Q(asset__runningstatus = am.Asset.RunningStatus.SCRAPPED),
+                ~Q(asset__runningstatus = Asset.RunningStatus.SCRAPPED),
                 parent_id = 1,
                 enable = True,
                 other_info__isdynamic=True
@@ -45,7 +47,7 @@ def create_dynamic_job(jobids=None):
             if jobids:
                 jobs = jobs.filter(id__in = jobids)
             for job in jobs:
-                asset = am.Asset.objects.get(id = job['asset_id'])
+                asset = Asset.objects.get(id = job['asset_id'])
                 jobstatus = 'ASSIGNED'
                 jobtype = 'SCHEDULE'
                 people = job['people_id']
@@ -71,46 +73,63 @@ def create_dynamic_job(jobids=None):
 def filter_jobs(jobids=None):
     from django.utils import timezone
     current_date = timezone.now()
-    query = am.Job.objects.filter(
-        ~Q(jobname='NONE'),
-        ~Q(cron='* * * * *'),
-        ~Q(asset__runningstatus=am.Asset.RunningStatus.SCRAPPED),
-        parent_id=1,
-        enable=True,
-        other_info__isdynamic=False,
-        uptodate__gte=current_date
-    ).select_related(
-        "asset", "pgroup", "cuser", "muser", "qset", "people",
-    ).values(*utils.JobFields.fields)
+    if jobids:
+        log.info("Inside the IF")
+        query = Job.objects.filter(id__in = jobids).select_related(
+            "asset", "pgroup", "cuser", "muser", "qset", "people",
+        ).values(*utils.JobFields.fields)
+    else:
+        log.info("Inside the Else")
+        query = Job.objects.filter(
+            ~Q(jobname='NONE'),
+            ~Q(cron='* * * * *'),
+            ~Q(asset__runningstatus=Asset.RunningStatus.SCRAPPED),
+            parent_id=1,
+            enable=True,
+            other_info__isdynamic=False,
+            uptodate__gte=current_date
+        ).select_related(
+            "asset", "pgroup", "cuser", "muser", "qset", "people",
+        ).values(*utils.JobFields.fields)
     return list(query)
 
-
-def process_job(job):
+def process_job(job,result):
+    msg = resp = None
+    log.info(f'Inside the process job')
     startdtz, enddtz = calculate_startdtz_enddtz(job)
     DT, is_cron, resp = get_datetime_list(job['cron'], startdtz, enddtz, {})
     if not is_cron:
         log.warning(f"Invalid cron expression for job {job['id']}: {job['cron']}")
-        return {'msg': f"Invalid cron expression for job {job['id']}: {job['cron']}"}
+        resp = {'msg': f"Invalid cron expression for job {job['id']}: {job['cron']}"}
     if not DT and is_cron:
-        return {'msg': f" Jobs are scheduled for job with id: {job['id']} between {startdtz} and {enddtz} "}
-
-    status, resp = insert_into_jn_and_jnd(job, DT, {})
-    resp = []
+        resp = {'msg': f" Jobs are scheduled for job with id: {job['id']} between {startdtz} and {enddtz} "}
+    log.info(f'Following DT is being scheduled: {DT} is_cron {is_cron} and resp {resp}')
+    if DT and is_cron:
+        status, resp = insert_into_jn_and_jnd(job, DT, resp)
+        result['story'].append(resp)
+        log.info(f"The result contains: {result}")
     return resp
+
 
 @shared_task(name="create_job()")
 def create_job(jobids=None):
     import time
+    msg = resp = None
     result = {'story': []}
     start_time = time.time()
     try:
         jobs = filter_jobs(jobids)
-        log.info(f"Total jobs: {len(jobs)}")
+        if not jobs:
+            msg = "No jobs found schedhuling terminated"
+            resp = {'msg':f"{msg}"}
+            log.warning(f"{msg}", exc_info = True)
+        else:
+            log.info(f"Total jobs: {len(jobs)}")
         for job in jobs:
             try:
                 with transaction.atomic(using=utils.get_current_db_name()):
                     try:
-                        resp = process_job(job)
+                        resp = process_job(job,result)
                         result['story'].append(resp)
                     except Exception as e:
                         log.error(f"Job {job['id']} failed inside atomic block", exc_info=True)
@@ -133,7 +152,7 @@ def create_job(jobids=None):
         raise
     end_time = time.time()
     log.info(f"Time Taken: {end_time - start_time}")
-    return result
+    return resp,result
 
 
 def calculate_startdtz_enddtz(job):
@@ -234,7 +253,7 @@ def insert_into_jn_and_jnd(job, DT, resp):
             jobstatus = 'ASSIGNED'
             jobtype = 'SCHEDULE'
             jobdesc = f'{job["jobname"]}'
-            asset = am.Asset.objects.get(id = job['asset_id'])
+            asset = Asset.objects.get(id = job['asset_id'])
             multiplication_factor = asset.asset_json['multifactor']
             mins = pdtz = edtz = people = jnid = None
             parent = people = -1
@@ -253,15 +272,15 @@ def insert_into_jn_and_jnd(job, DT, resp):
                 edtz = params['edtz'] = dt + timedelta(minutes = mins)
                 log.debug(f'pdtz:={pdtz} edtz:={edtz}')
                 jn = insert_into_jn_for_parent(job, params)
-                isparent = crontype in (am.Job.Identifier.INTERNALTOUR.value, am.Job.Identifier.EXTERNALTOUR.value)
+                isparent = crontype in (Job.Identifier.INTERNALTOUR.value, Job.Identifier.EXTERNALTOUR.value)
                 insert_update_jobneeddetails(jn.id, job, parent = isparent)
-                if isinstance(jn, am.Jobneed):
+                if isinstance(jn, Jobneed):
                     log.info(f"createJob() parent jobneed:= {jn.id}")
-                    if crontype in (am.Job.Identifier.INTERNALTOUR.value, am.Job.Identifier.EXTERNALTOUR.value):
+                    if crontype in (Job.Identifier.INTERNALTOUR.value, Job.Identifier.EXTERNALTOUR.value):
                         edtz = create_child_tasks(
                             job, pdtz, people, jn.id, jobstatus, jobtype, jn.other_info)
                         if edtz is not None:
-                            jn = am.Jobneed.objects.filter(id = jn.id).update(
+                            jn = Jobneed.objects.filter(id = jn.id).update(
                                 expirydatetime = edtz
                             )
                             if jn <= 0:
@@ -309,7 +328,7 @@ def insert_into_jn_dynamic_for_parent(job, params):
             'pgroup_id' : job['pgroup_id'],
             'parent' : params['NONE_JN'],
         }
-    obj = am.Jobneed.objects.create(
+    obj = Jobneed.objects.create(
         job_id         = job['id'],
         jobtype        = params['jobtype'],
         **defaults
@@ -347,7 +366,7 @@ def insert_into_jn_for_parent(job, params):
             'parent' : params['NONE_JN'],
         }
     try:
-        obj, iscreated = am.Jobneed.objects.get_or_create(
+        obj, iscreated = Jobneed.objects.get_or_create(
             defaults=defaults,
             job_id=job['id'],
             jobtype=params['jobtype'],
@@ -366,8 +385,8 @@ def insert_update_jobneeddetails(jnid, job, parent=False):
     from django.utils.timezone import get_current_timezone
     tz = get_current_timezone()
     try:
-        am.JobneedDetails.objects.filter(jobneed_id=jnid).delete()
-    except am.JobneedDetails.DoesNotExist:
+        JobneedDetails.objects.filter(jobneed_id=jnid).delete()
+    except JobneedDetails.DoesNotExist:
         pass
     try:
         if parent:
@@ -375,7 +394,7 @@ def insert_update_jobneeddetails(jnid, job, parent=False):
             log.info(f"It is parent record so creating none qsetbelonging record")
         else:
             log.info(f"qset_id {job['qset_id']} job_id {job['id']} jobname {job['jobname']} job_created_on {job['cdtz']} job_modified_on {job['mdtz']}" )
-            qsb = am.QuestionSetBelonging.objects.select_related('question').filter(qset_id=job['qset_id']).order_by('seqno').values_list(named=True)
+            qsb = QuestionSetBelonging.objects.select_related('question').filter(qset_id=job['qset_id']).order_by('seqno').values_list(named=True)
         if qsb:
             log.info(f'Checklist found with {len(qsb) if isinstance(qsb, QuerySet) else 1} questions in it.')
             insert_into_jnd(qsb, job, jnid, parent)
@@ -391,7 +410,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
         from django.utils.timezone import get_current_timezone
         tz = get_current_timezone()
         mins = pdtz = edtz = None
-        R = am.Job.objects.annotate(
+        R = Job.objects.annotate(
             cplocation = F('bu__gpslocation')
             ).filter(
             parent_id = job['id']).order_by(
@@ -414,7 +433,7 @@ def create_child_tasks(job, _pdtz, _people, jnid, _jobstatus, _jobtype, parent_o
         prev_edtz = _pdtz
         brektime_idx = len(R)//tour_freq
         for idx, r in enumerate(R):
-            asset = am.Asset.objects.get(id = r['asset_id'])
+            asset = Asset.objects.get(id = r['asset_id'])
             params['m_factor'] = asset.asset_json['multifactor']
             jobdescription = f"{r['asset__assetname']} - {r['jobname']}" 
             
@@ -453,7 +472,7 @@ def create_child_dynamic_tasks(job,  _people, jnid, _jobstatus, _jobtype, parent
         from django.utils.timezone import get_current_timezone
         tz = get_current_timezone()
         mins = pdtz = edtz = None
-        R = am.Job.objects.annotate(
+        R = Job.objects.annotate(
             cplocation = F('bu__gpslocation')
             ).filter(
             parent_id = job['id']).order_by(
@@ -468,7 +487,7 @@ def create_child_dynamic_tasks(job,  _people, jnid, _jobstatus, _jobtype, parent
         for idx, r in enumerate(R):
             log.info(f"create_child_tasks() [{idx}] child job:= {r['jobname']} | job:= {r['id']} | cron:= {r['cron']}")
 
-            asset = am.Asset.objects.get(id = r['asset_id'])
+            asset = Asset.objects.get(id = r['asset_id'])
             params['m_factor'] = asset.asset_json['multifactor']
             jobdescription = f"{r['asset__assetname']} - {r['jobname']}"
             
@@ -595,22 +614,22 @@ def delete_old_jobs(job_id, ppm=False):
     Delete old jobs and related data based on the given job ID.
     """
     # Get a list of related job IDs and include the given ID if ppm is True.
-    job_ids = am.Job.objects.filter(parent_id=job_id).values_list('id', flat=True)
+    job_ids = Job.objects.filter(parent_id=job_id).values_list('id', flat=True)
     job_ids = [job_id] + list(job_ids)
 
     # Set the old date to 1970-01-01 00:00:00 UTC.
     old_date = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     # Update jobneeddetails
-    jobneed_ids = am.Jobneed.objects.filter(plandatetime__gt=dtimezone.now(), job_id__in=job_ids).values_list('id', flat=True)
-    jnd_count = am.JobneedDetails.objects.filter(jobneed_id__in=jobneed_ids).update(cdtz=old_date, mdtz=old_date)
+    jobneed_ids = Jobneed.objects.filter(plandatetime__gt=dtimezone.now(), job_id__in=job_ids).values_list('id', flat=True)
+    jnd_count = JobneedDetails.objects.filter(jobneed_id__in=jobneed_ids).update(cdtz=old_date, mdtz=old_date)
 
     # Update jobneeds
-    jn_count = am.Jobneed.objects.filter(
+    jn_count = Jobneed.objects.filter(
         job_id__in=job_ids, plandatetime__gt=dtimezone.now()).update(
             cdtz=old_date, mdtz=old_date, plandatetime=old_date, expirydatetime=old_date)
 
     # Update job
-    am.Job.objects.filter(id=job_id).update(cdtz=F('mdtz'))
+    Job.objects.filter(id=job_id).update(cdtz=F('mdtz'))
 
     # Log the results
     log.info('Deleted %s jobneedetails and %s jobneeds for job ID %s', jnd_count, jn_count, job_id)
@@ -657,7 +676,7 @@ def create_ppm_reminder(jobs):
             #EXTRACT REMINDER CONFIG (FROM ESCMATRIX)
             esm = EscalationMatrix.objects.select_related('job', 'assignedgroup', 'assignedperson', 'bu').filter(job_id=job['job'])
             #RETRIVE JOBNEEDS
-            jobneeds = am.Jobneed.objects.select_related('job', 'asset', 'qset', 'bu', 'client', 'people', 'pgroup').filter(
+            jobneeds = Jobneed.objects.select_related('job', 'asset', 'qset', 'bu', 'client', 'people', 'pgroup').filter(
                 plandatetime__gt=datetime.now(), job_id=job['job'])
             
             if not esm or not jobneeds:
@@ -712,10 +731,10 @@ def create_ppm_job(jobid=None):
     startdtz = enddtz = msg = resp = None
     try:
         with transaction.atomic(using=utils.get_current_db_name()):
-            jobs = am.Job.objects.filter(
+            jobs = Job.objects.filter(
                 ~Q(jobname='NONE'),
-                ~Q(asset__runningstatus = am.Asset.RunningStatus.SCRAPPED),
-                identifier = am.Job.Identifier.PPM.value,
+                ~Q(asset__runningstatus = Asset.RunningStatus.SCRAPPED),
+                identifier = Job.Identifier.PPM.value,
                 parent_id = 1
             ).select_related('asset', 'pgroup', 'cuser', 'muser', 'people', 'qset').values(
                 *utils.JobFields.fields
@@ -825,7 +844,7 @@ def to_local(val):
 
 def delete_from_job(job, checkpointId, checklistId):
     try:
-        am.Job.objects.get(
+        Job.objects.get(
             parent     = int(job),
             asset_id = int(checkpointId),
             qset_id  = int(checklistId)).delete()
@@ -835,7 +854,7 @@ def delete_from_job(job, checkpointId, checklistId):
 
 def delete_from_jobneed(parentjob, checkpointId, checklistId):
     try:
-        am.Jobneed.objects.get(
+        Jobneed.objects.get(
             parent     = int(parentjob),
             asset_id = int(checkpointId),
             qset_id  = int(checklistId)).delete()
@@ -851,7 +870,7 @@ def update_lastgeneratedon(job, pdtz):
         log.info(f"update_lastgeneratedon [start] for job_id={job['id']} with pdtz={pdtz}")
         
         # Perform the update
-        updated = am.Job.objects.filter(id=job['id']).update(lastgeneratedon=pdtz)
+        updated = Job.objects.filter(id=job['id']).update(lastgeneratedon=pdtz)
         
         if updated:
             log.info(f"update_lastgeneratedon [success] updated lastgeneratedon to {pdtz} for job_id={job['id']}")
@@ -875,7 +894,7 @@ def insert_into_jnd(qsb, job, jnid, parent=False):
     qset = qsb if isinstance(qsb, QuerySet) else [qsb]
     for obj in qset:
         answer = 'NONE' if parent else None
-        am.JobneedDetails.objects.create(
+        JobneedDetails.objects.create(
             seqno      = obj.seqno,      question_id = obj.question_id,
             answertype = obj.answertype, max         = obj.max,
             min        = obj.min,        alerton     = obj.alerton,
@@ -889,7 +908,7 @@ def insert_into_jnd(qsb, job, jnid, parent=False):
 
 def  insert_into_jn_for_child(job, params, r):
     try:
-        jn = am.Jobneed.objects.create(
+        jn = Jobneed.objects.create(
                 job_id         = job['id'],                  parent_id         = params['jnid'],
                 jobdesc        = params['_jobdesc'],         plandatetime      = params['pdtz'],
                 expirydatetime = params['edtz'],             gracetime         = job['gracetime'],

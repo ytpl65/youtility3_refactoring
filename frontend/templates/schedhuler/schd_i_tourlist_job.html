@@ -70,9 +70,9 @@ Scheduled Tours
                 url: "{{ url('schedhuler:schd_internal_tour') }}?action=list"
             },
 			deferRender: true,
-			{# scrollY: 300,
+			scrollY: 300,
             scrollCollapse: true,
-            scrollX:true, #}
+            scrollX:true,
             lengthMenu: [ 10, 20, 50,100 ],
             pageLength: 10,
             dom:`<'row' <'col-sm-6 d-flex justify-content-start'f> <'col-sm-6 d-flex justify-content-end'B> >rt<'row'
@@ -150,7 +150,7 @@ Scheduled Tours
 			]
         
         })
-        initializeListOfPeoplesModal(ajaxData, "{{ url('activity:list_of_peoples') }}")
+        initializeListOfPeoplesModal(ajaxData, "{{ url('onboarding:list_of_peoples') }}")
 
         //BEGIN STYLING DATATABLE
 		$("th > input").addClass('form-control')

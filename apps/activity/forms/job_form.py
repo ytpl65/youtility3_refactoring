@@ -19,9 +19,9 @@ class JobForm(forms.ModelForm):
         ('DAY', 'Day'), ]
 
     freq_duration = forms.ChoiceField(
-        choices = DURATION_CHOICES, required = False, initial='MIN', widget = s2forms.Select2Widget)
+        choices = DURATION_CHOICES, required = False, initial='MIN', widget = s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}))
     freq_duration2 = forms.ChoiceField(
-        choices = DURATION_CHOICES, required = False, initial='MIN', widget = s2forms.Select2Widget)
+        choices = DURATION_CHOICES, required = False, initial='MIN', widget = s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}))
     jobdesc = forms.CharField(widget=forms.Textarea(attrs={'rows': 2, 'cols': 40}), label='Description', required=False)
     cronstrue = forms.CharField(widget=forms.Textarea(attrs={'readonly':True, 'rows':2}), required=False) 
 
@@ -43,18 +43,18 @@ class JobForm(forms.ModelForm):
         }
 
         widgets = {
-            'ticketcategory': s2forms.Select2Widget,
-            'scantype'      : s2forms.Select2Widget,
-            'shift'         : s2forms.Select2Widget,
-            'pgroup'        : s2forms.Select2Widget,
-            'asset'         : s2forms.Select2Widget,
-            'priority'      : s2forms.Select2Widget,
+            'ticketcategory': s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'scantype'      : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'shift'         : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'pgroup'        : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'asset'         : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'priority'      : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
             'fromdate'      : forms.DateTimeInput,
             'uptodate'      : forms.DateTimeInput,
             'ctzoffset'     : forms.NumberInput(attrs={"style": "display:none;"}),
-            'qset'          : s2forms.Select2Widget,
-            'people'        : s2forms.Select2Widget,
-            'bu'            : s2forms.Select2Widget,
+            'qset'          : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'people'        : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'bu'            : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
             'cron'          :forms.TextInput(attrs={'style':'display:none'}),
             'jobdesc'       :forms.Textarea(attrs={'rows':'5', 'placeholder':"What does this tour about?"})
         }

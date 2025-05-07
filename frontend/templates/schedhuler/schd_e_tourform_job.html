@@ -943,7 +943,7 @@ $(document).ready(() => {
                             showConfirmButton:false,
                             timer:1500,
                             icon: 'success',
-                            title: `${data.count} Tours scheduled successfully!`
+                            title:  data.count ? `${data.count} Tours scheduled successfully!` : data.msg
                         })
                         $('#lblIsRTour').html('No');
                     })
@@ -960,7 +960,6 @@ $(document).ready(() => {
         }
     })
 
-    //ON-LOAD WITH FORM INSTANCE
     if("{{ schdexternaltourform.instance.id }}" != 'None'){
         updateCronDate()
         let re = /(\d+:\d+:\d+)/g

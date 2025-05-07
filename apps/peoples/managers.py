@@ -256,7 +256,7 @@ class PgblngManager(models.Manager):
     def get_sitesfromgroup(self, job, force=False):
         "return sites under group with given sitegroupid"
         if not force:
-            from apps.activity.models import Job
+            from apps.activity.models.job_model import Job
             qset = Job.objects.get_sitecheckpoints_exttour(job)
         if force or not qset:
             qset = self.annotate(

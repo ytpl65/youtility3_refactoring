@@ -34,14 +34,14 @@ class Schd_I_TourJobForm(JobForm):
     def __init__(self, *args, **kwargs):
         """Initializes form add atttibutes and classes here."""
         self.request = kwargs.pop('request', None)
-        S = self.request.session
+        S = self.request
         super().__init__(*args, **kwargs)
         self.set_initial_values()
         self.set_required_false_for_dynamic()
         self.set_display_none()
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
-        self.set_options_for_dropdowns()
+        self.set_options_for_dropdowns(S)
         utils.initailize_form_fields(self)
         
 
@@ -61,10 +61,10 @@ class Schd_I_TourJobForm(JobForm):
             cd['planduration'] = cd['gracetime'] = cd['expirytime'] = 0
         return cd
     
-    def set_options_for_dropdowns(self):
-        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
-        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
-        self.fields['people'].queryset = pm.People.objects.filter_for_dd_people_field(self.request)
+    def set_options_for_dropdowns(self,S):
+        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(S, sitewise=True)
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(S, sitewise=True)
+        self.fields['people'].queryset = pm.People.objects.filter_for_dd_people_field(S)
     
     def set_display_none(self):
         for field in ['identifier', 'expirytime', 'starttime', 'endtime', 'frequency']:
@@ -281,7 +281,7 @@ class Schd_E_TourJobForm(JobForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
-        S = self.request.session
+        request,S =self.request,self.request.session
         super().__init__(*args, **kwargs)
         self.fields['israndom'].widget.attrs['class'] = 'btdeciders'
         self.fields['tourfrequency'].widget.attrs['class'] = 'btdeciders'
@@ -296,15 +296,14 @@ class Schd_E_TourJobForm(JobForm):
         self.fields['endtime'].widget.attrs    = {"style": "display:none"}
         self.fields['frequency'].widget.attrs  = {"style": "display:none"}
         self.fields['priority'].widget.attrs   = {"style": "display:none"}
-        self.fields['scantype'].widget.attrs   = {"style": "display:none"}
         self.fields['seqno'].widget.attrs      = {"style": "display:none"}
-        
+        self.fields['people'].widget.attrs = {"data-theme":"bootstrap5"}
         #filters for dropdown fields
-        self.fields['qset'].queryset  = QuestionSet.objects.get_proper_checklist_for_scheduling(self.request, ['RPCHECKLIST'])
-        self.fields['ticketcategory'].queryset  = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request)
+        self.fields['qset'].queryset  = QuestionSet.objects.get_proper_checklist_for_scheduling(request, ['RPCHECKLIST'])
+        self.fields['ticketcategory'].queryset  = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(request)
         self.fields['sgroup'].queryset  = pm.Pgroup.objects.filter(identifier__tacode="SITEGROUP", bu_id__in = S['assignedsites'], enable=True)
-        self.fields['people'].queryset  = pm.People.objects.filter_for_dd_people_field(self.request)
-        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request)
+        self.fields['people'].queryset  = pm.People.objects.filter_for_dd_people_field(request)
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(request)
 
         utils.initailize_form_fields(self)
         
@@ -377,7 +376,7 @@ class SchdTaskFormJob(JobForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
-        S = self.request.session
+        S = self.request
         super(SchdTaskFormJob, self).__init__(*args, **kwargs)
         self.fields['fromdate'].input_formats  = settings.DATETIME_INPUT_FORMATS
         self.fields['uptodate'].input_formats  = settings.DATETIME_INPUT_FORMATS
@@ -390,11 +389,11 @@ class SchdTaskFormJob(JobForm):
         self.fields['gracetime'].label         = 'Grace Time (Before)'
         
         #filters for dropdown fields
-        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
-        self.fields['qset'].queryset = QuestionSet.objects.filter_for_dd_qset_field(self.request, ['CHECKLIST'], sitewise=True)
-        self.fields['asset'].queryset = Asset.objects.filter_for_dd_asset_field(self.request, identifiers =["ASSET", 'CHECKPOINT'], sitewise=True)
-        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(self.request, sitewise=True)
-        self.fields['people'].queryset = pm.People.objects.filter_for_dd_people_field(self.request, sitewise=True)
+        self.fields['ticketcategory'].queryset = ob.TypeAssist.objects.filter_for_dd_notifycategory_field(S, sitewise=True)
+        self.fields['qset'].queryset = QuestionSet.objects.filter_for_dd_qset_field(S, ['CHECKLIST'], sitewise=True)
+        self.fields['asset'].queryset = Asset.objects.filter_for_dd_asset_field(S, identifiers =["ASSET", 'CHECKPOINT'], sitewise=True)
+        self.fields['pgroup'].queryset = pm.Pgroup.objects.filter_for_dd_pgroup_field(S, sitewise=True)
+        self.fields['people'].queryset = pm.People.objects.filter_for_dd_people_field(S, sitewise=True)
         utils.initailize_form_fields(self)
 
     def clean(self):
