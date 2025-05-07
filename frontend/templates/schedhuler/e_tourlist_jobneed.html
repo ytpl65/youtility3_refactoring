@@ -94,7 +94,14 @@ External Tour List
             //ordering:false,
             columns:[
                 {data: 'id', visible:false, searchable:false, className:'noVis'},
-                {data: 'plandatetime', title: "Plan Datetime"},
+                {
+                    data: 'plandatetime',
+                    title: "Plan Datetime",
+                    render: function(data, type, row, meta){
+                        const datetime = moment.utc(data).add(row['gracetime'], 'minutes');
+                        return `<a href="${urlname}?id=${row['id']}">${datetime.local().format('YYYY-MM-DD HH:mm')}</a>`;
+                    }
+                },
                 {data: 'jobdesc', title: 'Description'},
                 {data: 'jobstatus', title: 'Status'},
                 {title: 'People/Group', defaultContent:null, data:'assignedto'},
