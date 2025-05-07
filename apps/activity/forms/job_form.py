@@ -94,19 +94,20 @@ class JobNeedForm(forms.ModelForm):
                   'endtime', 'performedby', 'gpslocation', 'cuser', 'remarks', 'ctzoffset',
                   'remarkstype']
         widgets = {
-            # 'ticketcategory': s2forms.Select2Widget,
-            # 'scantype'      : s2forms.Select2Widget,
-            # 'pgroup'        : s2forms.Select2Widget,
-            # 'people'        : s2forms.Select2Widget,
+            'ticketcategory': s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'scantype'      : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'pgroup'        : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'people'        : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
             'qset'          : s2forms.ModelSelect2Widget(model = QuestionSet, search_fields = ['qset_name__icontains']),
             'asset'         : s2forms.ModelSelect2Widget(model = Asset, search_fields = ['assetname__icontains']),
-            # 'priority'      : s2forms.Select2Widget,
-            # 'jobdesc'       : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
-            # 'remarks'       : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
-            # 'jobstatus'     : s2forms.Select2Widget,
-            # 'performedby'   : s2forms.Select2Widget,
-            # 'gpslocation'   : forms.TextInput,
-            # 'remarks_type' : s2forms.Select2Widget
+            'priority'      : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'jobdesc'       : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
+            'remarks'       : forms.Textarea(attrs={'rows': 2, 'cols': 40}),
+            'jobstatus'     : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'performedby'   : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'gpslocation'   : forms.TextInput,
+            'remarks_type' : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'})
+
         }
         label = {
             'endtime': 'End Time',

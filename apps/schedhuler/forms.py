@@ -179,7 +179,7 @@ class I_TourFormJobneed(JobNeedForm): # jobneed
     timeInChoices      = [('MIN', 'Min'),('HRS', 'Hour'), ('DAY', 'Day'), ('WEEK', 'Week')]
     ASSIGNTO_CHOICES   = [('PEOPLE', 'People'), ('GROUP', 'Group')]
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
-    timeIn             = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
+    timeIn             = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}))
     required_css_class = "required"
     
 
@@ -191,10 +191,13 @@ class I_TourFormJobneed(JobNeedForm): # jobneed
         super().__init__(*args, **kwargs)
         self.fields['plandatetime'].input_formats   = settings.DATETIME_INPUT_FORMATS
         self.fields['expirydatetime'].input_formats = settings.DATETIME_INPUT_FORMATS
-        self.fields['identifier'].widget.attrs      = {"style": "display:none"}
-        self.fields['starttime'].widget.attrs       = {"disabled": "disabled"}
-        self.fields['endtime'].widget.attrs         = {"disabled": "disabled"}
-        self.fields['performedby'].widget.attrs    = {"disabled": "disabled"}
+        self.fields['identifier'].widget.attrs      = {"style": "display:none",'data-theme':'bootstrap5' }
+        self.fields['starttime'].widget.attrs       = {"disabled": "disabled",'data-theme':'bootstrap5' }
+        self.fields['endtime'].widget.attrs         = {"disabled": "disabled",'data-theme':'bootstrap5' }
+        self.fields['performedby'].widget.attrs    = {"disabled": "disabled",'data-theme':'bootstrap5' }
+        self.fields['qset'].widget.attrs = {'data-theme':'bootstrap5'}
+        self.fields['asset'].widget.attrs = {'data-theme':'bootstrap5'}
+        
         self.fields['qset'].label = 'Checklist'
         self.fields['asset'].label = 'Asset/Smartplace'
         
