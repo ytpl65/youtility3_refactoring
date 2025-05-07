@@ -296,8 +296,6 @@ class CheckpointForm(forms.ModelForm):
         model = Asset
         fields = ['assetcode', 'assetname', 'runningstatus', 'parent',
             'iscritical', 'enable', 'identifier', 'ctzoffset', 'type', 'location']
-        widgets = {
-        }
         labels = {'location':'Location', 'parent':'Belongs To'}
         
 
@@ -306,6 +304,19 @@ class CheckpointForm(forms.ModelForm):
         self.request = kwargs.pop('request', None)
         S = self.request.session
         super(CheckpointForm, self).__init__(*args, **kwargs)
+        self.fields['parent'].widget = s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'})
+        self.fields['runningstatus'] = forms.ChoiceField(
+            choices=Asset.RunningStatus.choices,
+            required=True,
+            label="Running Status",
+            widget=s2forms.Select2Widget(
+                attrs={
+                    'data-theme': 'bootstrap5'
+                }
+            )
+        )
+        self.fields['location'].widget = s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'})
+        self.fields['type'].widget = s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'})
         self.fields['assetcode'].widget.attrs = {'style':"text-transform:uppercase"}
         if self.instance.id is None:
             self.fields['parent'].initial = 1

@@ -203,7 +203,7 @@ class CheckpointQR(QRCodeBaseReport):
     unsupported_formats = ["xlsx", "csv", "json"]
 
     def set_data(self):
-        from apps.activity.models import Asset
+        from apps.activity.models.asset_model import Asset
         print_single_qr = self.formdata.get("print_single_qr")
         site = self.formdata.get("site")
         site_or_checkpoint = self.formdata.get("site_or_checkpoint")
