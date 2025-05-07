@@ -152,10 +152,10 @@ class PPMForm(forms.ModelForm):
                            ("QUARTERLY", "Quarterly"), ('MONTHLY', 'Monthly'),('HALFYEARLY', 'Half Yearly'),
                            ('YEARLY', 'Yearly')]
     
-    planduration_type  = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
-    gracetime_type     = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
-    expirytime_type    = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget)
-    frequency = forms.ChoiceField(choices=FREQUENCY_CHOICES, label="Frequency", widget=s2forms.Select2Widget)
+    planduration_type  = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}))
+    gracetime_type     = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}))
+    expirytime_type    = forms.ChoiceField(choices = timeInChoices, initial='MIN', widget = s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}))
+    frequency = forms.ChoiceField(choices=FREQUENCY_CHOICES, label="Frequency", widget=s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}))
     assign_to          = forms.ChoiceField(choices = ASSIGNTO_CHOICES, initial="PEOPLE")
     cronstrue = forms.CharField(widget=forms.Textarea(attrs={'readonly':True, 'rows':2}), required=False) 
 
@@ -178,13 +178,13 @@ class PPMForm(forms.ModelForm):
             'assign_to':'Assign to'
         }
         widgets = {
-            'asset'         : s2forms.Select2Widget,
-            'qset'          : s2forms.Select2Widget,
-            'people'        : s2forms.Select2Widget,
-            'pgroup'        : s2forms.Select2Widget,
-            'priority'      : s2forms.Select2Widget,
-            'scantype'      : s2forms.Select2Widget,
-            'ticketcategory': s2forms.Select2Widget,
+            'asset'         : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'qset'          : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'people'        : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'pgroup'        : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'priority'      : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'scantype'      : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'ticketcategory': s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
             'identifier':forms.TextInput(attrs={'style':"display:none;"})
         }
     
