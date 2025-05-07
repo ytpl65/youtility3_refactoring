@@ -8,9 +8,20 @@ from apps.activity.models.question_model import Question,QuestionSet,QuestionSet
 from .serializers import AttachmentSerializer,AssetSerializer,LocationSerializer,QuestionSerializer,QuestionSetSerializer,QuestionSetBelongingSerializer
 from django.utils import timezone
 import json
-
+import datetime
 from background_tasks.tasks import publish_mqtt
 TOPIC = "redmine_to_noc"
+
+
+def convert_dates(obj):
+    if isinstance(obj, dict):
+        return {k: convert_dates(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_dates(v) for v in obj]
+    elif isinstance(obj, (datetime.date, datetime.datetime)):
+        return obj.isoformat()
+    else:
+        return obj
 
 @receiver(post_save, sender=Asset)
 def create_asset_log(sender, instance, created, **kwargs):
@@ -39,27 +50,6 @@ def create_asset_log(sender, instance, created, **kwargs):
                 ctzoffset=instance.ctzoffset
             )
 
-# @receiver(post_save,sender=Attachment)
-# def create_attachment_record(sender,instance,created,**kwargs):
-#     print('I am here in Attachment Record Creation')
-#     from paho_client import MqttClient,REDMINE_TO_NOC
-#     client = MqttClient()
-#     client.client.connect('localhost',1883,60)
-
-#     operation = 'CREATE' if created else 'UPDATE'
-#     serializer = AttachmentSerializer(instance)
-
-#     data = {
-#         'operation':operation,
-#         'app':'activity',
-#         'models':'Attachment',
-#         'payload':serializer.data
-#     }
-
-#     payload = json.dumps(data)
-#     client.publish_message(REDMINE_TO_NOC,payload)
-#     client.client.disconnect()
-
 def build_payload(instance, model_name, created):
     serializer_cls = {
         "Attachment": AttachmentSerializer,
@@ -70,11 +60,12 @@ def build_payload(instance, model_name, created):
         "QuestionSetBelonging": QuestionSetBelongingSerializer
     }[model_name]
     serializer = serializer_cls(instance)
+    json_serializable_data = convert_dates(serializer.data)
     return json.dumps({
         "operation": "CREATE" if created else "UPDATE",
         "app": "Activity",
         "models": model_name,
-        "payload": serializer.data
+        "payload": json_serializable_data
     })
 
 @receiver(post_save,sender=Attachment)
