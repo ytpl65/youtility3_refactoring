@@ -39,10 +39,10 @@ class QuestionForm(forms.ModelForm):
         }
 
         widgets = {
-            'answertype': s2forms.Select2Widget,
-            'category'  : s2forms.Select2Widget,
-            'unit'      : s2forms.Select2Widget,
-            'alerton'   : s2forms.Select2MultipleWidget,
+            'answertype': s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'category'  : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'unit'      : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
+            'alerton'   : s2forms.Select2MultipleWidget(attrs={'data-theme':'bootstrap5'}),
         }
 
     def __init__(self, *args, **kwargs):  # sourcery skip: use-named-expression
