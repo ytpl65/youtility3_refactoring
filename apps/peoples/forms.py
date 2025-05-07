@@ -238,7 +238,9 @@ class PgroupForm(forms.ModelForm):
     }
     peoples = forms.MultipleChoiceField(
         required = True,
-        widget = s2forms.Select2MultipleWidget,
+        widget = s2forms.Select2MultipleWidget(
+            attrs={'data-theme':'bootstrap5'}
+        ),
         label="Select People")
 
     class Meta:

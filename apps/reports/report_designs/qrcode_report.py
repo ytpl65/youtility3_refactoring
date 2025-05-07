@@ -253,7 +253,7 @@ class LocationQR(QRCodeBaseReport):
     unsupported_formats = ["xlsx", "csv", "json"]
 
     def set_data(self):
-        from apps.activity.models import Location
+        from apps.activity.models.location_model import Location
 
         print_single_qr = self.formdata.get("print_single_qr")
         site = self.formdata.get("site")

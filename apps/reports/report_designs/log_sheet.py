@@ -2,7 +2,8 @@ from apps.reports.utils import BaseReportsExport
 from apps.core.utils import runrawsql, get_timezone
 from apps.core.report_queries import get_query
 from apps.onboarding.models import Bt
-from apps.activity.models import Asset, QuestionSet, Question
+from apps.activity.models.asset_model import Asset
+from apps.activity.models.question_model import QuestionSet
 from apps.peoples.models import People
 from django.conf import settings
 

@@ -74,7 +74,7 @@ class LocationForm(forms.ModelForm):
                 raise forms.ValidationError(self.error_msg['invalid_loccode3'])
             if loccode == getattr(self.cleaned_data.get('parent', None), 'loccode', None):
                 raise forms.ValidationError("Code and Belongs To cannot be the same!")
-            if not self.instance.id and am.Location.objects.filter(
+            if not self.instance.id and Location.objects.filter(
                 loccode=loccode,
                 client_id=self.request.session.get('client_id'),
                 bu_id=self.request.session.get('bu_id')
@@ -97,7 +97,7 @@ class LocationForm(forms.ModelForm):
     
     def clean_loccode(self):
         if val:= self.cleaned_data['loccode']:
-            if not self.instance.id and am.Location.objects.filter(loccode = val, client_id=self.request.session['client_id']).exists():
+            if not self.instance.id and Location.objects.filter(loccode = val, client_id=self.request.session['client_id']).exists():
                 raise forms.ValidationError("Location code already exist, choose different code")
             if ' ' in val:
                 raise forms.ValidationError("Spaces are not allowed")
