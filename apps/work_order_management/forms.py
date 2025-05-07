@@ -149,11 +149,6 @@ class ApproverForm(forms.ModelForm):
     class Meta:
         model = Approver
         fields = ['approverfor', 'forallsites', 'sites', 'people', 'ctzoffset','identifier']
-        widgets = {
-            'identifier': s2forms.Select2Widget(
-                attrs={'class': 'form-select form-select-solid'}
-            )
-        }
         labels = {
             'identifier' : 'Name',
             'forallsites':'Applicable to all sites',

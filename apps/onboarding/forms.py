@@ -106,21 +106,22 @@ class BtForm(forms.ModelForm):
         'invalid_solid': "Please enter a correct value for Sol id",
         'invalid_name'  : "[Invalid text] Only these special characters [-, _, @, #, . , &] are allowed in name field",                   
     }
-    parent = forms.ModelChoiceField(label='Belongs to', required = False, widget = s2forms.Select2Widget, queryset = obm.Bt.objects.all())
-    controlroom = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=False, label='Control Room')
+    parent = forms.ModelChoiceField(label='Belongs to', required = False, queryset = obm.Bt.objects.all())
+    controlroom = forms.MultipleChoiceField(required=False, label='Control Room')
     permissibledistance = forms.IntegerField(required=False, label='Permissible Distance')
-    address = forms.CharField(required=False, label='Address', max_length=500, widget=forms.Textarea(attrs={'rows': 2, 'cols': 15}))
+    address = forms.CharField(required=False, label='Address', max_length=500)
     total_people_count = forms.IntegerField(required=False, min_value=0,label='Total People Count')
-    designation = forms.ModelChoiceField(label='Desigantion',required=False,widget = s2forms.Select2Widget, queryset = obm.TypeAssist.objects.filter(tatype__tacode='DESIGNATION',enable = True))
+    designation = forms.ModelChoiceField(label='Desigantion',required=False, queryset = obm.TypeAssist.objects.filter(tatype__tacode='DESIGNATION',enable = True))
     designation_count = forms.IntegerField(required=False, min_value=0,label='Designation Count')
     posted_people = forms.MultipleChoiceField(
-        label='Posted People', 
-        required=False, 
-        widget=s2forms.Select2MultipleWidget(attrs={
-            'data-placeholder': 'Select Posted People',
-            'class': 'posted-people-select'
-        })
-    )
+    label='Posted People',
+    required=False,
+    widget=s2forms.Select2MultipleWidget(attrs={
+        'class': 'form-select form-select-solid',
+        'data-placeholder': 'Select Posted People',
+        'data-theme': 'bootstrap5'
+    })
+)
     jsonData = forms.CharField(widget=forms.HiddenInput(), required=False)
     class Meta:
         model  = obm.Bt
@@ -148,8 +149,6 @@ class BtForm(forms.ModelForm):
         widgets = { 
             'bucode'      : forms.TextInput(attrs={'style': 'text-transform:uppercase;', 'placeholder': 'Enter text without space & special characters'}),
             'buname'      : forms.TextInput(attrs={'placeholder': 'Name'}),
-            'identifier'  : s2forms.Select2Widget,
-            'butype'      : s2forms.Select2Widget
             }    
 
     def __init__(self, *args, **kwargs):
@@ -158,6 +157,14 @@ class BtForm(forms.ModelForm):
         self.request = kwargs.pop('request', False)
         S = self.request.session
         super().__init__(*args, **kwargs)
+        self.fields['parent'].widget = s2forms.Select2Widget(attrs={'class': 'form-select form-select-solid','data-placeholder': 'Select an option','data-theme': 'bootstrap5'})
+        self.fields['controlroom'].widget = s2forms.Select2MultipleWidget(attrs={'class': 'form-select form-select-solid','data-placeholder': 'Select an option','data-theme': 'bootstrap5'})
+        self.fields['address'].widget = forms.Textarea(attrs={'rows': 2, 'cols': 15})
+        self.fields['designation'].widget = s2forms.Select2Widget(attrs={'class': 'form-select form-select-solid','data-placeholder': 'Select an option','data-theme': 'bootstrap5'})
+        self.fields['identifier'].widget = s2forms.Select2Widget(attrs={'class':'form-select form-select-solid','data-placeholder':'Select an option','data-theme':'bootstrap5'})
+        self.fields['butype'].widget = s2forms.Select2Widget(attrs={'data-placeholder':'Select an Option','class':'form-select-solid','data-theme':'bootstrap5'})
+
+
         if self.client:
             self.fields['identifier'].initial = obm.TypeAssist.objects.get(tacode='CLIENT').id
             self.fields['identifier'].required= True
