@@ -31,7 +31,7 @@ class VendorForm(forms.ModelForm):
             'name':forms.TextInput(attrs={'placeholder':'Enter Name...'}),
             'address':forms.Textarea(attrs={'rows':4}),
             'code':forms.TextInput(attrs={'style': "text-transform: uppercase;", 'placeholder':"Enter characters without spaces..."}),
-            'type':s2forms.Select2Widget,
+            'type':s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
             'description':forms.Textarea(attrs={'rows':4, 'placeholder':"Enter detailed description of vendor..."}),
         }
     
