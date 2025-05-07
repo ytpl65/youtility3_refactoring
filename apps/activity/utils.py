@@ -1,4 +1,5 @@
-import apps.activity.models as av
+from apps.activity.models.asset_model import Asset
+from apps.y_helpdesk.models import Ticket
 from django.db.models import Value
 from django.db.models.functions import Concat
 from django.db.models import Q
@@ -21,7 +22,7 @@ def serialize_obj(obj):
 
 def get_assetincludes_choices(request):
     S = request.session
-    qset = av.Asset.objects.filter(
+    qset = Asset.objects.filter(
          Q(identifier__in=['CHECKPOINT']) & Q(enable = True) &  Q(bu_id  = S['bu_id']) &  Q(assetcode='NONE')).select_related(
             'parent').annotate(
             checkpoint = Concat(
@@ -30,7 +31,7 @@ def get_assetincludes_choices(request):
 
 def get_assetsmartplace_choices(request, idfs):
     S = request.session
-    qset = av.Asset.objects.filter(
+    qset = Asset.objects.filter(
          Q(identifier__in = idfs) & Q(enable = True) &  Q(bu_id= S['bu_id']) & Q(client_id = S['client_id']) |  Q(assetcode='NONE') ).select_related(
             'parent').annotate(
             checkpoint = Concat(
@@ -210,7 +211,7 @@ def datastatus(request, id_id):
 
 def sendTicketMail(ticketid, oper):
     try:
-        ticketdata = av.Ticket.objects.send_ticket_mail(ticketid)
+        ticketdata = Ticket.objects.send_ticket_mail(ticketid)
         # print("ticketdata", ticketdata)
         records = [{'cdtz': record.createdon, 'ticketlog': record.ticketlog, 'modifiedon': record.modifiedon, 'status': record.status, 'ticketdesc': record.ticketdesc, 'ticketno': record.ticketno, 'creatoremail': record.creatoremail, 'modifiermail': record.modifiermail, 'modifiername': record.modifiername, 'peopleemail': record.peopleemail, 'pgroupemail': record.pgroupemail, 'tescalationtemplate': record.tescalationtemplate, 'priority': record.priority, 'peoplename': record.peoplename, 'next_escalation': record.next_escalation, 'creatorid': record.creatorid, 'modifierid': record.modifierid, 'assignedtopeople_id': record.assignedtopeople_id, 'assignedtogroup_id': record.assignedtogroup_id, 'groupname': record.groupname, 'buname': record.buname, 'level': record.level, 'comments':record.comments} for record in ticketdata]
         #sendEscalationTicketMail(records, oper, 'WEB')
@@ -229,7 +230,7 @@ def savejsonbdata(request, id_id, asset, location):
     return id_id
 
 def increment_ticket_number():
-    last_ticket = av.Ticket.objects.order_by('ticketno').last()
+    last_ticket = Ticket.objects.order_by('ticketno').last()
     if not last_ticket:
         return '1'
     print(last_ticket)

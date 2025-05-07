@@ -237,10 +237,10 @@ class ChecklistForm(forms.ModelForm):
         'invalid_name'  : "[Invalid name] Only these special characters [-, _, @, #] are allowed in name field",
     }
     assetincludes = forms.MultipleChoiceField(
-        required = True, label='Checkpoint', widget = s2forms.Select2MultipleWidget)
-    site_type_includes = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label="Site Types", required=False)
-    buincludes         = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Site Includes', required=False)
-    site_grp_includes  = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, label='Site groups', required=False)
+        required = True, label='Checkpoint', widget = s2forms.Select2MultipleWidget(attrs={'data-theme':'bootstrap5'}))
+    site_type_includes = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget(attrs={'data-theme':'bootstrap5'}), label="Site Types", required=False)
+    buincludes         = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget(attrs={'data-theme':'bootstrap5'}), label='Site Includes', required=False)
+    site_grp_includes  = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget(attrs={'data-theme':'bootstrap5'}), label='Site groups', required=False)
     
     class Meta:
         model = QuestionSet

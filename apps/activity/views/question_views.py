@@ -13,7 +13,7 @@ from django.views.generic.base import View
 import apps.activity.filters as aft
 from apps.activity.forms.question_form import QuestionForm,ChecklistForm,QsetBelongingForm
 from apps.activity.forms.asset_form import CheckpointForm
-from apps.activity.models.question_model import QuestionSet, QuestionSetBelonging, Question
+from apps.activity.models.question_model import QuestionSet, QuestionSetBelonging,Question
 from apps.activity.models.asset_model import Asset
 import apps.activity.utils as av_utils
 import apps.peoples.utils as putils
@@ -245,6 +245,7 @@ class QsetNQsetBelonging(LoginRequiredMixin, View):
                   'ismandatory', 'isavpt', 'avpttype']
     }
     def get(self, request, *args, **kwargs):
+        from apps.activity.models.question_model import Question
         R, P = request.GET, self.params
         if(R.get('action') == 'loadQuestions'):
             qset =  Question.objects.questions_of_client(request, R)
