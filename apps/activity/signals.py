@@ -14,6 +14,7 @@ TOPIC = "redmine_to_noc"
 
 
 def convert_dates(obj):
+    
     if isinstance(obj, dict):
         return {k: convert_dates(v) for k, v in obj.items()}
     elif isinstance(obj, list):
