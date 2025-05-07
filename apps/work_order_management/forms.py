@@ -142,15 +142,17 @@ class WorkPermitForm(forms.ModelForm):
         
         
 class ApproverForm(forms.ModelForm):
+    from apps.work_order_management.models import Approver
     required_css_class = "required"
-    approverfor = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=True,label='Approver/Verifier For ')
-    sites = forms.MultipleChoiceField(widget=s2forms.Select2MultipleWidget, required=False,label='Sites')
+    approverfor = forms.MultipleChoiceField(required=True,label='Approver/Verifier For ')
+    sites = forms.MultipleChoiceField(required=False,label='Sites')
     class Meta:
         model = Approver
         fields = ['approverfor', 'forallsites', 'sites', 'people', 'ctzoffset','identifier']
         widgets = {
-            'people':s2forms.Select2Widget(),
-            'identifier':s2forms.Select2Widget()
+            'identifier': s2forms.Select2Widget(
+                attrs={'class': 'form-select form-select-solid'}
+            )
         }
         labels = {
             'identifier' : 'Name',
@@ -163,6 +165,36 @@ class ApproverForm(forms.ModelForm):
         self.request = kwargs.pop('request')
         S = self.request.session
         super().__init__(*args, **kwargs)
+        print("Identifier choices:", self.fields['identifier'].choices)
+
+        self.fields['identifier'] = forms.ChoiceField(
+            choices=Approver.Identifier.choices,
+            required=True,
+            label="Name",
+            widget=s2forms.Select2Widget(
+                attrs={
+                    'class': 'form-select form-select-solid',
+                    'data-placeholder': 'Select an option',
+                    'data-theme': 'bootstrap5'
+                }
+            )
+        )
+
+        self.fields['identifier'].widget.attrs.update({
+            'class': 'form-select form-select-solid', 
+            'data-placeholder': 'Select an option'
+        })
+        
+        self.fields['approverfor'].widget = s2forms.Select2MultipleWidget(
+            attrs={'class': 'form-select form-select-solid', 'data-placeholder': 'Select an option', 'data-theme': 'bootstrap5'}
+        )
+        self.fields['people'].widget = s2forms.Select2MultipleWidget(
+            attrs={'class': 'form-select form-select-solid', 'data-placeholder': 'Select an option', 'data-theme': 'bootstrap5'}
+        )
+        self.fields['sites'].widget = s2forms.Select2MultipleWidget(
+            attrs={'class': 'form-select form-select-solid', 'data-placeholder': 'Select an option', 'data-theme': 'bootstrap5'}
+        )
+        
         utils.initailize_form_fields(self)
 
         self.fields['approverfor'].choices = om.TypeAssist.objects.filter(
