@@ -8,7 +8,9 @@ from django.contrib.gis.geos import GEOSGeometry
 import django_select2.forms as s2forms
 from django.utils import timezone
 from apps.onboarding import models as om
-from apps.activity import models as am
+from apps.activity.models.asset_model import Asset
+from apps.activity.models.question_model import QuestionSet
+from apps.activity.models.location_model import Location
 from apps.work_order_management.models import Approver
 from apps.peoples.models import Pgbelonging, People
 
@@ -72,15 +74,15 @@ class VendorForm(forms.ModelForm):
 class WorkOrderForm(forms.ModelForm):
     required_css_class = "required"
     
-    categories = forms.MultipleChoiceField(label='Queue', widget=s2forms.Select2MultipleWidget, required=False)
+    categories = forms.MultipleChoiceField(label='Queue', widget=s2forms.Select2MultipleWidget(attrs={'data-theme':'bootstrap5'}), required=False)
     
     class Meta:
         model = Wom
         fields = ['description', 'plandatetime', 'expirydatetime',  'asset', 'location', 'qset', 'ismailsent',
                   'priority', 'qset', 'ticketcategory', 'categories', 'vendor', 'ctzoffset', 'workstatus']
         
-        widgets = {'categories':s2forms.Select2MultipleWidget,
-                   'vendor'    : s2forms.Select2Widget,
+        widgets = {'categories':s2forms.Select2MultipleWidget(attrs={'data-theme':'bootstrap5'}),
+                   'vendor'    : s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
                    'description':forms.Textarea(attrs={'rows':4, 'placeholder':"Enter detailed description of work to be done..."}),
                    'workstatus':forms.TextInput(attrs={'readonly':True}),
                    'ismailsent':forms.HiddenInput()
@@ -101,11 +103,11 @@ class WorkOrderForm(forms.ModelForm):
         
         self.fields['categories'].choices = om.TypeAssist.objects.filter((Q(client_id = S['client_id']) | Q(cuser__is_superuser = True)), tatype__tacode = 'WORKORDER_CATEGORY', enable=True).values_list('tacode', 'taname')
         self.fields['ticketcategory'].queryset = om.TypeAssist.objects.filter_for_dd_notifycategory_field(self.request, sitewise=True)
-        self.fields['asset'].queryset = am.Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET', 'CHECKPOINT'], sitewise=True)
-        self.fields['location'].queryset = am.Location.objects.filter(Q(client_id = S['client_id']), bu_id = S['bu_id'])
+        self.fields['asset'].queryset = Asset.objects.filter_for_dd_asset_field(self.request, ['ASSET', 'CHECKPOINT'], sitewise=True)
+        self.fields['location'].queryset = Location.objects.filter(Q(client_id = S['client_id']), bu_id = S['bu_id'])
         self.fields['vendor'].queryset = Vendor.objects.filter(
             Q(enable=True) & Q(client_id = S['client_id']) & Q(bu_id = S['bu_id']) | (Q(client_id = S['client_id']) & Q(show_to_all_sites = True)))
-        self.fields['qset'].queryset = am.QuestionSet.objects.filter(client_id = S['client_id'], enable=True, type = am.QuestionSet.Type.WORKORDER) 
+        self.fields['qset'].queryset = QuestionSet.objects.filter(client_id = S['client_id'], enable=True, type = QuestionSet.Type.WORKORDER) 
         utils.initailize_form_fields(self)
         if not self.instance.id:
             self.fields['plandatetime'].initial = timezone.now()
@@ -136,7 +138,7 @@ class WorkPermitForm(forms.ModelForm):
         utils.initailize_form_fields(self)
         self.fields['approvers'].choices = Approver.objects.get_approver_options_wp(self.request).values_list('people__peoplecode', 'people__peoplename')
         self.fields['verifiers'].choices = Approver.objects.get_verifier_options_wp(self.request).values_list('people__peoplecode','people__peoplename')
-        self.fields['qset'].queryset = am.QuestionSet.objects.filter(type='WORKPERMIT',client_id=S['client_id'],enable=True,parent_id=1).filter(Q(bu_id=S['bu_id']) | Q(buincludes__contains=[str(S['bu_id'])]) | Q(show_to_all_sites=True)).order_by('qsetname')
+        self.fields['qset'].queryset = QuestionSet.objects.filter(type='WORKPERMIT',client_id=S['client_id'],enable=True,parent_id=1).filter(Q(bu_id=S['bu_id']) | Q(buincludes__contains=[str(S['bu_id'])]) | Q(show_to_all_sites=True)).order_by('qsetname')
         self.fields['vendor'].queryset = Vendor.objects.filter(Q(bu_id = S['bu_id']) | Q(Q(show_to_all_sites = True) & Q(client_id=S['client_id'])))
         
         
@@ -257,7 +259,7 @@ class SlaForm(forms.ModelForm):
             self.fields['month'].initial = month_value        
         utils.initailize_form_fields(self)
         self.fields['approvers'].choices = Approver.objects.get_approver_options_sla(self.request).values_list('people__peoplecode', 'people__peoplename')
-        self.fields['qset'].queryset = am.QuestionSet.objects.filter(type='SLA_TEMPLATE',client_id=S['client_id'],enable=True,parent_id=1).filter(Q(bu_id=S['bu_id']) | Q(buincludes__contains=[str(S['bu_id'])]) | Q(show_to_all_sites=True))
+        self.fields['qset'].queryset = QuestionSet.objects.filter(type='SLA_TEMPLATE',client_id=S['client_id'],enable=True,parent_id=1).filter(Q(bu_id=S['bu_id']) | Q(buincludes__contains=[str(S['bu_id'])]) | Q(show_to_all_sites=True))
         self.fields['vendor'].queryset = Vendor.objects.filter(Q(enable=True) & (Q(bu_id = S['bu_id']) | Q(Q(show_to_all_sites = True) & Q(client_id=S['client_id']))))
 
 
