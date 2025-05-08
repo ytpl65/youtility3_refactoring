@@ -34,8 +34,9 @@ class SuperTypeAssistForm(forms.ModelForm):
                 'taname': 'Name',
                 'tatype': 'Type',
                 'enable':'Enable'}
+
         widgets = {
-            'tatype':s2forms.Select2Widget,
+            'tatype':s2forms.Select2Widget(attrs={'data-theme':'bootstrap5'}),
             'tacode':forms.TextInput(attrs={'placeholder': 'Enter code without space and special characters', 'style': "text-transform: uppercase;"}),
             'taname':forms.TextInput(attrs={'placeholder': "Enter name"}),
             }
